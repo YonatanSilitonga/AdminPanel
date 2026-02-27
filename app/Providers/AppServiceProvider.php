@@ -7,8 +7,8 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
-use App\Models\Review;
-use App\Models\Report;
+use App\Models\MongoDB\MongoReview as Review;
+use App\Models\MongoDB\MongoReport as Report;
 use App\Models\AdminActivityLog;
 
 class AppServiceProvider extends ServiceProvider

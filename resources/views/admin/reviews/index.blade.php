@@ -9,37 +9,25 @@
     <table class="min-w-full text-sm">
         <thead class="bg-gray-50 text-gray-600">
             <tr>
-                <th class="text-left px-4 py-3">User</th>
-                <th class="text-left px-4 py-3">Destination</th>
-                <th class="text-left px-4 py-3">Rating</th>
-                <th class="text-left px-4 py-3">Status</th>
-                <th class="text-left px-4 py-3">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse(($reviews ?? []) as $review)
                 <tr class="border-t">
-                    <td class="px-4 py-3">{{ optional($review->user)->name ?? '-' }}</td>
-                    <td class="px-4 py-3">{{ optional($review->destination)->name ?? '-' }}</td>
-                    <td class="px-4 py-3">{{ $review->rating ?? '-' }}</td>
                     <td class="px-4 py-3">
-                        <span class="px-2 py-1 text-xs rounded-full {{ ($review->status ?? '') === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700' }}">
-                            {{ $review->status ?? '-' }}
-                        </span>
+                        <p class="font-medium text-dark">{{ $review->user_id ?? 'Anonymous' }}</p>
+                        <p class="text-xs text-gray-500">{{ $review->created_at?->diffForHumans() }}</p>
+                    </td>
+                    <td class="px-4 py-3">{{ optional($review->destination)->name ?? 'General' }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex text-yellow-400">
+                            @for($i = 0; $i < ($review->rating ?? 0); $i++)
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                            @endfor
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <p class="text-xs text-gray-600 line-clamp-2">{{ $review->review ?? '-' }}</p>
                     </td>
                     <td class="px-4 py-3 space-x-2">
-                        <a href="{{ route('admin.reviews.show', $review) }}" class="text-blue-600">View</a>
-                        <form action="{{ route('admin.reviews.approve', $review) }}" method="POST" class="inline">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="text-green-600">Approve</button>
-                        </form>
-                        <form action="{{ route('admin.reviews.reject', $review) }}" method="POST" class="inline">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="text-amber-600">Reject</button>
-                        </form>
-                        <form action="{{ route('admin.reviews.destroy', $review) }}" method="POST" class="inline" onsubmit="return confirmDelete()">
+                        <a href="{{ route('admin.reviews.show', $review->_id) }}" class="text-blue-600">View</a>
+                        <form action="{{ route('admin.reviews.destroy', $review->_id) }}" method="POST" class="inline" onsubmit="return confirm('Delete this review?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-red-600">Delete</button>

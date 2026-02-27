@@ -20,7 +20,7 @@ class DestinationFactory extends Factory
             'long_description' => $this->faker->paragraphs(3, true),
             'latitude' => $this->faker->latitude(-90, 90),
             'longitude' => $this->faker->longitude(-180, 180),
-            'category' => $this->faker->randomElement(['park', 'beach', 'museum', 'historical', 'temple', 'waterfall']),
+            'category' => $this->faker->randomElement(['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi']),
             'rating' => $this->faker->randomFloat(2, 0, 5),
             'rating_count' => $this->faker->numberBetween(0, 500),
             'is_featured' => $this->faker->boolean(20),

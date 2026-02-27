@@ -18,7 +18,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700">Category</label>
             <select name="category" class="mt-1 w-full border rounded-lg px-4 py-2">
-                @foreach(($categories ?? ['park','beach','museum','historical','nature','cultural']) as $category)
+                @foreach(($categories ?? ['park','beach','museum','historical','nature','cultural','religi']) as $category)
                     <option value="{{ $category }}" @selected(old('category', $destination->category ?? '') === $category)>{{ ucfirst($category) }}</option>
                 @endforeach
             </select>
@@ -43,9 +43,9 @@
     </div>
 
     <div>
-        <label class="block text-sm font-medium text-gray-700">Long Description</label>
-        <textarea name="long_description" rows="5" class="mt-1 w-full border rounded-lg px-4 py-2">{{ old('long_description', $destination->long_description ?? '') }}</textarea>
-        @error('long_description')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="block text-sm font-medium text-gray-700">Location</label>
+        <input type="text" name="location" value="{{ old('location', $destination->location ?? '') }}" class="mt-1 w-full border rounded-lg px-4 py-2">
+        @error('location')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

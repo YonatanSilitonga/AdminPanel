@@ -166,11 +166,11 @@ class BaseAdminController extends Controller
     protected function getDashboardStats()
     {
         return [
-            'total_destinations' => DB::table('destinations')->where('is_active', true)->count(),
+            'total_destinations' => \App\Models\MongoDB\MongoDestination::count(),
             'total_events' => DB::table('events')->where('is_active', true)->count(),
             'total_users' => DB::table('users')->where('is_active', true)->count(),
-            'pending_reviews' => DB::table('reviews')->where('status', 'pending')->count(),
-            'pending_reports' => DB::table('reports')->where('status', 'pending')->count(),
+            'pending_reviews' => \App\Models\MongoDB\MongoReview::count(), // Adjust status if needed
+            'pending_reports' => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
         ];
     }
 

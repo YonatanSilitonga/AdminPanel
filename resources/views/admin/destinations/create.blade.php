@@ -17,7 +17,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700">Category</label>
             <select name="category" class="mt-1 w-full border rounded-lg px-4 py-2">
-                @foreach(($categories ?? ['park','beach','museum','historical','nature','cultural']) as $category)
+                @foreach(($categories ?? ['park','beach','museum','historical','nature','cultural','religi']) as $category)
                     <option value="{{ $category }}" @selected(old('category') === $category)>{{ ucfirst($category) }}</option>
                 @endforeach
             </select>
@@ -42,21 +42,21 @@
     </div>
 
     <div>
-        <label class="block text-sm font-medium text-gray-700">Long Description</label>
-        <textarea name="long_description" rows="5" class="mt-1 w-full border rounded-lg px-4 py-2">{{ old('long_description') }}</textarea>
-        @error('long_description')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="block text-sm font-medium text-gray-700">Location</label>
+        <input type="text" name="location" value="{{ old('location') }}" class="mt-1 w-full border rounded-lg px-4 py-2" placeholder="e.g. Samosir, North Sumatra">
+        @error('location')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-            <label class="block text-sm font-medium text-gray-700">Thumbnail</label>
+            <label class="block text-sm font-medium text-gray-700">Main Thumbnail</label>
             <input type="file" name="thumbnail" class="mt-1 w-full border rounded-lg px-4 py-2">
             @error('thumbnail')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700">Cover</label>
-            <input type="file" name="cover" class="mt-1 w-full border rounded-lg px-4 py-2">
-            @error('cover')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+            <label class="block text-sm font-medium text-gray-700">Gallery Images (Multiple)</label>
+            <input type="file" name="images[]" multiple class="mt-1 w-full border rounded-lg px-4 py-2">
+            @error('images')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
     </div>
 

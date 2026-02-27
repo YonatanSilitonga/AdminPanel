@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Destination;
+use App\Models\MongoDB\MongoDestination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -12,11 +12,12 @@ use Illuminate\Support\Str;
 class DestinationController extends BaseAdminController
 {
     /**
-     * Display list of destinations
+     * Display list of destinations from MongoDB
      */
     public function index(Request $request)
     {
-        $query = Destination::query();
+        Log::info('Destination index accessed', ['count' => MongoDestination::count()]);
+        $query = MongoDestination::query();
 
         // Search
         if ($request->filled('search')) {
@@ -42,11 +43,10 @@ class DestinationController extends BaseAdminController
             $query->where('is_featured', $request->featured === 'true');
         }
 
-        $destinations = $query->with('galleryImages', 'facilities')
-            ->orderBy('created_at', 'desc')
+        $destinations = $query->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural'];
+        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
         return view('admin.destinations.index', [
             'destinations' => $destinations,
@@ -59,7 +59,7 @@ class DestinationController extends BaseAdminController
      */
     public function create()
     {
-        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural'];
+        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
         return view('admin.destinations.create', [
             'categories' => $categories,
@@ -67,62 +67,69 @@ class DestinationController extends BaseAdminController
     }
 
     /**
-     * Store destination
+     * Store destination into MongoDB
      */
     public function store(Request $request)
     {
+        Log::info('Destination store attempt', $request->except(['thumbnail', 'images']));
+        
         $validated = $request->validate([
             'name' => 'required|string|min:3|max:200',
             'description' => 'required|string|min:10|max:500',
-            'long_description' => 'nullable|string|max:5000',
-            'category' => 'required|in:park,beach,museum,historical,nature,cultural',
+            'location' => 'required|string|max:500',
+            'category' => 'required|in:park,beach,museum,historical,nature,cultural,religi',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'thumbnail' => 'required|image|mimes:jpeg,png,webp|max:5120',
-            'cover' => 'required|image|mimes:jpeg,png,webp|max:5120',
-            'rating' => 'nullable|numeric|between:1,5',
+            'images.*' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
         ]);
 
         try {
-            $destination = new Destination();
+            $destination = new MongoDestination();
             $destination->name = $validated['name'];
-            $destination->slug = Str::slug($validated['name']);
             $destination->description = $validated['description'];
-            $destination->long_description = $validated['long_description'];
+            $destination->location = $validated['location'];
             $destination->category = $validated['category'];
-            $destination->latitude = $validated['latitude'];
-            $destination->longitude = $validated['longitude'];
-            $destination->rating = $validated['rating'] ?? 0;
-            $destination->admin_id = $this->admin->id;
+            $destination->latitude = (float) $validated['latitude'];
+            $destination->longitude = (float) $validated['longitude'];
+            $destination->average_rating = 0;
+            $destination->total_reviews = 0;
             $destination->is_active = true;
+            $destination->is_featured = false;
 
-            // Upload thumbnai
+            $images = [];
+
+            // Upload thumbnail
             if ($request->hasFile('thumbnail')) {
-                $destination->thumbnail_url = $this->processImage(
-                    $request->file('thumbnail'),
-                    'destinations/thumbnails'
-                );
+                $path = $this->processImage($request->file('thumbnail'), 'destinations');
+                if ($path) $images[] = $path;
             }
 
-            // Upload cover
-            if ($request->hasFile('cover')) {
-                $destination->cover_url = $this->processImage(
-                    $request->file('cover'),
-                    'destinations/covers'
-                );
+            // Upload additional images
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->processImage($file, 'destinations');
+                    if ($path) $images[] = $path;
+                }
             }
 
-            $destination->save();
+            $destination->images = $images;
+            $saved = $destination->save();
 
-            // Log action
-            $this->logActivity('create', 'destination', $destination->id, null, $destination->toArray());
+            if ($saved) {
+                Log::info('Destination saved to MongoDB', ['id' => (string)$destination->_id]);
+            } else {
+                Log::warning('Destination save() returned false');
+            }
+
+            $this->logActivity('create_mongo', 'destination', (string)$destination->_id, null, $destination->toArray());
 
             return redirect()
-                ->route('admin.destinations.edit', $destination)
-                ->with('success', 'Destination created successfully');
+                ->route('admin.destinations.index')
+                ->with('success', 'Destination created in MongoDB successfully');
 
         } catch (\Exception $e) {
-            Log::error('Error creating destination: ' . $e->getMessage());
+            Log::error('Error creating destination in Mongo: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return back()->with('error', 'Error creating destination: ' . $e->getMessage());
         }
     }
@@ -130,92 +137,100 @@ class DestinationController extends BaseAdminController
     /**
      * Show edit form
      */
-    public function edit(Destination $destination)
+    public function edit(string $id)
     {
-        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural'];
+        $destination = MongoDestination::findOrFail($id);
+        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
         return view('admin.destinations.edit', [
-            'destination' => $destination->load('galleryImages', 'facilities'),
+            'destination' => $destination,
             'categories' => $categories,
         ]);
     }
 
     /**
-     * Update destination
+     * Update destination in MongoDB
      */
-    public function update(Request $request, Destination $destination)
+    public function update(Request $request, string $id)
     {
+        $destination = MongoDestination::findOrFail($id);
+
         $validated = $request->validate([
             'name' => 'required|string|min:3|max:200',
             'description' => 'required|string|min:10|max:500',
-            'long_description' => 'nullable|string|max:5000',
+            'location' => 'required|string|max:500',
             'category' => 'required|in:park,beach,museum,historical,nature,cultural',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
-            'cover' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
-            'rating' => 'nullable|numeric|between:1,5',
         ]);
 
         try {
             $oldValues = $destination->toArray();
 
             $destination->name = $validated['name'];
-            $destination->slug = Str::slug($validated['name']);
             $destination->description = $validated['description'];
-            $destination->long_description = $validated['long_description'];
+            $destination->location = $validated['location'];
             $destination->category = $validated['category'];
-            $destination->latitude = $validated['latitude'];
-            $destination->longitude = $validated['longitude'];
-            $destination->rating = $validated['rating'] ?? $destination->rating;
+            $destination->latitude = (float) $validated['latitude'];
+            $destination->longitude = (float) $validated['longitude'];
 
-            // Update thumbnail
+            $currentImages = $destination->images ?? [];
+
+            // Update thumbnail (replace first image if exists, or add)
             if ($request->hasFile('thumbnail')) {
-                $this->deleteFile($destination->thumbnail_url);
-                $destination->thumbnail_url = $this->processImage(
+                $newThumb = $this->processImage(
                     $request->file('thumbnail'),
-                    'destinations/thumbnails'
+                    'destinations'
                 );
+                
+                if (count($currentImages) > 0) {
+                    $this->deleteFile($currentImages[0]);
+                    $currentImages[0] = $newThumb;
+                } else {
+                    array_unshift($currentImages, $newThumb);
+                }
             }
 
-            // Update cover
-            if ($request->hasFile('cover')) {
-                $this->deleteFile($destination->cover_url);
-                $destination->cover_url = $this->processImage(
-                    $request->file('cover'),
-                    'destinations/covers'
-                );
-            }
-
+            $destination->images = $currentImages;
             $destination->save();
 
             // Log action
-            $this->logActivity('update', 'destination', $destination->id, $oldValues, $destination->toArray());
+            $this->logActivity('update_mongo', 'destination', (string)$destination->_id, $oldValues, $destination->toArray());
 
             return redirect()
-                ->route('admin.destinations.edit', $destination)
-                ->with('success', 'Destination updated successfully');
+                ->route('admin.destinations.index')
+                ->with('success', 'Destination updated in MongoDB successfully');
 
         } catch (\Exception $e) {
-            Log::error('Error updating destination: ' . $e->getMessage());
+            Log::error('Error updating destination in Mongo: ' . $e->getMessage());
             return back()->with('error', 'Error updating destination: ' . $e->getMessage());
         }
     }
 
     /**
-     * Delete destination (soft delete)
+     * Delete destination from MongoDB
      */
-    public function destroy(Destination $destination)
+    public function destroy(string $id)
     {
         try {
+            $destination = MongoDestination::findOrFail($id);
+            
+            // Delete files
+            if ($destination->images) {
+                foreach ($destination->images as $img) {
+                    $this->deleteFile($img);
+                }
+            }
+            
             $destination->delete();
 
             // Log action
-            $this->logActivity('soft_delete', 'destination', $destination->id);
+            $this->logActivity('delete_mongo', 'destination', $id);
 
             return redirect()
                 ->route('admin.destinations.index')
-                ->with('success', 'Destination deleted successfully');
+                ->with('success', 'Destination deleted from MongoDB successfully');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Error deleting destination: ' . $e->getMessage());
@@ -223,40 +238,44 @@ class DestinationController extends BaseAdminController
     }
 
     /**
-     * Toggle featured status
+     * Toggle featured status in MongoDB
      */
-    public function toggleFeatured(Destination $destination)
+    public function toggleFeatured(string $id)
     {
+        $destination = MongoDestination::findOrFail($id);
         $oldValue = $destination->is_featured;
-        $destination->update(['is_featured' => !$destination->is_featured]);
+        $destination->is_featured = !$oldValue;
+        $destination->save();
 
         $this->logActivity(
-            'update_featured',
+            'update_featured_mongo',
             'destination',
-            $destination->id,
+            $id,
             ['is_featured' => $oldValue],
             ['is_featured' => $destination->is_featured]
         );
 
-        return back()->with('success', 'Featured status updated');
+        return back()->with('success', 'Featured status updated in MongoDB');
     }
 
     /**
-     * Toggle active status
+     * Toggle active status in MongoDB
      */
-    public function toggleStatus(Destination $destination)
+    public function toggleStatus(string $id)
     {
+        $destination = MongoDestination::findOrFail($id);
         $oldValue = $destination->is_active;
-        $destination->update(['is_active' => !$destination->is_active]);
+        $destination->is_active = !$oldValue;
+        $destination->save();
 
         $this->logActivity(
-            'update_status',
+            'update_status_mongo',
             'destination',
-            $destination->id,
+            $id,
             ['is_active' => $oldValue],
             ['is_active' => $destination->is_active]
         );
 
-        return back()->with('success', 'Status updated');
+        return back()->with('success', 'Status updated in MongoDB');
     }
 }

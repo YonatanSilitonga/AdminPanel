@@ -20,7 +20,7 @@ use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\ProfileController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('admin.login');
 });
 
 // PUBLIC ROUTES (No auth required)

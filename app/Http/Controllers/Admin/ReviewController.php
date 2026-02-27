@@ -4,191 +4,81 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Review;
-use App\Models\Destination;
+use App\Models\MongoDB\MongoReview;
+use App\Models\MongoDB\MongoDestination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class ReviewController extends BaseAdminController
 {
     /**
-     * Display list of reviews
+     * Display list of reviews from MongoDB
      */
     public function index(Request $request)
     {
         try {
-            $query = Review::with('user', 'destination');
-
-            // Filter by status
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
+            $query = MongoReview::with('destination');
 
             // Filter by rating
             if ($request->filled('rating')) {
-                $query->where('rating', $request->rating);
+                $query->where('rating', (int)$request->rating);
             }
 
-            // Search
+            // Search in review text
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('content', 'like', "%{$search}%");
-                });
-            }
-
-            // Filter by reported
-            if ($request->filled('reported')) {
-                if ($request->reported === 'true') {
-                    $query->where('reported_count', '>', 0);
-                }
+                $query->where('review', 'like', "%{$search}%");
             }
 
             $reviews = $query->orderBy('created_at', 'desc')
-                ->paginate(config('admin-panel.pagination.per_page'));
+                ->paginate(15);
 
-            $statuses = ['pending', 'approved', 'rejected'];
             $ratings = [1, 2, 3, 4, 5];
 
             return view('admin.reviews.index', [
                 'reviews' => $reviews,
-                'statuses' => $statuses,
                 'ratings' => $ratings,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error loading reviews: ' . $e->getMessage());
-            return back()->with('error', 'Error loading reviews');
+            Log::error('Error loading reviews from Mongo: ' . $e->getMessage());
+            return back()->with('error', 'Error loading reviews from MongoDB');
         }
     }
 
     /**
-     * Show review details
+     * Show review details from MongoDB
      */
-    public function show(Review $review)
+    public function show(string $id)
     {
         try {
-            $review->load('user', 'destination');
+            $review = MongoReview::with('destination')->findOrFail($id);
 
             return view('admin.reviews.show', [
                 'review' => $review,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error loading review: ' . $e->getMessage());
+            Log::error('Error loading review from Mongo: ' . $e->getMessage());
             return back()->with('error', 'Error loading review');
         }
     }
 
     /**
-     * Approve review
+     * Delete review from MongoDB
      */
-    public function approve(Review $review)
+    public function destroy(string $id)
     {
         try {
-            if ($review->status === 'approved') {
-                return back()->with('warning', 'Review is already approved');
-            }
-
-            $oldStatus = $review->status;
-            $review->update([
-                'status' => 'approved',
-                'approved_by' => $this->admin->id,
-            ]);
-
-            // Log action
-            $this->logActivity(
-                'approve_review',
-                'review',
-                $review->id,
-                ['status' => $oldStatus],
-                ['status' => 'approved']
-            );
-
-            return back()->with('success', 'Review approved successfully');
-        } catch (\Exception $e) {
-            Log::error('Error approving review: ' . $e->getMessage());
-            return back()->with('error', 'Error approving review');
-        }
-    }
-
-    /**
-     * Reject review
-     */
-    public function reject(Review $review, Request $request)
-    {
-        try {
-            if ($review->status === 'rejected') {
-                return back()->with('warning', 'Review is already rejected');
-            }
-
-            $request->validate([
-                'reason' => 'required|string|max:500',
-            ]);
-
-            $oldStatus = $review->status;
-            $review->update([
-                'status' => 'rejected',
-                'approved_by' => $this->admin->id,
-            ]);
-
-            // Log action
-            $this->logActivity(
-                'reject_review',
-                'review',
-                $review->id,
-                ['status' => $oldStatus],
-                ['status' => 'rejected', 'reason' => $request->reason]
-            );
-
-            return back()->with('success', 'Review rejected successfully');
-        } catch (\Exception $e) {
-            Log::error('Error rejecting review: ' . $e->getMessage());
-            return back()->with('error', 'Error rejecting review');
-        }
-    }
-
-    /**
-     * Delete review
-     */
-    public function destroy(Review $review)
-    {
-        try {
-            $reviewId = $review->id;
+            $review = MongoReview::findOrFail($id);
             $review->delete();
 
-            // Log action
-            $this->logActivity('delete_review', 'review', $reviewId);
+            $this->logActivity('delete_review_mongo', 'review', $id);
 
             return redirect()
                 ->route('admin.reviews.index')
-                ->with('success', 'Review deleted successfully');
+                ->with('success', 'Review deleted from MongoDB successfully');
         } catch (\Exception $e) {
-            Log::error('Error deleting review: ' . $e->getMessage());
+            Log::error('Error deleting review from Mongo: ' . $e->getMessage());
             return back()->with('error', 'Error deleting review');
-        }
-    }
-
-    /**
-     * Toggle review reported status
-     */
-    public function clearReports(Review $review)
-    {
-        try {
-            $oldCount = $review->reported_count;
-            $review->update(['reported_count' => 0]);
-
-            $this->logActivity(
-                'clear_reports',
-                'review',
-                $review->id,
-                ['reported_count' => $oldCount],
-                ['reported_count' => 0]
-            );
-
-            return back()->with('success', 'Review reports cleared');
-        } catch (\Exception $e) {
-            Log::error('Error clearing reports: ' . $e->getMessage());
-            return back()->with('error', 'Error clearing reports');
         }
     }
 }
