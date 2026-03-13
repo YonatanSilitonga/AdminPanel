@@ -118,21 +118,14 @@ class BaseAdminController extends Controller
         }
     }
 
-    /**
-     * Process and resize image
-     */
     protected function processImage($file, $path, $sizes = [])
     {
         if (!$file) {
             return null;
         }
 
-        $this->uploadFile($file, $path, ['mimes' => ['image/jpeg', 'image/png', 'image/webp']]);
-
-        // Process with intervention/image if needed
-        // This is a placeholder - integrate Image library as needed
-        // \Image::make($file)->fit(800, 600)->save(storage_path("app/public/{$path}/{$filename}"));
-
+        // Return the path relative to storage/app/public
+        // This will be something like 'destinations/filename.jpg'
         return $file->store($path, 'public');
     }
 
@@ -167,10 +160,10 @@ class BaseAdminController extends Controller
     {
         return [
             'total_destinations' => \App\Models\MongoDB\MongoDestination::count(),
-            'total_events' => DB::table('events')->where('is_active', true)->count(),
-            'total_users' => DB::table('users')->where('is_active', true)->count(),
-            'pending_reviews' => \App\Models\MongoDB\MongoReview::count(), // Adjust status if needed
-            'pending_reports' => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
+            'total_events'       => \App\Models\MongoDB\MongoEvent::count(),
+            'total_users'        => DB::table('users')->where('is_active', true)->count(),
+            'pending_reviews'    => \App\Models\MongoDB\MongoReview::where('status', 'pending')->count(),
+            'pending_reports'    => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
         ];
     }
 

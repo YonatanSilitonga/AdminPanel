@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::table('facilities', function (Blueprint $table) {
             if (Schema::hasColumn('facilities', 'destination_id')) {
+                // Drop index if it exists
+                try {
+                    $table->dropIndex(['destination_id']);
+                } catch (\Exception $e) {
+                    // Ignore if index doesn't exist
+                }
+                
                 $table->dropForeign(['destination_id']);
                 $table->dropColumn('destination_id');
             }

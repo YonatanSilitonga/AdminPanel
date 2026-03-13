@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\MongoDB\MongoEvent;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends BaseAdminController
@@ -74,8 +75,7 @@ class DashboardController extends BaseAdminController
                 'destinations' => DB::table('destinations')
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->count(),
-                'events' => DB::table('events')
-                    ->whereBetween('created_at', [$startDate, $endDate])
+                'events' => MongoEvent::whereBetween('created_at', [$startDate, $endDate])
                     ->count(),
                 'reviews' => DB::table('reviews')
                     ->whereBetween('created_at', [$startDate, $endDate])

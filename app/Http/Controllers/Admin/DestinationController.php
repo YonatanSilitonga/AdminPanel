@@ -102,14 +102,14 @@ class DestinationController extends BaseAdminController
             // Upload thumbnail
             if ($request->hasFile('thumbnail')) {
                 $path = $this->processImage($request->file('thumbnail'), 'destinations');
-                if ($path) $images[] = $path;
+                if ($path) $images[] = $path; // Simpan relative path
             }
 
             // Upload additional images
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     $path = $this->processImage($file, 'destinations');
-                    if ($path) $images[] = $path;
+                    if ($path) $images[] = $path; // Simpan relative path
                 }
             }
 
@@ -185,10 +185,11 @@ class DestinationController extends BaseAdminController
                 );
                 
                 if (count($currentImages) > 0) {
+                    // Delete old thumbnail
                     $this->deleteFile($currentImages[0]);
-                    $currentImages[0] = $newThumb;
+                    $currentImages[0] = $newThumb; // Simpan relative path
                 } else {
-                    array_unshift($currentImages, $newThumb);
+                    array_unshift($currentImages, $newThumb); // Simpan relative path
                 }
             }
 

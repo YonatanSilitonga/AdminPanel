@@ -51,13 +51,26 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
             <label class="block text-sm font-medium text-gray-700">Thumbnail</label>
+            @if(isset($destination->images) && count($destination->images) > 0)
+                <div class="mt-2 mb-3">
+                    <img src="{{ asset('storage/' . $destination->images[0]) }}" alt="Current Thumbnail" class="w-32 h-24 object-cover rounded-lg border">
+                    <p class="text-xs text-gray-500 mt-1">Current thumbnail</p>
+                </div>
+            @endif
             <input type="file" name="thumbnail" class="mt-1 w-full border rounded-lg px-4 py-2">
             @error('thumbnail')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700">Cover</label>
-            <input type="file" name="cover" class="mt-1 w-full border rounded-lg px-4 py-2">
-            @error('cover')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+            <label class="block text-sm font-medium text-gray-700">Gallery Images</label>
+            @if(isset($destination->images) && count($destination->images) > 1)
+                <div class="mt-2 mb-3 flex flex-wrap gap-2">
+                    @foreach(array_slice($destination->images, 1) as $img)
+                        <img src="{{ asset('storage/' . $img) }}" alt="Gallery Image" class="w-20 h-16 object-cover rounded-lg border">
+                    @endforeach
+                </div>
+            @endif
+            <input type="file" name="images[]" multiple class="mt-1 w-full border rounded-lg px-4 py-2">
+            @error('images')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
     </div>
 

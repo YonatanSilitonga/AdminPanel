@@ -32,6 +32,7 @@
     <table class="min-w-full text-sm">
         <thead class="bg-gray-50 text-gray-600">
             <tr>
+                <th class="text-left px-4 py-3">Thumbnail</th>
                 <th class="text-left px-4 py-3">Name</th>
                 <th class="text-left px-4 py-3">Category</th>
                 <th class="text-left px-4 py-3">Rating</th>
@@ -44,8 +45,15 @@
             @forelse(($destinations ?? []) as $destination)
                 <tr class="border-t">
                     <td class="px-4 py-3">
+                        @if(isset($destination->images) && count($destination->images) > 0)
+                            <img src="{{ asset('storage/' . $destination->images[0]) }}" alt="{{ $destination->name }}" class="w-16 h-12 object-cover rounded-lg border">
+                        @else
+                            <div class="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs text-center p-1">No Image</div>
+                        @endif
+                    </td>
+                    <td class="px-4 py-3">
                         <p class="font-medium text-dark">{{ $destination->name ?? '-' }}</p>
-                        <p class="text-xs text-gray-500">{{ $destination->slug ?? '-' }}</p>
+                        <p class="text-xs text-gray-500">{{ $destination->category ?? '-' }}</p>
                     </td>
                     <td class="px-4 py-3">{{ $destination->category ?? '-' }}</td>
                     <td class="px-4 py-3">{{ $destination->rating ?? '-' }}</td>
@@ -60,18 +68,18 @@
                         </span>
                     </td>
                     <td class="px-4 py-3 space-x-2">
-                        <a href="{{ route('admin.destinations.edit', $destination) }}" class="text-blue-600">Edit</a>
-                        <form action="{{ route('admin.destinations.toggle-featured', $destination) }}" method="POST" class="inline">
+                        <a href="{{ route('admin.destinations.edit', $destination->_id) }}" class="text-blue-600">Edit</a>
+                        <form action="{{ route('admin.destinations.toggle-featured', $destination->_id) }}" method="POST" class="inline">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="text-indigo-600">Toggle Featured</button>
                         </form>
-                        <form action="{{ route('admin.destinations.toggle-status', $destination) }}" method="POST" class="inline">
+                        <form action="{{ route('admin.destinations.toggle-status', $destination->_id) }}" method="POST" class="inline">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="text-amber-600">Toggle Status</button>
                         </form>
-                        <form action="{{ route('admin.destinations.destroy', $destination) }}" method="POST" class="inline" onsubmit="return confirmDelete()">
+                        <form action="{{ route('admin.destinations.destroy', $destination->_id) }}" method="POST" class="inline" onsubmit="return confirmDelete()">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-red-600">Delete</button>

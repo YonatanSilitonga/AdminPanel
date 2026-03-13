@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\MongoDB\MongoDestination;
 
 class Event extends Model
 {
@@ -33,11 +34,14 @@ class Event extends Model
     ];
 
     /**
-     * Get the destination this event belongs to
+     * Get the destination this event belongs to (from MongoDB)
      */
-    public function destination(): BelongsTo
+    public function getDestinationAttribute()
     {
-        return $this->belongsTo(Destination::class);
+        if (!$this->destination_id) {
+            return null;
+        }
+        return MongoDestination::find($this->destination_id);
     }
 
     /**
