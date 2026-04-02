@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class AdminActivityLog extends Model
 {
-    protected $table = 'admin_activity_logs';
+    protected $connection = 'mongodb';
+    protected $collection = 'admin_activity_logs';
+    protected $primaryKey = '_id';
+
     protected $guarded = [];
     protected $casts = [
         'old_values' => 'json',

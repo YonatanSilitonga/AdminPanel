@@ -2,15 +2,26 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use MongoDB\Laravel\Auth\User as Authenticatable;
+use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
+    protected $connection = 'mongodb';
+    protected $collection = 'users';
+    protected $primaryKey = '_id';
+
+    /**
+     * Default attributes for the model.
+     */
+    protected $attributes = [
+        'role' => 'user',
+        'is_active' => true,
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +33,7 @@ class User extends Authenticatable
         'email',
         'password',
         'is_active',
+        'role', // Single role: member/standard
     ];
 
     /**

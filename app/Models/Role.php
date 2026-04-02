@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 /**
- * Role Model
+ * Role Model (MongoDB)
  * 
  * Roles:
  * - super_admin (Full access)
- * - admin (Manage destinations & events)
- * - moderator (Review & report moderation)
  */
 class Role extends Model
 {
+    protected $connection = 'mongodb';
+    protected $collection = 'roles';
+    protected $primaryKey = '_id';
+
     protected $guarded = [];
     protected $casts = [
         'created_at' => 'datetime',
@@ -25,7 +27,7 @@ class Role extends Model
      */
     public function permissions()
     {
-        return $this->belongsToMany(Permission::class, 'role_permission');
+        return $this->belongsToMany(Permission::class, null, 'role_ids', 'permission_ids');
     }
 
     /**

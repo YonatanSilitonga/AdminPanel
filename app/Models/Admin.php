@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
+use MongoDB\Laravel\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
+use Illuminate\Notifications\Notifiable;
 
-class Admin extends Model implements Authenticatable
+class Admin extends Authenticatable
 {
-    use SoftDeletes, AuthenticatableTrait;
+    use SoftDeletes, Notifiable;
 
-    protected $table = 'admins';
+    protected $connection = 'mongodb';
+    protected $collection = 'admins';
+    protected $primaryKey = '_id';
+
     protected $guarded = [];
     protected $hidden = ['password'];
     protected $casts = [
@@ -43,7 +46,7 @@ class Admin extends Model implements Authenticatable
      */
     public function hasRole(string $role): bool
     {
-        return $this->role->name === $role;
+        return $this->role && $this->role->name === $role;
     }
 
     /**
@@ -51,7 +54,7 @@ class Admin extends Model implements Authenticatable
      */
     public function hasAnyRole(string ...$roles): bool
     {
-        return in_array($this->role->name, $roles);
+        return $this->role && in_array($this->role->name, $roles);
     }
 
     /**
@@ -59,6 +62,7 @@ class Admin extends Model implements Authenticatable
      */
     public function hasPermission(string $permission): bool
     {
+        if (!$this->role) return false;
         return $this->role->permissions()->where('name', $permission)->exists();
     }
 
@@ -67,6 +71,7 @@ class Admin extends Model implements Authenticatable
      */
     public function hasAllPermissions(string ...$permissions): bool
     {
+        if (!$this->role) return false;
         $userPermissions = $this->role->permissions()->pluck('name')->toArray();
         foreach ($permissions as $permission) {
             if (!in_array($permission, $userPermissions)) {
@@ -81,7 +86,7 @@ class Admin extends Model implements Authenticatable
      */
     public function isSuperAdmin(): bool
     {
-        return $this->role->name === 'super_admin';
+        return $this->hasRole('super_admin');
     }
 
     /**
@@ -111,6 +116,7 @@ class Admin extends Model implements Authenticatable
      */
     public function getPermissions(): array
     {
+        if (!$this->role) return [];
         return $this->role->permissions()->pluck('name')->toArray();
     }
 }

@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Permission extends Model
 {
+    protected $connection = 'mongodb';
+    protected $collection = 'permissions';
+    protected $primaryKey = '_id';
+
     protected $guarded = [];
 
     protected $casts = [
@@ -15,7 +19,7 @@ class Permission extends Model
 
     public function roles()
     {
-        return $this->belongsToMany(Role::class, 'role_permission');
+        return $this->belongsToMany(Role::class, null, 'permission_ids', 'role_ids');
     }
 
     public function scopeByGroup($query, $group)

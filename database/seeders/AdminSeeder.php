@@ -15,23 +15,13 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Roles
-        $superAdminRole = Role::firstOrCreate(
+        // 1. Create Single Role: super_admin
+        $superAdminRole = Role::updateOrCreate(
             ['name' => 'super_admin'],
             ['description' => 'Full access to admin panel']
         );
 
-        $adminRole = Role::firstOrCreate(
-            ['name' => 'admin'],
-            ['description' => 'Manage destinations and events']
-        );
-
-        $moderatorRole = Role::firstOrCreate(
-            ['name' => 'moderator'],
-            ['description' => 'Moderate reviews and reports']
-        );
-
-        // Create Permissions
+        // 2. Create Permissions
         $permissions = [
             // Destination Management
             ['name' => 'view_destinations', 'group' => 'destination'],
@@ -82,96 +72,29 @@ class AdminSeeder extends Seeder
             ['name' => 'view_audit_logs', 'group' => 'system'],
         ];
 
+        $permissionIds = [];
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission['name']], $permission);
+            $p = Permission::updateOrCreate(['name' => $permission['name']], $permission);
+            $permissionIds[] = $p->_id;
         }
 
-        // Assign permissions to roles
-        $allPermissions = Permission::all();
-        $destinationPerms = Permission::where('group', 'destination')->get();
-        $eventPerms = Permission::where('group', 'event')->get();
-        $reviewPerms = Permission::where('group', 'review')->get();
-        $reportPerms = Permission::where('group', 'report')->get();
-        $userPerms = Permission::where('group', 'user')->get();
-        $logPerms = Permission::where('group', 'log')->get();
-        $analyticsPerms = Permission::where('group', 'analytics')->get();
-        $systemPerms = Permission::where('group', 'system')->get();
+        // 3. Assign All Permissions to Super Admin
+        $superAdminRole->permissions()->sync($permissionIds);
 
-        // Super Admin - All permissions
-        foreach ($allPermissions as $permission) {
-            $superAdminRole->givePermission($permission);
-        }
-
-        // Admin - Destination, Event, Reviews, Analytics
-        foreach ($destinationPerms as $permission) {
-            $adminRole->givePermission($permission);
-        }
-        foreach ($eventPerms as $permission) {
-            $adminRole->givePermission($permission);
-        }
-        foreach ($reviewPerms as $permission) {
-            $adminRole->givePermission($permission);
-        }
-        foreach ($userPerms as $permission) {
-            $adminRole->givePermission($permission);
-        }
-        foreach ($logPerms as $permission) {
-            $adminRole->givePermission($permission);
-        }
-        foreach ($analyticsPerms as $permission) {
-            $adminRole->givePermission($permission);
-        }
-
-        // Moderator - Reviews, Reports, Logs
-        foreach ($reviewPerms as $permission) {
-            $moderatorRole->givePermission($permission);
-        }
-        foreach ($reportPerms as $permission) {
-            $moderatorRole->givePermission($permission);
-        }
-        foreach ($logPerms as $permission) {
-            $moderatorRole->givePermission($permission);
-        }
-
-        // Create sample admins
-        Admin::firstOrCreate(
+        // 4. Create Single Super Admin Account
+        Admin::updateOrCreate(
             ['email' => 'superadmin@smarttourism.local'],
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('SuperAdmin@123'),
-                'role_id' => $superAdminRole->id,
+                'role_id' => $superAdminRole->_id,
                 'is_active' => true,
                 'phone' => '+6281234567890',
             ]
         );
 
-        Admin::firstOrCreate(
-            ['email' => 'admin@smarttourism.local'],
-            [
-                'name' => 'Admin',
-                'password' => Hash::make('Admin@123'),
-                'role_id' => $adminRole->id,
-                'is_active' => true,
-                'phone' => '+6281234567891',
-            ]
-        );
-
-        Admin::firstOrCreate(
-            ['email' => 'moderator@smarttourism.local'],
-            [
-                'name' => 'Moderator',
-                'password' => Hash::make('Moderator@123'),
-                'role_id' => $moderatorRole->id,
-                'is_active' => true,
-                'phone' => '+6281234567892',
-            ]
-        );
-
-        $this->command->info('Admin users seeded successfully!');
-        $this->command->info('');
-        $this->command->info('Login credentials:');
-        $this->command->info('Super Admin: superadmin@smarttourism.local / SuperAdmin@123');
-        $this->command->info('Admin: admin@smarttourism.local / Admin@123');
-        $this->command->info('Moderator: moderator@smarttourism.local / Moderator@123');
+        $this->command->info('Admin system seeded successfully in MongoDB!');
+        $this->command->info('Role: super_admin');
+        $this->command->info('Credentials: superadmin@smarttourism.local / SuperAdmin@123');
     }
 }
