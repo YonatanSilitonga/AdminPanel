@@ -11,6 +11,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class MongoDestination extends Model
 {
     protected $connection = 'mongodb';
+    protected $table = 'destinations';
     protected $collection = 'destinations';
 
     protected $primaryKey = '_id';

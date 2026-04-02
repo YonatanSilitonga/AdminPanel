@@ -14,6 +14,7 @@ class MongoEvent extends Model
     use SoftDeletes;
 
     protected $connection = 'mongodb';
+    protected $table = 'events';
     protected $collection = 'events';
 
     protected $primaryKey = '_id';
