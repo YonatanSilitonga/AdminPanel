@@ -1,117 +1,139 @@
-@extends('admin.layouts.app')
-
-@section('content')
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12 sm:px-6 lg:px-8">
-    <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
-        <!-- Logo/Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Smart Tourism</h1>
-            <p class="text-gray-600 text-sm mt-2">Admin Panel</p>
-            <p class="text-gray-500 text-xs mt-1">v1.0</p>
-        </div>
-
-        <!-- Title -->
-        <div class="mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">Welcome Back</h2>
-            <p class="text-gray-600 text-sm mt-1">Sign in to your admin account</p>
-        </div>
-
-        <!-- Error Messages -->
-        @if ($errors->any())
-            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p class="text-red-800 text-sm font-medium">{{ $errors->first() }}</p>
-            </div>
-        @endif
-
-        <!-- Login Form -->
-        <form method="POST" action="{{ route('admin.login.post') }}" class="space-y-5">
-            @csrf
-
-            <!-- Email Field -->
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
-                </label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    value="{{ old('email') }}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition @error('email') border-red-500 @enderror"
-                    placeholder="admin@smarttourism.local"
-                    required
-                    autofocus
-                >
-                @error('email')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Password Field -->
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                    Password
-                </label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition @error('password') border-red-500 @enderror"
-                    placeholder="••••••••"
-                    required
-                >
-                @error('password')
-                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <!-- Remember Me -->
-            <div class="flex items-center justify-between">
-                <label class="flex items-center">
-                    <input 
-                        type="checkbox" 
-                        name="remember" 
-                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                    >
-                    <span class="ml-2 text-sm text-gray-600">Remember me for 30 days</span>
-                </label>
-            </div>
-
-            <!-- Submit Button -->
-            <button 
-                type="submit"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-                Sign In
-            </button>
-        </form>
-
-        <!-- Forgot Password Link -->
-        <div class="mt-6 text-center">
-            <a href="{{ route('admin.forgot-password') }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                Forgot your password?
-            </a>
-        </div>
-
-        <!-- Demo Credentials (For Development Only) -->
-        @if (app()->environment('local'))
-            <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p class="text-yellow-800 text-xs font-semibold mb-2">📋 Demo Credentials (Local Only)</p>
-                <div class="space-y-1 text-xs text-yellow-700">
-                    <p><strong>Super Admin:</strong> superadmin@smarttourism.local / SuperAdmin@123</p>
-                    <p><strong>Admin:</strong> admin@smarttourism.local / Admin@123</p>
-                    <p><strong>Moderator:</strong> moderator@smarttourism.local / Moderator@123</p>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toba Tourism - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        }
+        .bg-gradient-purple {
+            background: linear-gradient(135deg, #3d2a5a 0%, #2d1b3d 50%, #1a0f2e 100%);
+        }
+        .password-toggle {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gradient-purple min-h-screen flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-md">
+        <!-- Logo and Header -->
+        <div class="text-center mb-12">
+            <div class="flex justify-center mb-6">
+                <div class="bg-gray-700 bg-opacity-50 rounded-2xl p-4">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
                 </div>
             </div>
-        @endif
+            <h1 class="text-3xl font-bold text-white">Toba Tourism</h1>
+            <p class="text-gray-300 text-sm mt-2">Admin Panel</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-3xl shadow-2xl p-8">
+            <!-- Card Title -->
+            <h2 class="text-2xl font-bold text-gray-900 text-center mb-8">Masuk ke Dashboard</h2>
+
+            @if(session('success'))
+                <div class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <!-- Login Form -->
+            <form method="POST" action="{{ route('admin.login.post') }}" class="space-y-5">
+                @csrf
+                <!-- Email Field -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        value="{{ old('email') }}"
+                        class="w-full px-4 py-3 border @error('email') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        placeholder="admin@tobatourism.id"
+                        required
+                        autofocus
+                    >
+                    @error('email')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password"
+                            class="w-full px-4 py-3 border @error('password') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition pr-10"
+                            placeholder="••••••••"
+                            required
+                        >
+                        @error('password')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                        <button 
+                            type="button" 
+                            class="password-toggle absolute right-3 top-3.5 text-gray-500 hover:text-gray-700"
+                            onclick="togglePasswordVisibility()"
+                        >
+                            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Login Button -->
+                <button 
+                    type="submit"
+                    class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-3 px-4 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 mt-6"
+                >
+                    Masuk
+                </button>
+            </form>
+
+            <!-- Forgot Password Link -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-600 text-sm">
+                    Lupa password? <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Hubungi Superadmin</a>
+                </p>
+            </div>
+        </div>
 
         <!-- Footer -->
-        <div class="mt-8 pt-6 border-t border-gray-200">
-            <p class="text-center text-gray-600 text-xs">
-                Smart Tourism Admin Panel &copy; 2026.<br>
-                All rights reserved.
-            </p>
+        <div class="text-center mt-8">
+            <p class="text-gray-400 text-sm">© 2026 Toba Tourism. All rights reserved.</p>
         </div>
     </div>
-</div>
-@endsection
+
+    <script>
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.add('text-purple-600');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('text-purple-600');
+            }
+        }
+    </script>
+</body>
+</html>
