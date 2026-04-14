@@ -1,160 +1,211 @@
 <!-- resources/views/admin/layouts/sidebar.blade.php -->
+@php
+    $admin = auth('admin')->user();
+    $name = $admin?->name ?? 'Admin User';
+    $initials = collect(explode(' ', $name))->map(fn($n) => strtoupper(substr($n, 0, 1)))->take(2)->implode('');
+    $email = $admin?->email ?? 'admin@toba.id';
+    $roleName = optional($admin?->role)->name ?? 'Super Admin';
+@endphp
+
 <div 
-    x-data="{ open: true }" 
-    class="w-64 bg-dark text-white h-screen flex flex-col shadow-lg"
+    x-data="{ 
+        openMenus: {
+            destinasi: {{ request()->routeIs('admin.destinations.*') ? 'true' : 'false' }},
+            smartFeatures: {{ request()->routeIs('admin.chatbot-logs.*') || request()->routeIs('admin.recommendations.*') ? 'true' : 'false' }},
+            ulasan: {{ request()->routeIs('admin.reviews.*') || request()->routeIs('admin.reports.*') ? 'true' : 'false' }}
+        } 
+    }" 
+    class="w-60 bg-sidebar text-white h-screen flex flex-col shadow-xl overflow-hidden"
 >
-    <!-- Logo -->
-    <div class="px-6 py-4 border-b border-gray-700">
-        <h2 class="text-2xl font-bold">
-            <span class="text-primary">Smart</span>Tourism
-        </h2>
-        <p class="text-xs text-gray-400 mt-1">Admin Dashboard</p>
+    <!-- Logo Section -->
+    <div class="px-5 py-6 flex items-center space-x-3">
+        <div class="w-10 h-10 bg-toba-gold rounded-lg flex items-center justify-center shadow-lg flex-shrink-0">
+            <!-- Mountain Icon -->
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" class="hidden"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l7-14 4 8 3-4 4 10H3z"></path>
+            </svg>
+        </div>
+        <div>
+            <h2 class="text-lg font-bold tracking-wider leading-tight">TOBA TOURISM</h2>
+            <p class="text-xs text-gray-300 opacity-80">Kawasan Danau Toba</p>
+        </div>
     </div>
 
-    <!-- Admin Info -->
-    <div class="px-6 py-4 border-b border-gray-700">
-        <p class="text-sm font-semibold">{{ auth('admin')->user()?->name ?? '-' }}</p>
-        <p class="text-xs text-gray-400 text-uppercase">
-            {{ optional(optional(auth('admin')->user())->role)->name ?? '-' }}
-        </p>
+    <!-- User Profile Section -->
+    <div class="px-5 py-4 flex items-center space-x-3 border-b border-white/10 mb-2">
+        <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center border border-white/20 text-sm font-bold">
+            {{ $initials }}
+        </div>
+        <div class="overflow-hidden">
+            <p class="text-sm font-semibold truncate">{{ $name }}</p>
+            <p class="text-xs text-gray-400 truncate">{{ $email }}</p>
+        </div>
     </div>
 
     <!-- Navigation Menu -->
-    <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-2">
+    <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-1 custom-scrollbar">
         <!-- Dashboard -->
         <a href="{{ route('admin.dashboard') }}" 
-           class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.dashboard') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4z"></path>
-                <path d="M3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"></path>
-                <path d="M14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+           class="flex items-center px-4 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.dashboard') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
             </svg>
-            <span>Dashboard</span>
+            <span class="font-medium">Dashboard</span>
         </a>
 
-        <!-- Destinations (Admin Only) -->
-        @if (optional(auth('admin')->user())->hasAnyRole('admin', 'super_admin'))
-            <a href="{{ route('admin.destinations.index') }}" 
-               class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.destinations.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06m0 0L4.5 17h10l-.74-4.435m0 0a1 1 0 01.54-1.06l.74-4.435A1 1 0 0015.847 3H18a1 1 0 011 1v2a1 1 0 01-1 1v7.5a2.5 2.5 0 01-2.5 2.5h-3a2.5 2.5 0 01-2.5-2.5V9a1 1 0 01-1-1V4a1 1 0 011-1z"></path>
+        <!-- Destinasi (Dropdown) -->
+        <div x-data="{ open: openMenus.destinasi }">
+            <button @click="open = !open" 
+               class="w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                <span>Destinations</span>
-            </a>
-        @endif
-
-        <!-- Daftar Event (Admin Only) -->
-        @if (optional(auth('admin')->user())->hasAnyRole('admin', 'super_admin'))
-            <a href="{{ route('admin.events.index') }}" 
-               class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.events.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                <span class="font-medium flex-1 text-left">Destinasi</span>
+                <svg :class="open ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
-                <span>Event</span>
-            </a>
-        @endif
+            </button>
+            <div x-show="open" x-transition class="ml-10 mt-1 space-y-1">
+                <a href="{{ route('admin.destinations.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Kelola Destinasi</a>
+                <a href="#" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Trending Destinasi</a>
+            </div>
+        </div>
 
-        <!-- Reviews (Admin & Moderator) -->
-        @if (optional(auth('admin')->user())->hasAnyRole('admin', 'moderator', 'super_admin'))
-            <a href="{{ route('admin.reviews.index') }}" 
-               class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.reviews.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"></path>
-                    <path d="M6.5 7a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" fill="white"></path>
-                </svg>
-                <span>Reviews</span>
-                @if (optional(auth('admin')->user())->hasPermission('view_reviews'))
-                    @if (($pendingReviewsCount ?? 0) > 0)
-                        <span class="ml-auto bg-danger text-white text-xs px-2 py-1 rounded-full">{{ $pendingReviewsCount }}</span>
-                    @endif
-                @endif
-            </a>
-        @endif
-
-        <!-- Reports (Admin & Moderator) -->
-        @if (optional(auth('admin')->user())->hasAnyRole('admin', 'moderator', 'super_admin'))
-            <a href="{{ route('admin.reports.index') }}" 
-               class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.reports.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"></path>
-                </svg>
-                <span>Reports</span>
-                @if (($pendingReportsCount ?? 0) > 0)
-                    <span class="ml-auto bg-danger text-white text-xs px-2 py-1 rounded-full">{{ $pendingReportsCount }}</span>
-                @endif
-            </a>
-        @endif
-
-        <!-- Users (Admin Only) -->
-        @if (optional(auth('admin')->user())->hasAnyRole('admin', 'super_admin'))
-            <a href="{{ route('admin.users.index') }}" 
-               class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.users.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM9 12a6 6 0 11-12 0 6 6 0 0112 0z"></path>
-                </svg>
-                <span>Users</span>
-            </a>
-        @endif
-
-        <!-- Logs (Admin Only) -->
-        @if (optional(auth('admin')->user())->hasAnyRole('admin', 'super_admin'))
-            <a href="{{ route('admin.recommendations.index') }}" 
-               class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.recommendations.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M5.5 13a3 3 0 01-.369-5.98 5 5 0 119.753 1H15a2 2 0 010 4h-4l-2.835-2.828A5 5 0 005.5 13z"></path>
-                </svg>
-                <span>Recommendations</span>
-            </a>
-        @endif
-
-        <a href="{{ route('admin.chatbot-logs.index') }}" 
-           class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.chatbot-logs.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"></path>
+        <!-- Kelola Event -->
+        <a href="{{ route('admin.events.index') }}" 
+           class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.events.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+            <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
             </svg>
-            <span>Chatbot Logs</span>
+            <span class="font-medium">Kelola Event</span>
         </a>
 
-        <!-- Analytics (Admin Only) -->
-        @if (optional(auth('admin')->user())->hasAnyRole('admin', 'super_admin'))
-            <a href="{{ route('admin.analytics.dashboard') }}" 
-               class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.analytics.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
-                </svg>
-                <span>Analytics</span>
-            </a>
-        @endif
+        <!-- Carousel & Banner -->
+        <a href="{{ route('admin.carousel_banners.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.carousel_banners.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+            <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="font-medium">Carousel & Banner</span>
+        </a>
 
-        <!-- Settings (Super Admin Only) -->
-        @if (optional(auth('admin')->user())->isSuperAdmin())
-            <a href="{{ route('admin.settings.general') }}" 
-               class="flex items-center px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.settings.*') ? 'bg-primary text-white' : 'text-gray-300 hover:bg-gray-700' }}">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+        <!-- Fasilitas Umum -->
+        <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+            <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <span class="font-medium">Fasilitas Umum</span>
+        </a>
+
+        <!-- Berita & Promosi -->
+        <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+            <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a2 2 0 002 2h4"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h3m-3 4h5m-5 4h5"></path>
+            </svg>
+            <span class="font-medium">Berita & Promosi</span>
+        </a>
+
+        <!-- Budaya & Heritage -->
+        <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+            <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
+            </svg>
+            <span class="font-medium">Budaya & Heritage</span>
+        </a>
+
+        <!-- Panduan Wisata -->
+        <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+            <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            <span class="font-medium">Panduan Wisata</span>
+        </a>
+
+        <!-- Manajemen Pengguna -->
+        <a href="{{ route('admin.users.index') }}" 
+           class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.users.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+            <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <span class="font-medium">Manajemen Pengguna</span>
+        </a>
+
+        <!-- AI & Smart Features (Dropdown) -->
+        <div x-data="{ open: openMenus.smartFeatures }">
+            <button @click="open = !open" 
+               class="w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
-                <span>Settings</span>
-            </a>
-        @endif
+                <span class="font-medium flex-1 text-left">AI & Smart Features</span>
+                <svg :class="open ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="ml-10 mt-1 space-y-1">
+                <a href="{{ route('admin.chatbot-logs.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Chatbot Log</a>
+                <a href="{{ route('admin.recommendations.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Trip Planner Log</a>
+            </div>
+        </div>
+
+        <!-- Ulasan & Laporan (Dropdown) -->
+        <div x-data="{ open: openMenus.ulasan }">
+            <button @click="open = !open" 
+               class="w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                </svg>
+                <span class="font-medium flex-1 text-left">Ulasan & Laporan</span>
+                <svg :class="open ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="ml-10 mt-1 space-y-1">
+                <a href="{{ route('admin.reviews.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Ringkasan Ulasan</a>
+                <a href="{{ route('admin.reports.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Laporan Masuk</a>
+            </div>
+        </div>
+
+        <!-- Pengaturan Sistem -->
+        <a href="{{ route('admin.settings.general') }}" 
+           class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.settings.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+            <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span class="font-medium">Pengaturan Sistem</span>
+        </a>
     </nav>
 
-    <!-- User Menu & Logout -->
-    <div class="px-6 py-4 border-t border-gray-700 space-y-2">
-        <a href="{{ route('admin.profile') }}" class="flex items-center px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 transition">
-            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
-            </svg>
-            <span>Profile</span>
-        </a>
-
-        <form action="{{ route('admin.logout') }}" method="POST" class="w-full">
+    <!-- Logout Section -->
+    <div class="px-5 py-6 mt-auto border-t border-white/10">
+        <form action="{{ route('admin.logout') }}" method="POST">
             @csrf
-            <button type="submit" class="w-full flex items-center px-4 py-2 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition">
-                <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+            <button type="submit" class="w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 text-gray-300 hover:bg-red-500/10 hover:text-red-400 group">
+                <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                 </svg>
-                <span>Logout</span>
+                <span class="font-medium">Logout</span>
             </button>
         </form>
     </div>
 </div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+</style>

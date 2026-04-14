@@ -19,10 +19,37 @@ class EventService
     public function getPaginatedEvents(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = MongoEvent::query();
+        $now = now();
 
+        // Search across name, location, and category
         if (!empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where('name', 'like', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by Category
+        if (!empty($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+
+        // Filter by Status (Date based)
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            switch ($filters['status']) {
+                case 'upcoming':
+                    $query->where('start_date', '>', $now);
+                    break;
+                case 'ongoing':
+                    $query->where('start_date', '<=', $now)
+                          ->where('end_date', '>=', $now);
+                    break;
+                case 'completed':
+                    $query->where('end_date', '<', $now);
+                    break;
+            }
         }
 
         if (isset($filters['is_active'])) {

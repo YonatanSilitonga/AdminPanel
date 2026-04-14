@@ -45,17 +45,16 @@ class ReviewController extends BaseAdminController
         }
     }
 
-    /**
-     * Show review details from MongoDB
-     */
-    public function show(string $id)
+    public function show(string $id, Request $request)
     {
         try {
             $review = MongoReview::with('destination')->findOrFail($id);
 
-            return view('admin.reviews.show', [
-                'review' => $review,
-            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json($review);
+            }
+
+            return view('admin.reviews.show', ['review' => $review]);
         } catch (\Exception $e) {
             Log::error('Error loading review from Mongo: ' . $e->getMessage());
             return back()->with('error', 'Error loading review');

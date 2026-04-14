@@ -62,17 +62,16 @@ class ReportController extends BaseAdminController
         }
     }
 
-    /**
-     * Show report details from MongoDB
-     */
-    public function show(string $id)
+    public function show(string $id, Request $request)
     {
         try {
             $report = MongoReport::with('destination')->findOrFail($id);
 
-            return view('admin.reports.show', [
-                'report' => $report,
-            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json($report);
+            }
+
+            return view('admin.reports.show', ['report' => $report]);
         } catch (\Exception $e) {
             Log::error('Error loading report from Mongo: ' . $e->getMessage());
             return back()->with('error', 'Error loading report');
@@ -107,34 +106,31 @@ class ReportController extends BaseAdminController
         }
     }
 
-    /**
-     * Update report status in MongoDB
-     */
     public function updateStatus(string $id, Request $request)
     {
         try {
-            $request->validate([
-                'status' => 'required|in:pending,reviewed,resolved',
-            ]);
+            $request->validate(['status' => 'required|in:pending,reviewed,resolved']);
 
             $report = MongoReport::findOrFail($id);
             $oldStatus = $report->status;
-            
             $report->status = $request->status;
             $report->assigned_to = $report->assigned_to ?? (string)$this->admin->id;
             $report->save();
 
-            $this->logActivity(
-                'update_report_status_mongo',
-                'report',
-                $id,
-                ['status' => $oldStatus],
-                ['status' => $request->status]
-            );
+            $this->logActivity('update_report_status_mongo', 'report', $id, ['status' => $oldStatus], ['status' => $request->status]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Status updated.']);
+            }
 
             return back()->with('success', 'Report status updated in MongoDB');
         } catch (\Exception $e) {
             Log::error('Error updating report status in Mongo: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
+
             return back()->with('error', 'Error updating report status');
         }
     }

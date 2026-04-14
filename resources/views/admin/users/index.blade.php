@@ -32,11 +32,7 @@
                             @method('PATCH')
                             <button type="submit" class="text-amber-600">Toggle Status</button>
                         </form>
-                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirmDelete()">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-600">Delete</button>
-                        </form>
+                        <button type="button" @click="$dispatch('open-delete-modal', { action: '{{ route('admin.users.destroy', $user) }}', title: 'Hapus User', type: 'user', name: {{ json_encode($user->name) }} })" class="text-red-600">Delete</button>
                     </td>
                 </tr>
             @empty

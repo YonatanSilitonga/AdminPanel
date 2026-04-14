@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\CarouselBannerController;
 
 Route::get('/', function () {
     return redirect()->route('admin.login');
@@ -89,6 +90,21 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
         Route::patch('events/{event}/status', [EventController::class, 'toggleStatus'])
             ->name('admin.events.toggle-status');
+    });
+
+    // ============ CAROUSEL & BANNER ============
+    Route::middleware('admin.role:admin,super_admin')->group(function () {
+        Route::patch('carousel-banners/order', [CarouselBannerController::class, 'updateOrder'])->name('admin.carousel_banners.order');
+        Route::resource('carousel-banners', CarouselBannerController::class, [
+            'names' => [
+                'index' => 'admin.carousel_banners.index',
+                'create' => 'admin.carousel_banners.create',
+                'store' => 'admin.carousel_banners.store',
+                'edit' => 'admin.carousel_banners.edit',
+                'update' => 'admin.carousel_banners.update',
+                'destroy' => 'admin.carousel_banners.destroy',
+            ]
+        ])->except(['show', 'create']);
     });
 
     // ============ REVIEWS (Admin + Moderator) ============

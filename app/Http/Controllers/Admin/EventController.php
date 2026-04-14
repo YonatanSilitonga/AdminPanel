@@ -28,7 +28,8 @@ class EventController extends BaseAdminController
 
         $events = $this->eventService->getPaginatedEvents([
             'search' => $request->get('search'),
-            'is_active' => $request->get('status') === 'active' ? true : ($request->get('status') === 'inactive' ? false : null),
+            'category' => $request->get('category'),
+            'status' => $request->get('status', 'all'),
         ]);
 
         return view('admin.events.index', compact('events'));
@@ -70,21 +71,38 @@ class EventController extends BaseAdminController
             
             $this->logActivity('create', 'event', (string)$event->_id, null, $event->toArray());
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Event berhasil dibuat.',
+                    'event' => $event
+                ]);
+            }
+
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil dibuat.');
         } catch (\Exception $e) {
             Log::error('Error creating event: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal membuat event: ' . $e->getMessage()
+                ], 422);
+            }
+
             return back()->withInput()->with('error', 'Gagal membuat event: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Show the form for editing the specified event.
-     */
-    public function edit(string $id)
+    public function edit(string $id, Request $request)
     {
         $this->checkPermission('edit_event');
         $event = MongoEvent::findOrFail($id);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($event);
+        }
 
         return view('admin.events.edit', compact('event'));
     }
@@ -118,10 +136,26 @@ class EventController extends BaseAdminController
             
             $this->logActivity('update', 'event', (string)$event->_id, $oldValues, $event->toArray());
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Event berhasil diperbarui.',
+                    'event' => $event
+                ]);
+            }
+
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil diperbarui.');
         } catch (\Exception $e) {
             Log::error('Error updating event: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui event: ' . $e->getMessage()
+                ], 422);
+            }
+
             return back()->withInput()->with('error', 'Gagal memperbarui event: ' . $e->getMessage());
         }
     }

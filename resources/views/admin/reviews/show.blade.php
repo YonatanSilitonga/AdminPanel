@@ -34,11 +34,7 @@
     </div>
 
     <div class="flex items-center gap-3">
-        <form action="{{ route('admin.reviews.destroy', $review->_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this review?')">
-            @csrf
-            @method('DELETE')
-            <button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition" type="submit">Delete Review</button>
-        </form>
+        <button type="button" @click="$dispatch('open-delete-modal', { action: '{{ route('admin.reviews.destroy', $review->_id) }}', title: 'Hapus Ulasan', type: 'ulasan', name: {{ json_encode('dari ' . ($review->user_id ?? 'Anonymous')) }} })" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Delete Review</button>
         <a href="{{ route('admin.reviews.index') }}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition">Back to List</a>
     </div>
 </div>

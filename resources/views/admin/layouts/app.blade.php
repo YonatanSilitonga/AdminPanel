@@ -21,6 +21,14 @@
                         info: '#06B6D4',
                         dark: '#1F2937',
                         light: '#F9FAFB',
+                        sidebar: {
+                            DEFAULT: '#066466',
+                            hover: '#055456',
+                            active: '#197a7c',
+                        },
+                        toba: {
+                            gold: '#e5bc3d',
+                        }
                     }
                 }
             }
@@ -37,6 +45,23 @@
     <script src="https://cdn.jsdelivr.net/npm/heroicons@1.0.6/solid/index.min.js"></script>
 
     @stack('styles')
+    <style>
+        html {
+            font-size: 13px;
+        }
+        @media (min-width: 1536px) {
+            html {
+                font-size: 14px;
+            }
+        }
+        [x-cloak] { display: none !important; }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(6,100,102,0.2); border-radius: 2px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(6,100,102,0.4); }
+    </style>
 </head>
 <body class="bg-light">
     @auth('admin')
@@ -50,14 +75,14 @@
                 @include('admin.layouts.navbar')
 
                 <!-- Page Content -->
-                <main class="flex-1 overflow-auto">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
+                <main class="flex-1 overflow-auto custom-scrollbar">
+                    <div class="max-w-[1700px] mx-auto px-6 md:px-10 py-8">
                         <!-- Breadcrumb -->
                         @yield('breadcrumb')
 
                         <!-- Page Title -->
-                        <div class="mb-6">
-                            <h1 class="text-3xl font-bold text-dark">@yield('page_title')</h1>
+                        <div class="mb-5">
+                            <h1 class="text-2xl font-bold text-dark">@yield('page_title')</h1>
                             <p class="text-gray-600 mt-1">@yield('page_description')</p>
                         </div>
 
@@ -110,6 +135,43 @@
             @yield('content')
         </main>
     @endguest
+
+    <!-- Global Delete Modal -->
+    <div x-data="{ show: false, action: '', title: '', type: '', name: '' }"
+         @open-delete-modal.window="show = true; action = $event.detail.action; title = $event.detail.title; type = $event.detail.type; name = $event.detail.name"
+         x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-gray-500/20 backdrop-blur-sm" @click="show = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-md px-8 pt-10 pb-8 overflow-hidden text-center align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800">
+                
+                <div class="w-20 h-20 bg-[#FEE2E2] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-[#EF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" x-text="title"></h3>
+                
+                <p class="text-[15px] text-gray-500 mb-10 leading-relaxed px-2">
+                    Apakah Anda yakin ingin menghapus <span x-text="type"></span> <strong class="text-gray-800" x-text="`&quot;${name}&quot;`"></strong>? Tindakan ini tidak dapat dibatalkan.
+                </p>
+
+                <div class="flex items-center justify-center gap-4 bg-gray-50/50 -mx-8 -mb-8 px-8 py-6 border-t border-gray-50">
+                    <button type="button" @click="show = false" class="w-full px-6 py-3.5 text-[15px] font-bold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm">
+                        Batal
+                    </button>
+                    <form :action="action" method="POST" class="w-full m-0">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="w-full px-6 py-3.5 text-[15px] font-bold text-white bg-[#EF4444] rounded-2xl hover:bg-red-600 transition-all shadow-[0_8px_20px_-6px_rgba(239,68,68,0.5)]">
+                            <span x-text="title"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script>

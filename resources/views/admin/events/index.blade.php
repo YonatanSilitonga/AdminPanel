@@ -4,151 +4,541 @@
 @section('page_title', 'Event')
 @section('page_description', 'Kelola konten event dan promosi destinasi')
 
+@section('breadcrumb')
+<nav class="flex text-sm mb-6 text-gray-500 font-medium overflow-x-auto whitespace-nowrap">
+    <a href="#" class="hover:text-sidebar transition-colors">Home</a>
+    <span class="mx-2 text-gray-300">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    </span>
+    <a href="#" class="hover:text-sidebar transition-colors">Content Management</a>
+    <span class="mx-2 text-gray-300">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    </span>
+    <span class="text-gray-900 font-bold">Kelola Event</span>
+</nav>
+@endsection
+
 @section('content')
-<!-- Tabs / Filters -->
-<div class="flex flex-wrap items-center gap-4 mb-8">
-    <div class="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1">
-        <a href="{{ route('admin.events.index') }}" class="px-6 py-2 rounded-lg text-sm font-bold transition-all {{ !request('status') || request('status') === 'all' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-500 hover:bg-gray-50' }}">Semua</a>
-        <a href="{{ route('admin.events.index', ['status' => 'upcoming']) }}" class="px-6 py-2 rounded-lg text-sm font-bold transition-all {{ request('status') === 'upcoming' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-500 hover:bg-gray-50' }}">Akan Datang</a>
-        <a href="{{ route('admin.events.index', ['status' => 'ongoing']) }}" class="px-6 py-2 rounded-lg text-sm font-bold transition-all {{ request('status') === 'ongoing' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-500 hover:bg-gray-50' }}">Berlangsung</a>
-        <a href="{{ route('admin.events.index', ['status' => 'completed']) }}" class="px-6 py-2 rounded-lg text-sm font-bold transition-all {{ request('status') === 'completed' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-500 hover:bg-gray-50' }}">Selesai</a>
+<div x-data="{ 
+    showEditModal: false,
+    showCreateModal: false,
+    editingEvent: null,
+    loading: false,
+    fileName: '',
+    createFileName: '',
+    schedule: [],
+    createSchedule: [],
+    
+    async openEditModal(id) {
+        this.loading = true;
+        this.showEditModal = true;
+        this.editingEvent = null;
+        try {
+            const response = await fetch(`/admin/events/${id}/edit`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            this.editingEvent = await response.json();
+            this.schedule = this.editingEvent.schedule || [];
+            this.fileName = this.editingEvent.banner_url ? 'Banner saat ini' : '';
+        } catch (error) {
+            alert('Gagal mengambil data event');
+            this.showEditModal = false;
+        } finally {
+            this.loading = false;
+        }
+    },
+    
+    addSchedule() {
+        this.schedule.push({ time: '09:00', activity: '' });
+    },
+    
+    removeSchedule(index) {
+        this.schedule.splice(index, 1);
+    },
+
+    addCreateSchedule() {
+        this.createSchedule.push({ time: '09:00', activity: '' });
+    },
+    
+    removeCreateSchedule(index) {
+        this.createSchedule.splice(index, 1);
+    },
+    
+    async submitUpdate() {
+        this.loading = true;
+        const form = document.getElementById('editEventForm');
+        const formData = new FormData(form);
+        
+        this.schedule.forEach((item, index) => {
+            formData.set(`schedule[${index}][time]`, item.time);
+            formData.set(`schedule[${index}][activity]`, item.activity);
+        });
+
+        try {
+            const response = await fetch(`/admin/events/${this.editingEvent._id}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
+                },
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert(result.message || 'Gagal memperbarui event');
+            }
+        } catch (error) {
+            alert('Terjadi kesalahan saat menyimpan data');
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async submitCreate() {
+        this.loading = true;
+        const form = document.getElementById('createEventForm');
+        const formData = new FormData(form);
+        
+        this.createSchedule.forEach((item, index) => {
+            formData.set(`schedule[${index}][time]`, item.time);
+            formData.set(`schedule[${index}][activity]`, item.activity);
+        });
+
+        try {
+            const response = await fetch('/admin/events', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
+                },
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert(result.message || 'Gagal membuat event');
+            }
+        } catch (error) {
+            alert('Terjadi kesalahan saat menyimpan data');
+        } finally {
+            this.loading = false;
+        }
+    }
+}">
+    <!-- Tabs / Filters -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 inline-flex mb-8">
+        <a href="{{ route('admin.events.index', ['status' => 'all', 'search' => request('search'), 'category' => request('category')]) }}" 
+           class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all {{ !request('status') || request('status') === 'all' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Semua</a>
+        <a href="{{ route('admin.events.index', ['status' => 'upcoming', 'search' => request('search'), 'category' => request('category')]) }}" 
+           class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'upcoming' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Akan Datang</a>
+        <a href="{{ route('admin.events.index', ['status' => 'ongoing', 'search' => request('search'), 'category' => request('category')]) }}" 
+           class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'ongoing' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Berlangsung</a>
+        <a href="{{ route('admin.events.index', ['status' => 'completed', 'search' => request('search'), 'category' => request('category')]) }}" 
+           class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'completed' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Selesai</a>
     </div>
 
-    <div class="flex-1"></div>
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-10">
+        <form method="GET" action="{{ route('admin.events.index') }}" class="flex flex-wrap items-center gap-4 w-full md:w-auto">
+            <input type="hidden" name="status" value="{{ request('status', 'all') }}">
+            
+            <div class="relative w-full md:w-80">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4">
+                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </span>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, lokasi, kategori..."
+                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
+            </div>
 
-    <a href="{{ route('admin.events.create') }}" class="flex items-center gap-2 px-6 py-3 bg-[#006666] text-white rounded-xl font-bold hover:opacity-90 transition-opacity shadow-lg shadow-[#006666]/20">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        Tambah Event
-    </a>
-</div>
+            <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 outline-none text-sm shadow-sm transition-all text-gray-600 font-medium">
+                <option value="">Semua Kategori</option>
+                <option value="Budaya" @selected(request('category') === 'Budaya')>Budaya</option>
+                <option value="Adat" @selected(request('category') === 'Adat')>Adat</option>
+                <option value="Olahraga" @selected(request('category') === 'Olahraga')>Olahraga</option>
+                <option value="Kuliner" @selected(request('category') === 'Kuliner')>Kuliner</option>
+            </select>
+        </form>
 
-<div class="flex flex-wrap items-center gap-4 mb-6">
-    <form method="GET" action="{{ route('admin.events.index') }}" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-        <div class="relative w-full md:w-64">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </span>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, lokasi, kategori..."
-                class="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm transition-all shadow-sm">
-        </div>
+        <button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentcolor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            Tambah Event
+        </button>
+    </div>
 
-        <select name="category" class="px-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm shadow-sm transition-all">
-            <option value="">Semua Kategori</option>
-            <option value="Budaya" @selected(request('category') === 'Budaya')>Budaya</option>
-            <option value="Adat" @selected(request('category') === 'Adat')>Adat</option>
-            <option value="Olahraga" @selected(request('category') === 'Olahraga')>Olahraga</option>
-            <option value="Kuliner" @selected(request('category') === 'Kuliner')>Kuliner</option>
-        </select>
-
-        <div class="flex items-center gap-2">
-            <input type="date" name="from" class="px-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm shadow-sm transition-all">
-            <input type="date" name="to" class="px-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm shadow-sm transition-all">
-        </div>
-
-        <button type="submit" class="px-6 py-3 border border-primary text-primary font-bold rounded-xl hover:bg-primary hover:text-white transition-all text-sm">Kelola Kategori</button>
-    </form>
-</div>
-
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-100">
-            <thead class="bg-gray-50/50">
-                <tr>
-                    <th class="px-8 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Nama Event</th>
-                    <th class="px-8 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Banner</th>
-                    <th class="px-8 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Tanggal</th>
-                    <th class="px-8 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Lokasi</th>
-                    <th class="px-8 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Kategori</th>
-                    <th class="px-8 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                    <th class="px-8 py-4 text-right text-[11px] font-bold text-gray-400 uppercase tracking-wider">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-50">
-                @forelse($events as $event)
-                    @php
-                        $now = now();
-                        if ($event->start_date > $now) {
-                            $statusLabel = 'Akan Datang';
-                            $statusClass = 'text-blue-600';
-                        } elseif ($event->end_date < $now) {
-                            $statusLabel = 'Selesai';
-                            $statusClass = 'text-gray-400';
-                        } else {
-                            $statusLabel = 'Berlangsung';
-                            $statusClass = 'text-green-600';
-                        }
-
-                        $categoryColors = [
-                            'Budaya' => 'bg-green-50 text-green-600',
-                            'Adat' => 'bg-emerald-50 text-emerald-600',
-                            'Olahraga' => 'bg-blue-50 text-blue-600',
-                            'Kuliner' => 'bg-teal-50 text-teal-600',
-                        ];
-                        $catClass = $categoryColors[$event->category] ?? 'bg-gray-50 text-gray-600';
-                    @endphp
-                    <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="px-8 py-6">
-                            <div class="text-sm font-bold text-gray-800">{{ $event->name }}</div>
-                        </td>
-                        <td class="px-8 py-6">
-                            @if($event->banner_url)
-                                <img src="{{ asset('storage/' . $event->banner_url) }}" alt="{{ $event->name }}" class="w-16 h-10 object-cover rounded-lg shadow-sm border border-gray-100">
-                            @else
-                                <div class="w-16 h-10 bg-gray-50 rounded-lg border border-dashed border-gray-200 flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                </div>
-                            @endif
-                        </td>
-                        <td class="px-8 py-6">
-                            <div class="text-xs text-gray-500 font-medium">
-                                {{ $event->start_date->format('j M Y') }}
-                                @if($event->start_date != $event->end_date)
-                                     - {{ $event->end_date->format('j M Y') }}
-                                @endif
-                            </div>
-                        </td>
-                        <td class="px-8 py-6">
-                            <div class="text-xs text-gray-500 font-medium">{{ $event->location ?? '-' }}</div>
-                        </td>
-                        <td class="px-8 py-6">
-                            <span class="px-3 py-1 text-[10px] font-bold rounded-full {{ $catClass }}">
-                                {{ $event->category ?? '-' }}
-                            </span>
-                        </td>
-                        <td class="px-8 py-6">
-                            <div class="text-xs font-bold {{ $statusClass }}">{{ $statusLabel }}</div>
-                        </td>
-                        <td class="px-8 py-6 text-right space-x-2">
-                            <a href="{{ route('admin.events.edit', $event) }}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-lg hover:bg-green-100 transition-colors">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                Edit
-                            </a>
-                            <form action="{{ route('admin.events.destroy', $event) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus event ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-400 text-[10px] font-bold rounded-lg hover:bg-red-100 transition-colors">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    Hapus
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-50">
+                <thead class="bg-white">
                     <tr>
-                        <td colspan="6" class="px-8 py-12 text-center text-gray-400">
-                            <div class="flex flex-col items-center">
-                                <svg class="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                <p class="text-sm font-medium">Tidak ada event yang ditemukan.</p>
-                            </div>
-                        </td>
+                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Nama Event</th>
+                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
+                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Lokasi</th>
+                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Kategori</th>
+                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-50">
+                    @forelse($events as $event)
+                        @php
+                            $now = now();
+                            if ($event->start_date > $now) {
+                                $statusLabel = 'Akan Datang';
+                                $statusClass = 'bg-[#E6F6F2] text-[#00A884] px-4 py-1.5 rounded-xl font-bold text-xs inline-block';
+                            } elseif ($event->end_date < $now) {
+                                $statusLabel = 'Selesai';
+                                $statusClass = 'bg-gray-100 text-gray-400 px-4 py-1.5 rounded-xl font-bold text-xs inline-block';
+                            } else {
+                                $statusLabel = 'Berlangsung';
+                                $statusClass = 'bg-[#F0FDF4] text-[#16A34A] px-4 py-1.5 rounded-xl font-bold text-xs inline-block';
+                            }
 
-<div class="mt-6">
-    {{ $events->links() }}
+                            $categoryColors = [
+                                'Budaya' => 'text-[#066466]',
+                                'Adat' => 'text-[#066466]',
+                                'Olahraga' => 'text-[#066466]',
+                                'Kuliner' => 'text-[#066466]',
+                            ];
+                            $catColor = $categoryColors[$event->category] ?? 'text-gray-600';
+                        @endphp
+                        <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
+                            <td class="px-10 py-7">
+                                <div class="text-[15px] font-bold text-gray-800">{{ $event->name }}</div>
+                            </td>
+                            <td class="px-10 py-7">
+                                <div class="text-[14px] text-gray-500 font-medium">
+                                    {{ $event->start_date->format('d M Y') }}
+                                    @if($event->start_date != $event->end_date)
+                                         - {{ $event->end_date->format('d M Y') }}
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-10 py-7">
+                                <div class="text-[14px] text-gray-500 font-medium">{{ $event->location ?? '-' }}</div>
+                            </td>
+                            <td class="px-10 py-7">
+                                <span class="font-bold text-xs {{ $catColor }}">
+                                    {{ $event->category ?? '-' }}
+                                </span>
+                            </td>
+                            <td class="px-10 py-7">
+                                <span class="{{ $statusClass }}">{{ $statusLabel }}</span>
+                            </td>
+                            <td class="px-10 py-7 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <button @click="openEditModal('{{ $event->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                    <button type="button" @click="$dispatch('open-delete-modal', { action: '{{ route('admin.events.destroy', $event) }}', title: 'Hapus Event', type: 'event', name: {{ json_encode($event->name) }} })" class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-8 py-12 text-center text-gray-400">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <p class="text-sm font-medium">Tidak ada event yang ditemukan.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="px-10 py-6 border-t border-gray-50 flex items-center justify-between">
+        <div class="text-gray-400 text-sm font-medium">
+            Menampilkan {{ $events->count() }} dari {{ $events->total() }} Event
+        </div>
+        <div>
+            {{ $events->appends(request()->query())->links('vendor.pagination.tailwind-custom') }}
+        </div>
+    </div>
+
+    <!-- Edit Modal Overlay -->
+    <div x-show="showEditModal" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background Backdrop -->
+            <div x-show="showEditModal"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 transition-opacity bg-gray-500/20 backdrop-blur-sm" 
+                 @click="showEditModal = false"></div>
+
+            <!-- Modal Panel -->
+            <div x-show="showEditModal"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8">
+                
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-xl font-bold text-gray-900">Edit Event</h3>
+                    <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div x-show="loading && !editingEvent" class="py-12 flex justify-center">
+                    <svg class="animate-spin h-8 w-8 text-sidebar" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+
+                <div x-show="editingEvent">
+                    <form id="editEventForm" @submit.prevent="submitUpdate()" class="space-y-6">
+                        @method('PUT')
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama Event</label>
+                            <input type="text" name="name" x-model="editingEvent.name" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori</label>
+                            <select name="category" x-model="editingEvent.category" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700 appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22currentColor%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                                <option value="Budaya">Budaya</option>
+                                <option value="Adat">Adat</option>
+                                <option value="Olahraga">Olahraga</option>
+                                <option value="Kuliner">Kuliner</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tanggal Mulai</label>
+                                <input type="date" name="start_date" x-model="editingEvent.start_date.substring(0, 10)" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tanggal Selesai</label>
+                                <input type="date" name="end_date" x-model="editingEvent.end_date.substring(0, 10)" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi</label>
+                            <input type="text" name="location" x-model="editingEvent.location" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
+                            <textarea name="description" rows="3" x-model="editingEvent.description" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700 placeholder-gray-300"></textarea>
+                        </div>
+
+                        <!-- Jadwal Kegiatan -->
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jadwal Kegiatan</label>
+                                <button type="button" @click="addSchedule()" class="flex items-center gap-1 text-sidebar bg-sidebar/5 px-3 py-1.5 rounded-xl text-[10px] font-bold hover:bg-sidebar/10 transition-all uppercase tracking-wider">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Tambah
+                                </button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <template x-for="(item, index) in schedule" :key="index">
+                                    <div class="flex items-center gap-3">
+                                        <input type="time" x-model="item.time" class="w-28 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
+                                        <input type="text" x-model="item.activity" placeholder="Keterangan kegiatan" class="flex-1 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
+                                        <button type="button" @click="removeSchedule(index)" class="p-2 text-red-300 hover:text-red-500 transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Foto Event -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Event</label>
+                            <div class="relative group">
+                                <input type="file" name="banner" id="banner_modal" class="hidden" @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                                <label for="banner_modal" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <div class="p-3 bg-white rounded-2xl shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                                            <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        </div>
+                                        <p class="text-sm font-bold text-gray-700" x-text="fileName || 'Klik atau seret file ke sini'"></p>
+                                        <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tight">PNG, JPG (Maks. 2MB, Rekomendasi 1920x1080px)</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-[1.5rem] border border-gray-100">
+                            <div>
+                                <p class="text-sm font-bold text-gray-800 tracking-tight">Tampilkan di Carousel</p>
+                                <p class="text-[10px] text-gray-400 font-medium">Akan muncul di halaman utama aplikasi</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_active" class="sr-only peer" :checked="editingEvent.is_active">
+                                <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-4">
+                            <button type="button" @click="showEditModal = false" class="px-8 py-3.5 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors border border-gray-200 rounded-xl">Batal</button>
+                            <button type="submit" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all flex items-center gap-2" :disabled="loading">
+                                <svg x-show="loading" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>Simpan Event</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Create Modal Overlay -->
+    <div x-show="showCreateModal" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background Backdrop -->
+            <div x-show="showCreateModal"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 transition-opacity bg-gray-500/20 backdrop-blur-sm" 
+                 @click="showCreateModal = false"></div>
+
+            <!-- Modal Panel -->
+            <div x-show="showCreateModal"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8">
+                
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-xl font-bold text-gray-900">Tambah Event</h3>
+                    <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div>
+                    <form id="createEventForm" @submit.prevent="submitCreate()" class="space-y-6">
+                        @csrf
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama Event</label>
+                            <input type="text" name="name" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori</label>
+                            <select name="category" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700 appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22currentColor%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                                <option value="Budaya">Budaya</option>
+                                <option value="Adat">Adat</option>
+                                <option value="Olahraga">Olahraga</option>
+                                <option value="Kuliner">Kuliner</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tanggal Mulai</label>
+                                <input type="date" name="start_date" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tanggal Selesai</label>
+                                <input type="date" name="end_date" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi</label>
+                            <input type="text" name="location" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
+                            <textarea name="description" rows="3" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700 placeholder-gray-300"></textarea>
+                        </div>
+
+                        <!-- Jadwal Kegiatan -->
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jadwal Kegiatan</label>
+                                <button type="button" @click="addCreateSchedule()" class="flex items-center gap-1 text-sidebar bg-sidebar/5 px-3 py-1.5 rounded-xl text-[10px] font-bold hover:bg-sidebar/10 transition-all uppercase tracking-wider">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Tambah
+                                </button>
+                            </div>
+
+                            <div class="space-y-3">
+                                <template x-for="(item, index) in createSchedule" :key="index">
+                                    <div class="flex items-center gap-3">
+                                        <input type="time" x-model="item.time" class="w-28 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
+                                        <input type="text" x-model="item.activity" placeholder="Keterangan kegiatan" class="flex-1 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
+                                        <button type="button" @click="removeCreateSchedule(index)" class="p-2 text-red-300 hover:text-red-500 transition-colors">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Foto Event -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Event</label>
+                            <div class="relative group">
+                                <input type="file" name="banner" id="create_banner_modal" class="hidden" @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                                <label for="create_banner_modal" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <div class="p-3 bg-white rounded-2xl shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                                            <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        </div>
+                                        <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Klik atau seret file ke sini'"></p>
+                                        <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tight">PNG, JPG (Maks. 2MB, Rekomendasi 1920x1080px)</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-[1.5rem] border border-gray-100">
+                            <div>
+                                <p class="text-sm font-bold text-gray-800 tracking-tight">Tampilkan di Carousel</p>
+                                <p class="text-[10px] text-gray-400 font-medium">Akan muncul di halaman utama aplikasi</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_active" class="sr-only peer" checked>
+                                <div class="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-4">
+                            <button type="button" @click="showCreateModal = false" class="px-8 py-3.5 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors border border-gray-200 rounded-xl">Batal</button>
+                            <button type="submit" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all flex items-center gap-2" :disabled="loading">
+                                <svg x-show="loading" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>Simpan Event</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

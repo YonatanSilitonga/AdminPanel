@@ -134,13 +134,14 @@ class DestinationController extends BaseAdminController
         }
     }
 
-    /**
-     * Show edit form
-     */
-    public function edit(string $id)
+    public function edit(string $id, Request $request)
     {
         $destination = MongoDestination::findOrFail($id);
         $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($destination);
+        }
 
         return view('admin.destinations.edit', [
             'destination' => $destination,
@@ -177,34 +178,34 @@ class DestinationController extends BaseAdminController
 
             $currentImages = $destination->images ?? [];
 
-            // Update thumbnail (replace first image if exists, or add)
             if ($request->hasFile('thumbnail')) {
-                $newThumb = $this->processImage(
-                    $request->file('thumbnail'),
-                    'destinations'
-                );
-                
+                $newThumb = $this->processImage($request->file('thumbnail'), 'destinations');
                 if (count($currentImages) > 0) {
-                    // Delete old thumbnail
                     $this->deleteFile($currentImages[0]);
-                    $currentImages[0] = $newThumb; // Simpan relative path
+                    $currentImages[0] = $newThumb;
                 } else {
-                    array_unshift($currentImages, $newThumb); // Simpan relative path
+                    array_unshift($currentImages, $newThumb);
                 }
             }
 
             $destination->images = $currentImages;
             $destination->save();
 
-            // Log action
             $this->logActivity('update_mongo', 'destination', (string)$destination->_id, $oldValues, $destination->toArray());
 
-            return redirect()
-                ->route('admin.destinations.index')
-                ->with('success', 'Destination updated in MongoDB successfully');
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Destination updated successfully.']);
+            }
+
+            return redirect()->route('admin.destinations.index')->with('success', 'Destination updated in MongoDB successfully');
 
         } catch (\Exception $e) {
             Log::error('Error updating destination in Mongo: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
+
             return back()->with('error', 'Error updating destination: ' . $e->getMessage());
         }
     }
