@@ -24,6 +24,10 @@ class MongoEvent extends Model
         'slug',
         'category',
         'location',
+        'latitude',
+        'longitude',
+        'organizer',
+        'tags',
         'description',
         'long_description',
         'start_date',
@@ -40,6 +44,7 @@ class MongoEvent extends Model
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'is_active' => 'boolean',
+        'tags' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

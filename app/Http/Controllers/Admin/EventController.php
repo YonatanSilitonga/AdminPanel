@@ -55,6 +55,10 @@ class EventController extends BaseAdminController
             'name' => 'required|string|max:255',
             'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
             'location' => 'required|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'organizer' => 'nullable|string|max:255',
+            'tags' => 'nullable|string',
             'description' => 'required|string',
             'long_description' => 'nullable|string',
             'start_date' => 'required|date',
@@ -67,6 +71,12 @@ class EventController extends BaseAdminController
         ]);
 
         try {
+            if (isset($validated['tags']) && $validated['tags']) {
+                $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags']))));
+            } else {
+                $validated['tags'] = [];
+            }
+            
             $event = $this->eventService->createEvent($validated, $request->file('banner'));
             
             $this->logActivity('create', 'event', (string)$event->_id, null, $event->toArray());
@@ -119,6 +129,10 @@ class EventController extends BaseAdminController
             'name' => 'required|string|max:255',
             'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
             'location' => 'required|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'organizer' => 'nullable|string|max:255',
+            'tags' => 'nullable|string',
             'description' => 'required|string',
             'long_description' => 'nullable|string',
             'start_date' => 'required|date',
@@ -131,6 +145,12 @@ class EventController extends BaseAdminController
         ]);
 
         try {
+            if (isset($validated['tags']) && $validated['tags']) {
+                $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags']))));
+            } else {
+                $validated['tags'] = [];
+            }
+
             $oldValues = $event->toArray();
             $event = $this->eventService->updateEvent($event, $validated, $request->file('banner'));
             

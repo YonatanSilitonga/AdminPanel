@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Models\MongoDB;
+
+use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Represents a public facility stored in MongoDB.
+ * Collection: fasilitas_umum
+ */
+class MongoFasilitasUmum extends Model
+{
+    use SoftDeletes;
+
+    protected $connection = 'mongodb';
+    protected $collection = 'fasilitas_umum';
+
+    protected $primaryKey = '_id';
+
+    protected $fillable = [
+        'name',
+        'type',
+        'address',
+        'latitude',
+        'longitude',
+        'phone_number',
+        'description',
+        'available_services',
+        'tags',
+        'operational_hours',
+        'is_active',
+        'image_url',
+    ];
+
+    public $timestamps = true;
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'available_services' => 'array',
+        'tags' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+}

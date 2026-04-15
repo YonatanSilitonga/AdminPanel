@@ -2,7 +2,13 @@
 <header class="bg-white border-b border-gray-200 shadow-sm">
     <div class="flex items-center justify-between h-16 px-6">
         <!-- Left: Breadcrumb or Title -->
-        <div class="flex items-center">
+        <div class="flex items-center space-x-4">
+            <!-- Sidebar Toggle Button -->
+            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors focus:outline-none" aria-label="Toggle Sidebar">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
             <h2 class="text-lg font-semibold text-dark">@yield('navbar_title', 'Dashboard')</h2>
         </div>
 

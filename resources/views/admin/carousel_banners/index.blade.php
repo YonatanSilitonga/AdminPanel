@@ -82,7 +82,7 @@
                             </div>
 
                             <!-- Thumbnail -->
-                            <div class="w-20 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                            <div class="w-28 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
                                 @if($banner->image_url)
                                     <img src="{{ Storage::url($banner->image_url) }}" alt="{{ $banner->title }}" class="w-full h-full object-cover">
                                 @endif

@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\CarouselBannerController;
+use App\Http\Controllers\Admin\FasilitasUmumController;
 
 Route::get('/', function () {
     return redirect()->route('admin.login');
@@ -105,6 +106,19 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
                 'destroy' => 'admin.carousel_banners.destroy',
             ]
         ])->except(['show', 'create']);
+    });
+
+    // ============ FASILITAS UMUM ============
+    Route::middleware('admin.role:admin,super_admin')->group(function () {
+        Route::resource('fasilitas-umum', FasilitasUmumController::class, [
+            'names' => [
+                'index' => 'admin.fasilitas_umum.index',
+                'store' => 'admin.fasilitas_umum.store',
+                'edit' => 'admin.fasilitas_umum.edit',
+                'update' => 'admin.fasilitas_umum.update',
+                'destroy' => 'admin.fasilitas_umum.destroy',
+            ]
+        ])->only(['index', 'store', 'edit', 'update', 'destroy']);
     });
 
     // ============ REVIEWS (Admin + Moderator) ============

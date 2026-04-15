@@ -65,12 +65,31 @@
 </head>
 <body class="bg-light">
     @auth('admin')
-        <div class="flex h-screen">
+        <div class="flex h-screen overflow-hidden" 
+             x-data="{ 
+                sidebarOpen: window.innerWidth > 1024,
+                toggleSidebar() { this.sidebarOpen = !this.sidebarOpen }
+             }"
+             @resize.window="if (window.innerWidth > 1024) sidebarOpen = true">
+            
+            <!-- Mobile Backdrop -->
+            <div x-show="sidebarOpen" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="sidebarOpen = false"
+                 class="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                 x-cloak>
+            </div>
+
             <!-- Sidebar -->
             @include('admin.layouts.sidebar')
 
             <!-- Main Content -->
-            <div class="flex-1 flex flex-col overflow-hidden">
+            <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
                 <!-- Header -->
                 @include('admin.layouts.navbar')
 

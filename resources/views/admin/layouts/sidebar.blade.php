@@ -15,7 +15,8 @@
             ulasan: {{ request()->routeIs('admin.reviews.*') || request()->routeIs('admin.reports.*') ? 'true' : 'false' }}
         } 
     }" 
-    class="w-60 bg-sidebar text-white h-screen flex flex-col shadow-xl overflow-hidden"
+    class="fixed inset-y-0 left-0 lg:relative w-72 bg-sidebar text-white h-screen flex flex-col shadow-2xl lg:shadow-xl overflow-hidden flex-shrink-0 z-50 transition-all duration-300 ease-in-out"
+    :class="sidebarOpen ? 'translate-x-0 ml-0' : '-translate-x-full lg:-ml-72 lg:translate-x-0'"
 >
     <!-- Logo Section -->
     <div class="px-5 py-6 flex items-center space-x-3">
@@ -91,7 +92,8 @@
         </a>
 
         <!-- Fasilitas Umum -->
-        <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+        <a href="{{ route('admin.fasilitas_umum.index') }}" 
+           class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.fasilitas_umum.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
             <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
             </svg>
