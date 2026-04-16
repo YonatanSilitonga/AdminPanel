@@ -220,6 +220,18 @@
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
                             <input type="text" name="longitude" required placeholder="98.8756" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
                         </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Rating (0-5)</label>
+                            <input type="number" step="0.1" min="0" max="5" name="average_rating" placeholder="4.8" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Total Ulasan</label>
+                            <input type="number" name="total_reviews" placeholder="2847" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                        </div>
+                        <div class="col-span-2 space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Fasilitas (Pisahkan dengan koma)</label>
+                            <input type="text" name="facilities" placeholder="Toko Suvenir, Toilet Umum, Area Parkir" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                        </div>
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
                             <textarea name="description" rows="3" required placeholder="Deskripsi singkat destinasi..." class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300"></textarea>
@@ -295,6 +307,18 @@
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
                                 <input type="text" name="longitude" x-model="editingDest.longitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Rating (0-5)</label>
+                                <input type="number" step="0.1" min="0" max="5" name="average_rating" x-model="editingDest.average_rating" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Total Ulasan</label>
+                                <input type="number" name="total_reviews" x-model="editingDest.total_reviews" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="col-span-2 space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Fasilitas (Pisahkan dengan koma)</label>
+                                <input type="text" name="facilities" :value="editingDest.facilities ? editingDest.facilities.join(', ') : ''" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>

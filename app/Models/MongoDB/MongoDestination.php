@@ -28,6 +28,7 @@ class MongoDestination extends Model
         'longitude',
         'is_active',
         'is_featured',
+        'facilities',
     ];
 
     public $timestamps = true; // Use Laravel timestamps, which will be stored in Mongo
@@ -41,6 +42,7 @@ class MongoDestination extends Model
         'total_reviews' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
+        'facilities' => 'array',
     ];
 
     /**
