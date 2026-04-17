@@ -34,6 +34,22 @@
             <input type="text" name="longitude" value="{{ old('longitude', $destination->longitude ?? '') }}" class="mt-1 w-full border rounded-lg px-4 py-2">
             @error('longitude')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Rating (0-5)</label>
+            <input type="number" step="0.1" min="0" max="5" name="average_rating" value="{{ old('average_rating', $destination->average_rating ?? '') }}" class="mt-1 w-full border rounded-lg px-4 py-2">
+            @error('average_rating')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Total Ulasan</label>
+            <input type="number" name="total_reviews" value="{{ old('total_reviews', $destination->total_reviews ?? '') }}" class="mt-1 w-full border rounded-lg px-4 py-2">
+            @error('total_reviews')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700">Fasilitas (Pisahkan dengan koma)</label>
+        <input type="text" name="facilities" value="{{ old('facilities', isset($destination->facilities) ? implode(', ', $destination->facilities) : '') }}" class="mt-1 w-full border rounded-lg px-4 py-2" placeholder="contoh: Toko Suvenir, Toilet Umum">
+        @error('facilities')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 
     <div>
