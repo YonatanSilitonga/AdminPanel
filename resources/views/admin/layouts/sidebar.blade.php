@@ -111,7 +111,7 @@
         </a>
 
         <!-- Budaya & Heritage -->
-        <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+        <a href="{{ route('admin.budaya.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.budaya.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
             <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
             </svg>
@@ -119,12 +119,12 @@
         </a>
 
         <!-- Panduan Wisata -->
-        <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+        <!-- <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
             <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
             </svg>
             <span class="font-medium">Panduan Wisata</span>
-        </a>
+        </a> -->
 
         <!-- Manajemen Pengguna -->
         <a href="{{ route('admin.users.index') }}" 

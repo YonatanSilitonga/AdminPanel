@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\CarouselBannerController;
 use App\Http\Controllers\Admin\FasilitasUmumController;
+use App\Http\Controllers\Admin\BudayaController;
 
 Route::get('/', function () {
     return redirect()->route('admin.login');
@@ -121,6 +122,20 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         ])->only(['index', 'store', 'edit', 'update', 'destroy']);
     });
 
+    // ============ BUDAYA & HERITAGE ============
+    Route::middleware('admin.role:admin,super_admin')->group(function () {
+        Route::patch('budaya/{budaya}/status', [BudayaController::class, 'toggleStatus'])->name('admin.budaya.toggle-status');
+        Route::resource('budaya', BudayaController::class, [
+            'names' => [
+                'index' => 'admin.budaya.index',
+                'store' => 'admin.budaya.store',
+                'edit' => 'admin.budaya.edit',
+                'update' => 'admin.budaya.update',
+                'destroy' => 'admin.budaya.destroy',
+            ]
+        ])->only(['index', 'store', 'edit', 'update', 'destroy']);
+    });
+
     // ============ REVIEWS (Admin + Moderator) ============
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
@@ -141,10 +156,17 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
     // ============ USERS (Admin Role) ============
     Route::middleware('admin.role:admin,super_admin')->group(function () {
-        Route::get('users', [UserController::class, 'index'])->name('admin.users.index');
-        Route::get('users/{user}/activity', [UserController::class, 'showActivity'])->name('admin.users.activity');
         Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
-        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+        Route::get('users/{user}/activity', [UserController::class, 'showActivity'])->name('admin.users.activity');
+        Route::resource('users', UserController::class, [
+            'names' => [
+                'index' => 'admin.users.index',
+                'store' => 'admin.users.store',
+                'edit' => 'admin.users.edit',
+                'update' => 'admin.users.update',
+                'destroy' => 'admin.users.destroy',
+            ]
+        ])->only(['index', 'store', 'edit', 'update', 'destroy']);
     });
 
     // ============ RECOMMENDATION LOGS (Admin Role) ============
