@@ -89,6 +89,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
         Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('admin.reviews.show');
+        Route::post('reviews/{review}/analyze', [ReviewController::class, 'analyze'])->name('admin.reviews.analyze');
+        Route::post('reviews/analyze-batch', [ReviewController::class, 'analyzeBatch'])->name('admin.reviews.analyze-batch');
         Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('admin.reviews.approve');
         Route::patch('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('admin.reviews.reject');
         Route::delete('reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
@@ -101,6 +103,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::patch('reports/{report}/resolve', [ReportController::class, 'resolve'])->name('admin.reports.resolve');
         Route::post('reports/{report}/action', [ReportController::class, 'takeAction'])->name('admin.reports.action');
         Route::patch('reports/{report}/flag', [ReportController::class, 'flag'])->name('admin.reports.flag');
+        Route::delete('reports/{report}', [ReportController::class, 'destroy'])->name('admin.reports.destroy');
     });
 
     // ============ USERS (Admin Role) ============

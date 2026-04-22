@@ -1,32 +1,36 @@
 <!-- resources/views/admin/layouts/navbar.blade.php -->
-<header class="bg-white border-b border-gray-200 shadow-sm">
+<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
     <div class="flex items-center justify-between h-16 px-6">
-        <!-- Left: Breadcrumb or Title -->
-        <div class="flex items-center space-x-4">
+        <!-- Left: Toggle Button -->
+        <div class="flex items-center space-x-4 min-w-0">
             <!-- Sidebar Toggle Button -->
-            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors focus:outline-none" aria-label="Toggle Sidebar">
+            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors focus:outline-none flex-shrink-0" aria-label="Toggle Sidebar">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
-            <h2 class="text-lg font-semibold text-dark">@yield('navbar_title', 'Dashboard')</h2>
         </div>
 
         <!-- Right: Notifications, User Menu -->
-        <div class="flex items-center space-x-6">
-            <!-- Current Date/Time -->
-            <div class="text-sm text-gray-600">
-                <span id="current-time" class="font-mono">{{ now()->format('H:i:s') }}</span>
+        <div class="flex items-center space-x-4 sm:space-x-6">
+            <!-- Search Form -->
+            <div class="hidden md:block">
+                <div class="relative">
+                    <input type="text" placeholder="Cari destinasi, event, hotel..." class="w-64 px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    <svg class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
             </div>
 
             <!-- Notifications -->
             <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="text-gray-600 hover:text-primary relative">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="open = !open" class="text-gray-600 hover:text-primary relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                     </svg>
                     @if (($pendingNotificationsCount ?? 0) > 0)
-                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-danger rounded-full">
+                        <span class="absolute top-1 right-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white transform bg-danger rounded-full animate-pulse">
                             {{ $pendingNotificationsCount }}
                         </span>
                     @endif
@@ -36,9 +40,9 @@
                 <div x-show="open" 
                      x-transition 
                      @click.outside="open = false"
-                     class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50">
-                    <div class="p-4">
-                        <h3 class="text-sm font-bold text-dark mb-3">Notifications</h3>
+                     class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
+                    <div class="p-4 border-b border-gray-100">
+                        <h3 class="text-sm font-bold text-dark mb-3">📢 Notifikasi</h3>
                         
                         @php
                             $pendingReviewsCount = (int) ($pendingReviews ?? 0);
@@ -48,33 +52,36 @@
 
                         @if($totalNotifications > 0)
                             @if($pendingReviewsCount > 0)
-                                <div class="mb-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <p class="font-medium text-dark">{{ $pendingReviewsCount }} Pending Review{{ $pendingReviewsCount !== 1 ? 's' : '' }}</p>
-                                    <p class="text-gray-600 text-xs">Click to review</p>
-                                </div>
+                                <a href="{{ route('admin.reviews.index') }}" class="block mb-2 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
+                                    <p class="font-medium text-dark">⭐ {{ $pendingReviewsCount }} Ulasan Pending</p>
+                                    <p class="text-gray-600 text-xs">Klik untuk review</p>
+                                </a>
                             @endif
 
                             @if($pendingReportsCount > 0)
-                                <div class="mb-2 p-3 bg-red-50 rounded-lg border border-red-200">
-                                    <p class="font-medium text-dark">{{ $pendingReportsCount }} Pending Report{{ $pendingReportsCount !== 1 ? 's' : '' }}</p>
-                                    <p class="text-gray-600 text-xs">Click to resolve</p>
-                                </div>
+                                <a href="{{ route('admin.reports.index') }}" class="block p-3 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors">
+                                    <p class="font-medium text-dark">⚠️ {{ $pendingReportsCount }} Laporan Pending</p>
+                                    <p class="text-gray-600 text-xs">Klik untuk proses</p>
+                                </a>
                             @endif
                         @else
-                            <p class="text-center text-gray-500 text-sm py-4">No notifications</p>
+                            <p class="text-center text-gray-500 text-sm py-4">✓ Tidak ada notifikasi baru</p>
                         @endif
+                    </div>
+                    <div class="p-3 bg-gray-50 text-center">
+                        <p class="text-xs text-gray-600">Last update: {{ now()->format('H:i') }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- User Menu -->
             <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="flex items-center space-x-3 text-gray-700 hover:text-primary">
-                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                <button @click="open = !open" class="flex items-center space-x-2 text-gray-700 hover:text-primary p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <div class="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
                         {{ strtoupper(substr(auth('admin')->user()?->name ?? '-', 0, 1)) }}
                     </div>
-                    <span class="hidden md:inline text-sm font-medium">{{ \Illuminate\Support\Str::limit(auth('admin')->user()?->name ?? '-', 15) }}</span>
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <span class="hidden md:inline text-sm font-medium text-dark">{{ \Illuminate\Support\Str::limit(auth('admin')->user()?->name ?? '-', 15) }}</span>
+                    <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                     </svg>
                 </button>
@@ -83,17 +90,29 @@
                 <div x-show="open" 
                      x-transition 
                      @click.outside="open = false"
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50">
-                    <a href="{{ route('admin.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg">
-                        Profile
+                     class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden">
+                    <!-- User Info -->
+                    <div class="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+                        <p class="text-sm font-semibold text-dark">{{ auth('admin')->user()?->name ?? 'Admin' }}</p>
+                        <p class="text-xs text-gray-600 truncate">{{ auth('admin')->user()?->email ?? 'admin@example.com' }}</p>
+                    </div>
+                    
+                    <!-- Menu Items -->
+                    <a href="{{ route('admin.profile') }}" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors border-b border-gray-100">
+                        👤 Profil Saya
                     </a>
-                    <a href="{{ route('admin.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        Change Password
+                    <a href="{{ route('admin.profile') }}" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors border-b border-gray-100">
+                        🔐 Ubah Password
                     </a>
+                    <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors border-b border-gray-100">
+                        📊 Dashboard
+                    </a>
+                    
+                    <!-- Logout -->
                     <form action="{{ route('admin.logout') }}" method="POST" class="block">
                         @csrf
-                        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-danger hover:bg-red-50 rounded-b-lg">
-                            Logout
+                        <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors font-medium">
+                            🚪 Logout
                         </button>
                     </form>
                 </div>

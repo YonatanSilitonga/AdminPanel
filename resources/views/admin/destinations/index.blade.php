@@ -1,14 +1,17 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Kelola Destinasi')
+@section('navbar_title', 'Destinasi')
 @section('page_title', 'Destinasi')
 @section('page_description', 'Kelola konten destinasi wisata Danau Toba')
 
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
-    <a href="#" class="hover:text-sidebar transition-colors">Home</a>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <a href="#" class="hover:text-sidebar transition-colors">Content Management</a>
+    <span class="text-gray-400">Content Management</span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-400">Destinasi</span>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-900 font-bold">Kelola Destinasi</span>
 </nav>

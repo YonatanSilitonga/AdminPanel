@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'sentiment' => [
+        'enabled' => env('SENTIMENT_SERVICE_ENABLED', true),
+        'url' => env('SENTIMENT_API_URL', 'http://127.0.0.1:5000'),
+        'timeout' => env('SENTIMENT_API_TIMEOUT', 30),
+        'batch_timeout' => env('SENTIMENT_API_BATCH_TIMEOUT', 90),
+        'auto_save' => env('SENTIMENT_AUTO_SAVE', true),
+    ],
+
 ];

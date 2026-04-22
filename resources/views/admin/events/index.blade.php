@@ -1,20 +1,21 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Daftar Event')
+@section('navbar_title', 'Event')
 @section('page_title', 'Event')
 @section('page_description', 'Kelola konten event dan promosi destinasi')
 
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium overflow-x-auto whitespace-nowrap">
-    <a href="#" class="hover:text-sidebar transition-colors">Home</a>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
     <span class="mx-2 text-gray-300">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
     </span>
-    <a href="#" class="hover:text-sidebar transition-colors">Content Management</a>
+    <span class="text-gray-400">Content Management</span>
     <span class="mx-2 text-gray-300">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
     </span>
-    <span class="text-gray-900 font-bold">Kelola Event</span>
+    <span class="text-gray-400">Kelola Event</span>
 </nav>
 @endsection
 

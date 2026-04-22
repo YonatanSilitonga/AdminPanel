@@ -82,12 +82,38 @@ class AppSetting extends Model
     protected static function castValue(mixed $value, string $type): mixed
     {
         return match ($type) {
-            'json' => json_decode($value, true),
+            'json' => self::castJsonValue($value),
             'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $value,
             'float' => (float) $value,
             default => (string) $value,
         };
+    }
+
+    /**
+     * Cast JSON safely whether value is string, array, object, or null.
+     */
+    protected static function castJsonValue(mixed $value): mixed
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_object($value)) {
+            return (array) $value;
+        }
+
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
     }
 
     /**

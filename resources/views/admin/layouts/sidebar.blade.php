@@ -55,6 +55,11 @@
             <span class="font-medium">Dashboard</span>
         </a>
 
+        <!-- Content Management Section -->
+        <div class="px-4 py-3 mt-4 mb-2">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Content Management</p>
+        </div>
+
         <!-- Destinasi (Dropdown) -->
         <div x-data="{ open: openMenus.destinasi }">
             <button @click="open = !open" 
@@ -88,7 +93,7 @@
             <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
-            <span class="font-medium">Carousel & Banner</span>
+            <span class="font-medium">Carousel dan Banner</span>
         </a>
 
         <!-- Fasilitas Umum -->
@@ -110,12 +115,12 @@
             <span class="font-medium">Berita & Promosi</span>
         </a>
 
-        <!-- Budaya & Heritage -->
+        <!-- Budaya dan Warisan -->
         <a href="{{ route('admin.budaya.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.budaya.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
             <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
             </svg>
-            <span class="font-medium">Budaya & Heritage</span>
+            <span class="font-medium">Budaya dan Warisan</span>
         </a>
 
         <!-- Panduan Wisata -->
@@ -126,6 +131,11 @@
             <span class="font-medium">Panduan Wisata</span>
         </a> -->
 
+        <!-- Administration Section -->
+        <div class="px-4 py-3 mt-4 mb-2">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</p>
+        </div>
+
         <!-- Manajemen Pengguna -->
         <a href="{{ route('admin.users.index') }}" 
            class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.users.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
@@ -135,21 +145,26 @@
             <span class="font-medium">Manajemen Pengguna</span>
         </a>
 
-        <!-- AI & Smart Features (Dropdown) -->
+        <!-- Monitoring Section -->
+        <div class="px-4 py-3 mt-4 mb-2">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Monitoring</p>
+        </div>
+
+        <!-- Fitur AI dan Cerdas (Dropdown) -->
         <div x-data="{ open: openMenus.smartFeatures }">
             <button @click="open = !open" 
                class="w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
-                <span class="font-medium flex-1 text-left">AI & Smart Features</span>
+                <span class="font-medium flex-1 text-left">Fitur AI dan Cerdas</span>
                 <svg :class="open ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </button>
             <div x-show="open" x-transition class="ml-10 mt-1 space-y-1">
-                <a href="{{ route('admin.chatbot-logs.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Chatbot Log</a>
-                <a href="{{ route('admin.recommendations.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Trip Planner Log</a>
+                <a href="{{ route('admin.chatbot-logs.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Log Chatbot</a>
+                <a href="{{ route('admin.recommendations.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Log Rekomendasi</a>
             </div>
         </div>
 
@@ -169,6 +184,11 @@
                 <a href="{{ route('admin.reviews.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Ringkasan Ulasan</a>
                 <a href="{{ route('admin.reports.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Laporan Masuk</a>
             </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="px-4 py-3 mt-4 mb-2">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Settings</p>
         </div>
 
         <!-- Pengaturan Sistem -->

@@ -1,8 +1,12 @@
-@extends('admin.layouts.app')
-
-@section('title', 'Budaya & Heritage')
-@section('page_title', 'Budaya & Heritage')
-@section('page_description', 'Kelola konten sejarah dan budaya Batak')
+@section('breadcrumb')
+<nav class="flex text-sm mb-6 text-gray-500 font-medium">
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-400">Content Management</span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-900 font-bold">Budaya dan Warisan</span>
+</nav>
+@endsection
 
 @section('content')
 

@@ -27,6 +27,9 @@ class AdminRoleMiddleware
         
         // Check if admin is authenticated
         if (!$guard->check()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
             return redirect()->route('admin.login')
                 ->with('error', 'Authentication required');
         }
@@ -37,6 +40,9 @@ class AdminRoleMiddleware
         // Double-check admin exists
         if (!$admin) {
             $guard->logout();
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Session expired'], 401);
+            }
             return redirect()->route('admin.login')
                 ->with('error', 'Session expired. Please login again');
         }
@@ -44,6 +50,9 @@ class AdminRoleMiddleware
         // Check if admin is active
         if (!$admin->is_active) {
             $guard->logout();
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Account deactivated'], 403);
+            }
             return redirect()->route('admin.login')
                 ->with('error', 'Your account has been deactivated');
         }
@@ -57,11 +66,17 @@ class AdminRoleMiddleware
         $adminRole = $admin->role?->name ?? null;
         
         if (!$adminRole) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Admin role not configured'], 500);
+            }
             abort(500, 'Admin role not configured. Contact administrator.');
         }
 
         // Check if admin's role is in allowed roles
         if (!in_array($adminRole, $roles, true)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => 'Insufficient privileges'], 403);
+            }
             abort(403, 'Insufficient privileges. This action is not permitted for your role.');
         }
 
