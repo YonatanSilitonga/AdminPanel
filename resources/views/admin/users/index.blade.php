@@ -324,7 +324,7 @@
                             </template>
                             <template x-if="detailUser && !detailUser.user.is_active">
                                 <span class="px-5 py-1.5 bg-gray-100 text-gray-400 text-xs font-bold uppercase tracking-widest rounded-full">Nonaktif</span>
-                            </template>
+                            </template> 
                         </div>
 
                         {{-- Stats Cards --}}

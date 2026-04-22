@@ -12,14 +12,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->redirectGuestsTo(function (Request $request) {
-            if ($request->expectsJson()) {
-                return null;
-            }
-
-            return route('admin.login');
-        });
-
         $middleware->alias([
             // Admin custom middleware
             'admin.auth' => \App\Http\Middleware\EnsureAdminAuthenticated::class,
@@ -28,6 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.activity-log' => \App\Http\Middleware\AdminActivityLogMiddleware::class,
             'admin.maintenance' => \App\Http\Middleware\AdminMaintenanceMode::class,
         ]);
+       // $middleware->redirectGuestsTo(fn () => route('admin.login'));
+       $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->expectsJson()) {
+                return null;
+            }
+
+            return route('admin.login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

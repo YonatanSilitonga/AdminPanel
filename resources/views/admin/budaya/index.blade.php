@@ -1,3 +1,7 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Budaya dan Warisan')
+
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
     <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
