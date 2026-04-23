@@ -15,8 +15,8 @@
 @section('content')
 
 <div x-data="{
-    showCreateModal: false,
-    showEditModal: false,
+    showCreateModal: {{ $errors->any() && !old('_method') ? 'true' : 'false' }},
+    showEditModal: {{ $errors->any() && old('_method') == 'PUT' ? 'true' : 'false' }},
     editingBudaya: null,
     loading: false,
     createFileName: '',
@@ -152,12 +152,16 @@
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                             Edit
                                         </button>
-                                        <form action="{{ route('admin.budaya.destroy', $item->_id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus budaya ini?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                            @click="$dispatch('open-delete-modal', { 
+                                                action: '{{ route('admin.budaya.destroy', (string)$item->_id) }}', 
+                                                title: 'Hapus Budaya', 
+                                                type: 'budaya', 
+                                                name: '{{ addslashes($item->name) }}' 
+                                            })" 
+                                            class="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -318,32 +322,41 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama / Judul Budaya</label>
-                            <input type="text" name="name" required placeholder="Cth: Makam Raja Sidabutar" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                            <input type="text" name="name" value="{{ old('name') }}" required placeholder="Cth: Makam Raja Sidabutar" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('name') border-red-500 @enderror">
+                            @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="col-span-2  space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori Utama</label>
-                            <select name="category" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                            <select name="category" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700 @error('category') border-red-500 @enderror">
                                 @foreach($categories ?? ['Sejarah', 'Tradisi', 'Rumah Adat', 'Cerita Rakyat', 'Kuliner'] as $cat)
-                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                    <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                                 @endforeach
                             </select>
+                            @error('category') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
-                        <!-- <div class="space-y-2">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori Mobile <span class="text-[10px] lowercase font-normal">(Opsional)</span></label>
-                            <input type="text" name="category_mobile" placeholder="Cth: SEJARAH BATAK" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
-                        </div> -->
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi Singkat</label>
-                            <input type="text" name="location" required placeholder="Cth: Pulau Samosir" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                            <input type="text" name="location" value="{{ old('location') }}" required placeholder="Cth: Pulau Samosir" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('location') border-red-500 @enderror">
+                            @error('location') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
-                            <textarea name="description" rows="3" required placeholder="Penjelasan mengenai budaya ini..." class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300"></textarea>
+                            <textarea name="description" rows="3" required placeholder="Penjelasan mengenai budaya ini..." class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300 @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
+                            @error('description') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Utama (Thumbnail)</label>
-                            <div class="relative group">
-                                <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                            <div class="relative group" x-data="{ previewUrl: '' }">
+                                <template x-if="previewUrl">
+                                    <img :src="previewUrl" class="absolute inset-0 w-full h-full object-cover rounded-[2rem] opacity-20 pointer-events-none">
+                                </template>
+                                <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" 
+                                    @change="
+                                        createFileName = $event.target.files[0].name;
+                                        const reader = new FileReader();
+                                        reader.onload = (e) => { previewUrl = e.target.result };
+                                        reader.readAsDataURL($event.target.files[0]);
+                                    ">
                                 <label for="create_thumbnail" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
                                     <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                         <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -352,6 +365,7 @@
                                     <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tight">PNG, JPG, WEBP (Maks. 5MB)</p>
                                 </label>
                             </div>
+                            @error('thumbnail') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="col-span-2 mt-2">
                             <label class="flex items-center gap-3 cursor-pointer">
@@ -456,6 +470,27 @@
             </div>
         </div>
     </div>
+</div>
+
+
+
+    <!-- Custom Success Alert Modal -->
+    @if(session('success'))
+    <div x-data="{ show: true }" x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-sm p-10 text-center align-middle transition-all transform bg-white shadow-2xl rounded-[1.5rem] sm:my-8 text-gray-800 relative z-10" x-init="setTimeout(() => show = false, 2500)">
+                <div class="w-20 h-20 bg-[#cbf4f5] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">{{ session('success') }}</h3>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 <style>

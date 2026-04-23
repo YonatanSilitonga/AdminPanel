@@ -192,7 +192,7 @@
          @open-delete-modal.window="show = true; action = $event.detail.action; title = $event.detail.title; type = $event.detail.type; name = $event.detail.name"
          x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
         <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
-            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-gray-500/20 backdrop-blur-sm" @click="show = false"></div>
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
@@ -220,6 +220,43 @@
                         </button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Modal -->
+    <div x-data="{ showLogout: false }"
+         @open-logout-modal.window="showLogout = true"
+         x-show="showLogout" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+            <!-- Backdrop -->
+            <div x-show="showLogout" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showLogout = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <!-- Modal Panel -->
+            <div x-show="showLogout" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-[400px] p-8 text-center align-middle transition-all transform bg-white shadow-2xl rounded-[1.5rem] sm:my-8 text-gray-800 relative z-10">
+                
+                <div class="w-[72px] h-[72px] bg-[#fef2f2] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                </div>
+
+                <h3 class="text-[20px] font-bold text-gray-900 mb-3">Keluar dari Sistem?</h3>
+                <p class="text-[14px] text-gray-500 mb-8 leading-relaxed px-4">
+                    Apakah Anda yakin ingin keluar? Anda harus login kembali untuk mengakses panel admin.
+                </p>
+
+                <form action="{{ route('admin.logout') }}" method="POST" class="flex flex-col gap-3">
+                    @csrf
+                    <button type="submit" class="w-full py-3 text-[14px] font-bold text-white bg-[#dc2626] hover:bg-[#b91c1c] rounded-xl transition-all shadow-[0_4px_12px_-4px_rgba(220,38,38,0.5)]">
+                        Ya, Keluar
+                    </button>
+                    <button type="button" @click="showLogout = false" class="w-full py-3 text-[14px] font-bold text-gray-500 hover:text-gray-800 transition-colors bg-transparent border-none">
+                        Batal
+                    </button>
+                </form>
             </div>
         </div>
     </div>

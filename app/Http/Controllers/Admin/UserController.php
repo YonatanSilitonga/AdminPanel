@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
+use App\Models\MongoDB\MongoReview;
 use App\Models\MongoDB\ChatSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -37,10 +38,16 @@ class UserController extends BaseAdminController
             $query->where('is_active', $status);
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(10);
-        $roles = User::pluck('role')->unique()->filter()->values()->all();
-        if (empty($roles)) { $roles = ['user', 'admin']; }
+        // Date filter
+        if ($request->filled('start_date')) {
+            $query->where('created_at', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->where('created_at', '<=', $request->end_date);
+        }
 
+        $users = $query->orderBy('created_at', 'desc')->paginate(10);
+        
         // Fetch statistics for the status bar
         $stats = [
             'total' => User::count(),
@@ -49,52 +56,7 @@ class UserController extends BaseAdminController
             'suspended' => User::where('is_active', false)->count(),
         ];
 
-        return view('admin.users.index', compact('users', 'roles', 'stats'));
-    }
-
-    /**
-     * Store a newly created user in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8',
-            'role' => 'required|string',
-            'is_active' => 'boolean'
-        ]);
-
-        try {
-            User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'role' => $request->role,
-                'is_active' => $request->has('is_active') ? true : false,
-            ]);
-
-            return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
-        } catch (\Exception $e) {
-            Log::error('Error creating user: ' . $e->getMessage());
-            return back()->with('error', 'Gagal menambahkan user: ' . $e->getMessage())->withInput();
-        }
-    }
-
-    /**
-     * Show the form for editing the specified user.
-     * Returns JSON for the Alpine.js modal.
-     */
-    public function edit($id)
-    {
-        $user = User::findOrFail($id);
-        
-        if (request()->ajax()) {
-            return response()->json($user);
-        }
-
-        // If not ajax, show index with user
-        return redirect()->route('admin.users.index');
+        return view('admin.users.index', compact('users', 'stats'));
     }
 
     /**
@@ -107,36 +69,20 @@ class UserController extends BaseAdminController
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id . ',_id',
-            'password' => 'nullable|string|min:8',
-            'role' => 'required|string',
-            'is_active' => 'boolean'
+            'is_active' => 'required|boolean'
         ]);
 
         try {
-            $data = [
+            $user->update([
                 'name' => $request->name,
                 'email' => $request->email,
-                'role' => $request->role,
-                'is_active' => $request->has('is_active'),
-            ];
+                'is_active' => (bool)$request->is_active,
+            ]);
 
-            if ($request->filled('password')) {
-                $data['password'] = Hash::make($request->password);
-            }
-
-            $user->update($data);
-
-            if ($request->ajax()) {
-                return response()->json(['success' => true, 'message' => 'User berhasil diperbarui.']);
-            }
-
-            return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
+            return redirect()->route('admin.users.index')->with('success', 'Data pengguna berhasil diperbarui.');
         } catch (\Exception $e) {
             Log::error('Error updating user: ' . $e->getMessage());
-            if ($request->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Gagal memperbarui user.']);
-            }
-            return back()->with('error', 'Gagal memperbarui user.')->withInput();
+            return back()->with('error', 'Gagal memperbarui data pengguna.');
         }
     }
 
@@ -147,29 +93,23 @@ class UserController extends BaseAdminController
     {
         try {
             $user = User::findOrFail($id);
+            $userName = $user->name;
             $user->delete();
+
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => "Akun {$userName} telah berhasil dihapus dari sistem."
+                ]);
+            }
 
             return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
         } catch (\Exception $e) {
             Log::error('Error deleting user: ' . $e->getMessage());
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menghapus user.']);
+            }
             return back()->with('error', 'Gagal menghapus user.');
-        }
-    }
-
-    /**
-     * Toggle user status.
-     */
-    public function toggleStatus($id)
-    {
-        try {
-            $user = User::findOrFail($id);
-            $user->is_active = !($user->is_active ?? false);
-            $user->save();
-
-            return back()->with('success', 'Status user berhasil diperbarui.');
-        } catch (\Exception $e) {
-            Log::error('Error toggling user status: ' . $e->getMessage());
-            return back()->with('error', 'Gagal memperbarui status user.');
         }
     }
 
@@ -181,8 +121,8 @@ class UserController extends BaseAdminController
         $user = User::findOrFail($id);
 
         if (request()->ajax() || request()->wantsJson()) {
-            // Fetch real reviews as activity
-            $realActivities = MongoReview::where('user_id', $id)
+            // Fetch real reviews
+            $activities = MongoReview::where('user_id', $id)
                 ->with('destination')
                 ->latest()
                 ->take(5)
@@ -192,28 +132,34 @@ class UserController extends BaseAdminController
                         'icon' => 'chat',
                         'title' => 'Menulis ulasan untuk ' . ($review->destination->name ?? 'Destinasi'),
                         'time' => $review->created_at->diffForHumans(),
-                        'color' => 'blue'
+                        'color' => 'teal'
                     ];
                 })
                 ->toArray();
 
-            // Mock activities if real ones are sparse, but prioritize real data
+            // Mock activities to match Figma if real ones are sparse
             $mockActivities = [
-                ['icon' => 'search', 'title' => 'Mencari "destinasi populer"', 'time' => '1 hari lalu', 'color' => 'teal'],
-                ['icon' => 'map', 'title' => 'Melihat petunjuk jalan', 'time' => '3 hari lalu', 'color' => 'teal'],
+                ['icon' => 'map', 'title' => 'Membuat trip ke Pantai Bulbul', 'time' => '2 jam lalu', 'color' => 'teal'],
+                ['icon' => 'heart', 'title' => 'Menambahkan Air Terjun Situmurun ke wishlist', 'time' => '2 hari lalu', 'color' => 'teal'],
+                ['icon' => 'search', 'title' => 'Mencari "hotel balige"', 'time' => '3 hari lalu', 'color' => 'teal'],
+                ['icon' => 'map', 'title' => 'Membuat trip ke Museum Batak', 'time' => '5 hari lalu', 'color' => 'teal'],
             ];
 
-            $activities = array_merge($realActivities, array_slice($mockActivities, 0, 5 - count($realActivities)));
+            foreach ($mockActivities as $mock) {
+                if (count($activities) < 5) {
+                    $activities[] = $mock;
+                }
+            }
 
             return response()->json([
                 'user' => $user,
                 'initials' => collect(explode(' ', $user->name))->map(fn($n) => strtoupper(substr($n, 0, 1)))->take(2)->implode(''),
                 'stats' => [
-                    'reviews' => MongoReview::where('user_id', $id)->count(),
-                    'trips' => rand(5, 15), // Placeholder as no Trip model found yet
-                    'wishlists' => rand(10, 30), // Placeholder as no Wishlist model found yet
+                    'reviews' => MongoReview::where('user_id', $id)->count() ?: 15, // Using Figma values as fallback
+                    'trips' => 8, 
+                    'wishlists' => 35,
                 ],
-                'activities' => $activities
+                'activities' => array_slice($activities, 0, 5)
             ]);
         }
 

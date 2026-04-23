@@ -21,6 +21,8 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\CarouselBannerController;
 use App\Http\Controllers\Admin\FasilitasUmumController;
 use App\Http\Controllers\Admin\BudayaController;
+use App\Http\Controllers\Admin\BeritaPromosiController;
+use App\Http\Controllers\Admin\TrendingDestinationController;
 
 Route::get('/', function () {
     return redirect()->route('admin.login');
@@ -75,6 +77,22 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
             ->name('admin.facilities.store');
         Route::delete('destinations/{destination}/facilities/{facility}', [FacilityController::class, 'destroy'])
             ->name('admin.facilities.destroy');
+
+        // Trending Destinations
+        Route::get('trending-destinations', [TrendingDestinationController::class, 'index'])
+            ->name('admin.trending.index');
+        Route::post('trending-destinations/mode', [TrendingDestinationController::class, 'updateMode'])
+            ->name('admin.trending.update-mode');
+        Route::post('trending-destinations/order', [TrendingDestinationController::class, 'updateOrder'])
+            ->name('admin.trending.update-order');
+        Route::post('trending-destinations/add', [TrendingDestinationController::class, 'addDestination'])
+            ->name('admin.trending.add');
+        Route::delete('trending-destinations/remove/{id}', [TrendingDestinationController::class, 'removeDestination'])
+            ->name('admin.trending.remove');
+        Route::post('trending-destinations/reset', [TrendingDestinationController::class, 'resetToAutomatic'])
+            ->name('admin.trending.reset');
+        Route::get('trending-destinations/search', [TrendingDestinationController::class, 'searchDestinations'])
+            ->name('admin.trending.search');
     });
 
     // ============ EVENTS (Admin Role) ============
@@ -134,6 +152,19 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
                 'destroy' => 'admin.budaya.destroy',
             ]
         ])->only(['index', 'store', 'edit', 'update', 'destroy']);
+    });
+
+    // ============ BERITA & PROMOSI ============
+    Route::middleware('admin.role:admin,super_admin')->group(function () {
+        Route::resource('berita-promosi', BeritaPromosiController::class, [
+            'names' => [
+                'index' => 'admin.berita_promosi.index',
+                'store' => 'admin.berita_promosi.store',
+                'edit' => 'admin.berita_promosi.edit',
+                'update' => 'admin.berita_promosi.update',
+                'destroy' => 'admin.berita_promosi.destroy',
+            ]
+        ])->except(['create', 'show']);
     });
 
     // ============ REVIEWS (Admin + Moderator) ============
@@ -237,6 +268,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
     // ============ PROFILE (All authenticated) ============
     Route::get('profile', [ProfileController::class, 'edit'])->name('admin.profile');
+    Route::put('profile', [ProfileController::class, 'update'])->name('admin.profile.update');
     Route::put('profile/password', [ProfileController::class, 'updatePassword'])
         ->name('admin.profile.password.update');
     Route::post('logout', [AdminAuthController::class, 'logout'])->name('admin.logout');

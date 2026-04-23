@@ -24,102 +24,64 @@ class DatabaseSeeder extends Seeder
         // 1. Seed admin users with roles and permissions
         $this->call(AdminSeeder::class);
 
-        // Reset Mongo data so reseeding fully replaces dataset
-        MongoReview::query()->delete();
-        MongoReport::query()->delete();
-        MongoEvent::query()->delete();
-        MongoDestination::query()->delete();
-
-        // 2. Create test users
-        User::factory(15)->create();
-
-        // 3. Create destinations
-        $destinations = [];
-        for ($i = 1; $i <= 10; $i++) {
-            $destinations[] = MongoDestination::create([
-                'name' => "Destinasi " . $i,
-                'description' => fake()->paragraph(),
-                'location' => fake()->city(),
-                'price' => fake()->numberBetween(50000, 500000),
-                'rating' => fake()->randomFloat(1, 1, 5),
-            ]);
+        // 2. Create test users (if using MongoDB for users, use mongo model, otherwise SQL works if configured)
+        try {
+            User::factory(15)->create();
+        } catch (\Throwable $e) {
+            $this->command->warn('User seeding skipped: ' . $e->getMessage());
         }
 
-        // 4. Create events for destinations
+        // 3. Create destinations (using MongoDB model)
+        $destinations = [];
+        for ($i = 0; $i < 10; $i++) {
+            $destination = MongoDestination::create([
+                'name' => "Destination " . ($i + 1),
+                'description' => "Description for destination " . ($i + 1),
+                'category' => ['Alam', 'Budaya', 'Hiburan'][rand(0, 2)],
+                'latitude' => -6.2 + (rand(-100, 100) / 1000),
+                'longitude' => 106.8 + (rand(-100, 100) / 1000),
+                'is_active' => true,
+                'is_featured' => rand(0, 1) === 1,
+                'average_rating' => rand(3, 5),
+                'total_reviews' => rand(0, 100),
+            ]);
+            $destinations[] = $destination;
+        }
+
+        // 4. Create events for destinations (using MongoDB model)
         foreach ($destinations as $destination) {
-            for ($j = 0; $j < 2; $j++) {
+            for ($i = 0; $i < 2; $i++) {
                 MongoEvent::create([
-                    'destination_id' => $destination->_id,
-                    'title' => fake()->sentence(),
-                    'description' => fake()->paragraph(),
-                    'start_date' => fake()->dateTimeBetween('+1 days', '+30 days'),
-                    'end_date' => fake()->dateTimeBetween('+30 days', '+60 days'),
+                    'name' => "Event " . ($i + 1) . " at " . $destination->name,
+                    'description' => "Description for event",
+                    'destination_id' => $destination->_id ?? $destination->id,
+                    'start_date' => now()->addDays(rand(1, 30))->toDateTimeString(),
+                    'end_date' => now()->addDays(rand(31, 60))->toDateTimeString(),
+                    'is_active' => true,
                 ]);
             }
         }
 
-        // 5. Create new curated reviews for sentiment testing
-        $reviewSamples = [
-            ['rating' => 5, 'review' => 'Pelayanan cepat, staf ramah, dan kamar sangat bersih. Saya puas.'],
-            ['rating' => 5, 'review' => 'Pemandangan indah, fasilitas lengkap, dan proses check in sangat mudah.'],
-            ['rating' => 4, 'review' => 'Lokasi strategis, akses mudah, harga masih masuk akal.'],
-            ['rating' => 5, 'review' => 'Pengalaman liburan menyenangkan, tempat nyaman untuk keluarga.'],
-            ['rating' => 4, 'review' => 'Makanan enak, area rapi, petugas responsif saat diminta bantuan.'],
-            ['rating' => 5, 'review' => 'Kamar luas, kasur nyaman, AC dingin, dan suasana tenang.'],
-            ['rating' => 4, 'review' => 'Sangat recommended untuk akhir pekan, tidak terlalu ramai.'],
-            ['rating' => 5, 'review' => 'Pelayanan front office profesional dan informatif dari awal sampai selesai.'],
-            ['rating' => 4, 'review' => 'Kebersihan area publik terjaga dengan baik.'],
-            ['rating' => 5, 'review' => 'Semua fasilitas berfungsi, pengalaman saya memuaskan.'],
-            ['rating' => 4, 'review' => 'Harga sesuai kualitas, saya ingin kembali lagi.'],
-            ['rating' => 5, 'review' => 'Tempat wisata ini bagus sekali, aman dan nyaman.'],
-
-            ['rating' => 3, 'review' => 'Tempat cukup baik, pengalaman standar, tidak istimewa.'],
-            ['rating' => 3, 'review' => 'Fasilitas dasar tersedia, pelayanan biasa saja.'],
-            ['rating' => 3, 'review' => 'Lokasi lumayan bagus, tetapi belum terlalu menarik.'],
-            ['rating' => 3, 'review' => 'Kamar cukup bersih, ukuran sedang, cocok untuk singgah.'],
-            ['rating' => 3, 'review' => 'Makanan cukup enak, pilihan menu terbatas.'],
-            ['rating' => 3, 'review' => 'Waktu tunggu normal, tidak cepat juga tidak lambat.'],
-            ['rating' => 3, 'review' => 'Suasana tenang, fasilitas standar sesuai kelasnya.'],
-            ['rating' => 3, 'review' => 'Area parkir cukup luas, namun penunjuk arah kurang jelas.'],
-            ['rating' => 3, 'review' => 'Tidak ada masalah besar, tapi juga tidak terlalu berkesan.'],
-            ['rating' => 3, 'review' => 'Harga dan layanan terasa seimbang.'],
-            ['rating' => 3, 'review' => 'Kondisi umum oke untuk kunjungan singkat.'],
-            ['rating' => 3, 'review' => 'Saya menilai pengalaman ini biasa saja.'],
-
-            ['rating' => 1, 'review' => 'Kamar kotor, bau lembap, dan sprei tidak layak pakai.'],
-            ['rating' => 2, 'review' => 'Pelayanan lambat, staf kurang ramah, proses check in lama.'],
-            ['rating' => 1, 'review' => 'Fasilitas tidak sesuai iklan dan banyak yang rusak.'],
-            ['rating' => 2, 'review' => 'Makanan datang dingin dan rasanya tidak enak.'],
-            ['rating' => 1, 'review' => 'Toilet kotor, air kecil, kebersihan sangat buruk.'],
-            ['rating' => 1, 'review' => 'Lokasi sulit dijangkau, informasi arah membingungkan.'],
-            ['rating' => 2, 'review' => 'Suasana bising dan tidak nyaman untuk istirahat.'],
-            ['rating' => 1, 'review' => 'Pengalaman mengecewakan, saya tidak akan kembali.'],
-            ['rating' => 2, 'review' => 'AC mati, kamar panas, komplain tidak cepat ditangani.'],
-            ['rating' => 1, 'review' => 'Area tidak terawat, banyak sampah di sekitar lokasi.'],
-            ['rating' => 2, 'review' => 'Harga mahal untuk kualitas layanan yang rendah.'],
-            ['rating' => 1, 'review' => 'Sangat tidak rekomendasi karena pelayanan buruk.'],
-        ];
-
-        foreach ($reviewSamples as $index => $sample) {
+        // 5. Create reviews (using MongoDB model)
+        for ($i = 0; $i < 20; $i++) {
             MongoReview::create([
-                'destination_id' => $destinations[$index % count($destinations)]->_id,
-                'user_id' => 'user_' . str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT),
-                'rating' => $sample['rating'],
-                'review' => $sample['review'],
+                'destination_id' => $destinations[rand(0, count($destinations) - 1)]->_id ?? $destinations[rand(0, count($destinations) - 1)]->id,
+                'user_id' => rand(1, 15),
+                'rating' => rand(1, 5),
+                'title' => "Review Title " . ($i + 1),
+                'content' => "Review content here",
                 'status' => 'approved',
             ]);
         }
 
-        // 6. Create reports
+        // 6. Create reports (using MongoDB model)
         for ($i = 0; $i < 5; $i++) {
             MongoReport::create([
-                'destination_id' => $destinations[array_rand($destinations)]->_id,
-                'user_id' => 'user_' . fake()->randomNumber(),
-                'description' => fake()->paragraph(),
-                'status' => fake()->randomElement(['pending', 'reviewed', 'resolved']),
-                'assigned_to' => null,
-                'action_taken' => null,
-                'action_reason' => null,
+                'destination_id' => $destinations[rand(0, count($destinations) - 1)]->_id ?? $destinations[rand(0, count($destinations) - 1)]->id,
+                'user_id' => rand(1, 15),
+                'reason' => ['Spam', 'Inappropriate', 'Offensive'][rand(0, 2)],
+                'description' => "Report description",
+                'status' => 'pending',
             ]);
         }
 

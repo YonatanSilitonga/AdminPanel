@@ -83,15 +83,16 @@ class BudayaController extends BaseAdminController
             $this->logActivity('create', 'budaya', (string)$budaya->_id, null, $budaya->toArray());
 
             if ($request->ajax() || $request->wantsJson()) {
+                session()->flash('success', 'Berhasil Ditambahkan');
                 return response()->json([
                     'success' => true,
-                    'message' => 'Konten Budaya berhasil ditambahkan.',
+                    'message' => 'Berhasil Ditambahkan',
                     'budaya' => $budaya
                 ]);
             }
 
             return redirect()->route('admin.budaya.index')
-                ->with('success', 'Konten Budaya berhasil ditambahkan.');
+                ->with('success', 'Berhasil Ditambahkan');
         } catch (\Exception $e) {
             Log::error('Error creating budaya: ' . $e->getMessage());
 
@@ -160,15 +161,16 @@ class BudayaController extends BaseAdminController
             $this->logActivity('update', 'budaya', (string)$budaya->_id, $oldValues, $budaya->toArray());
 
             if ($request->ajax() || $request->wantsJson()) {
+                session()->flash('success', 'Berhasil Diperbarui');
                 return response()->json([
                     'success' => true,
-                    'message' => 'Konten Budaya berhasil diperbarui.',
+                    'message' => 'Berhasil Diperbarui',
                     'budaya' => $budaya
                 ]);
             }
 
             return redirect()->route('admin.budaya.index')
-                ->with('success', 'Konten Budaya berhasil diperbarui.');
+                ->with('success', 'Berhasil Diperbarui');
         } catch (\Exception $e) {
             Log::error('Error updating budaya: ' . $e->getMessage());
 
@@ -200,7 +202,7 @@ class BudayaController extends BaseAdminController
             $budaya->delete();
 
             return redirect()->route('admin.budaya.index')
-                ->with('success', 'Konten Budaya berhasil dihapus.');
+                ->with('success', 'Berhasil Dihapus');
         } catch (\Exception $e) {
             Log::error('Error deleting budaya: ' . $e->getMessage());
             return back()->with('error', 'Gagal menghapus konten.');
@@ -218,6 +220,6 @@ class BudayaController extends BaseAdminController
         
         $this->logActivity('toggle_status', 'budaya', (string)$budaya->_id, ['is_active' => !$budaya->is_active], ['is_active' => $budaya->is_active]);
         
-        return redirect()->route('admin.budaya.index')->with('success', 'Status konten berhasil diubah.');
+        return redirect()->route('admin.budaya.index')->with('success', 'Status berhasil diubah');
     }
 }
