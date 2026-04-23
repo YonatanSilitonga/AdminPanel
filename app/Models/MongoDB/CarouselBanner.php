@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class CarouselBanner extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'carrousel_banner';
+    protected $collection = 'carousel_banners';
 
     protected $fillable = [
         'title',

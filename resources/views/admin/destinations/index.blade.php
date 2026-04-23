@@ -18,7 +18,7 @@
 @endsection
 
 @section('content')
-<div x-data="{
+<div id="dest-manager" x-data="{
     showCreateModal: false,
     showEditModal: false,
     editingDest: null,
@@ -217,11 +217,16 @@
                         </div>
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
-                            <input type="text" name="latitude" required placeholder="2.6845" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                            <input type="text" name="latitude" id="create_latitude" required placeholder="2.6845" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
                         </div>
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
-                            <input type="text" name="longitude" required placeholder="98.8756" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                            <input type="text" name="longitude" id="create_longitude" required placeholder="98.8756" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
+                        </div>
+                        {{-- Map Picker for Create --}}
+                        <div class="col-span-2 space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Pilih Lokasi di Peta</label>
+                            <div id="create_map_picker" style="width: 100%; height: 300px; border-radius: 1.5rem; border: 1px solid #eee;"></div>
                         </div>
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Rating (0-5)</label>
@@ -305,11 +310,16 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
-                                <input type="text" name="latitude" x-model="editingDest.latitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                                <input type="text" name="latitude" id="edit_latitude" x-model="editingDest.latitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
-                                <input type="text" name="longitude" x-model="editingDest.longitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                                <input type="text" name="longitude" id="edit_longitude" x-model="editingDest.longitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
+                            </div>
+                            {{-- Map Picker for Edit --}}
+                            <div class="col-span-2 space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi Destinasi (Klik/Geser untuk mengubah)</label>
+                                <div id="edit_map_picker" style="width: 100%; height: 300px; border-radius: 1.5rem; border: 1px solid #eee;"></div>
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Rating (0-5)</label>
@@ -359,3 +369,114 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&callback=Function.prototype" async defer></script>
+<script>
+    // Handler untuk error autentikasi Google Maps
+    window.gm_authFailure = function() {
+        console.error('Google Maps authentication failed! Periksa API Key Anda.');
+        const pickers = document.querySelectorAll('[id*="map_picker"]');
+        pickers.forEach(p => {
+            p.innerHTML = '<div class="flex items-center justify-center h-full text-red-500 text-xs font-bold p-4 text-center">Google Maps Error: API Key tidak valid atau belum diaktifkan.</div>';
+        });
+    };
+
+    let createMap, editMap, createMarker, editMarker;
+
+    function initGoogleMap(elementId, latId, lngId, initialPos = { lat: 2.3361, lng: 99.0631 }) {
+        if (typeof google === 'undefined') {
+            console.warn('Google Maps API not yet loaded');
+            return null;
+        }
+
+        const mapElement = document.getElementById(elementId);
+        if (!mapElement) return null;
+
+        const map = new google.maps.Map(mapElement, {
+            zoom: 13,
+            center: initialPos,
+            mapTypeControl: false,
+            streetViewControl: false,
+        });
+
+        const marker = new google.maps.Marker({
+            position: initialPos,
+            map: map,
+            draggable: true,
+            animation: google.maps.Animation.DROP,
+        });
+
+        const updateInputs = (pos) => {
+            const latInput = document.getElementById(latId);
+            const lngInput = document.getElementById(lngId);
+            if (latInput) {
+                latInput.value = pos.lat().toFixed(8);
+                latInput.dispatchEvent(new Event('input'));
+            }
+            if (lngInput) {
+                lngInput.value = pos.lng().toFixed(8);
+                lngInput.dispatchEvent(new Event('input'));
+            }
+        };
+
+        // Ensure map renders correctly by triggering resize after a short delay
+        setTimeout(() => {
+            google.maps.event.trigger(map, "resize");
+            map.setCenter(initialPos);
+        }, 300);
+
+        map.addListener("click", (e) => {
+            marker.setPosition(e.latLng);
+            updateInputs(e.latLng);
+        });
+
+        marker.addListener("dragend", () => {
+            updateInputs(marker.getPosition());
+        });
+
+        return { map, marker };
+    }
+
+    setInterval(() => {
+        const el = document.getElementById('dest-manager');
+        if (el && window.Alpine) {
+            const data = Alpine.$data(el);
+            
+            if (data) {
+                // Initialize Create Map
+                if (data.showCreateModal && !createMap && typeof google !== 'undefined') {
+                    createMap = true; // Temporary flag
+                    setTimeout(() => {
+                        const res = initGoogleMap('create_map_picker', 'create_latitude', 'create_longitude');
+                        if(res) {
+                            createMap = res.map;
+                            createMarker = res.marker;
+                        } else { createMap = null; }
+                    }, 500); // Wait for modal animation
+                } else if (!data.showCreateModal) {
+                    createMap = null;
+                }
+
+                // Initialize Edit Map
+                if (data.showEditModal && data.editingDest && !editMap && typeof google !== 'undefined') {
+                    editMap = true; // Temporary flag
+                    setTimeout(() => {
+                        const pos = { 
+                            lat: parseFloat(data.editingDest.latitude) || 2.3361, 
+                            lng: parseFloat(data.editingDest.longitude) || 99.0631 
+                        };
+                        const res = initGoogleMap('edit_map_picker', 'edit_latitude', 'edit_longitude', pos);
+                        if(res) {
+                            editMap = res.map;
+                            editMarker = res.marker;
+                        } else { editMap = null; }
+                    }, 500); // Wait for modal animation
+                } else if (!data.showEditModal) {
+                    editMap = null;
+                }
+            }
+        }
+    }, 500);
+</script>
+@endpush

@@ -22,6 +22,16 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+    ],
+
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
@@ -41,6 +51,10 @@ return [
         'timeout' => env('SENTIMENT_API_TIMEOUT', 30),
         'batch_timeout' => env('SENTIMENT_API_BATCH_TIMEOUT', 90),
         'auto_save' => env('SENTIMENT_AUTO_SAVE', true),
+    ],
+    
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
 ];

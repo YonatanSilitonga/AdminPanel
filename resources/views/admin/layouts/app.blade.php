@@ -226,12 +226,15 @@
 
     <!-- Scripts -->
     <script>
-        // CSRF token for AJAX
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
+        // CSRF token for AJAX (Vanilla JS)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (typeof jQuery !== 'undefined') {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+        }
 
         // Show confirmation before delete
         function confirmDelete(message = 'Are you sure you want to delete this item?') {
