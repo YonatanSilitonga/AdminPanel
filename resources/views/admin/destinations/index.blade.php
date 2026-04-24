@@ -52,6 +52,10 @@
     loading: false,
     createFileName: '',
     editFileName: '',
+    openTime: '08:00',
+    closeTime: '17:00',
+    editOpenTime: '08:00',
+    editCloseTime: '17:00',
 
     async openEditModal(id) {
         this.loading = true;
@@ -61,6 +65,15 @@
             const res = await fetch(`/admin/destinations/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             this.editingDest = await res.json();
             this.editFileName = this.editingDest.images && this.editingDest.images.length ? 'Foto saat ini' : '';
+            
+            if (this.editingDest.opening_hours && this.editingDest.opening_hours.includes(' - ')) {
+                const parts = this.editingDest.opening_hours.split(' - ');
+                this.editOpenTime = parts[0];
+                this.editCloseTime = parts[1];
+            } else {
+                this.editOpenTime = '08:00';
+                this.editCloseTime = '17:00';
+            }
         } catch(e) {
             alert('Gagal mengambil data destinasi');
             this.showEditModal = false;
@@ -73,8 +86,9 @@
         this.loading = true;
         const form = document.getElementById('editDestForm');
         const formData = new FormData(form);
+        const destId = this.editingDest._id || this.editingDest.id;
         try {
-            const res = await fetch(`/admin/destinations/${this.editingDest._id}`, {
+            const res = await fetch(`/admin/destinations/${destId}`, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
                 body: formData
@@ -126,9 +140,8 @@
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Destinasi</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Kategori</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Rating</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Featured</th>
-                        <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
+                        <th class="px-10 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
+                        <th class="px-10 py-5 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
@@ -166,13 +179,6 @@
                                     </button>
                                 </form>
                             </td>
-                            <td class="px-10 py-6">
-                                <form action="{{ route('admin.destinations.toggle-featured', $destination->_id) }}" method="POST">
-                                    @csrf @method('PATCH')
-                                    <button type="submit" class="{{ ($destination->is_featured ?? false) ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400' }} px-4 py-1.5 rounded-xl font-bold text-xs inline-block">
-                                        {{ ($destination->is_featured ?? false) ? 'Featured' : 'Biasa' }}
-                                    </button>
-                                </form>
                             </td>
                             <td class="px-10 py-6 text-right">
                                 <div class="flex items-center justify-end gap-3">
@@ -278,6 +284,26 @@
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Fasilitas (Pisahkan dengan koma)</label>
                             <input type="text" name="facilities" placeholder="Toko Suvenir, Toilet Umum, Area Parkir" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
                         </div>
+                        {{-- Jam Operasional, Tiket, Best Time (Fixed layout) --}}
+                        <div class="col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="space-y-2 md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jam Operasional</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="time" x-model="openTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                    <span class="text-gray-400">-</span>
+                                    <input type="time" x-model="closeTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                </div>
+                                <input type="hidden" name="opening_hours" :value="openTime + ' - ' + closeTime">
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
+                                <input type="text" name="ticket_price" value="Gratis" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="space-y-2 col-span-1">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
+                                <input type="text" name="best_time" value="Kapan saja" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                            </div>
+                        </div>
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
                             <textarea name="description" rows="3" required placeholder="Deskripsi singkat destinasi..." class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300"></textarea>
@@ -381,6 +407,26 @@
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Fasilitas (Pisahkan dengan koma)</label>
                                 <input type="text" name="facilities" :value="editingDest.facilities ? editingDest.facilities.join(', ') : ''" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                            </div>
+                            {{-- Jam Operasional, Tiket, Best Time (Fixed layout) --}}
+                            <div class="col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4" x-show="editingDest">
+                                <div class="space-y-2 md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jam Operasional</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="time" x-model="editOpenTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                        <span class="text-gray-400">-</span>
+                                        <input type="time" x-model="editCloseTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                    </div>
+                                    <input type="hidden" name="opening_hours" :value="editOpenTime + ' - ' + editCloseTime">
+                                </div>
+                                <div class="space-y-2 col-span-1">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
+                                    <input type="text" name="ticket_price" x-model="editingDest.ticket_price" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                </div>
+                                <div class="space-y-2 col-span-1">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
+                                    <input type="text" name="best_time" x-model="editingDest.best_time" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                </div>
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>

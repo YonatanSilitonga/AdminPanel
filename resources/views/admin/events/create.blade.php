@@ -72,6 +72,38 @@
                 @error('location')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
+            <!-- Quick Info Section (Jam Operasional, Tiket, Best Time) -->
+            <div class="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 space-y-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="p-2 bg-primary/10 rounded-lg">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-gray-800">Informasi Operasional & Tiket</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-2" x-data="{ open_time: '08:00', close_time: '17:00' }">
+                        <label class="block text-sm font-semibold text-gray-700">Jam Operasional</label>
+                        <div class="flex items-center gap-2">
+                            <input type="time" x-model="open_time" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                            <span class="text-gray-400">-</span>
+                            <input type="time" x-model="close_time" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                        </div>
+                        <input type="hidden" name="opening_hours" :value="open_time + ' - ' + close_time">
+                        @error('opening_hours')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">Tiket Masuk</label>
+                        <input type="text" name="ticket_price" value="{{ old('ticket_price') }}" placeholder="Gratis / Rp 10.000" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                        @error('ticket_price')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">Waktu Terbaik</label>
+                        <input type="text" name="best_time" value="{{ old('best_time') }}" placeholder="Pagi Hari / Malam Hari" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                        @error('best_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                </div>
+            </div>
+
             <!-- Deskripsi -->
             <div class="space-y-2">
                 <label class="block text-sm font-semibold text-gray-700">Deskripsi</label>

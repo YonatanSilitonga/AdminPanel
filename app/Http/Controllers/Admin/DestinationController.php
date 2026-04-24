@@ -83,6 +83,9 @@ class DestinationController extends BaseAdminController
             'facilities' => 'nullable|string',
             'thumbnail' => 'required|image|mimes:jpeg,png,webp|max:5120',
             'images.*' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
+            'opening_hours' => 'nullable|string|max:255',
+            'ticket_price' => 'nullable|string|max:255',
+            'best_time' => 'nullable|string|max:255',
         ]);
 
         try {
@@ -99,6 +102,10 @@ class DestinationController extends BaseAdminController
                 $facilities = array_map('trim', explode(',', $request->facilities));
             }
             $destination->facilities = array_values(array_filter($facilities));
+            
+            $destination->opening_hours = $validated['opening_hours'] ?? '08:00 - 17:00';
+            $destination->ticket_price = $validated['ticket_price'] ?? 'Gratis';
+            $destination->best_time = $validated['best_time'] ?? 'Kapan saja';
 
             $destination->is_active = true;
             $destination->is_featured = false;
@@ -171,6 +178,9 @@ class DestinationController extends BaseAdminController
             'longitude' => 'required|numeric|between:-180,180',
             'facilities' => 'nullable|string',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
+            'opening_hours' => 'nullable|string|max:255',
+            'ticket_price' => 'nullable|string|max:255',
+            'best_time' => 'nullable|string|max:255',
         ]);
 
         try {
@@ -190,6 +200,10 @@ class DestinationController extends BaseAdminController
                 }
                 $destination->facilities = array_values(array_filter($facilities));
             }
+
+            $destination->opening_hours = $validated['opening_hours'] ?? $destination->opening_hours;
+            $destination->ticket_price = $validated['ticket_price'] ?? $destination->ticket_price;
+            $destination->best_time = $validated['best_time'] ?? $destination->best_time;
 
             $currentImages = $destination->images ?? [];
 
@@ -254,26 +268,6 @@ class DestinationController extends BaseAdminController
         }
     }
 
-    /**
-     * Toggle featured status in MongoDB
-     */
-    public function toggleFeatured(string $id)
-    {
-        $destination = MongoDestination::findOrFail($id);
-        $oldValue = $destination->is_featured;
-        $destination->is_featured = !$oldValue;
-        $destination->save();
-
-        $this->logActivity(
-            'update_featured_mongo',
-            'destination',
-            $id,
-            ['is_featured' => $oldValue],
-            ['is_featured' => $destination->is_featured]
-        );
-
-        return back()->with('success', 'Featured status updated in MongoDB');
-    }
 
     /**
      * Toggle active status in MongoDB

@@ -65,6 +65,9 @@ class EventController extends BaseAdminController
             'schedule' => 'nullable|array',
             'schedule.*.time' => 'required_with:schedule|string',
             'schedule.*.activity' => 'required_with:schedule|string',
+            'opening_hours' => 'nullable|string|max:255',
+            'ticket_price' => 'nullable|string|max:255',
+            'best_time' => 'nullable|string|max:255',
         ]);
 
         try {
@@ -136,6 +139,9 @@ class EventController extends BaseAdminController
             'schedule' => 'nullable|array',
             'schedule.*.time' => 'required_with:schedule|string',
             'schedule.*.activity' => 'required_with:schedule|string',
+            'opening_hours' => 'nullable|string|max:255',
+            'ticket_price' => 'nullable|string|max:255',
+            'best_time' => 'nullable|string|max:255',
         ]);
 
         try {

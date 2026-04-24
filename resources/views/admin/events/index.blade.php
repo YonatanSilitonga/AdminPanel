@@ -29,6 +29,10 @@
     createFileName: '',
     schedule: [],
     createSchedule: [],
+    openTime: '08:00',
+    closeTime: '17:00',
+    editOpenTime: '08:00',
+    editCloseTime: '17:00',
     
     async openEditModal(id) {
         this.loading = true;
@@ -41,6 +45,15 @@
             this.editingEvent = await response.json();
             this.schedule = this.editingEvent.schedule || [];
             this.fileName = this.editingEvent.banner_url ? 'Banner saat ini' : '';
+            
+            if (this.editingEvent.opening_hours && this.editingEvent.opening_hours.includes(' - ')) {
+                const parts = this.editingEvent.opening_hours.split(' - ');
+                this.editOpenTime = parts[0];
+                this.editCloseTime = parts[1];
+            } else {
+                this.editOpenTime = '08:00';
+                this.editCloseTime = '17:00';
+            }
         } catch (error) {
             alert('Gagal mengambil data event');
             this.showEditModal = false;
@@ -75,8 +88,9 @@
             formData.set(`schedule[${index}][activity]`, item.activity);
         });
 
+        const eventId = this.editingEvent._id || this.editingEvent.id;
         try {
-            const response = await fetch(`/admin/events/${this.editingEvent._id}`, {
+            const response = await fetch(`/admin/events/${eventId}`, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -338,6 +352,17 @@
                             <input type="text" name="location" x-model="editingEvent.location" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
                         </div>
 
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
+                                <input type="text" name="latitude" x-model="editingEvent.latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
+                                <input type="text" name="longitude" x-model="editingEvent.longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                        </div>
+
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Penyelenggara</label>
                             <input type="text" name="organizer" x-model="editingEvent.organizer" placeholder="Contoh: BPODT" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
@@ -470,6 +495,17 @@
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi (Nama Tempat)</label>
                             <input type="text" name="location" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
+                                <input type="text" name="latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
+                                <input type="text" name="longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
                         </div>
 
                         <div class="space-y-2">

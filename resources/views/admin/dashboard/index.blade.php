@@ -134,26 +134,23 @@
 
 <!-- Bottom Section: 3 Columns -->
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8 mt-2">
-    <!-- Top Destinasi Dikunjungi -->
+    <!-- Laporan Terbaru (Replacement for Featured) -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div class="flex items-center mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <h2 class="text-lg font-bold text-gray-900">Featured Destinasi</h2>
+            <h2 class="text-lg font-bold text-gray-900">Statistik Sistem</h2>
         </div>
         <div class="space-y-4">
-        @forelse(($featuredDestinations ?? []) as $index => $destination)
-            <div class="flex justify-between items-center">
-                <div class="flex items-center">
-                    <span class="w-6 h-6 rounded-full {{ $index < 3 ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600' }} flex items-center justify-center text-xs font-bold mr-3">{{ $index + 1 }}</span>
-                    <span class="text-sm text-gray-700 truncate w-32 md:w-48">{{ $destination->name ?? '-' }}</span>
-                </div>
-                <span class="text-sm font-semibold text-gray-500">Rating: {{ $destination->rating ?? '-' }}</span>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm text-gray-600">Total Ulasan</span>
+                <span class="text-sm font-bold text-gray-900">{{ number_format($stats['total_reviews'] ?? 0) }}</span>
             </div>
-        @empty
-            <p class="text-sm text-gray-500">No featured destinations.</p>
-        @endforelse
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm text-gray-600">Total Fasilitas</span>
+                <span class="text-sm font-bold text-gray-900">{{ number_format($stats['total_facilities'] ?? 0) }}</span>
+            </div>
         </div>
     </div>
 

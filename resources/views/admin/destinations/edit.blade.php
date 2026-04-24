@@ -81,6 +81,36 @@
         @error('facilities')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 
+    <!-- Jam Operasional, Tiket, Best Time -->
+    @php
+        $opening = $destination->opening_hours ?? '08:00 - 17:00';
+        $times = explode(' - ', $opening);
+        $open = $times[0] ?? '08:00';
+        $close = $times[1] ?? '17:00';
+    @endphp
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" x-data="{ open_time: '{{ $open }}', close_time: '{{ $close }}' }">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Jam Operasional</label>
+            <div class="flex items-center gap-2 mt-1">
+                <input type="time" x-model="open_time" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-sidebar/20 outline-none">
+                <span class="text-gray-400">-</span>
+                <input type="time" x-model="close_time" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-sidebar/20 outline-none">
+            </div>
+            <input type="hidden" name="opening_hours" :value="open_time + ' - ' + close_time">
+            @error('opening_hours')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Tiket Masuk</label>
+            <input type="text" name="ticket_price" value="{{ old('ticket_price', $destination->ticket_price ?? 'Gratis') }}" class="mt-1 w-full border rounded-lg px-4 py-2" placeholder="Gratis / Rp 10.000">
+            @error('ticket_price')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Waktu Terbaik</label>
+            <input type="text" name="best_time" value="{{ old('best_time', $destination->best_time ?? 'Kapan saja') }}" class="mt-1 w-full border rounded-lg px-4 py-2" placeholder="Pagi Hari / Malam Hari">
+            @error('best_time')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+        </div>
+    </div>
+
     <div>
         <label class="block text-sm font-medium text-gray-700">Description</label>
         <textarea name="description" rows="3" class="mt-1 w-full border rounded-lg px-4 py-2">{{ old('description', $destination->description ?? '') }}</textarea>

@@ -33,6 +33,9 @@ class MongoEvent extends Model
         'banner_url',
         'admin_id',
         'schedule',
+        'opening_hours',
+        'ticket_price',
+        'best_time',
     ];
 
     public $timestamps = true;

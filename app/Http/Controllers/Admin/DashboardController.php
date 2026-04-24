@@ -20,13 +20,6 @@ class DashboardController extends BaseAdminController
         // Get recent activity
         $recentActivity = $this->getRecentActivity(10);
 
-        // Get featured destinations
-        $featuredDestinations = DB::table('destinations')
-            ->where('is_featured', true)
-            ->where('is_active', true)
-            ->orderBy('rating', 'desc')
-            ->limit(5)
-            ->get();
 
         // Get pending items
         $pendingReviews = DB::table('reviews')
@@ -43,7 +36,6 @@ class DashboardController extends BaseAdminController
         return view('admin.dashboard.index', [
             'stats' => $stats,
             'recentActivity' => $recentActivity,
-            'featuredDestinations' => $featuredDestinations,
             'pendingReviews' => $pendingReviews,
             'pendingReports' => $pendingReports,
             'chartData' => $chartData,
