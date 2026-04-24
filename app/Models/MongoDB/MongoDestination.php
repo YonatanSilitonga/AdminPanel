@@ -21,8 +21,6 @@ class MongoDestination extends Model
         'description',
         'location',
         'images',
-        'average_rating',
-        'total_reviews',
         'category',
         'latitude',
         'longitude',
@@ -38,12 +36,40 @@ class MongoDestination extends Model
         'updated_at' => 'datetime',
         'latitude'   => 'float',
         'longitude'  => 'float',
-        'average_rating' => 'float',
-        'total_reviews' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'facilities' => 'array',
     ];
+
+    /**
+     * Get the reviews for this destination
+     */
+    public function reviews()
+    {
+        return MongoReview::where('destination_id', (string)$this->_id)->where('status', 'approved');
+    }
+
+    /**
+     * Get average rating from approved reviews
+     */
+    public function getAverageRatingAttribute()
+    {
+        $reviews = $this->reviews()->get();
+        
+        if ($reviews->isEmpty()) {
+            return 0;
+        }
+
+        return $reviews->avg('rating') ?? 0;
+    }
+
+    /**
+     * Get total review count from approved reviews
+     */
+    public function getTotalReviewsAttribute()
+    {
+        return $this->reviews()->count();
+    }
 
     /**
      * Scope to search by name.

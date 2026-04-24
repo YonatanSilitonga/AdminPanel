@@ -80,8 +80,6 @@ class DestinationController extends BaseAdminController
             'category' => 'required|in:park,beach,museum,historical,nature,cultural,religi',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
-            'average_rating' => 'nullable|numeric|between:0,5',
-            'total_reviews' => 'nullable|integer|min:0',
             'facilities' => 'nullable|string',
             'thumbnail' => 'required|image|mimes:jpeg,png,webp|max:5120',
             'images.*' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
@@ -95,8 +93,6 @@ class DestinationController extends BaseAdminController
             $destination->category = $validated['category'];
             $destination->latitude = (float) $validated['latitude'];
             $destination->longitude = (float) $validated['longitude'];
-            $destination->average_rating = (float) ($request->average_rating ?? 0);
-            $destination->total_reviews = (int) ($request->total_reviews ?? 0);
             
             $facilities = [];
             if (!empty($request->facilities)) {
@@ -173,8 +169,6 @@ class DestinationController extends BaseAdminController
             'category' => 'required|in:park,beach,museum,historical,nature,cultural,religi',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
-            'average_rating' => 'nullable|numeric|between:0,5',
-            'total_reviews' => 'nullable|integer|min:0',
             'facilities' => 'nullable|string',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
         ]);
@@ -189,13 +183,6 @@ class DestinationController extends BaseAdminController
             $destination->latitude = (float) $validated['latitude'];
             $destination->longitude = (float) $validated['longitude'];
 
-            if ($request->has('average_rating')) {
-                $destination->average_rating = (float) $request->average_rating;
-            }
-            if ($request->has('total_reviews')) {
-                $destination->total_reviews = (int) $request->total_reviews;
-            }
-            
             if ($request->has('facilities')) {
                 $facilities = [];
                 if (!empty($request->facilities)) {

@@ -1,5 +1,32 @@
 @extends('admin.layouts.app')
 
+@push('styles')
+<style>
+    /* Fix Google Autocomplete Suggestions in Modals */
+    .pac-container {
+        z-index: 9999 !important;
+        border-radius: 1rem;
+        border: none;
+        margin-top: 5px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        font-family: inherit;
+    }
+    .pac-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-top: 1px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .pac-item:first-child { border-top: none; }
+    .pac-item:hover { background-color: #f9fafb; }
+    .pac-item-query { font-size: 14px; color: #374151; font-weight: 600; }
+    .pac-matched { color: #066466; }
+    .pac-icon { display: none; }
+</style>
+@endpush
+
 @section('navbar_title', 'Fasilitas Umum')
 @section('title', 'Kelola Fasilitas Umum')
 @section('page_title', 'Fasilitas Umum')
@@ -208,12 +235,33 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Latitude</label>
-                            <input type="text" name="latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                            <input type="text" name="latitude" id="create_latitude" required placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Longitude</label>
-                            <input type="text" name="longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                            <input type="text" name="longitude" id="create_longitude" required placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
                         </div>
+                    </div>
+
+                    {{-- Map Picker for Create --}}
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Pilih Lokasi di Peta</label>
+                        <div class="flex gap-2 mb-2">
+                            <div class="relative flex-1 group">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                                <input type="text" id="create_location_search" placeholder="Ketik nama lokasi atau alamat..." class="w-full pl-10 pr-12 py-3.5 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-bold placeholder-gray-300 transition-all" autocomplete="off">
+                                <button type="button" onclick="performSearch('create_location_search', 'create_map_picker')" class="absolute inset-y-1.5 right-1.5 px-3 bg-sidebar text-white rounded-xl hover:opacity-90 transition-all flex items-center justify-center shadow-sm" title="Cari Lokasi">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </button>
+                            </div>
+                            <button type="button" onclick="getCurrentLocation('create_latitude', 'create_longitude', 'create_map_picker')" class="px-4 py-3.5 bg-white border border-gray-100 text-gray-500 rounded-2xl hover:bg-gray-50 hover:text-sidebar transition-all shadow-sm flex items-center gap-2" title="Gunakan Lokasi Saya">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div id="create_map_picker" style="width: 100%; height: 250px; border-radius: 1.5rem; border: 1px solid #eee;"></div>
+                        <p class="text-[10px] text-gray-400 italic mt-1">*Cari lokasi di atas atau klik/geser marker pada peta</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -322,12 +370,33 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Latitude</label>
-                            <input type="text" name="latitude" x-model="editingFacility.latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                            <input type="text" name="latitude" id="edit_latitude" x-model="editingFacility.latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Longitude</label>
-                            <input type="text" name="longitude" x-model="editingFacility.longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                            <input type="text" name="longitude" id="edit_longitude" x-model="editingFacility.longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
                         </div>
+                    </div>
+
+                    {{-- Map Picker for Edit --}}
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Lokasi Fasilitas (Klik/Geser untuk mengubah)</label>
+                        <div class="flex gap-2 mb-2">
+                            <div class="relative flex-1 group">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                                <input type="text" id="edit_location_search" placeholder="Ketik nama lokasi atau alamat..." class="w-full pl-10 pr-12 py-3.5 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-bold placeholder-gray-300 transition-all" autocomplete="off">
+                                <button type="button" onclick="performSearch('edit_location_search', 'edit_map_picker')" class="absolute inset-y-1.5 right-1.5 px-3 bg-sidebar text-white rounded-xl hover:opacity-90 transition-all flex items-center justify-center shadow-sm" title="Cari Lokasi">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </button>
+                            </div>
+                            <button type="button" onclick="getCurrentLocation('edit_latitude', 'edit_longitude', 'edit_map_picker')" class="px-4 py-3.5 bg-white border border-gray-100 text-gray-500 rounded-2xl hover:bg-gray-50 hover:text-sidebar transition-all shadow-sm flex items-center gap-2" title="Gunakan Lokasi Saya">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div id="edit_map_picker" style="width: 100%; height: 250px; border-radius: 1.5rem; border: 1px solid #eee;"></div>
+                        <p class="text-[10px] text-gray-400 italic mt-1">*Cari lokasi di atas atau klik/geser marker pada peta</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -504,5 +573,209 @@ function facilityManager() {
         }
     }
 }
+
+// Map Initialization and Logic
+let createMap, editMap, createMarker, editMarker;
+
+function initGoogleMap(elementId, latId, lngId, initialPos = { lat: 2.3361, lng: 99.0631 }) {
+    if (typeof google === 'undefined') return null;
+
+    const mapElement = document.getElementById(elementId);
+    if (!mapElement) return null;
+
+    const map = new google.maps.Map(mapElement, {
+        zoom: 14,
+        center: initialPos,
+        mapTypeControl: false,
+        streetViewControl: false,
+    });
+
+    const marker = new google.maps.Marker({
+        position: initialPos,
+        map: map,
+        draggable: true,
+        animation: google.maps.Animation.DROP,
+    });
+
+    const updateInputs = (pos) => {
+        const latInput = document.getElementById(latId);
+        const lngInput = document.getElementById(lngId);
+        if (latInput) {
+            latInput.value = pos.lat().toFixed(8);
+            latInput.dispatchEvent(new Event('input'));
+        }
+        if (lngInput) {
+            lngInput.value = pos.lng().toFixed(8);
+            lngInput.dispatchEvent(new Event('input'));
+        }
+    };
+
+    // --- Location Search Feature using standard Autocomplete ---
+    const isCreate = elementId.includes('create');
+    const searchInput = document.getElementById(isCreate ? 'create_location_search' : 'edit_location_search');
+
+    if (searchInput && typeof google.maps.places.Autocomplete !== 'undefined') {
+        const autocomplete = new google.maps.places.Autocomplete(searchInput, {
+            componentRestrictions: { country: 'id' },
+            fields: ['geometry', 'formatted_address', 'name'],
+            types: ['geocode', 'establishment']
+        });
+
+        autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+            if (!place.geometry || !place.geometry.location) return;
+
+            const pos = place.geometry.location;
+            map.setCenter(pos);
+            map.setZoom(17);
+            marker.setPosition(pos);
+            updateInputs(pos);
+            searchInput.value = place.formatted_address || place.name;
+        });
+
+        // Handle Enter key
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch(isCreate ? 'create_location_search' : 'edit_location_search', elementId);
+            }
+        });
+    }
+    // --- End Search Feature ---
+
+    setTimeout(() => {
+        google.maps.event.trigger(map, "resize");
+        map.setCenter(initialPos);
+    }, 300);
+
+    map.addListener("click", (e) => {
+        marker.setPosition(e.latLng);
+        updateInputs(e.latLng);
+    });
+
+    marker.addListener("dragend", () => {
+        updateInputs(marker.getPosition());
+    });
+
+    return { map, marker };
+}
+
+// Monitor Alpine.js for modal changes
+setInterval(() => {
+    const el = document.querySelector('[x-data^="facilityManager"]');
+    if (el && window.Alpine) {
+        const data = Alpine.$data(el);
+        if (data) {
+            // Create Map
+            if (data.showCreateModal && !createMap && typeof google !== 'undefined') {
+                createMap = true;
+                setTimeout(() => {
+                    const res = initGoogleMap('create_map_picker', 'create_latitude', 'create_longitude');
+                    if(res) { createMap = res.map; createMarker = res.marker; }
+                    else { createMap = null; }
+                }, 500);
+            } else if (!data.showCreateModal) { createMap = null; }
+
+            // Edit Map
+            if (data.showEditModal && data.editingFacility && !editMap && typeof google !== 'undefined') {
+                editMap = true;
+                setTimeout(() => {
+                    const pos = { 
+                        lat: parseFloat(data.editingFacility.latitude) || 2.3361, 
+                        lng: parseFloat(data.editingFacility.longitude) || 99.0631 
+                    };
+                    const res = initGoogleMap('edit_map_picker', 'edit_latitude', 'edit_longitude', pos);
+                    if(res) { editMap = res.map; editMarker = res.marker; }
+                    else { editMap = null; }
+                }, 500);
+            } else if (!data.showEditModal) { editMap = null; }
+        }
+    }
+}, 500);
+
+// Get current user location
+function getCurrentLocation(latId, lngId, mapElementId) {
+    if (!navigator.geolocation) {
+        alert("Geolocation tidak didukung oleh browser Anda.");
+        return;
+    }
+
+    const btn = event.currentTarget;
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<svg class="animate-spin h-4 w-4 text-sidebar" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
+    btn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            
+            const latInput = document.getElementById(latId);
+            const lngInput = document.getElementById(lngId);
+            if (latInput) latInput.value = pos.lat.toFixed(8);
+            if (lngInput) lngInput.value = pos.lng.toFixed(8);
+
+            // Update Map & Marker
+            const isCreate = mapElementId.includes('create');
+            const map = isCreate ? createMap : editMap;
+            const marker = isCreate ? createMarker : editMarker;
+
+            if (map && marker && typeof map !== 'boolean') {
+                map.setCenter(pos);
+                map.setZoom(17);
+                marker.setPosition(pos);
+            }
+
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        },
+        (error) => {
+            console.error("Geolocation error:", error);
+            alert("Gagal mengambil lokasi: " + error.message);
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        },
+        { enableHighAccuracy: true }
+    );
+}
+
+// Perform Geocoding Search
+function performSearch(inputId, mapElementId) {
+    const query = document.getElementById(inputId).value;
+    if (!query || query.trim().length < 3) return;
+
+    const isCreate = mapElementId.includes('create');
+    const map = isCreate ? createMap : editMap;
+    const marker = isCreate ? createMarker : editMarker;
+    const latId = isCreate ? 'create_latitude' : 'edit_latitude';
+    const lngId = isCreate ? 'create_longitude' : 'edit_longitude';
+
+    if (!map || typeof map === 'boolean') return;
+
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ 
+        address: query, 
+        componentRestrictions: { country: 'id' } 
+    }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            const pos = results[0].geometry.location;
+            map.setCenter(pos);
+            map.setZoom(17);
+            marker.setPosition(pos);
+            
+            const latInput = document.getElementById(latId);
+            const lngInput = document.getElementById(lngId);
+            if (latInput) latInput.value = pos.lat().toFixed(8);
+            if (lngInput) lngInput.value = pos.lng().toFixed(8);
+            
+            document.getElementById(inputId).value = results[0].formatted_address;
+        } else {
+            console.warn('Geocode failed:', status);
+        }
+    });
+}
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places&callback=Function.prototype" async defer></script>
 @endsection

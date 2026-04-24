@@ -44,7 +44,6 @@ class DestinationRequest extends FormRequest
             'longitude' => 'required|numeric|between:-180,180',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'cover' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'rating' => 'nullable|numeric|between:0,5',
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
         ];
@@ -76,8 +75,6 @@ class DestinationRequest extends FormRequest
             'cover.image' => 'The cover must be an image file.',
             'cover.mimes' => 'The cover must be a JPEG, PNG, or WebP image.',
             'cover.max' => 'The cover must not exceed 2 MB.',
-            'rating.numeric' => 'The rating must be a valid number.',
-            'rating.between' => 'The rating must be between 0 and 5.',
         ];
     }
 
