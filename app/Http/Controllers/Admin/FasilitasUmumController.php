@@ -69,7 +69,7 @@ class FasilitasUmumController extends BaseAdminController
         ]);
 
         try {
-            $validated['is_active'] = $request->has('is_active');
+            $validated['is_active'] = $request->boolean('is_active');
             
             if (isset($validated['available_services']) && $validated['available_services']) {
                 $validated['available_services'] = array_values(array_filter(array_map('trim', explode(',', $validated['available_services']))));
@@ -152,7 +152,7 @@ class FasilitasUmumController extends BaseAdminController
         ]);
 
         try {
-            $validated['is_active'] = $request->has('is_active');
+            $validated['is_active'] = $request->boolean('is_active');
             
             if (isset($validated['available_services']) && $validated['available_services']) {
                 $validated['available_services'] = array_values(array_filter(array_map('trim', explode(',', $validated['available_services']))));

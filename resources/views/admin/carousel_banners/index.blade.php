@@ -60,7 +60,7 @@
             
             <!-- Slide List Card -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-8">
                     <h3 class="font-bold text-gray-800 text-lg">Urutan Slide Tampilan Utama</h3>
                     <div class="text-xs text-gray-400 font-medium flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                         Drag Handle 
@@ -132,69 +132,6 @@
                 </div>
             </div>
 
-            <!-- Carousel Global Settings -->
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="p-2 bg-sidebar/10 rounded-xl text-sidebar">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    </div>
-                    <h3 class="font-bold text-gray-800 text-lg">Pengaturan Kontrol Carousel</h3>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <!-- Setting 1 -->
-                    <div class="p-5 border border-gray-100 rounded-2xl flex items-center justify-between bg-gray-50/50">
-                        <div>
-                            <p class="font-bold text-gray-800 text-sm">Auto-play Slides</p>
-                            <p class="text-xs text-gray-400 mt-0.5">Slide akan berganti otomatis</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" checked class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
-                        </label>
-                    </div>
-                    <!-- Setting 2 -->
-                    <div class="p-5 border border-gray-100 rounded-2xl flex items-center justify-between bg-gray-50/50">
-                        <div>
-                            <p class="font-bold text-gray-800 text-sm">Tampilkan Dots</p>
-                            <p class="text-xs text-gray-400 mt-0.5">Navigasi titik di bagian bawah</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" checked class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
-                        </label>
-                    </div>
-                    <!-- Setting 3 -->
-                    <div class="p-5 border border-gray-100 rounded-2xl flex items-center justify-between bg-gray-50/50">
-                        <div>
-                            <p class="font-bold text-gray-800 text-sm">Gesture Swipe</p>
-                            <p class="text-xs text-gray-400 mt-0.5">Mendukung geser pada layar sentuh</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" checked class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
-                        </label>
-                    </div>
-                    <!-- Setting 4 -->
-                    <div class="p-5 border border-gray-100 rounded-2xl flex items-center justify-between bg-gray-50/50">
-                        <div>
-                            <p class="font-bold text-gray-800 text-sm">Interval Transisi</p>
-                            <p class="text-xs text-gray-400 mt-0.5">Detik antara pergantian slide</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <input type="number" value="3.5" step="0.5" class="w-16 border border-gray-200 rounded-xl px-3 py-1.5 text-center font-medium text-sm focus:ring-2 focus:ring-sidebar/20 outline-none">
-                            <span class="text-xs text-gray-400">detik</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex justify-end">
-                    <button class="px-6 py-3 bg-[#6349A5] hover:bg-[#523A91] text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-purple-900/20">
-                        Simpan Semua Perubahan
-                    </button>
-                </div>
-            </div>
-            
         </div>
 
         <!-- Right Column: Mobile Preview -->

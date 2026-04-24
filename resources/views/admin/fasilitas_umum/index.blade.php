@@ -310,7 +310,8 @@
                             <p class="text-[11px] text-gray-400 mt-0.5">Aktifkan untuk menampilkan di aplikasi</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="is_active" checked class="sr-only peer">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" x-model="createIsActive" class="sr-only peer">
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
                         </label>
                     </div>
@@ -454,7 +455,8 @@
                             <p class="text-[11px] text-gray-400 mt-0.5">Aktifkan untuk menampilkan di aplikasi</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="is_active" :checked="editingFacility.is_active" class="sr-only peer">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" x-model="editingFacility.is_active" class="sr-only peer">
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
                         </label>
                     </div>
@@ -478,11 +480,12 @@ function facilityManager() {
         showCreateModal: false,
         showEditModal: false,
         loading: false,
+        createIsActive: true,
+        editingFacility: {},
+        createFileName: '',
         activeType: '{{ request('type', 'Semua') }}',
         searchQuery: '{{ request('search', '') }}',
         statusFilter: '{{ request('status', 'all') }}',
-        editingFacility: null,
-        createFileName: '',
         editFileName: '',
 
         filterByType(type) {
@@ -500,16 +503,21 @@ function facilityManager() {
         },
 
         async openEditModal(id) {
+            if (!id) return;
             this.loading = true;
             this.showEditModal = true;
-            this.editingFacility = null;
+            this.editingFacility = {};
             this.editFileName = '';
             try {
                 const response = await fetch(`/admin/fasilitas-umum/${id}/edit`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
-                this.editingFacility = await response.json();
+                const data = await response.json();
+                // Ensure ID is present in the object
+                if (data && !data._id && data.id) data._id = data.id;
+                this.editingFacility = data;
             } catch (error) {
+                console.error(error);
                 alert('Gagal mengambil data fasilitas');
                 this.showEditModal = false;
             } finally {
@@ -545,13 +553,19 @@ function facilityManager() {
         },
 
         async submitUpdate() {
+            const facilityId = this.editingFacility._id || this.editingFacility.id;
+            if (!facilityId) {
+                alert('ID Fasilitas tidak ditemukan');
+                return;
+            }
+
             this.loading = true;
             const form = event.target;
             const formData = new FormData(form);
             formData.append('_method', 'PUT');
             
             try {
-                const response = await fetch(`/admin/fasilitas-umum/${this.editingFacility._id}`, {
+                const response = await fetch(`/admin/fasilitas-umum/${facilityId}`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -566,6 +580,7 @@ function facilityManager() {
                     alert(result.message || 'Gagal memperbarui fasilitas');
                 }
             } catch (error) {
+                console.error(error);
                 alert('Terjadi kesalahan saat menyimpan data');
             } finally {
                 this.loading = false;
