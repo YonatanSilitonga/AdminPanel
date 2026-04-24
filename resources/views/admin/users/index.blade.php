@@ -1,8 +1,10 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Manajemen Pengguna')
+
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
-    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
-    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-400">Administration</span>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-900 font-bold">Manajemen Pengguna</span>
 </nav>
@@ -12,8 +14,13 @@
 
 <div x-data="{
     showDetailModal: false,
+    showEditModal: false,
+    showConfirmDelete: false,
+    showSuccessModal: false,
     loadingDetail: false,
     detailUser: null,
+    userToDelete: { id: null, name: '' },
+    successMessage: '',
     
     getInitials(name) {
         if (!name) return 'U';
@@ -24,14 +31,6 @@
         this.showDetailModal = true;
         this.loadingDetail = true;
         
-        // Pre-populate with data we already have for instant response
-        this.detailUser = {
-            user: userBase,
-            initials: this.getInitials(userBase.name),
-            stats: { reviews: '...', trips: '...', wishlists: '...' },
-            activities: []
-        };
-        
         try {
             const response = await fetch(`/admin/users/${userBase.id}/activity`, {
                 headers: {
@@ -40,375 +39,385 @@
                 }
             });
             const fullData = await response.json();
-            
-            // Merge full data with base info
-            this.detailUser = { ...this.detailUser, ...fullData };
+            this.detailUser = fullData;
         } catch (error) {
-            console.error('Error fetching user details:', error);
-            alert('Gagal memuat detail lengkap pengguna.');
+            console.error('Error:', error);
+            alert('Gagal memuat detail.');
         } finally {
             this.loadingDetail = false;
+        }
+    },
+
+    async openUserEdit(user) {
+        this.detailUser = { user: user };
+        this.showEditModal = true;
+    },
+
+    confirmDelete(userId, userName) {
+        this.userToDelete = { id: userId, name: userName };
+        this.showConfirmDelete = true;
+        this.showDetailModal = false; // Close detail modal if open
+    },
+
+    async processDelete() {
+        if (!this.userToDelete.id) return;
+        
+        try {
+            const response = await fetch(`/admin/users/${this.userToDelete.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                this.successMessage = result.message;
+                this.showConfirmDelete = false;
+                this.showSuccessModal = true;
+                setTimeout(() => window.location.reload(), 2000);
+            }
+        } catch (error) {
+            alert('Gagal menghapus akun.');
         }
     }
 }">
 
-    {{-- /////////////////////////////////// --}}
-    {{-- DESKTOP VIEW (ADMIN TABLE LAYOUT)   --}}
-    {{-- /////////////////////////////////// --}}
-    <div class="hidden md:block">
-        {{-- Status Bar / Statistics --}}
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 mb-8">
-            <div class="grid grid-cols-4 divide-x divide-gray-100">
-                {{-- Total Users --}}
-                <div class="flex items-center gap-5 px-6 first:pl-0">
-                    <div class="w-1.5 h-12 rounded-full bg-[#006466]"></div>
-                    <div>
-                        <p class="text-3xl font-extrabold text-[#006466] leading-none mb-1">{{ number_format($stats['total'] ?? 0) }}</p>
-                        <p class="text-sm font-bold text-gray-400">Total</p>
-                    </div>
+    <!-- Stats Overview -->
+    <div class="bg-white rounded-[20px] border border-gray-100 p-8 mb-8 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+            <div class="flex items-center gap-4 px-6 first:pl-0">
+                <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
+                <div>
+                    <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($stats['total'] ?? 0) }}</p>
+                    <p class="text-[13px] font-bold text-gray-400">Total</p>
                 </div>
-
-                {{-- Active Users --}}
-                <div class="flex items-center gap-5 px-8">
-                    <div class="w-1.5 h-12 rounded-full bg-[#00A884]"></div>
-                    <div>
-                        <p class="text-3xl font-extrabold text-[#00A884] leading-none mb-1">{{ number_format($stats['active'] ?? 0) }}</p>
-                        <p class="text-sm font-bold text-gray-400">Aktif</p>
-                    </div>
+            </div>
+            <div class="flex items-center gap-4 px-8">
+                <div class="w-1 h-10 bg-emerald-500 rounded-full"></div>
+                <div>
+                    <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($stats['active'] ?? 0) }}</p>
+                    <p class="text-[13px] font-bold text-gray-400">Aktif Hari Ini</p>
                 </div>
-
-                {{-- Guest Sessions --}}
-                <div class="flex items-center gap-5 px-8">
-                    <div class="w-1.5 h-12 rounded-full bg-[#FF9F1C]"></div>
-                    <div>
-                        <p class="text-3xl font-extrabold text-[#FF9F1C] leading-none mb-1">{{ number_format($stats['guests'] ?? 0) }}</p>
-                        <p class="text-sm font-bold text-gray-400">Guest Sessions</p>
-                    </div>
+            </div>
+            <div class="flex items-center gap-4 px-8">
+                <div class="w-1 h-10 bg-orange-400 rounded-full"></div>
+                <div>
+                    <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($stats['guests'] ?? 0) }}</p>
+                    <p class="text-[13px] font-bold text-gray-400">Guest Sessions</p>
                 </div>
-
-                {{-- Suspended Users --}}
-                <div class="flex items-center gap-5 px-8 last:pr-0">
-                    <div class="w-1.5 h-12 rounded-full bg-[#EF4444]"></div>
-                    <div>
-                        <p class="text-3xl font-extrabold text-[#EF4444] leading-none mb-1">{{ number_format($stats['suspended'] ?? 0) }}</p>
-                        <p class="text-sm font-bold text-gray-400">Suspended</p>
-                    </div>
+            </div>
+            <div class="flex items-center gap-4 px-8 last:pr-0">
+                <div class="w-1 h-10 bg-red-400 rounded-full"></div>
+                <div>
+                    <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($stats['suspended'] ?? 0) }}</p>
+                    <p class="text-[13px] font-bold text-gray-400">Suspended</p>
                 </div>
             </div>
         </div>
+    </div>
 
-        {{-- Search & Filters --}}
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-wrap items-center gap-4">
-                <div class="relative w-72">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4">
-                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </span>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau email..."
-                        class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-400 shadow-sm transition-all">
-                </div>
+    <!-- Filter Bar -->
+    <div class="bg-white rounded-[20px] border border-gray-100 p-6 mb-6 shadow-sm">
+        <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-wrap items-center gap-4">
+            <div class="relative flex-grow max-w-md">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </span>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari pengguna..." 
+                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium placeholder-gray-400 focus:border-emerald-500 transition-all shadow-sm">
+            </div>
+            
+            <select name="status" onchange="this.form.submit()" 
+                class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
+                <option value="">Semua Status</option>
+                <option value="active" @selected(request('status') === 'active')>Aktif</option>
+                <option value="inactive" @selected(request('status') === 'inactive')>Suspended</option>
+            </select>
+
+            <div class="flex items-center gap-3">
+                <span class="text-[13px] font-bold text-gray-400">Dari:</span>
+                <input type="date" name="start_date" value="{{ request('start_date') }}" onchange="this.form.submit()" 
+                    class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium text-gray-500 shadow-sm focus:border-emerald-500 transition-all">
                 
-                <select name="role" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm font-medium text-gray-600 shadow-sm hover:border-sidebar/30 transition-all">
-                    <option value="">Semua Role</option>
-                    @foreach($roles ?? ['user', 'admin'] as $role)
-                        <option value="{{ $role }}" @selected(request('role') === $role)>
-                            {{ ucfirst($role) }}
-                        </option>
+                <span class="text-[13px] font-bold text-gray-400">Hingga:</span>
+                <input type="date" name="end_date" value="{{ request('end_date') }}" onchange="this.form.submit()" 
+                    class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium text-gray-500 shadow-sm focus:border-emerald-500 transition-all">
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden mb-8">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-white border-b border-gray-50">
+                        <th class="px-8 py-5 text-[12px] font-bold text-gray-400 uppercase tracking-widest">Avatar</th>
+                        <th class="px-8 py-5 text-[12px] font-bold text-gray-400 uppercase tracking-widest">Nama</th>
+                        <th class="px-8 py-5 text-[12px] font-bold text-gray-400 uppercase tracking-widest">Email</th>
+                        <th class="px-8 py-5 text-[12px] font-bold text-gray-400 uppercase tracking-widest">Terdaftar</th>
+                        <th class="px-8 py-5 text-[12px] font-bold text-gray-400 uppercase tracking-widest">Last Active</th>
+                        <th class="px-8 py-5 text-[12px] font-bold text-gray-400 uppercase tracking-widest">Status</th>
+                        <th class="px-8 py-5 text-right text-[12px] font-bold text-gray-400 uppercase tracking-widest">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    @forelse($users as $user)
+                    <tr class="hover:bg-gray-50/50 transition-all group">
+                        <td class="px-8 py-5">
+                            <div class="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center border border-emerald-100">
+                                <span class="text-[14px] font-bold text-emerald-700" x-text="getInitials('{{ $user->name }}')"></span>
+                            </div>
+                        </td>
+                        <td class="px-8 py-5">
+                            <span class="text-[15px] font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{{ $user->name }}</span>
+                        </td>
+                        <td class="px-8 py-5">
+                            <span class="text-[14px] font-medium text-gray-400">{{ $user->email }}</span>
+                        </td>
+                        <td class="px-8 py-5">
+                            <span class="text-[14px] font-medium text-gray-600">{{ $user->created_at->format('j M Y') }}</span>
+                        </td>
+                        <td class="px-8 py-5">
+                            <span class="text-[14px] font-medium text-gray-400">{{ $user->updated_at ? $user->updated_at->diffForHumans() : 'N/A' }}</span>
+                        </td>
+                        <td class="px-8 py-5">
+                            @if($user->is_active)
+                                <span class="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-[11px] font-bold rounded-lg">Aktif</span>
+                            @else
+                                <span class="px-3 py-1.5 bg-red-50 text-red-500 text-[11px] font-bold rounded-lg">Suspended</span>
+                            @endif
+                        </td>
+                        <td class="px-8 py-5 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button @click="openUserDetail({ id: '{{ $user->_id }}' })" 
+                                    class="p-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg hover:bg-emerald-700 hover:text-white transition-all shadow-sm"
+                                    title="Detail">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                </button>
+                                <button @click="openUserEdit({ id: '{{ $user->_id }}', name: '{{ $user->name }}', email: '{{ $user->email }}', is_active: {{ $user->is_active ? 'true' : 'false' }} })" 
+                                    class="p-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                                    title="Edit">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                                <button @click="confirmDelete('{{ $user->_id }}', '{{ $user->name }}')" 
+                                    class="p-2 bg-red-50 text-red-500 border border-red-100 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                    title="Hapus">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-8 py-20 text-center text-gray-400">Belum ada pengguna.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($users->hasPages())
+        <div class="px-8 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
+            <p class="text-[13px] text-gray-400 font-medium">Menampilkan {{ $users->firstItem() }}-{{ $users->lastItem() }} dari {{ $users->total() }} pengguna</p>
+            <div class="flex items-center gap-2">
+                @if($users->onFirstPage())
+                    <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Prev</span>
+                @else
+                    <a href="{{ $users->previousPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Prev</a>
+                @endif
+                
+                <div class="flex items-center gap-1">
+                    @foreach($users->getUrlRange(max(1, $users->currentPage()-1), min($users->lastPage(), $users->currentPage()+1)) as $page => $url)
+                        <a href="{{ $url }}" class="w-9 h-9 flex items-center justify-center text-[13px] font-bold {{ $page == $users->currentPage() ? 'bg-emerald-700 text-white shadow-lg shadow-emerald-700/30' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-all">{{ $page }}</a>
                     @endforeach
-                </select>
+                </div>
 
-                <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm font-medium text-gray-600 shadow-sm hover:border-sidebar/30 transition-all">
-                    <option value="">Semua Status</option>
-                    <option value="active" @selected(request('status') === 'active')>Aktif</option>
-                    <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
-                </select>
-            </form>
-        </div>
-
-        {{-- Table --}}
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden mb-6">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-50">
-                    <thead class="bg-white">
-                        <tr>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Avatar</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Nama</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Email</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Terdaftar</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Last Active</th>
-                            <th class="px-8 py-5 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
-                            <th class="px-8 py-5 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-50">
-                        @forelse($users as $user)
-                            <tr class="hover:bg-gray-50/30 transition-colors group">
-                                <td class="px-8 py-5">
-                                    <div class="w-10 h-10 bg-sidebar/10 rounded-full flex items-center justify-center border border-sidebar/5 group-hover:bg-sidebar/20 transition-all">
-                                        <span class="text-sm font-bold text-sidebar" x-text="getInitials({{ json_encode($user->name) }})"></span>
-                                    </div>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <p class="text-[15px] font-bold text-gray-800 leading-none group-hover:text-sidebar transition-all">{{ $user->name }}</p>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <p class="text-sm font-medium text-gray-500">{{ $user->email }}</p>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <p class="text-sm font-medium text-gray-600">{{ $user->created_at->format('d M Y') }}</p>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <p class="text-sm font-medium text-gray-400 italic">
-                                        {{ $user->updated_at ? $user->updated_at->diffForHumans() : 'N/A' }}
-                                    </p>
-                                </td>
-                                <td class="px-8 py-5 text-center">
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold {{ ($user->is_active ?? false) ? 'bg-[#E6F6F2] text-[#00A884]' : 'bg-gray-100 text-gray-400' }}">
-                                        <div class="w-1.5 h-1.5 {{ ($user->is_active ?? false) ? 'bg-[#00A884]' : 'bg-gray-400' }} rounded-full"></div>
-                                        {{ ($user->is_active ?? false) ? 'Aktif' : 'Nonaktif' }}
-                                    </span>
-                                </td>
-                                <td class="px-8 py-5 text-right">
-                                    <div class="flex items-center justify-end">
-                                        <button @click="openUserDetail({ id: '{{ $user->_id }}', name: '{{ $user->name }}', email: '{{ $user->email }}', is_active: {{ $user->is_active ? 'true' : 'false' }} })" 
-                                           class="flex items-center justify-center gap-2 px-6 py-2.5 bg-green-500 text-white rounded-full font-bold text-xs hover:bg-green-600 transition-all shadow-lg shadow-green-500/30">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                            Detail
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-8 py-20 text-center text-gray-400">
-                                    <div class="flex flex-col items-center">
-                                        <svg class="w-16 h-16 mb-4 opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                        <p class="text-lg font-medium">Tidak ada data pengguna.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        @if(isset($users) && method_exists($users, 'links'))
-        <div class="px-10 py-6 border-t border-gray-50 flex items-center justify-between">
-            <div class="text-sm font-medium text-gray-400 text-[13px]">
-                Menampilkan {{ $users->firstItem() ?? 0 }}-{{ $users->lastItem() ?? 0 }} dari {{ $users->total() }} Pengguna
-            </div>
-            <div>
-                {{ $users->appends(request()->query())->links('vendor.pagination.tailwind-custom') }}
+                @if($users->hasMorePages())
+                    <a href="{{ $users->nextPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Next</a>
+                @else
+                    <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Next</span>
+                @endif
             </div>
         </div>
         @endif
     </div>
 
-
-    {{-- /////////////////////////////////// --}}
-    {{-- MOBILE VIEW (FRONTEND APP LAYOUT)   --}}
-    {{-- /////////////////////////////////// --}}
-    <div class="md:hidden block pb-24 bg-[#F2F3F8] min-h-screen -mx-5 -mt-6 sm:-mx-6 sm:-mt-8 font-sans">
-        <!-- Top Header Mobile -->
-        <div class="bg-gradient-to-b from-sidebar to-[#055355] rounded-b-[2.5rem] px-6 py-12 text-white shadow-xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+    <!-- Detail User Modal -->
+    <template x-if="showDetailModal">
+        <div class="fixed inset-0 z-[100] flex items-center justify-center px-4">
+            <div @click="showDetailModal = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
             
-            <div class="flex items-center gap-4 mb-6 relative">
-                <a href="{{ route('admin.dashboard') }}" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-sm">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
-                </a>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Pengguna</h1>
-                    <p class="text-xs text-white/70 font-medium">Manajemen Akses & Member</p>
-                </div>
-            </div>
-
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-4 flex items-center">
-                    <svg class="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </span>
-                <input type="text" placeholder="Cari nama atau email..." class="w-full bg-white/10 backdrop-blur-md placeholder-white/50 text-white rounded-2xl py-4 pl-12 pr-4 outline-none border border-white/10 focus:bg-white/20 transition-all font-medium">
-            </div>
-        </div>
-
-        <!-- Scrollable Cards -->
-        <div class="px-6 py-8 space-y-4">
-            @forelse($users as $user)
-                <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex items-center justify-between group transition-all">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl bg-sidebar/5 flex items-center justify-center border border-sidebar/5">
-                            <span class="font-extrabold text-sidebar" x-text="getInitials({{ json_encode($user->name) }})"></span>
-                        </div>
-                        <div>
-                            <p class="font-bold text-gray-900 leading-tight mb-1">{{ $user->name }}</p>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-extrabold uppercase tracking-widest text-sidebar bg-sidebar/5 px-2 py-0.5 rounded-md">{{ $user->role }}</span>
-                                <span class="text-[11px] text-gray-400 font-medium">{{ $user->email }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex flex-col items-end gap-3">
-                        <div class="w-8 h-4 rounded-full relative transition-colors {{ $user->is_active ? 'bg-[#00A884]' : 'bg-gray-200' }}">
-                            <div class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-all shadow-sm {{ $user->is_active ? 'translate-x-4' : '' }}"></div>
-                        </div>
-                        <button @click="openUserDetail({ id: '{{ $user->_id }}', name: '{{ $user->name }}', email: '{{ $user->email }}', is_active: {{ $user->is_active ? 'true' : 'false' }} })" class="text-xs font-extrabold text-red-500 uppercase tracking-widest">Detail</button>
-                    </div>
-                </div>
-            @empty
-                <div class="text-center text-gray-400 py-10">Belum ada pengguna terdaftar.</div>
-            @endforelse
-        </div>
-    </div>
-
-
-    {{-- Detail User Modal --}}
-    <div x-show="showDetailModal" 
-         class="fixed inset-0 z-[100] overflow-y-auto" 
-         x-cloak
-         role="dialog"
-         aria-modal="true">
-        
-        {{-- Backdrop --}}
-        <div x-show="showDetailModal"
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-gray-900/40 backdrop-blur-[2px] transition-opacity"
-             @click="showDetailModal = false"></div>
-
-        {{-- Modal Content --}}
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div x-show="showDetailModal"
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
-                
-                {{-- Modal Header --}}
-                <div class="px-8 py-6 flex items-center justify-between border-b border-gray-50 bg-white/50 backdrop-blur-md sticky top-0 z-10">
-                    <h3 class="text-xl font-bold text-gray-800">Detail Pengguna</h3>
-                    <button @click="showDetailModal = false" class="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-50 rounded-xl">
+            <div class="relative w-full max-w-[580px] bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                <!-- Header -->
+                <div class="px-8 py-6 flex items-center justify-between border-b border-gray-50">
+                    <h3 class="text-[18px] font-bold text-gray-900">Detail Pengguna</h3>
+                    <button @click="showDetailModal = false" class="text-gray-400 hover:text-gray-900 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <div class="p-10 no-scrollbar overflow-y-auto max-h-[75vh]">
-                    {{-- Loading Background State (Small Spinner instead of full screen) --}}
-                    <div x-show="loadingDetail && !detailUser" class="py-20 flex flex-col items-center justify-center">
-                        <div class="w-12 h-12 border-4 border-sidebar/10 border-t-sidebar rounded-full animate-spin mb-4"></div>
-                        <p class="text-sm font-bold text-gray-400">Memuat data...</p>
+                <div class="p-10">
+                    <div x-show="loadingDetail" class="flex flex-col items-center py-10">
+                        <div class="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
                     </div>
 
-                    {{-- Data Content --}}
-                    <div x-show="detailUser" class="space-y-12">
-                        {{-- Profile Info --}}
+                    <div x-show="!loadingDetail && detailUser" class="space-y-10">
+                        <!-- Profile HN Section -->
                         <div class="flex flex-col items-center text-center">
-                            <div class="relative mb-6">
-                                <div class="w-32 h-32 bg-sidebar/5 rounded-full flex items-center justify-center border-4 border-white shadow-xl ring-1 ring-gray-100 overflow-hidden">
-                                    <span class="text-4xl font-black text-sidebar/80 tracking-tighter" x-text="detailUser ? detailUser.initials : ''"></span>
-                                </div>
+                            <div class="w-[100px] h-[100px] bg-emerald-50 rounded-full flex items-center justify-center border-4 border-white shadow-lg mb-4">
+                                <span class="text-3xl font-bold text-emerald-700" x-text="detailUser.initials"></span>
                             </div>
-                            <h3 class="text-3xl font-bold text-gray-900 mb-1" x-text="detailUser ? detailUser.user.name : ''"></h3>
-                            <p class="text-[15px] font-medium text-gray-400 mb-5" x-text="detailUser ? detailUser.user.email : ''"></p>
-                            
-                            <template x-if="detailUser && detailUser.user.is_active">
-                                <span class="px-5 py-1.5 bg-[#E6F6F2] text-[#00A884] text-xs font-bold uppercase tracking-widest rounded-full">Aktif</span>
-                            </template>
-                            <template x-if="detailUser && !detailUser.user.is_active">
-                                <span class="px-5 py-1.5 bg-gray-100 text-gray-400 text-xs font-bold uppercase tracking-widest rounded-full">Nonaktif</span>
-                            </template> 
+                            <h4 class="text-[22px] font-bold text-gray-900" x-text="detailUser.user.name"></h4>
+                            <p class="text-[15px] font-medium text-gray-400 mb-4" x-text="detailUser.user.email"></p>
+                            <span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[11px] font-extrabold uppercase tracking-widest rounded-full" 
+                                  x-text="detailUser.user.is_active ? 'AKTIF' : 'SUSPENDED'"></span>
                         </div>
 
-                        {{-- Stats Cards --}}
-                        <div class="grid grid-cols-3 gap-6">
-                            <div class="bg-gray-50/70 rounded-[2rem] p-7 text-center border border-gray-100/50 hover:bg-white hover:shadow-lg hover:shadow-gray-100 transition-all duration-300">
-                                <p class="text-3xl font-black text-gray-900 mb-1" x-text="detailUser ? detailUser.stats.reviews : 0"></p>
+                        <!-- Mini Stats Grid -->
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-gray-50 rounded-[1.5rem] p-6 text-center border border-gray-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-gray-100 group">
+                                <p class="text-[24px] font-bold text-gray-900 mb-0.5 group-hover:scale-110 transition-transform" x-text="detailUser.stats.reviews"></p>
                                 <p class="text-[13px] font-bold text-gray-400">Review</p>
                             </div>
-                            <div class="bg-gray-50/70 rounded-[2rem] p-7 text-center border border-gray-100/50 hover:bg-white hover:shadow-lg hover:shadow-gray-100 transition-all duration-300">
-                                <p class="text-3xl font-black text-gray-900 mb-1" x-text="detailUser ? detailUser.stats.trips : 0"></p>
+                            <div class="bg-gray-50 rounded-[1.5rem] p-6 text-center border border-gray-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-gray-100 group">
+                                <p class="text-[24px] font-bold text-gray-900 mb-0.5 group-hover:scale-110 transition-transform" x-text="detailUser.stats.trips"></p>
                                 <p class="text-[13px] font-bold text-gray-400">Trip</p>
                             </div>
-                            <div class="bg-gray-50/70 rounded-[2rem] p-7 text-center border border-gray-100/50 hover:bg-white hover:shadow-lg hover:shadow-gray-100 transition-all duration-300">
-                                <p class="text-3xl font-black text-gray-900 mb-1" x-text="detailUser ? detailUser.stats.wishlists : 0"></p>
+                            <div class="bg-gray-50 rounded-[1.5rem] p-6 text-center border border-gray-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-gray-100 group">
+                                <p class="text-[24px] font-bold text-gray-900 mb-0.5 group-hover:scale-110 transition-transform" x-text="detailUser.stats.wishlists"></p>
                                 <p class="text-[13px] font-bold text-gray-400">Wishlist</p>
                             </div>
                         </div>
 
-                        {{-- Activity Log --}}
-                        <div class="space-y-8">
-                            <div class="flex items-center gap-3 mb-2">
-                                <svg class="w-5 h-5 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <h4 class="text-lg font-bold text-gray-800">Riwayat Aktivitas</h4>
+                        <!-- Activity Timeline -->
+                        <div class="space-y-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <h5 class="text-[16px] font-bold text-gray-900">Riwayat Aktivitas</h5>
                             </div>
 
-                            <div class="relative space-y-8 pl-4">
-                                {{-- Timeline Line --}}
-                                <div class="absolute left-7 top-4 bottom-4 w-0.5 bg-gray-100"></div>
-
-                                <template x-for="activity in (detailUser ? detailUser.activities : [])" :key="activity.title">
-                                    <div class="relative flex items-center gap-6 group">
-                                        {{-- Icon Circle --}}
-                                        <div class="relative z-10 w-11 h-11 rounded-2xl flex items-center justify-center bg-[#E6F6F2] text-[#00A884] border-4 border-white shadow-sm transition-transform group-hover:scale-110">
-                                            {{-- Dynamic Icons based on type --}}
-                                            <template x-if="activity.icon === 'map'">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-                                            </template>
-                                            <template x-if="activity.icon === 'chat'">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                                            </template>
-                                            <template x-if="activity.icon === 'heart'">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                                            </template>
-                                            <template x-if="activity.icon === 'search'">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                            </template>
+                            <div class="relative space-y-8 pl-1">
+                                <div class="absolute left-[21px] top-4 bottom-4 w-[1.5px] bg-gray-100"></div>
+                                <template x-for="activity in detailUser.activities">
+                                    <div class="relative flex items-center gap-5">
+                                        <div class="relative z-10 w-11 h-11 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm text-emerald-600">
+                                            <template x-if="activity.icon === 'map'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg></template>
+                                            <template x-if="activity.icon === 'chat'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg></template>
+                                            <template x-if="activity.icon === 'heart'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></template>
+                                            <template x-if="activity.icon === 'search'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></template>
                                         </div>
                                         <div>
-                                            <p class="text-[15px] font-bold text-gray-800 leading-tight mb-1" x-text="activity.title"></p>
-                                            <p class="text-xs font-medium text-gray-400" x-text="activity.time"></p>
+                                            <p class="text-[14px] font-bold text-gray-800 leading-tight mb-0.5" x-text="activity.title"></p>
+                                            <p class="text-[12px] font-medium text-gray-400" x-text="activity.time"></p>
                                         </div>
                                     </div>
                                 </template>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {{-- Footer Footer Actions --}}
-                <div class="px-10 py-8 bg-gray-50/80 border-t border-gray-100 flex justify-end">
-                    <form :action="detailUser ? `/admin/users/${detailUser.user._id}` : '#'" method="POST" @submit.prevent="if(confirm('Apakah Anda yakin ingin menghapus akun ini?')) $el.submit()">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="flex items-center gap-3 px-8 py-3.5 bg-red-600 text-white rounded-2xl font-bold text-[15px] hover:bg-red-700 transition-all shadow-xl shadow-red-600/20 active:scale-95">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            Hapus Akun
-                        </button>
-                    </form>
+                        <!-- Modal Footer Action -->
+                        <div class="flex justify-center pt-4">
+                            <button @click="confirmDelete(detailUser.user._id, detailUser.user.name)" class="flex items-center gap-2.5 px-10 py-4 bg-[#EF4444] text-white rounded-2xl font-bold text-[15px] hover:bg-red-700 transition-all shadow-xl shadow-red-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Hapus Akun
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </template>
+
+    <!-- Edit User Modal -->
+    <template x-if="showEditModal">
+        <div class="fixed inset-0 z-[100] flex items-center justify-center px-4">
+            <div @click="showEditModal = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+            
+            <div class="relative w-full max-w-[480px] bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="px-8 py-6 flex items-center justify-between border-b border-gray-50">
+                    <h3 class="text-[18px] font-bold text-gray-900">Edit Pengguna</h3>
+                    <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-900 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form :action="`/admin/users/${detailUser.user.id}`" method="POST" class="p-8 space-y-5">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div>
+                        <label class="block text-[12px] font-bold text-gray-700 mb-2">Nama Lengkap</label>
+                        <input type="text" name="name" :value="detailUser.user.name" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium focus:border-emerald-500 transition-all shadow-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-bold text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" :value="detailUser.user.email" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium focus:border-emerald-500 transition-all shadow-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-bold text-gray-700 mb-2">Status Akun</label>
+                        <select name="is_active" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm focus:border-emerald-500 transition-all cursor-pointer">
+                            <option value="1" :selected="detailUser.user.is_active">Aktif</option>
+                            <option value="0" :selected="!detailUser.user.is_active">Suspended</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-4 flex items-center gap-3">
+                        <button type="button" @click="showEditModal = false" class="flex-1 py-3.5 text-[14px] font-bold text-gray-500 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all">Batal</button>
+                        <button type="submit" class="flex-1 py-3.5 text-[14px] font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-lg shadow-emerald-700/20">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- Custom Confirmation Modal -->
+    <template x-if="showConfirmDelete">
+        <div class="fixed inset-0 z-[200] flex items-center justify-center px-4">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showConfirmDelete = false"></div>
+            <div class="relative w-full max-w-[420px] bg-white rounded-[2.5rem] p-12 text-center animate-in zoom-in duration-300 shadow-2xl">
+                <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner ring-4 ring-red-50/50">
+                    <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-[22px] font-bold text-gray-900 mb-3">Konfirmasi Hapus</h3>
+                <p class="text-[15px] text-gray-500 font-medium leading-relaxed mb-10">
+                    Apakah Anda yakin ingin menghapus akun <span class="font-bold text-gray-900" x-text="userToDelete.name"></span>? Tindakan ini tidak dapat dibatalkan.
+                </p>
+                <div class="flex items-center gap-3">
+                    <button @click="showConfirmDelete = false" class="flex-1 py-4 text-[15px] font-bold text-gray-500 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all">Batal</button>
+                    <button @click="processDelete()" class="flex-1 py-4 text-[15px] font-bold text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-all shadow-xl shadow-red-200">Ya, Hapus</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Success Modal -->
+    <template x-if="showSuccessModal">
+        <div class="fixed inset-0 z-[200] flex items-center justify-center px-4">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+            <div class="relative w-full max-w-[420px] bg-white rounded-[2.5rem] p-12 text-center animate-in zoom-in duration-300">
+                <div class="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner ring-4 ring-emerald-50/50">
+                    <svg class="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-[22px] font-bold text-gray-900 mb-3">Akun Berhasil Dihapus</h3>
+                <p class="text-[15px] text-gray-500 font-medium leading-relaxed" x-text="successMessage"></p>
+            </div>
+        </div>
+    </template>
+
 </div>
 
 <style>
     [x-cloak] { display: none !important; }
-    
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-    /* Hide scrollbar for IE, Edge and Firefox */
-    .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-    }
 </style>
+
 @endsection

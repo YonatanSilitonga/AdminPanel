@@ -101,20 +101,11 @@
                     <a href="{{ route('admin.profile') }}" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors border-b border-gray-100">
                         👤 Profil Saya
                     </a>
-                    <a href="{{ route('admin.profile') }}" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors border-b border-gray-100">
-                        🔐 Ubah Password
-                    </a>
-                    <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors border-b border-gray-100">
-                        📊 Dashboard
-                    </a>
                     
                     <!-- Logout -->
-                    <form action="{{ route('admin.logout') }}" method="POST" class="block">
-                        @csrf
-                        <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors font-medium">
-                            🚪 Logout
-                        </button>
-                    </form>
+                    <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-logout-modal'))" class="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors font-medium block border-t border-gray-100 mt-1 pt-2">
+                        🚪 Logout
+                    </button>
                 </div>
             </div>
         </div>

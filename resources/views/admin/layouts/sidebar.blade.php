@@ -74,8 +74,8 @@
                 </svg>
             </button>
             <div x-show="open" x-transition class="ml-10 mt-1 space-y-1">
-                <a href="{{ route('admin.destinations.index') }}" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Kelola Destinasi</a>
-                <a href="#" class="block px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white transition-colors">Trending Destinasi</a>
+                <a href="{{ route('admin.destinations.index') }}" class="block px-4 py-2 text-sm rounded-lg {{ request()->routeIs('admin.destinations.index') ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white' }} transition-colors">Kelola Destinasi</a>
+                <a href="{{ route('admin.trending.index') }}" class="block px-4 py-2 text-sm rounded-lg {{ request()->routeIs('admin.trending.index') ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white' }} transition-colors">Trending Destinasi</a>
             </div>
         </div>
 
@@ -106,7 +106,7 @@
         </a>
 
         <!-- Berita & Promosi -->
-        <a href="#" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-gray-300 hover:bg-white/5 hover:text-white">
+        <a href="{{ route('admin.berita_promosi.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.berita_promosi.*') ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
             <svg class="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a2 2 0 002 2h4"></path>
@@ -204,15 +204,12 @@
 
     <!-- Logout Section -->
     <div class="px-5 py-6 mt-auto border-t border-white/10">
-        <form action="{{ route('admin.logout') }}" method="POST">
-            @csrf
-            <button type="submit" class="w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 text-gray-300 hover:bg-red-500/10 hover:text-red-400 group">
-                <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                </svg>
-                <span class="font-medium">Logout</span>
-            </button>
-        </form>
+        <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-logout-modal'))" class="w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 text-gray-300 hover:bg-red-500/10 hover:text-red-400 group">
+            <svg class="w-5 h-5 mr-3 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            <span class="font-medium">Logout</span>
+        </button>
     </div>
 </div>
 
