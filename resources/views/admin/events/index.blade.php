@@ -497,17 +497,6 @@
                             <input type="text" name="location" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
-                                <input type="text" name="latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
-                                <input type="text" name="longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
-                            </div>
-                        </div>
-
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Penyelenggara</label>
                             <input type="text" name="organizer" placeholder="Contoh: BPODT" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
