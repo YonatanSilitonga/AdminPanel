@@ -7,15 +7,11 @@
 
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium overflow-x-auto whitespace-nowrap">
-    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
-    <span class="mx-2 text-gray-300">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    </span>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-400">Content Management</span>
-    <span class="mx-2 text-gray-300">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    </span>
-    <span class="text-gray-400">Kelola Event</span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-900 font-bold">Kelola Event</span>
 </nav>
 @endsection
 
@@ -291,7 +287,7 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 transition-opacity bg-gray-500/20 backdrop-blur-sm" 
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" 
                  @click="showEditModal = false"></div>
 
             <!-- Modal Panel -->
@@ -443,7 +439,7 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 transition-opacity bg-gray-500/20 backdrop-blur-sm" 
+                 class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" 
                  @click="showCreateModal = false"></div>
 
             <!-- Modal Panel -->

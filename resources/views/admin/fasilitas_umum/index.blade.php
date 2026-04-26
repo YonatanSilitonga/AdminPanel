@@ -34,22 +34,25 @@
 
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium overflow-x-auto whitespace-nowrap">
-    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
-    <span class="mx-2 text-gray-300">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    </span>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-400">Content Management</span>
-    <span class="mx-2 text-gray-300">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    </span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-900 font-bold">Fasilitas Umum</span>
 </nav>
+@endsection
+
+@section('page_actions')
+<button @click="showCreateModal = true" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+    Tambah Fasilitas
+</button>
 @endsection
 
 @section('content')
 <div x-data="facilityManager()">
     <!-- Header Summary Panel & Add Button -->
-    <div class="flex flex-wrap items-center justify-between gap-6 mb-8">
+    <div class="flex flex-wrap items-center gap-6 mb-8">
         <!-- Filter Tabs (Matching Image) -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 flex flex-wrap gap-1">
             <template x-for="type in ['Semua', 'SPBU', 'Hotel', 'Resto', 'RS/Puskesmas', 'ATM']">
@@ -61,11 +64,6 @@
                 </button>
             </template>
         </div>
-        
-        <button @click="showCreateModal = true" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-            Tambah Fasilitas
-        </button>
     </div>
 
     <!-- Filters & Search Bar (Matching Image) -->
@@ -142,27 +140,19 @@
                                 <div class="text-[13px] text-gray-600 font-bold">{{ $facility->operational_hours }}</div>
                             </td>
                             <td class="px-10 py-6">
-                                @if($facility->is_active)
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 rounded-lg text-[11px] font-bold">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                        Aktif
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-500 rounded-lg text-[11px] font-bold">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                        Nonaktif
-                                    </span>
-                                @endif
+                                 @if($facility->is_active)
+                                     <span class="px-4 py-1.5 bg-[#E6F6F2] text-[#00A884] rounded-xl text-xs font-bold">Aktif</span>
+                                 @else
+                                     <span class="px-4 py-1.5 bg-red-50 text-red-500 rounded-xl text-xs font-bold">Nonaktif</span>
+                                 @endif
                             </td>
                             <td class="px-10 py-6 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <button @click="openEditModal('{{ $facility->_id }}')" class="flex items-center gap-1.5 px-4 py-2 bg-teal-50 text-teal-600 rounded-xl text-xs font-bold hover:bg-teal-100 transition-all">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                        Edit
+                                <div class="flex items-center justify-end gap-3">
+                                    <button @click="openEditModal('{{ $facility->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
-                                    <button @click="$dispatch('open-delete-modal', { action: '{{ route('admin.fasilitas_umum.destroy', $facility->_id) }}', title: 'Hapus Fasilitas', type: 'fasilitas', name: '{{ $facility->name }}' })" class="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-400 rounded-xl text-xs font-bold hover:bg-red-100 hover:text-red-500 transition-all">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        Hapus
+                                    <button @click="$dispatch('open-delete-modal', { action: '{{ route('admin.fasilitas_umum.destroy', $facility->_id) }}', title: 'Hapus Fasilitas', type: 'fasilitas', name: '{{ $facility->name }}' })" class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all" title="Hapus">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
                             </td>
@@ -198,9 +188,9 @@
     <!-- Create Modal -->
     <div x-show="showCreateModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/20 backdrop-blur-sm" @click="showCreateModal = false"></div>
+            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
 
-            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2.5rem] sm:my-8 text-gray-800">
+            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800">
                 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold">Tambah Fasilitas Umum</h3>
@@ -331,9 +321,9 @@
     <!-- Edit Modal -->
     <div x-show="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="showEditModal" class="fixed inset-0 transition-opacity bg-black/20 backdrop-blur-sm" @click="showEditModal = false"></div>
+            <div x-show="showEditModal" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showEditModal = false"></div>
 
-            <div x-show="showEditModal" class="inline-block w-full max-w-xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2.5rem] sm:my-8 text-gray-800">
+            <div x-show="showEditModal" class="inline-block w-full max-w-xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800">
                 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold">Edit Fasilitas Umum</h3>

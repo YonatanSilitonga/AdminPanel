@@ -43,14 +43,19 @@ class BaseAdminController extends Controller
     protected function logActivity(string $action, string $entityType, $entityId, ?array $oldValues = null, ?array $newValues = null): void
     {
         if ($this->admin) {
-            AdminActivityLog::log(
-                $action,
-                $entityType,
-                $entityId,
-                $oldValues,
-                $newValues,
-                $this->admin->id
-            );
+            $logData = [
+                'admin_id' => $this->admin->id,
+                'action' => $action,
+                'entity_type' => $entityType,
+                'entity_id' => $entityId,
+                'old_values' => $oldValues,
+                'new_values' => $newValues,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'created_at' => now(),
+            ];
+
+            \App\Jobs\ProcessAdminActivityLog::dispatch($logData)->afterResponse();
         }
     }
 

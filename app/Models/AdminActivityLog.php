@@ -120,36 +120,18 @@ class AdminActivityLog extends Model
         $newValues = null,
         $adminId = null
     ) {
-        $changes = null;
-
-        if ($oldValues && $newValues) {
-            $changes = [];
-            foreach ($newValues as $key => $value) {
-                if (isset($oldValues[$key]) && $oldValues[$key] != $value) {
-                    $changes[$key] = [
-                        'old' => $oldValues[$key],
-                        'new' => $value,
-                    ];
-                } elseif (!isset($oldValues[$key])) {
-                    $changes[$key] = [
-                        'old' => null,
-                        'new' => $value,
-                    ];
-                }
-            }
-        }
-
-        return static::create([
+        $logData = [
             'admin_id' => $adminId ?? auth('admin')->id(),
             'action' => $action,
             'entity_type' => $entityType,
             'entity_id' => $entityId,
             'old_values' => $oldValues,
             'new_values' => $newValues,
-            'changes' => $changes ?: null,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
-            'status' => 'success',
-        ]);
+            'created_at' => now(),
+        ];
+
+        return \App\Jobs\ProcessAdminActivityLog::dispatch($logData)->afterResponse();
     }
 }

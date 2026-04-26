@@ -56,15 +56,15 @@
         <!-- Stat 3 -->
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Booking Proses</p>
-                <h3 class="text-3xl font-bold text-orange-500">{{ number_format($stats['total_booking']) }}</h3>
+                <p class="text-sm font-medium text-gray-500 mb-1">Total Ulasan</p>
+                <h3 class="text-3xl font-bold text-orange-500">{{ number_format($stats['total_review']) }}</h3>
                 <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
-                    +{{ $stats['booking_increase'] }}% minggu ini
+                    +{{ $stats['review_increase'] }}% minggu ini
                 </p>
             </div>
             <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
             </div>
         </div>
     </div>
@@ -160,7 +160,8 @@
                 <div class="flex items-center justify-between mb-6">
                     <div>
                         <h3 class="text-lg font-bold text-gray-800">Urutan Trending di Aplikasi Mobile</h3>
-                        <p class="text-xs text-gray-400 mt-1">Drag & drop untuk mengubah urutan</p>
+                        <p class="text-xs text-gray-400 mt-1" x-show="mode === 'manual'">Drag & drop untuk mengubah urutan</p>
+                        <p class="text-xs text-teal-500 mt-1 font-medium" x-show="mode === 'automatic'">Mode Otomatis Aktif (Hanya Baca)</p>
                     </div>
                     <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">
                         <span x-text="trendingList.length"></span>/10 Destinasi
@@ -168,9 +169,9 @@
                 </div>
 
                 <div class="space-y-3" id="trending-sortable">
-                    <template x-for="(item, index) in trendingList" :key="item._id">
-                        <div class="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-all group" :data-id="item._id">
-                            <div class="cursor-grab text-gray-300 hover:text-gray-500 drag-handle">
+                    <template x-for="(item, index) in trendingList" :key="item.id_str || (item._id && item._id.$oid) || item._id">
+                        <div class="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-all group" :data-id="item.id_str || (item._id && item._id.$oid) || item._id">
+                            <div class="text-gray-300 hover:text-gray-500 drag-handle" :class="mode === 'manual' ? 'cursor-grab' : 'opacity-50 cursor-not-allowed'" x-show="mode === 'manual'">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                             </div>
                             <div class="w-8 h-8 rounded-full bg-sidebar flex items-center justify-center text-white text-[10px] font-bold" x-text="index + 1"></div>
@@ -188,14 +189,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <button @click="removeItem(item._id)" class="p-2 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100">
+                            <button x-show="mode === 'manual'" @click="removeItem(item.id_str || (item._id && item._id.$oid) || item._id)" class="p-2 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>
                     </template>
                 </div>
 
-                <div class="mt-8 pt-8 border-t border-gray-50">
+                <div class="mt-8 pt-8 border-t border-gray-50" x-show="mode === 'manual'">
                     <h4 class="font-bold text-gray-800 mb-4 text-sm">Tambah Destinasi ke Trending</h4>
                     <div class="relative" @click.away="searchResults = []">
                         <div class="relative">
@@ -209,7 +210,7 @@
                         </div>
 
                         <div x-show="searchResults.length > 0" class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden py-1">
-                            <template x-for="res in searchResults" :key="res._id">
+                            <template x-for="res in searchResults" :key="res.id_str || (res._id && res._id.$oid) || res._id">
                                 <div @click="addItem(res)" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0">
                                     <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
                                         <img :src="res.images && res.images[0] ? '/storage/' + res.images[0] : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=100&q=80'" class="w-full h-full object-cover">
@@ -227,7 +228,7 @@
                     </div>
                 </div>
 
-                <div class="mt-8 flex gap-4">
+                <div class="mt-8 flex gap-4" x-show="mode === 'manual'">
                     <button @click="saveOrder()" class="flex-1 py-4 bg-sidebar text-white rounded-2xl font-bold hover:bg-sidebar-hover transition-all shadow-lg shadow-sidebar/20 flex items-center justify-center gap-2 text-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                         Simpan Urutan Trending
@@ -258,7 +259,7 @@
                         <h4 class="text-[9px] font-bold text-gray-900 mb-3 uppercase tracking-wider">Trending</h4>
                         
                         <div class="space-y-3">
-                            <template x-for="(item, i) in trendingList.slice(0, 4)" :key="i">
+                            <template x-for="(item, i) in trendingList.slice(0, 4)" :key="item.id_str || (item._id && item._id.$oid) || item._id">
                                 <div class="relative w-full h-24 rounded-xl overflow-hidden shadow-sm">
                                     <img :src="item.images && item.images[0] ? '/storage/' + item.images[0] : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=400&q=80'" class="w-full h-full object-cover">
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
@@ -362,15 +363,33 @@ function trendingManager() {
                     animation: 150,
                     handle: '.drag-handle',
                     ghostClass: 'opacity-50',
+                    draggable: '[data-id]', // Hanya item dengan data-id yang dihitung
                     onEnd: (evt) => {
-                        const newOrder = [];
-                        const items = Array.from(el.children);
-                        items.forEach((item) => {
-                            const id = item.dataset.id;
-                            const found = this.trendingList.find(d => d._id === id || d.id_str === id);
-                            if (found) newOrder.push(found);
-                        });
-                        this.trendingList = newOrder;
+                        // 1. Dapatkan index yang jauh lebih akurat (mengabaikan <template>)
+                        const oldIdx = evt.oldDraggableIndex;
+                        const newIdx = evt.newDraggableIndex;
+
+                        if (oldIdx !== undefined && newIdx !== undefined && oldIdx !== newIdx) {
+                            // 2. Batalkan sementara perubahan DOM fisik
+                            const item = evt.item;
+                            const parent = item.parentNode;
+                            parent.removeChild(item); 
+                            
+                            const referenceNode = parent.children[evt.oldIndex];
+                            if (referenceNode) {
+                                parent.insertBefore(item, referenceNode);
+                            } else {
+                                parent.appendChild(item);
+                            }
+
+                            // 3. Paksa Alpine merender dengan Re-Assignment Array Baru!
+                            const newList = [...this.trendingList];
+                            const movedItem = newList.splice(oldIdx, 1)[0];
+                            newList.splice(newIdx, 0, movedItem);
+                            
+                            // Re-assign untuk memicu reactivity
+                            this.trendingList = newList;
+                        }
                     }
                 });
             }
@@ -434,7 +453,7 @@ function trendingManager() {
         },
 
         async saveOrder() {
-            const orders = this.trendingList.map(d => d._id || d.id_str);
+            const orders = this.trendingList.map(d => d.id_str || (d._id && d._id.$oid) || d._id);
             try {
                 const res = await fetch('{{ route("admin.trending.update-order") }}', {
                     method: 'POST',
@@ -518,7 +537,7 @@ function trendingManager() {
                     datasets: [
                         { label: 'View', data: [85, 72, 65, 55, 45], backgroundColor: '#066466', borderRadius: 6 },
                         { label: 'Wish', data: [35, 28, 22, 18, 15], backgroundColor: '#10B981', borderRadius: 6 },
-                        { label: 'Booking', data: [15, 12, 10, 8, 5], backgroundColor: '#F59E0B', borderRadius: 6 }
+                        { label: 'Review', data: [15, 12, 10, 8, 5], backgroundColor: '#F59E0B', borderRadius: 6 }
                     ]
                 },
                 options: {

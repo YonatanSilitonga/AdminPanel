@@ -31,24 +31,30 @@ class TrendingDestinationController extends BaseAdminController
                 return $dest;
             })->filter()->values();
         } else {
-            // Automatic mode: fetch based on rating/reviews
-            $trendingDestinations = MongoDestination::orderBy('average_rating', 'desc')
-                ->orderBy('total_reviews', 'desc')
-                ->limit(10)
+            // Automatic mode: fetch active destinations, calculate trending score in-memory
+            // Score logic: heavily favor total_reviews (popularity) combined with rating
+            $trendingDestinations = MongoDestination::where('is_active', true)
                 ->get()
+                ->sortByDesc(function($dest) {
+                    $reviewsCount = $dest->total_reviews;
+                    $avgRating = $dest->average_rating;
+                    // Formula: (Reviews * 10) + Rating
+                    return ($reviewsCount * 10) + $avgRating;
+                })
+                ->take(10)
                 ->map(function($dest) {
                     $dest->id_str = (string)$dest->_id;
                     return $dest;
-                });
+                })->values();
         }
 
         $stats = [
             'total_search' => 7842,
             'total_wishlist' => 1543,
-            'total_booking' => 342,
+            'total_review' => 842,
             'search_increase' => 12,
             'wishlist_increase' => 12,
-            'booking_increase' => 12
+            'review_increase' => 18
         ];
 
         return view('admin.destinations.trending', [

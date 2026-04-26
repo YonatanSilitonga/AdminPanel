@@ -228,13 +228,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const chartData = @json($chartData ?? []);
-        const labels = chartData.map(item => item.month ?? '-');
-        const destinations = chartData.map(item => item.destinations ?? 0);
-        const events = chartData.map(item => item.events ?? 0);
-
         const ctx = document.getElementById('monthlyChart');
-        if (ctx) {
+        if (!ctx) return;
+
+        // Function to initialize chart with data
+        const initChart = (chartData) => {
+            const labels = chartData.map(item => item.month ?? '-');
+            const destinations = chartData.map(item => item.destinations ?? 0);
+            const events = chartData.map(item => item.events ?? 0);
+
             new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -242,7 +244,7 @@
                     datasets: [
                         {
                             label: 'Destinasi',
-                            data: destinations.length ? destinations : [12, 35, 15, 60, 10, 85],
+                            data: destinations.length ? destinations : [0, 0, 0, 0, 0, 0],
                             borderColor: '#7e22ce', // purple-700
                             borderWidth: 2,
                             tension: 0.4,
@@ -252,7 +254,7 @@
                         },
                         {
                             label: 'Event',
-                            data: events.length ? events : [5, 18, 15, 35, 15, 60],
+                            data: events.length ? events : [0, 0, 0, 0, 0, 0],
                             borderColor: '#16a34a', // green-600
                             borderWidth: 2,
                             tension: 0.4,
@@ -295,7 +297,18 @@
                     }
                 }
             });
-        }
+        };
+
+        // Fetch chart data via AJAX
+        fetch('{{ route("admin.dashboard.chart-data") }}')
+            .then(response => response.json())
+            .then(data => {
+                initChart(data);
+            })
+            .catch(error => {
+                console.error('Error fetching chart data:', error);
+                initChart([]); // Show empty chart on error
+            });
     });
 </script>
 @endpush

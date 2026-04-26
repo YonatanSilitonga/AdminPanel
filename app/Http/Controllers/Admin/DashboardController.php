@@ -14,24 +14,18 @@ class DashboardController extends BaseAdminController
      */
     public function index()
     {
-        // Get statistics
+        // Get statistics (Basic stats are faster)
         $stats = $this->getDashboardStats();
 
         // Get recent activity
         $recentActivity = $this->getRecentActivity(10);
 
+        // Get pending items (use 0 or basic count)
+        $pendingReviews = $stats['pending_reviews'] ?? 0;
+        $pendingReports = $stats['pending_reports'] ?? 0;
 
-        // Get pending items
-        $pendingReviews = DB::table('reviews')
-            ->where('status', 'pending')
-            ->count();
-
-        $pendingReports = DB::table('reports')
-            ->where('status', 'pending')
-            ->count();
-
-        // Get chart data
-        $chartData = $this->getMonthlyChartData();
+        // Chart data is now handled via AJAX to speed up page load
+        $chartData = []; 
 
         return view('admin.dashboard.index', [
             'stats' => $stats,

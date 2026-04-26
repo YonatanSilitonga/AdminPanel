@@ -101,10 +101,17 @@
                         <!-- Breadcrumb -->
                         @yield('breadcrumb')
 
-                        <!-- Page Title -->
-                        <div class="mb-5">
-                            <h1 class="text-2xl font-bold text-dark">@yield('page_title')</h1>
-                            <p class="text-gray-600 mt-1">@yield('page_description')</p>
+                        <!-- Page Title & Actions -->
+                        <div class="mb-5 flex flex-col md:flex-row md:items-start md:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">@yield('page_title')</h1>
+                                <p class="text-gray-500 text-sm mt-1">@yield('page_description')</p>
+                            </div>
+                            @hasSection('page_actions')
+                            <div>
+                                @yield('page_actions')
+                            </div>
+                            @endif
                         </div>
 
                         <!-- Alerts -->

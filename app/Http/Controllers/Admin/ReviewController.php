@@ -93,7 +93,7 @@ class ReviewController extends BaseAdminController
                     'destination_id' => $review->destination_id ? (string) $review->destination_id : null,
                 ])->values()->all();
 
-                $summaryResponse = $this->sentimentService->summaryKeywords($summaryPayload, 20);
+                $summaryResponse = $this->sentimentService->summaryKeywords($summaryPayload, 50);
 
                 if ($summaryResponse['success'] ?? false) {
                     $summaryData = $summaryResponse['data'] ?? [];

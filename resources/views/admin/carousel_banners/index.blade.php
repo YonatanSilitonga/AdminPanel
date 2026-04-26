@@ -7,16 +7,19 @@
 
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium overflow-x-auto whitespace-nowrap">
-    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
-    <span class="mx-2 text-gray-300">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    </span>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-400">Content Management</span>
-    <span class="mx-2 text-gray-300">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    </span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-900 font-bold">Carousel dan Banner</span>
 </nav>
+@endsection
+
+@section('page_actions')
+<button @click="showCreateModal = true" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
+    <svg class="w-4 h-4" fill="none" stroke="currentcolor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+    Tambah Slide Baru
+</button>
 @endsection
 
 @section('content')
@@ -34,7 +37,7 @@
             <div class="h-8 w-px bg-gray-100 hidden sm:block"></div>
             <div>
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Slides</p>
-                <span class="font-bold text-gray-800 text-sm">{{ $banners->where('is_active', true)->count() }} Slide Aktif</span>
+                <span class="font-bold text-gray-800 text-sm">{{ $banners->getCollection()->where('is_active', true)->count() }} Slide Aktif</span>
             </div>
             <div class="h-8 w-px bg-gray-100 hidden sm:block"></div>
             <div>
@@ -45,11 +48,6 @@
                 </div>
             </div>
         </div>
-        
-        <button @click="showCreateModal = true" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentcolor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-            Tambah Slide Baru
-        </button>
     </div>
 
     <!-- Main Layout Grid -->
@@ -109,22 +107,21 @@
                                     <span class="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">{{ $banner->category_badge }}</span>
                                 @endif
 
-                                @if($banner->is_active)
-                                    <span class="text-green-500 font-bold text-[11px]">AKTIF</span>
-                                @else
-                                    <span class="text-gray-300 font-bold text-[11px]">NONAKTIF</span>
-                                @endif
+                                <button type="button" 
+                                        @click="toggleActive('{{ $banner->_id }}', {{ $banner->is_active ? 'false' : 'true' }})" 
+                                        class="px-4 py-1.5 rounded-xl font-bold text-[10px] transition-all {{ $banner->is_active ? 'bg-[#E6F6F2] text-[#00A884] hover:bg-[#00A884] hover:text-white' : 'bg-gray-50 text-gray-400 hover:bg-gray-200' }}"
+                                        :class="{ 'opacity-50 cursor-not-allowed': loading }"
+                                        :disabled="loading">
+                                    {{ $banner->is_active ? 'AKTIF' : 'NONAKTIF' }}
+                                </button>
                             </div>
 
                             <!-- Actions -->
-                            <div class="flex items-center gap-2 pl-4 border-l border-gray-100">
-                                <button @click="toggleActive('{{ $banner->_id }}', {{ $banner->is_active ? 'false' : 'true' }})" :disabled="loading" :title="'{{ $banner->is_active ? 'Nonaktifkan slide' : 'Aktifkan slide' }}'" class="p-2 transition-colors" :class="'{{ $banner->is_active ? 'text-green-500 hover:bg-green-50' : 'text-gray-300 hover:bg-gray-50' }}'">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                </button>
-                                <button @click="openEditModal('{{ $banner->_id }}')" class="p-2 text-sidebar hover:bg-sidebar/5 rounded-lg transition-colors">
+                            <div class="flex items-center gap-3 pl-4 border-l border-gray-100">
+                                <button @click="openEditModal('{{ $banner->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                 </button>
-                                <button type="button" @click="$dispatch('open-delete-modal', { action: '{{ route('admin.carousel_banners.destroy', $banner->_id) }}', title: 'Hapus Slide', type: 'slide', name: {{ json_encode($banner->title) }} })" class="p-2 text-red-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors">
+                                <button type="button" @click='$dispatch("open-delete-modal", { action: "{{ route("admin.carousel_banners.destroy", $banner->_id) }}", title: "Hapus Slide", type: "slide", name: {{ json_encode($banner->title) }} })' class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all" title="Hapus">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </div>
@@ -233,7 +230,7 @@
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
 
-            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-2xl sm:my-8 text-gray-800">
+            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800">
                 
                 <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
                     <h3 class="text-xl font-bold">Tambah Slide Carousel</h3>
@@ -329,7 +326,7 @@
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div x-show="showEditModal" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showEditModal = false"></div>
 
-            <div x-show="showEditModal" class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-2xl sm:my-8 text-gray-800">
+            <div x-show="showEditModal" class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800">
                 <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
                     <h3 class="text-xl font-bold">Edit Slide Carousel</h3>
                     <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -426,7 +423,7 @@
 <script>
 function carouselManager() {
     return {
-        bannersData: @json($banners->values()),
+        bannersData: @json($banners->items()),
         previewIndex: 0,
         
         get currentPreview() {
@@ -484,7 +481,7 @@ function carouselManager() {
 
         showEditModal: false,
         showCreateModal: false,
-        editingBanner: null,
+        editingBanner: {},
         loading: false,
         fileName: '',
         createFileName: '',
@@ -492,7 +489,7 @@ function carouselManager() {
         async openEditModal(id) {
             this.loading = true;
             this.showEditModal = true;
-            this.editingBanner = null;
+            this.editingBanner = {};
             try {
                 const response = await fetch(`/admin/carousel-banners/${id}/edit`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }

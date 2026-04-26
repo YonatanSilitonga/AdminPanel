@@ -219,6 +219,7 @@
             </div>
         </div>
 
+
         <div class="grid gap-6 lg:grid-cols-2">
             <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
                 <div class="flex items-center justify-between gap-3 mb-5">
@@ -231,21 +232,27 @@
                     $overallKeywords = $keywordSummary['overall']['top_keywords'] ?? [];
                     $overallCounts = $keywordSummary['overall']['sentiment_counts'] ?? ['negative' => 0, 'neutral' => 0, 'positive' => 0];
                     $overallCloud = array_slice($buildKeywordCloud($overallKeywords), 0, 12);
+                    
+                    // Build sentiment map for word cloud coloring
+                    $sentimentMap = [];
+                    foreach($keywordSummary['overall']['top_keywords_by_sentiment'] ?? [] as $sent => $kws) {
+                        foreach($kws as $kw) {
+                            $sentimentMap[$kw['keyword']] = $sent;
+                        }
+                    }
                 @endphp
-                @if(!empty($overallCloud))
+                @if(!empty($overallKeywords))
                     <div class="flex items-center gap-3 mb-4 text-xs text-gray-500">
                         <span>Positif: <strong class="text-emerald-700">{{ $overallCounts['positive'] ?? 0 }}</strong></span>
                         <span>Netral: <strong class="text-amber-700">{{ $overallCounts['neutral'] ?? 0 }}</strong></span>
                         <span>Negatif: <strong class="text-red-700">{{ $overallCounts['negative'] ?? 0 }}</strong></span>
                     </div>
-                    <div class="flex flex-wrap items-end gap-x-3 gap-y-2">
-                        @foreach($overallCloud as $word)
-                            <span class="inline-flex items-end gap-1.5 px-2 py-1 " style="{{ $word['style'] }}">
-                                <span>{{ $word['keyword'] }}</span>
-                                <span class="text-[11px] font-semibold text-gray-400">{{ $word['count'] }}</span>
-                            </span>
-                        @endforeach
+                    <div class="relative w-full h-[350px] bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm flex items-center justify-center p-6">
+                        <canvas id="word-cloud-canvas" class="w-full h-full cursor-default"></canvas>
                     </div>
+                    <p class="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                        Ukuran kata melambangkan frekuensi kemunculan kata tersebut dalam seluruh ulasan yang dianalisis.
+                    </p>
                 @else
                     <p class="text-sm text-gray-500">Belum ada keyword populer.</p>
                 @endif
@@ -255,32 +262,56 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-5">Keyword Per Sentimen</h3>
                 @php
                     $bySentiment = $keywordSummary['overall']['top_keywords_by_sentiment'] ?? [];
-                    $groups = [
-                        'positive' => ['title' => 'Positif', 'class' => 'text-emerald-700 bg-emerald-50 border-emerald-100'],
-                        'neutral' => ['title' => 'Netral', 'class' => 'text-amber-700 bg-amber-50 border-amber-100'],
-                        'negative' => ['title' => 'Negatif', 'class' => 'text-red-700 bg-red-50 border-red-100'],
+                    $sentimentGroups = [
+                        'positive' => [
+                            'title' => 'Positif', 
+                            'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+                            'color' => 'text-emerald-600',
+                            'bg' => 'bg-emerald-50',
+                            'bar' => 'bg-emerald-500'
+                        ],
+                        'neutral' => [
+                            'title' => 'Netral', 
+                            'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                            'color' => 'text-amber-600',
+                            'bg' => 'bg-amber-50',
+                            'bar' => 'bg-amber-500'
+                        ],
+                        'negative' => [
+                            'title' => 'Negatif', 
+                            'icon' => 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
+                            'color' => 'text-red-600',
+                            'bg' => 'bg-red-50',
+                            'bar' => 'bg-red-500'
+                        ],
                     ];
                 @endphp
-                <div class="space-y-4">
-                    @foreach($groups as $key => $meta)
+                <div class="grid gap-4 md:grid-cols-3">
+                    @foreach($sentimentGroups as $key => $meta)
                         @php
                             $items = $bySentiment[$key] ?? [];
-                            $cloud = array_slice($buildKeywordCloud($items), 0, 6);
+                            $maxCount = !empty($items) ? max(array_column($items, 'count')) : 1;
                         @endphp
-                        <div class="border rounded-xl p-3 {{ $meta['class'] }}">
-                            <p class="text-xs font-bold uppercase tracking-wider mb-2">{{ $meta['title'] }}</p>
-                            @if(!empty($cloud))
-                                <div class="flex flex-wrap items-end gap-x-2.5 gap-y-2">
-                                    @foreach($cloud as $word)
-                                        <span class="inline-flex items-end gap-1 px-2 py-1 rounded" style="{{ $word['style'] }}">
-                                            <span>{{ $word['keyword'] }}</span>
-                                            <span class="text-[10px] font-semibold text-gray-400">{{ $word['count'] }}</span>
-                                        </span>
-                                    @endforeach
-                                </div>
-                            @else
-                                <p class="text-xs opacity-75">Belum ada data.</p>
-                            @endif
+                        <div class="rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
+                            <div class="px-4 py-3 {{ $meta['bg'] }} flex items-center gap-2 border-b border-gray-100">
+                                <svg class="w-4 h-4 {{ $meta['color'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $meta['icon'] }}"></path></svg>
+                                <span class="text-xs font-bold uppercase tracking-wider {{ $meta['color'] }}">{{ $meta['title'] }}</span>
+                            </div>
+                            <div class="p-4 space-y-3 flex-1">
+                                @forelse(array_slice($items, 0, 5) as $item)
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between text-[11px] font-medium">
+                                            <span class="text-gray-700">{{ $item['keyword'] }}</span>
+                                            <span class="text-gray-400">{{ $item['count'] }}</span>
+                                        </div>
+                                        <div class="h-1 w-full bg-gray-50 rounded-full overflow-hidden">
+                                            <div class="h-full {{ $meta['bar'] }} opacity-60 rounded-full" style="width: {{ ($item['count'] / $maxCount) * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-[11px] text-gray-400 italic text-center py-4">Belum ada data</p>
+                                @endforelse
+                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -288,46 +319,56 @@
         </div>
 
         <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-5">Keyword Per Destinasi</h3>
+            <h3 class="text-lg font-bold text-gray-900 mb-6">Keyword Per Destinasi</h3>
             @if(!empty($keywordSummary['destinations']))
-                <div class="space-y-3">
-                    @foreach(array_slice($keywordSummary['destinations'], 0, 5) as $destination)
+                <div class="grid gap-4 lg:grid-cols-2">
+                    @foreach(array_slice($keywordSummary['destinations'], 0, 6) as $destination)
                         @php
                             $destinationName = $destination['destination_name'] ?? $destination['name'] ?? $destination['destination_id'] ?? 'Destinasi';
-                            $destinationKeywords = $destination['top_keywords'] ?? [];
-                            $destinationCloud = array_slice($buildKeywordCloud($destinationKeywords), 0, 6);
-                            $destinationSentimentCounts = $destination['sentiment_counts'] ?? ['negative' => 0, 'neutral' => 0, 'positive' => 0];
-                            $reviewCount = $destination['review_count'] ?? null;
+                            $destinationKeywords = array_slice($destination['top_keywords'] ?? [], 0, 8);
+                            $sentimentCounts = $destination['sentiment_counts'] ?? ['negative' => 0, 'neutral' => 0, 'positive' => 0];
+                            $totalSent = array_sum($sentimentCounts);
+                            $reviewCount = $destination['review_count'] ?? 0;
                         @endphp
-                        <div class="border border-gray-100 rounded-xl p-4">
-                            <div class="flex items-center justify-between gap-3 mb-2">
-                                <p class="text-sm font-bold text-gray-800">{{ $destinationName }}</p>
-                                @if($reviewCount !== null)
-                                    <span class="text-xs text-gray-500">{{ $reviewCount }} ulasan</span>
-                                @endif
+                        <div class="group bg-gray-50/30 hover:bg-white border border-gray-100 hover:border-sidebar/20 rounded-2xl p-5 transition-all duration-300 hover:shadow-md">
+                            <div class="flex items-start justify-between gap-4 mb-4">
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-gray-900 group-hover:text-sidebar transition-colors truncate">{{ $destinationName }}</h4>
+                                    <p class="text-[11px] text-gray-400 mt-0.5">{{ $reviewCount }} ulasan teranalisis</p>
+                                </div>
+                                <div class="flex h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden mt-2">
+                                    @if($totalSent > 0)
+                                        <div class="bg-emerald-500" style="width: {{ ($sentimentCounts['positive'] / $totalSent) * 100 }}%"></div>
+                                        <div class="bg-amber-400" style="width: {{ ($sentimentCounts['neutral'] / $totalSent) * 100 }}%"></div>
+                                        <div class="bg-red-500" style="width: {{ ($sentimentCounts['negative'] / $totalSent) * 100 }}%"></div>
+                                    @else
+                                        <div class="bg-gray-200 w-full"></div>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="flex items-center gap-3 mb-3 text-[11px] text-gray-500">
-                                <span>Positif: <strong class="text-emerald-700">{{ $destinationSentimentCounts['positive'] ?? 0 }}</strong></span>
-                                <span>Netral: <strong class="text-amber-700">{{ $destinationSentimentCounts['neutral'] ?? 0 }}</strong></span>
-                                <span>Negatif: <strong class="text-red-700">{{ $destinationSentimentCounts['negative'] ?? 0 }}</strong></span>
-                            </div>
-                            @if(!empty($destinationCloud))
-                                <div class="flex flex-wrap items-end gap-x-2.5 gap-y-2">
-                                    @foreach($destinationCloud as $word)
-                                        <span class="inline-flex items-end gap-1 px-2 py-1" style="{{ $word['style'] }}">
-                                            <span>{{ $word['keyword'] }}</span>
-                                            <span class="text-[10px] font-semibold text-gray-400">{{ $word['count'] }}</span>
+                            
+                            @if(!empty($destinationKeywords))
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach($destinationKeywords as $kw)
+                                        <span class="inline-flex items-center px-2 py-1 rounded-lg bg-white border border-gray-100 text-[11px] font-medium text-gray-600 shadow-sm">
+                                            {{ $kw['keyword'] }}
+                                            <span class="ml-1.5 text-[9px] text-gray-300 font-bold">{{ $kw['count'] }}</span>
                                         </span>
                                     @endforeach
                                 </div>
                             @else
-                                <p class="text-xs text-gray-400">Belum ada keyword untuk destinasi ini.</p>
+                                <p class="text-[11px] text-gray-400 italic">Belum ada keyword populer</p>
                             @endif
                         </div>
                     @endforeach
                 </div>
+                @if(count($keywordSummary['destinations']) > 6)
+                    <p class="mt-6 text-center text-xs text-gray-400 italic">Dan {{ count($keywordSummary['destinations']) - 6 }} destinasi lainnya...</p>
+                @endif
             @else
-                <p class="text-sm text-gray-500">Data keyword per destinasi belum tersedia.</p>
+                <div class="py-12 text-center">
+                    <p class="text-sm text-gray-400">Data keyword per destinasi belum tersedia.</p>
+                </div>
             @endif
         </div>
     </div>
@@ -534,3 +575,88 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const keywords = @json($keywordSummary['overall']['top_keywords'] ?? []);
+        const sentimentMap = @json($sentimentMap ?? []);
+        
+        console.log('WordCloud: Initializing with', keywords.length, 'keywords');
+        
+        if (keywords.length > 0) {
+            const canvas = document.getElementById('word-cloud-canvas');
+            if (canvas) {
+                const renderCloud = () => {
+                    if (typeof WordCloud === 'undefined') {
+                        console.error('WordCloud: Library wordcloud2.js not loaded!');
+                        return;
+                    }
+
+                    const container = canvas.parentElement;
+                    const width = container.offsetWidth;
+                    const height = container.offsetHeight;
+                    
+                    if (width === 0 || height === 0) {
+                        console.warn('WordCloud: Container has 0 dimensions, retrying...');
+                        setTimeout(renderCloud, 500);
+                        return;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const list = keywords.map(item => {
+                        let size = 22 + (item.count * 5);
+                        if (size > 90) size = 90; 
+                        return [item.keyword, size];
+                    });
+
+                    try {
+                        WordCloud(canvas, { 
+                            list: list,
+                            gridSize: 6,
+                            weightFactor: 1.2,
+                            fontFamily: "'Instrument Sans', sans-serif",
+                            color: function(word) {
+                                const sentiment = sentimentMap[word] || 'neutral';
+                                const colors = {
+                                    'positive': '#10b981',
+                                    'neutral': '#94a3b8',
+                                    'negative': '#f43f5e'
+                                };
+                                return colors[sentiment] || '#94a3b8';
+                            },
+                            rotateRatio: 0,
+                            backgroundColor: 'transparent',
+                            ellipticity: 0.65,
+                            shuffle: true,
+                            clearCanvas: true,
+                            drawOutOfBound: false,
+                            shrinkToFit: true
+                        });
+                        console.log('WordCloud: Rendered successfully');
+                    } catch (e) {
+                        console.error('WordCloud: Render failed', e);
+                    }
+                };
+
+                // Initial render with a slight delay for layout
+                setTimeout(renderCloud, 800);
+
+                // Re-render on window resize
+                let resizeTimeout;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(renderCloud, 500);
+                });
+            } else {
+                console.error('WordCloud: Canvas element not found!');
+            }
+        } else {
+            console.warn('WordCloud: No keywords available for rendering');
+        }
+    });
+</script>
+@endpush

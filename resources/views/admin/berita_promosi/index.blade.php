@@ -1,28 +1,28 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Berita & Promosi')
+@section('page_title', 'Berita & Promosi')
+@section('page_description', 'Kelola publikasi informasi, artikel, dan promo menarik di Danau Toba.')
+
+@section('breadcrumb')
+<nav class="flex text-sm mb-6 text-gray-500 font-medium">
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-400">Content Management</span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-900 font-bold">Berita & Promosi</span>
+</nav>
+@endsection
+
+@section('page_actions')
+<button type="button" onclick="window.dispatchEvent(new CustomEvent('open-add-modal'))" class="bg-sidebar hover:bg-sidebar-hover text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center transition-colors shadow-sm">
+    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+    Tambah Berita/Promosi
+</button>
+@endsection
 
 @section('content')
 <div class="mb-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <div class="flex items-center text-sm text-gray-500 mb-2">
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-primary">Home</a>
-                <span class="mx-2">›</span>
-                <span>Content Management</span>
-                <span class="mx-2">›</span>
-                <span class="text-gray-900 font-medium">Berita & Promosi</span>
-            </div>
-            <h1 class="text-2xl font-bold text-gray-900">Berita & Promosi</h1>
-            <p class="text-gray-500 text-sm mt-1">Kelola publikasi informasi, artikel, dan promo menarik di Danau Toba.</p>
-        </div>
-        <div>
-            <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-add-modal'))" class="bg-sidebar hover:bg-sidebar-hover text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center transition-colors">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                Tambah Berita/Promosi
-            </button>
-        </div>
-    </div>
 </div>
 
 <!-- Filters -->
@@ -60,65 +60,65 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-gray-50/50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    <th class="px-6 py-4">JUDUL</th>
-                    <th class="px-6 py-4">TIPE</th>
-                    <th class="px-6 py-4">TANGGAL TAYANG</th>
-                    <th class="px-6 py-4">STATUS</th>
-                    <th class="px-6 py-4 text-right">AKSI</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">JUDUL</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">TIPE</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">TANGGAL TAYANG</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">STATUS</th>
+                    <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">AKSI</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($beritaPromosi as $item)
                 <tr class="hover:bg-gray-50/50 transition-colors">
-                    <td class="px-6 py-4">
+                    <td class="px-10 py-6">
                         <div class="flex items-center">
                             @if($item->thumbnail)
-                                <div class="w-12 h-8 rounded-lg overflow-hidden mr-3 border border-gray-200 flex-shrink-0 shadow-sm">
+                                <div class="w-16 h-10 rounded-xl overflow-hidden mr-4 border border-gray-100 flex-shrink-0 shadow-sm">
                                     <img src="{{ Storage::url($item->thumbnail) }}" alt="" class="w-full h-full object-cover">
                                 </div>
                             @else
-                                <div class="w-12 h-8 rounded-lg bg-gray-100 mr-3 border border-dashed border-gray-300 flex-shrink-0 flex items-center justify-center text-gray-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <div class="w-16 h-10 rounded-xl bg-gray-50 mr-4 border border-dashed border-gray-200 flex-shrink-0 flex items-center justify-center text-gray-300">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
                             @endif
-                            <div class="font-bold text-gray-900 text-sm">{{ $item->judul }}</div>
+                            <div class="font-bold text-gray-800 text-[15px]">{{ $item->judul }}</div>
                         </div>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-10 py-6">
                         @if($item->tipe === 'EVENT')
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-600">EVENT</span>
+                            <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-green-50 text-green-600">EVENT</span>
                         @elseif($item->tipe === 'PROMO')
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-500">PROMO</span>
+                            <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-orange-50 text-orange-500">PROMO</span>
                         @else
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-600">BERITA</span>
+                            <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-teal-50 text-teal-600">BERITA</span>
                         @endif
                     </td>
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ $item->tanggal_tayang ? $item->tanggal_tayang->format('d F Y') : '-' }}
+                    <td class="px-10 py-6 text-sm text-gray-500 font-medium">
+                        {{ $item->tanggal_tayang ? $item->tanggal_tayang->format('d M Y') : '-' }}
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-10 py-6">
                         @if($item->is_active)
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-600">Aktif</span>
+                            <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#E6F6F2] text-[#00A884]">Aktif</span>
                         @else
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Draft</span>
+                            <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-gray-100 text-gray-400">Draft</span>
                         @endif
                     </td>
-                    <td class="px-6 py-4 text-right space-x-2">
-                        <button type="button" onclick="editItem('{{ $item->_id }}')" class="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            Edit
-                        </button>
-                        <button type="button" 
-                            @click="$dispatch('open-delete-modal', { 
-                                action: '{{ route('admin.berita_promosi.destroy', (string)$item->_id) }}', 
-                                title: 'Hapus Konten', 
-                                type: '{{ strtolower($item->tipe) }}', 
-                                name: '{{ addslashes($item->judul) }}' 
-                            })" 
-                            class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            Hapus
-                        </button>
+                    <td class="px-10 py-6 text-right">
+                        <div class="flex items-center justify-end gap-3">
+                            <button type="button" onclick="editItem('{{ $item->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button type="button" 
+                                @click="$dispatch('open-delete-modal', { 
+                                    action: '{{ route('admin.berita_promosi.destroy', (string)$item->_id) }}', 
+                                    title: 'Hapus Konten', 
+                                    type: '{{ strtolower($item->tipe) }}', 
+                                    name: '{{ addslashes($item->judul) }}' 
+                                })" 
+                                class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all" title="Hapus">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 @empty
@@ -225,13 +225,15 @@
 </div>
 
 <!-- Edit Modal -->
-<div x-data="{ show: false }" @open-edit-modal.window="show = true" x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
+<div x-data="{ show: false, previewUrl: '' }" 
+     @open-edit-modal.window="show = true; previewUrl = $event.detail.thumbnail_url || ''" 
+     x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
     <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
         <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-2xl text-left align-middle transition-all transform bg-white shadow-2xl rounded-[1.5rem] sm:my-8 relative z-10">
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-2xl text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 relative z-10">
             <div class="flex justify-between items-center p-6 border-b border-gray-100">
                 <h3 class="text-xl font-bold text-gray-900">Edit Berita/Promosi</h3>
                 <button @click="show = false" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -257,7 +259,7 @@
                         </select>
                         @error('tipe') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div x-data="{ fileName: '', previewUrl: '' }">
+                    <div x-data="{ fileName: '' }">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
                         <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors relative overflow-hidden">
                             <template x-if="previewUrl">
@@ -348,7 +350,9 @@
                 document.getElementById('edit_carousel').checked = data.tampilkan_di_carousel;
                 document.getElementById('edit_status').checked = data.is_active;
                 
-                window.dispatchEvent(new CustomEvent('open-edit-modal'));
+                window.dispatchEvent(new CustomEvent('open-edit-modal', {
+                    detail: { thumbnail_url: data.thumbnail_url }
+                }));
             })
             .catch(err => {
                 alert('Gagal mengambil data: ' + err);

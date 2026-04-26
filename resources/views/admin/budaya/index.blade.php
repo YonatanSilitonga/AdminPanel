@@ -1,16 +1,20 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Budaya dan Warisan')
+@section('navbar_title', 'Budaya')
+@section('page_title', 'Budaya & Warisan')
+@section('page_description', 'Kelola konten informasi sejarah, tradisi, dan budaya masyarakat lokal.')
 
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
-    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-400">Content Management</span>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-900 font-bold">Budaya dan Warisan</span>
 </nav>
 @endsection
+
 
 @section('content')
 
@@ -135,22 +139,15 @@
                                 <td class="px-8 py-5 text-center">
                                     <form action="{{ route('admin.budaya.toggle-status', $item->_id) }}" method="POST">
                                         @csrf @method('PATCH')
-                                        <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold {{ ($item->is_active ?? false) ? 'bg-[#E6F6F2] text-[#00A884]' : 'bg-gray-100 text-gray-400' }}">
-                                            @if($item->is_active)
-                                                <div class="w-1.5 h-1.5 bg-[#00A884] rounded-full"></div>
-                                                Aktif
-                                            @else
-                                                <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                                                Nonaktif
-                                            @endif
+                                        <button type="submit" class="px-4 py-1.5 rounded-xl text-xs font-bold {{ ($item->is_active ?? false) ? 'bg-[#E6F6F2] text-[#00A884]' : 'bg-gray-100 text-gray-400' }}">
+                                            {{ ($item->is_active ?? false) ? 'Aktif' : 'Nonaktif' }}
                                         </button>
                                     </form>
                                 </td>
-                                <td class="px-8 py-5">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button @click="openEditModal('{{ $item->_id }}')" class="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 rounded-lg font-bold text-xs hover:bg-green-100 transition-colors">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                            Edit
+                                <td class="px-8 py-5 text-right">
+                                    <div class="flex items-center justify-end gap-3">
+                                        <button @click="openEditModal('{{ $item->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                         </button>
                                         <button type="button" 
                                             @click="$dispatch('open-delete-modal', { 
@@ -159,7 +156,7 @@
                                                 type: 'budaya', 
                                                 name: '{{ addslashes($item->name) }}' 
                                             })" 
-                                            class="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors">
+                                            class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all" title="Hapus">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </div>
@@ -304,7 +301,7 @@
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-gray-500/50 backdrop-blur-sm" @click="showCreateModal = false"></div>
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
 
             <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
@@ -391,7 +388,7 @@
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-gray-500/50 backdrop-blur-sm" @click="showEditModal = false"></div>
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showEditModal = false"></div>
 
             <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"

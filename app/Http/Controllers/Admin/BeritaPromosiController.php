@@ -81,6 +81,11 @@ class BeritaPromosiController extends BaseAdminController
             $bp->tanggal_tayang_formatted = $bp->tanggal_tayang->format('Y-m-d');
         }
 
+        // Add full URL for thumbnail
+        if ($bp->thumbnail) {
+            $bp->thumbnail_url = \Illuminate\Support\Facades\Storage::url($bp->thumbnail);
+        }
+
         return response()->json($bp);
     }
 
