@@ -14,7 +14,6 @@ class CarouselBanner extends Model
         'subtitle',
         'category_badge',
         'image_url',
-        'link_type',
         'start_date',
         'end_date',
         'order',

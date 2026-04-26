@@ -115,6 +115,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // ============ CAROUSEL & BANNER ============
     Route::middleware('admin.role:admin,super_admin')->group(function () {
         Route::patch('carousel-banners/order', [CarouselBannerController::class, 'updateOrder'])->name('admin.carousel_banners.order');
+        Route::patch('carousel-banners/{id}/toggle-active', [CarouselBannerController::class, 'toggleActive'])->name('admin.carousel_banners.toggle-active');
         Route::resource('carousel-banners', CarouselBannerController::class, [
             'names' => [
                 'index' => 'admin.carousel_banners.index',

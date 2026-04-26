@@ -65,7 +65,7 @@
                     <div class="text-xs text-gray-400 font-medium flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                         Drag Handle 
                         <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg> 
-                        untuk mengubah urutan
+                        Untuk mengubah urutan
                     </div>
                 </div>
 
@@ -118,6 +118,9 @@
 
                             <!-- Actions -->
                             <div class="flex items-center gap-2 pl-4 border-l border-gray-100">
+                                <button @click="toggleActive('{{ $banner->_id }}', {{ $banner->is_active ? 'false' : 'true' }})" :disabled="loading" :title="'{{ $banner->is_active ? 'Nonaktifkan slide' : 'Aktifkan slide' }}'" class="p-2 transition-colors" :class="'{{ $banner->is_active ? 'text-green-500 hover:bg-green-50' : 'text-gray-300 hover:bg-gray-50' }}'">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                </button>
                                 <button @click="openEditModal('{{ $banner->_id }}')" class="p-2 text-sidebar hover:bg-sidebar/5 rounded-lg transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                 </button>
@@ -127,7 +130,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-10 text-gray-400 text-sm font-medium">BElum ada slide. Klik "Tambah Slide Baru" untuk membuat.</div>
+                        <div class="text-center py-10 text-gray-400 text-sm font-medium">Belum ada slide. Klik "Tambah Slide Baru" untuk membuat.</div>
                     @endforelse
                 </div>
             </div>
@@ -280,29 +283,6 @@
                         </div>
                     </div>
 
-                    <!-- Link Tujuan -->
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Link Tujuan</label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input type="radio" name="link_type" value="destinasi" class="w-4 h-4 text-[#6349A5] focus:ring-[#6349A5]">
-                                <span class="text-sm font-medium">Ke Halaman Destinasi</span>
-                            </label>
-                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input type="radio" name="link_type" value="event" class="w-4 h-4 text-[#6349A5] focus:ring-[#6349A5]">
-                                <span class="text-sm font-medium">Ke Halaman Event</span>
-                            </label>
-                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input type="radio" name="link_type" value="berita" class="w-4 h-4 text-[#6349A5] focus:ring-[#6349A5]">
-                                <span class="text-sm font-medium">Ke Halaman Berita</span>
-                            </label>
-                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input type="radio" name="link_type" value="none" checked class="w-4 h-4 text-[#6349A5] focus:ring-[#6349A5]">
-                                <span class="text-sm font-medium">Tidak ada link</span>
-                            </label>
-                        </div>
-                    </div>
-
                     <!-- Row: Periode -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
@@ -327,7 +307,7 @@
                             </div>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="is_active" class="sr-only peer" checked>
+                            <input type="checkbox" name="is_active" value="on" class="sr-only peer" checked>
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6349A5]"></div>
                         </label>
                     </div>
@@ -402,28 +382,6 @@
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Link Tujuan</label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input type="radio" name="link_type" value="destinasi" x-model="editingBanner.link_type" class="w-4 h-4 text-[#6349A5] focus:ring-[#6349A5]">
-                                <span class="text-sm font-medium">Ke Halaman Destinasi</span>
-                            </label>
-                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input type="radio" name="link_type" value="event" x-model="editingBanner.link_type" class="w-4 h-4 text-[#6349A5] focus:ring-[#6349A5]">
-                                <span class="text-sm font-medium">Ke Halaman Event</span>
-                            </label>
-                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input type="radio" name="link_type" value="berita" x-model="editingBanner.link_type" class="w-4 h-4 text-[#6349A5] focus:ring-[#6349A5]">
-                                <span class="text-sm font-medium">Ke Halaman Berita</span>
-                            </label>
-                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input type="radio" name="link_type" value="none" x-model="editingBanner.link_type" class="w-4 h-4 text-[#6349A5] focus:ring-[#6349A5]">
-                                <span class="text-sm font-medium">Tidak ada link</span>
-                            </label>
-                        </div>
-                    </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-sm font-medium text-gray-700">Periode Dari</label>
@@ -446,7 +404,7 @@
                             </div>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="is_active" class="sr-only peer" :checked="editingBanner.is_active">
+                            <input type="checkbox" name="is_active" value="on" class="sr-only peer" :checked="editingBanner.is_active">
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6349A5]"></div>
                         </label>
                     </div>
@@ -600,6 +558,33 @@ function carouselManager() {
                 }
             } catch (error) {
                 alert('Terjadi kesalahan saat menyimpan data');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async toggleActive(id, isActive) {
+            this.loading = true;
+            try {
+                const response = await fetch(`/admin/carousel-banners/${id}/toggle-active`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ is_active: isActive })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert(result.message || 'Gagal mengubah status');
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan saat mengubah status');
+                console.error(error);
             } finally {
                 this.loading = false;
             }

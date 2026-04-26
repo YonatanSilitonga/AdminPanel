@@ -38,7 +38,6 @@ class CarouselBannerController extends BaseAdminController
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
             'image_url' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'link_type' => 'required|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
         ]);
@@ -99,7 +98,6 @@ class CarouselBannerController extends BaseAdminController
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
             'image_url' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'link_type' => 'required|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
         ]);
@@ -166,6 +164,27 @@ class CarouselBannerController extends BaseAdminController
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function toggleActive(string $id, Request $request)
+    {
+        try {
+            $banner = CarouselBanner::findOrFail($id);
+            $isActive = $request->input('is_active', false);
+            
+            $banner->update(['is_active' => (bool) $isActive]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => $isActive ? 'Slide diaktifkan' : 'Slide dinonaktifkan',
+                'is_active' => $banner->is_active
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
