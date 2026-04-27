@@ -25,9 +25,9 @@ class EventService
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                $q->where('name', 'regexp', "/{$search}/i")
+                  ->orWhere('location', 'regexp', "/{$search}/i")
+                  ->orWhere('category', 'regexp', "/{$search}/i");
             });
         }
 

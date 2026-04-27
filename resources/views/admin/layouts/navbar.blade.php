@@ -15,12 +15,14 @@
         <div class="flex items-center space-x-4 sm:space-x-6">
             <!-- Search Form -->
             <div class="hidden md:block">
-                <div class="relative">
-                    <input type="text" placeholder="Cari destinasi, event, hotel..." class="w-64 px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <svg class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </div>
+                <form action="{{ route('admin.search') }}" method="GET" class="relative">
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari destinasi, event, hotel..." class="w-64 px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    <button type="submit" class="absolute right-3 top-2.5 text-gray-400 hover:text-primary transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </button>
+                </form>
             </div>
 
             <!-- Notifications -->

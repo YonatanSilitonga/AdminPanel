@@ -23,8 +23,8 @@ class DestinationController extends BaseAdminController
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                $q->where('name', 'regexp', "/{$search}/i")
+                  ->orWhere('description', 'regexp', "/{$search}/i");
             });
         }
 

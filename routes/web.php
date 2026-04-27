@@ -41,9 +41,10 @@ Route::prefix('admin')->group(function () {
 // PROTECTED ROUTES (Require auth:admin)
 Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
-    // ============ DASHBOARD ============
+    // ============ DASHBOARD & GLOBAL SEARCH ============
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/dashboard/chart-data', [DashboardController::class, 'getChartData'])->name('admin.dashboard.chart-data');
+    Route::get('/search', [\App\Http\Controllers\Admin\GlobalSearchController::class, 'index'])->name('admin.search');
 
     // ============ DESTINATIONS (Admin Role) ============
     Route::middleware('admin.role:admin,super_admin')->group(function () {

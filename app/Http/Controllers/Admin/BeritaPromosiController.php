@@ -17,7 +17,7 @@ class BeritaPromosiController extends BaseAdminController
 
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->where('judul', 'like', "%{$search}%");
+            $query->where('judul', 'regexp', "/{$search}/i");
         }
 
         if ($request->has('tipe') && $request->tipe != '') {
