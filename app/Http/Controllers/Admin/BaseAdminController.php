@@ -108,7 +108,7 @@ class BaseAdminController extends Controller
 
         // ── Cloudinary ──────────────────────────────────────────────────────
         if (env('CLOUDINARY_CLOUD_NAME')) {
-            $result = cloudinary()->uploadApi()->upload($file->getRealPath(), [
+            $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
                 'folder'        => 'smarttourism/' . trim($path, '/'),
                 'resource_type' => 'image',
                 'quality'       => 'auto',
@@ -147,7 +147,7 @@ class BaseAdminController extends Controller
                     $publicIdWithExt = preg_replace('/^v\d+\//', '', $withVersion);
                     // Remove extension
                     $publicId = preg_replace('/\.[^.]+$/', '', $publicIdWithExt);
-                    cloudinary()->uploadApi()->destroy($publicId);
+                    \cloudinary()->uploadApi()->destroy($publicId);
                 }
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning('Cloudinary delete failed: ' . $e->getMessage());
