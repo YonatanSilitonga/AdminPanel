@@ -61,7 +61,7 @@ class ReportController extends BaseAdminController
             $report = MongoReport::with('destination')->findOrFail($id);
 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json($report);
+                return response()->json($report->append('all_image_urls'));
             }
 
             return view('admin.reports.show', ['report' => $report]);

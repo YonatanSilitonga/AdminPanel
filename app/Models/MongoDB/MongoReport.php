@@ -23,6 +23,8 @@ class MongoReport extends Model
         'user_id',
         'image_path',
         'image_url',
+        'image_paths',
+        'image_urls',
         'description',
         'status',
         'assigned_to',
@@ -38,7 +40,11 @@ class MongoReport extends Model
         'status' => 'string',
         'destination_id' => 'string',
         'user_id' => 'string',
+        'image_paths' => 'array',
+        'image_urls' => 'array',
     ];
+
+    protected $appends = ['all_image_urls'];
 
     /**
      * Get the destination associated with this report
@@ -77,8 +83,44 @@ class MongoReport extends Model
      */
     public function getImageUrlAttribute(?string $value): ?string
     {
+        return $this->formatImageUrl($value);
+    }
+
+    /**
+     * Get all image URLs as an array.
+     */
+    public function getAllImageUrlsAttribute(): array
+    {
+        $rawUrls = $this->image_urls ?? [];
+        $processedUrls = [];
+
+        foreach ($rawUrls as $url) {
+            if ($url) {
+                $processedUrls[] = $this->formatImageUrl($url);
+            }
+        }
+        
+        // Add the single image_url or image_path if it's not already in the list
+        $singleUrl = $this->image_url;
+        if (!$singleUrl && $this->image_path) {
+            $singleUrl = $this->formatImageUrl($this->image_path);
+        }
+
+        if ($singleUrl && !in_array($singleUrl, $processedUrls)) {
+            $processedUrls[] = $singleUrl;
+        }
+        
+        return array_unique($processedUrls);
+    }
+
+    /**
+     * Helper to format image URL consistently
+     */
+    private function formatImageUrl(?string $value): ?string
+    {
         if (!$value) return null;
-        // The Go backend serves images from /uploads
+        if (filter_var($value, FILTER_VALIDATE_URL)) return $value;
+        
         $goBackendUrl = config('services.go_backend.url', 'http://localhost:8080');
         return rtrim($goBackendUrl, '/') . '/uploads/reports/' . basename($value);
     }

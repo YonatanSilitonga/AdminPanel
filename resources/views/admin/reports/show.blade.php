@@ -33,10 +33,19 @@
             <p class="text-sm text-gray-500 uppercase tracking-wider">Description</p>
             <p class="text-dark mt-1">{{ $report->description ?? '-' }}</p>
         </div>
-        @if($report->image_url)
+        @if($report->all_image_urls && count($report->all_image_urls) > 0)
         <div class="md:col-span-2">
-            <p class="text-sm text-gray-500 uppercase tracking-wider mb-2">Attachment</p>
-            <img src="{{ $report->image_url }}" alt="Report Image" class="max-w-md rounded-lg shadow-sm border">
+            <p class="text-sm text-gray-500 uppercase tracking-wider mb-2">Attachments</p>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                @foreach($report->all_image_urls as $url)
+                <div class="relative group aspect-video rounded-lg overflow-hidden border">
+                    <img src="{{ $url }}" alt="Report Image" class="w-full h-full object-cover">
+                    <a href="{{ $url }}" target="_blank" class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    </a>
+                </div>
+                @endforeach
+            </div>
         </div>
         @endif
         <div>

@@ -57,4 +57,8 @@ return [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'go_backend' => [
+        'url' => env('GO_BACKEND_URL', 'http://localhost:8080'),
+    ],
+
 ];
