@@ -93,12 +93,9 @@
                     </div>
                     <div class="pt-4 border-t border-gray-50">
                         <p class="text-xs text-gray-400 font-bold mb-3">TINDAKAN CEPAT</p>
-                        <form action="{{ route('admin.users.toggle-status', $user->_id) }}" method="POST">
-                            @csrf @method('PATCH')
-                            <button type="submit" class="w-full py-3 {{ ($user->is_active ?? false) ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100' }} rounded-xl text-xs font-extrabold uppercase tracking-widest transition-colors">
-                                {{ ($user->is_active ?? false) ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}
-                            </button>
-                        </form>
+                        <div class="w-full py-3 {{ ($user->is_active ?? false) ? 'bg-[#E6F6F2] text-[#00A884]' : 'bg-gray-50 text-gray-400' }} rounded-xl text-xs font-extrabold uppercase tracking-widest text-center">
+                            {{ ($user->is_active ?? false) ? 'Akun Aktif' : 'Akun Nonaktif' }}
+                        </div>
                     </div>
                 </div>
             </div>

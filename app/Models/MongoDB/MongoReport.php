@@ -23,20 +23,20 @@ class MongoReport extends Model
         'image_path',
         'image_url',
         'description',
+        'reason',
         'status',
         'assigned_to',
         'action_taken',
         'action_reason',
     ];
 
-    public $timestamps = true;
+    public $timestamps = false;  // Go backend manages timestamps — do NOT let Laravel overwrite them
 
     protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'status' => 'string',
+        'status'         => 'string',
         'destination_id' => 'string',
-        'user_id' => 'string',
+        'user_id'        => 'string',
+        'reason'         => 'string',
     ];
 
     /**
@@ -73,12 +73,32 @@ class MongoReport extends Model
 
     /**
      * Get the full image URL.
+     *
+     * Priority:
+     * 1. Use image_path (relative path) + current Go backend URL  — most reliable
+     * 2. Fall back to stored image_url if no path available
      */
     public function getImageUrlAttribute(?string $value): ?string
     {
+        $goBackendUrl = rtrim(config('services.go_backend.url', 'http://localhost:8080'), '/');
+
+        // Prefer image_path (relative) — avoids stale IPs stored in image_url
+        $imagePath = $this->attributes['image_path'] ?? null;
+        if ($imagePath) {
+            // Normalise Windows backslashes to forward slashes
+            $relativePath = ltrim(str_replace('\\', '/', $imagePath), '/');
+            return $goBackendUrl . '/' . $relativePath;
+        }
+
+        // Fallback: use stored image_url
         if (!$value) return null;
-        // The Go backend serves images from /uploads
-        $goBackendUrl = config('services.go_backend.url', 'http://localhost:8080');
-        return rtrim($goBackendUrl, '/') . '/uploads/reports/' . basename($value);
+        if (str_starts_with($value, 'http')) {
+            // Replace any stored IP/host with current Go backend URL
+            $parsed   = parse_url($value);
+            $filePart = $parsed['path'] ?? '';
+            return $goBackendUrl . $filePart;
+        }
+
+        return $goBackendUrl . '/' . ltrim(str_replace('\\', '/', $value), '/');
     }
 }

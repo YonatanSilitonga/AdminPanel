@@ -80,12 +80,13 @@ class BaseAdminController extends Controller
     }
 
     /**
-     * Upload and store file
+     * Upload and store file.
+     * Uses Cloudinary when CLOUDINARY_CLOUD_NAME is set, otherwise falls back to local public disk.
      *
-     * @param $file
-     * @param string $path
-     * @param array $options
-     * @return string|null
+     * @param  \Illuminate\Http\UploadedFile  $file
+     * @param  string  $path   Folder/prefix used for both Cloudinary and local storage
+     * @param  array   $options
+     * @return string|null  Cloudinary secure URL  –or–  local relative path
      */
     protected function uploadFile($file, $path = 'uploads', $options = [])
     {
@@ -93,32 +94,69 @@ class BaseAdminController extends Controller
             return null;
         }
 
-        // Validate file
+        // Validate size
         $maxSize = $options['max_size'] ?? 5; // MB
         if ($file->getSize() > $maxSize * 1024 * 1024) {
             throw new \Exception("File size exceeds {$maxSize}MB limit");
         }
 
+        // Validate mime
         $allowedMimes = $options['mimes'] ?? ['image/jpeg', 'image/png', 'image/webp'];
         if (!in_array($file->getMimeType(), $allowedMimes)) {
             throw new \Exception('File type not allowed');
         }
 
-        // Generate filename
+        // ── Cloudinary ──────────────────────────────────────────────────────
+        if (env('CLOUDINARY_CLOUD_NAME')) {
+            $result = cloudinary()->uploadApi()->upload($file->getRealPath(), [
+                'folder'        => 'smarttourism/' . trim($path, '/'),
+                'resource_type' => 'image',
+                'quality'       => 'auto',
+                'fetch_format'  => 'auto',
+            ]);
+
+            // $result is an ArrayObject — access secure_url directly
+            return $result['secure_url'];
+        }
+
+        // ── Local fallback ───────────────────────────────────────────────────
         $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
-
-        // Store file
-        $filePath = $file->storeAs($path, $filename, 'public');
-
-        return $filePath;
+        return $file->storeAs($path, $filename, 'public');
     }
 
     /**
-     * Delete file from storage
+     * Delete file from storage.
+     * Handles both Cloudinary URLs (https://res.cloudinary.com/…) and local paths.
      */
     protected function deleteFile($filePath)
     {
-        if ($filePath && Storage::disk('public')->exists($filePath)) {
+        if (!$filePath) {
+            return;
+        }
+
+        // ── Cloudinary ──────────────────────────────────────────────────────
+        if (str_starts_with($filePath, 'https://res.cloudinary.com/')) {
+            try {
+                // Extract public_id from URL
+                // URL pattern: https://res.cloudinary.com/{cloud}/image/upload/{version}/{public_id}.{ext}
+                $parsed   = parse_url($filePath, PHP_URL_PATH);
+                $segments = explode('/upload/', $parsed);
+                if (isset($segments[1])) {
+                    $withVersion = $segments[1];
+                    // Strip optional version prefix (v1234567890/)
+                    $publicIdWithExt = preg_replace('/^v\d+\//', '', $withVersion);
+                    // Remove extension
+                    $publicId = preg_replace('/\.[^.]+$/', '', $publicIdWithExt);
+                    cloudinary()->uploadApi()->destroy($publicId);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Cloudinary delete failed: ' . $e->getMessage());
+            }
+            return;
+        }
+
+        // ── Local fallback ───────────────────────────────────────────────────
+        if (Storage::disk('public')->exists($filePath)) {
             Storage::disk('public')->delete($filePath);
         }
     }
@@ -129,9 +167,8 @@ class BaseAdminController extends Controller
             return null;
         }
 
-        // Return the path relative to storage/app/public
-        // This will be something like 'destinations/filename.jpg'
-        return $file->store($path, 'public');
+        // Delegate to uploadFile() so Cloudinary is used when configured
+        return $this->uploadFile($file, $path);
     }
 
     /**

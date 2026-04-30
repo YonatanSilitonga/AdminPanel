@@ -31,6 +31,9 @@
         try {
             const res = await fetch(`/admin/reports/${id}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             this.viewingReport = await res.json();
+            if (this.viewingReport && !this.viewingReport._id && this.viewingReport.id) {
+                this.viewingReport._id = this.viewingReport.id;
+            }
         } catch(e) {
             alert('Gagal mengambil data laporan');
             this.showViewModal = false;
@@ -145,7 +148,20 @@
                                 <span class="{{ $cls[$s] ?? 'bg-gray-100 text-gray-400' }} px-4 py-1.5 rounded-xl font-bold text-xs inline-block">{{ $lbl[$s] ?? ucfirst($s) }}</span>
                             </td>
                             <td class="px-10 py-6">
-                                <span class="text-xs text-gray-400 font-medium">{{ $report->created_at?->diffForHumans() ?? '-' }}</span>
+                                @php
+                                    $rawTs = $report->created_at;
+                                    if ($rawTs instanceof \MongoDB\BSON\UTCDateTime) {
+                                        $ts = \Carbon\Carbon::createFromTimestampMs((int)$rawTs->toDateTime()->format('Uv'));
+                                    } elseif (is_numeric($rawTs)) {
+                                        // Go stores as milliseconds
+                                        $ts = \Carbon\Carbon::createFromTimestampMs((int)$rawTs);
+                                    } elseif ($rawTs instanceof \Carbon\Carbon) {
+                                        $ts = $rawTs;
+                                    } else {
+                                        $ts = null;
+                                    }
+                                @endphp
+                                <span class="text-xs text-gray-400 font-medium">{{ $ts ? $ts->diffForHumans() : '-' }}</span>
                             </td>
                             <td class="px-10 py-6 text-right">
                                 <div class="flex items-center justify-end gap-3">
@@ -216,6 +232,16 @@
                         </div>
                         <span :class="statusClass(viewingReport?.status)" class="px-4 py-1.5 rounded-xl font-bold text-xs" x-text="statusLabel(viewingReport?.status)"></span>
                     </div>
+
+                    {{-- Report Image --}}
+                    <template x-if="viewingReport?.image_url">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Laporan</label>
+                            <div class="rounded-2xl overflow-hidden bg-gray-50 border border-gray-100">
+                                <img :src="viewingReport?.image_url" class="w-full h-auto max-h-[300px] object-contain mx-auto" alt="Report Image">
+                            </div>
+                        </div>
+                    </template>
 
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi Laporan</label>

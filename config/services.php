@@ -32,6 +32,12 @@ return [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    // Go backend API (shared with Flutter app)
+    'go_backend' => [
+        'url' => env('GO_BACKEND_URL', 'http://localhost:8080'),
+    ],
+
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
@@ -53,8 +59,5 @@ return [
         'auto_save' => env('SENTIMENT_AUTO_SAVE', true),
     ],
     
-    'google_maps' => [
-        'key' => env('GOOGLE_MAPS_API_KEY'),
-    ],
 
 ];

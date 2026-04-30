@@ -33,6 +33,9 @@
         try {
             const res = await fetch(`/admin/budaya/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             this.editingBudaya = await res.json();
+            if (this.editingBudaya && !this.editingBudaya._id && this.editingBudaya.id) {
+                this.editingBudaya._id = this.editingBudaya.id;
+            }
             this.editFileName = this.editingBudaya.image_url ? 'Foto saat ini' : '';
         } catch(e) {
             alert('Gagal mengambil data budaya');
@@ -43,11 +46,17 @@
     },
 
     async submitEdit() {
+        const budayaId = this.editingBudaya._id || this.editingBudaya.id;
+        if (!budayaId) {
+            alert('ID Budaya tidak ditemukan');
+            return;
+        }
+
         this.loading = true;
         const form = document.getElementById('editBudayaForm');
         const formData = new FormData(form);
         try {
-            const res = await fetch(`/admin/budaya/${this.editingBudaya._id}`, {
+            const res = await fetch(`/admin/budaya/${budayaId}`, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
                 body: formData
@@ -121,7 +130,7 @@
                                 </td>
                                 <td class="px-8 py-5">
                                     @if(isset($item->image_url))
-                                        <img src="{{ Str::startsWith($item->image_url, 'http') ? $item->image_url : asset('storage/' . $item->image_url) }}" alt="{{ $item->name }}" class="w-20 h-14 object-cover rounded-xl shadow-sm border border-gray-100 group-hover:scale-105 transition-transform">
+                                        <img src="{{ image_url($item->image_url) }}" alt="{{ $item->name }}" class="w-20 h-14 object-cover rounded-xl shadow-sm border border-gray-100 group-hover:scale-105 transition-transform">
                                     @else
                                         <div class="w-20 h-14 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
                                             <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -137,12 +146,11 @@
                                     </span>
                                 </td>
                                 <td class="px-8 py-5 text-center">
-                                    <form action="{{ route('admin.budaya.toggle-status', $item->_id) }}" method="POST">
-                                        @csrf @method('PATCH')
-                                        <button type="submit" class="px-4 py-1.5 rounded-xl text-xs font-bold {{ ($item->is_active ?? false) ? 'bg-[#E6F6F2] text-[#00A884]' : 'bg-gray-100 text-gray-400' }}">
-                                            {{ ($item->is_active ?? false) ? 'Aktif' : 'Nonaktif' }}
-                                        </button>
-                                    </form>
+                                    @if($item->is_active ?? false)
+                                        <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#E6F6F2] text-[#00A884]">Aktif</span>
+                                    @else
+                                        <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-gray-100 text-gray-400">Nonaktif</span>
+                                    @endif
                                 </td>
                                 <td class="px-8 py-5 text-right">
                                     <div class="flex items-center justify-end gap-3">
@@ -224,7 +232,7 @@
                <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100/50 relative z-0">
                    <div class="relative">
                        @if(isset($item->image_url))
-                           <img src="{{ Str::startsWith($item->image_url, 'http') ? $item->image_url : asset('storage/' . $item->image_url) }}" class="h-48 w-full object-cover">
+                           <img src="{{ image_url($item->image_url) }}" class="h-48 w-full object-cover">
                        @else
                            <div class="h-48 w-full bg-gray-200 flex items-center justify-center text-gray-400">Tidak ada gambar</div>
                        @endif

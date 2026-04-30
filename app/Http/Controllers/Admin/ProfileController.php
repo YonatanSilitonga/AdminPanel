@@ -39,10 +39,9 @@ class ProfileController extends BaseAdminController
         if ($request->hasFile('profile_photo')) {
             // Delete old photo if exists
             if ($admin->profile_photo) {
-                Storage::disk('public')->delete($admin->profile_photo);
+                $this->deleteFile($admin->profile_photo);
             }
-            $path = $request->file('profile_photo')->store('profile-photos', 'public');
-            $data['profile_photo'] = $path;
+            $data['profile_photo'] = $this->uploadFile($request->file('profile_photo'), 'profile-photos');
         }
 
         $admin->update($data);

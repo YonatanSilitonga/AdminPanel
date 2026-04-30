@@ -146,7 +146,7 @@
                 <label class="block text-sm font-semibold text-gray-700">Foto</label>
                 @if($event->banner_url)
                     <div class="mb-3">
-                        <img src="{{ asset('storage/' . $event->banner_url) }}" alt="Banner saat ini" class="w-full h-48 object-cover rounded-xl shadow-sm border border-gray-100">
+                    <img src="{{ image_url($event->banner_url) }}" alt="Banner saat ini" class="w-full h-48 object-cover rounded-xl shadow-sm border border-gray-100">
                         <p class="text-[10px] text-gray-500 mt-2">Banner saat ini</p>
                     </div>
                 @endif

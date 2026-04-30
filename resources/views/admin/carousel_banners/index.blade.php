@@ -107,13 +107,11 @@
                                     <span class="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">{{ $banner->category_badge }}</span>
                                 @endif
 
-                                <button type="button" 
-                                        @click="toggleActive('{{ $banner->_id }}', {{ $banner->is_active ? 'false' : 'true' }})" 
-                                        class="px-4 py-1.5 rounded-xl font-bold text-[10px] transition-all {{ $banner->is_active ? 'bg-[#E6F6F2] text-[#00A884] hover:bg-[#00A884] hover:text-white' : 'bg-gray-50 text-gray-400 hover:bg-gray-200' }}"
-                                        :class="{ 'opacity-50 cursor-not-allowed': loading }"
-                                        :disabled="loading">
-                                    {{ $banner->is_active ? 'AKTIF' : 'NONAKTIF' }}
-                                </button>
+                                @if($banner->is_active)
+                                    <span class="px-4 py-1.5 bg-[#E6F6F2] text-[#00A884] text-[10px] font-bold rounded-xl uppercase">Aktif</span>
+                                @else
+                                    <span class="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-bold rounded-xl uppercase">Nonaktif</span>
+                                @endif
                             </div>
 
                             <!-- Actions -->
@@ -401,7 +399,7 @@
                             </div>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="is_active" value="on" class="sr-only peer" :checked="editingBanner.is_active">
+                            <input type="checkbox" name="is_active" value="on" class="sr-only peer" x-model="editingBanner.is_active">
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6349A5]"></div>
                         </label>
                     </div>
@@ -495,6 +493,10 @@ function carouselManager() {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 this.editingBanner = await response.json();
+                // Ensure _id is present for submission
+                if (this.editingBanner && !this.editingBanner._id && this.editingBanner.id) {
+                    this.editingBanner._id = this.editingBanner.id;
+                }
                 this.fileName = this.editingBanner.image_url ? 'Gambar saat ini' : '';
             } catch (error) {
                 alert('Gagal mengambil data banner');
@@ -505,12 +507,18 @@ function carouselManager() {
         },
         
         async submitUpdate() {
+            const bannerId = this.editingBanner._id || this.editingBanner.id;
+            if (!bannerId) {
+                alert('ID Banner tidak ditemukan');
+                return;
+            }
+
             this.loading = true;
             const form = document.getElementById('editBannerForm');
             const formData = new FormData(form);
             
             try {
-                const response = await fetch(`/admin/carousel-banners/${this.editingBanner._id}`, {
+                const response = await fetch(`/admin/carousel-banners/${bannerId}`, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -555,33 +563,6 @@ function carouselManager() {
                 }
             } catch (error) {
                 alert('Terjadi kesalahan saat menyimpan data');
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        async toggleActive(id, isActive) {
-            this.loading = true;
-            try {
-                const response = await fetch(`/admin/carousel-banners/${id}/toggle-active`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ is_active: isActive })
-                });
-                
-                const result = await response.json();
-                if (result.success) {
-                    window.location.reload();
-                } else {
-                    alert(result.message || 'Gagal mengubah status');
-                }
-            } catch (error) {
-                alert('Terjadi kesalahan saat mengubah status');
-                console.error(error);
             } finally {
                 this.loading = false;
             }

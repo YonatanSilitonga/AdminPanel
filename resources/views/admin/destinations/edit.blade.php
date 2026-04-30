@@ -128,7 +128,7 @@
             <label class="block text-sm font-medium text-gray-700">Thumbnail</label>
             @if(isset($destination->images) && count($destination->images) > 0)
                 <div class="mt-2 mb-3">
-                    <img src="{{ asset('storage/' . $destination->images[0]) }}" alt="Current Thumbnail" class="w-32 h-24 object-cover rounded-lg border">
+                    <img src="{{ image_url($destination->images[0]) }}" alt="Current Thumbnail" class="w-32 h-24 object-cover rounded-lg border">
                     <p class="text-xs text-gray-500 mt-1">Current thumbnail</p>
                 </div>
             @endif
@@ -140,7 +140,7 @@
             @if(isset($destination->images) && count($destination->images) > 1)
                 <div class="mt-2 mb-3 flex flex-wrap gap-2">
                     @foreach(array_slice($destination->images, 1) as $img)
-                        <img src="{{ asset('storage/' . $img) }}" alt="Gallery Image" class="w-20 h-16 object-cover rounded-lg border">
+                        <img src="{{ image_url($img) }}" alt="Gallery Image" class="w-20 h-16 object-cover rounded-lg border">
                     @endforeach
                 </div>
             @endif

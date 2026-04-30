@@ -47,8 +47,7 @@ class CarouselBannerController extends BaseAdminController
             
             if ($request->hasFile('image_url')) {
                 $file = $request->file('image_url');
-                $filename = 'banner_' . time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('carousel_banners', $filename, 'public');
+                $path = $this->uploadFile($file, 'carousel_banners');
                 $data['image_url'] = $path;
             }
 
@@ -107,13 +106,12 @@ class CarouselBannerController extends BaseAdminController
             
             if ($request->hasFile('image_url')) {
                 // Delete old image if exists
-                if ($banner->image_url && Storage::disk('public')->exists($banner->image_url)) {
-                    Storage::disk('public')->delete($banner->image_url);
+                if ($banner->image_url) {
+                    $this->deleteFile($banner->image_url);
                 }
 
                 $file = $request->file('image_url');
-                $filename = 'banner_' . time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('carousel_banners', $filename, 'public');
+                $path = $this->uploadFile($file, 'carousel_banners');
                 $data['image_url'] = $path;
             }
 

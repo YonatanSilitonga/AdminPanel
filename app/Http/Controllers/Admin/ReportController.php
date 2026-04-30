@@ -15,10 +15,9 @@ class ReportController extends BaseAdminController
      */
     public function index(Request $request)
     {
+        Log::info('Report index accessed', ['request' => $request->all()]);
         try {
-            // In MongoDB, we might not have a separate 'user' collection yet that maps 1:1 with SQLite's User
-            // So we'll fetch reports and handle the display of user info gracefully
-            $query = MongoReport::with('destination');
+            $query = MongoReport::query();
 
             // Filter by status
             if ($request->filled('status')) {
@@ -30,9 +29,9 @@ class ReportController extends BaseAdminController
                 $query->where('reason', $request->reason);
             }
 
-            // Filter by assigned (local SQLite admin ID)
+            // Filter by assigned admin
             if ($request->filled('assigned')) {
-                if ($request->assigned === 'me') {
+                if ($request->assigned === 'me' && $this->admin) {
                     $query->where('assigned_to', (string)$this->admin->id);
                 } elseif ($request->assigned === 'unassigned') {
                     $query->whereNull('assigned_to');
@@ -45,8 +44,14 @@ class ReportController extends BaseAdminController
                 $query->where('description', 'like', "%{$search}%");
             }
 
-            $reports = $query->orderBy('created_at', 'desc')
-                ->paginate(15);
+            // Sort by _id desc (ObjectID contains creation timestamp — safe across all MongoDB drivers)
+            // Avoids issues with Go storing created_at as BSON DateTime vs PHP storing as ISODate
+            $reports = $query->orderBy('_id', 'desc')->paginate(15);
+
+            Log::info('Reports fetched', [
+                'count' => $reports->count(),
+                'total' => $reports->total(),
+            ]);
 
             $statuses = ['pending', 'reviewed', 'resolved'];
             $reasons = ['spam', 'inappropriate', 'fake', 'harassment', 'facility_damage', 'other'];
@@ -58,17 +63,26 @@ class ReportController extends BaseAdminController
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading reports from Mongo: ' . $e->getMessage());
-            return back()->with('error', 'Error loading reports from MongoDB');
+            return back()->with('error', 'Gagal memuat laporan: ' . $e->getMessage());
         }
     }
 
     public function show(string $id, Request $request)
     {
         try {
-            $report = MongoReport::with('destination')->findOrFail($id);
+            $report = MongoReport::findOrFail($id);
 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json($report);
+                return response()->json([
+                    '_id'          => (string) $report->_id,
+                    'user_id'      => $report->user_id ?? null,
+                    'destination'  => $report->destination_id ?? null,
+                    'reason'       => $report->reason ?? null,
+                    'description'  => $report->description ?? null,
+                    'status'       => $report->status ?? 'pending',
+                    // image_url goes through getImageUrlAttribute → always uses current Go backend URL
+                    'image_url'    => $report->image_url,
+                ]);
             }
 
             return view('admin.reports.show', ['report' => $report]);

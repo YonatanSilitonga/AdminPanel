@@ -203,7 +203,30 @@ class FasilitasUmumController extends BaseAdminController
     }
 
     /**
-     * Remove the specified facility from storage.
+     * Toggle the active status of a facility.
+     */
+    public function toggleStatus(string $id)
+    {
+        $facility = MongoFasilitasUmum::findOrFail($id);
+
+        try {
+            $oldValues = $facility->toArray();
+            $facility->update(['is_active' => !$facility->is_active]);
+
+            $this->logActivity('update', 'facility', (string)$facility->_id, $oldValues, $facility->toArray());
+
+            return response()->json([
+                'success' => true,
+                'is_active' => $facility->is_active,
+                'message' => $facility->is_active ? 'Fasilitas diaktifkan.' : 'Fasilitas dinonaktifkan.',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error toggling facility status: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Gagal mengubah status.'], 500);
+        }
+    }
+
+    /**
      */
     public function destroy(string $id)
     {

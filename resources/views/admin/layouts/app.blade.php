@@ -72,7 +72,7 @@
                 sidebarOpen: window.innerWidth > 1024,
                 toggleSidebar() { this.sidebarOpen = !this.sidebarOpen }
              }"
-             @resize.window="if (window.innerWidth > 1024) sidebarOpen = true">
+             @resize.window="if (window.innerWidth <= 1024) sidebarOpen = false">
             
             <!-- Mobile Backdrop -->
             <div x-show="sidebarOpen" 

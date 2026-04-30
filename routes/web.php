@@ -131,6 +131,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
     // ============ FASILITAS UMUM ============
     Route::middleware('admin.role:admin,super_admin')->group(function () {
+        Route::patch('fasilitas-umum/{id}/toggle-status', [FasilitasUmumController::class, 'toggleStatus'])
+            ->name('admin.fasilitas_umum.toggle-status');
         Route::resource('fasilitas-umum', FasilitasUmumController::class, [
             'names' => [
                 'index' => 'admin.fasilitas_umum.index',
