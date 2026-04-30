@@ -60,4 +60,8 @@ return [
     ],
     
 
+    'go_backend' => [
+        'url' => env('GO_BACKEND_URL', 'http://localhost:8080'),
+    ],
+
 ];

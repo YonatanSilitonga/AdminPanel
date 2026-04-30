@@ -16,7 +16,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class ChatSession extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'chat_sessions';
+    protected $table = 'chat_sessions';
 
     protected $primaryKey = '_id';
 

@@ -14,7 +14,7 @@ class MongoFasilitasUmum extends Model
     use SoftDeletes;
 
     protected $connection = 'mongodb';
-    protected $collection = 'fasilitas_umum';
+    protected $table = 'fasilitas_umum';
 
     protected $primaryKey = '_id';
 

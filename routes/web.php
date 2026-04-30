@@ -189,6 +189,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::patch('reports/{report}/resolve', [ReportController::class, 'resolve'])->name('admin.reports.resolve');
         Route::post('reports/{report}/action', [ReportController::class, 'takeAction'])->name('admin.reports.action');
         Route::patch('reports/{report}/flag', [ReportController::class, 'flag'])->name('admin.reports.flag');
+        Route::post('reports/{report}/status', [ReportController::class, 'updateStatus'])->name('admin.reports.status');
         Route::delete('reports/{report}', [ReportController::class, 'destroy'])->name('admin.reports.destroy');
     });
 

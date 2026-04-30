@@ -2,6 +2,7 @@
 
 namespace App\Models\MongoDB;
 
+use MongoDB\Client;
 use MongoDB\Laravel\Eloquent\Model;
 
 /**
@@ -13,7 +14,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class MongoReport extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'reports';
+    protected $table = 'reports';
 
     protected $primaryKey = '_id';
 
@@ -22,6 +23,8 @@ class MongoReport extends Model
         'user_id',
         'image_path',
         'image_url',
+        'image_paths',
+        'image_urls',
         'description',
         'reason',
         'status',
@@ -35,9 +38,13 @@ class MongoReport extends Model
     protected $casts = [
         'status'         => 'string',
         'destination_id' => 'string',
-        'user_id'        => 'string',
-        'reason'         => 'string',
+
+        'user_id' => 'string',
+        'image_paths' => 'array',
+        'image_urls' => 'array',
     ];
+
+    protected $appends = ['all_image_urls'];
 
     /**
      * Get the destination associated with this report
@@ -80,25 +87,60 @@ class MongoReport extends Model
      */
     public function getImageUrlAttribute(?string $value): ?string
     {
-        $goBackendUrl = rtrim(config('services.go_backend.url', 'http://localhost:8080'), '/');
+        return $this->formatImageUrl($value);
+    }
 
-        // Prefer image_path (relative) — avoids stale IPs stored in image_url
-        $imagePath = $this->attributes['image_path'] ?? null;
-        if ($imagePath) {
-            // Normalise Windows backslashes to forward slashes
-            $relativePath = ltrim(str_replace('\\', '/', $imagePath), '/');
-            return $goBackendUrl . '/' . $relativePath;
+    /**
+     * Get all image URLs as an array.
+     */
+    public function getAllImageUrlsAttribute(): array
+    {
+        $rawUrls = $this->image_urls ?? [];
+        $processedUrls = [];
+
+        foreach ($rawUrls as $url) {
+            if ($url) {
+                $processedUrls[] = $this->formatImageUrl($url);
+            }
+        }
+        
+        // Add the single image_url or image_path if it's not already in the list
+        $singleUrl = $this->image_url;
+        if (!$singleUrl && $this->image_path) {
+            $singleUrl = $this->formatImageUrl($this->image_path);
         }
 
-        // Fallback: use stored image_url
+        if ($singleUrl && !in_array($singleUrl, $processedUrls)) {
+            $processedUrls[] = $singleUrl;
+        }
+        
+        return array_unique($processedUrls);
+    }
+
+    /**
+     * Helper to format image URL consistently
+     */
+    private function formatImageUrl(?string $value): ?string
+    {
         if (!$value) return null;
-        if (str_starts_with($value, 'http')) {
-            // Replace any stored IP/host with current Go backend URL
-            $parsed   = parse_url($value);
-            $filePart = $parsed['path'] ?? '';
-            return $goBackendUrl . $filePart;
-        }
+        if (filter_var($value, FILTER_VALIDATE_URL)) return $value;
+        
+        $goBackendUrl = config('services.go_backend.url', 'http://localhost:8080');
+        return rtrim($goBackendUrl, '/') . '/uploads/reports/' . basename($value);
 
-        return $goBackendUrl . '/' . ltrim(str_replace('\\', '/', $value), '/');
+    }
+
+    /**
+     * Get raw reports directly using the MongoDB PHP Driver.
+     * This bypasses Eloquent and uses the native client as requested.
+     */
+    public static function getRawReports()
+    {
+        // Requires the MongoDB PHP Driver
+        // https://www.mongodb.com/docs/drivers/php/
+        $client = new Client('mongodb+srv://deeny3366_db_user:p1CLeU4YJU48ECRn@cluster0.9gwjswd.mongodb.net/?appName=Cluster0');
+        $collection = $client->selectCollection('smarttourism', 'reports');
+        
+        return $collection->find([]);
     }
 }

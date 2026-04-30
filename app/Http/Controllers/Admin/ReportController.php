@@ -38,20 +38,7 @@ class ReportController extends BaseAdminController
                 }
             }
 
-            // Search in description
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where('description', 'like', "%{$search}%");
-            }
-
-            // Sort by _id desc (ObjectID contains creation timestamp — safe across all MongoDB drivers)
-            // Avoids issues with Go storing created_at as BSON DateTime vs PHP storing as ISODate
-            $reports = $query->orderBy('_id', 'desc')->paginate(15);
-
-            Log::info('Reports fetched', [
-                'count' => $reports->count(),
-                'total' => $reports->total(),
-            ]);
+            $reports = $query->paginate(15);
 
             $statuses = ['pending', 'reviewed', 'resolved'];
             $reasons = ['spam', 'inappropriate', 'fake', 'harassment', 'facility_damage', 'other'];
@@ -73,16 +60,7 @@ class ReportController extends BaseAdminController
             $report = MongoReport::findOrFail($id);
 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    '_id'          => (string) $report->_id,
-                    'user_id'      => $report->user_id ?? null,
-                    'destination'  => $report->destination_id ?? null,
-                    'reason'       => $report->reason ?? null,
-                    'description'  => $report->description ?? null,
-                    'status'       => $report->status ?? 'pending',
-                    // image_url goes through getImageUrlAttribute → always uses current Go backend URL
-                    'image_url'    => $report->image_url,
-                ]);
+                return response()->json($report->append('all_image_urls'));
             }
 
             return view('admin.reports.show', ['report' => $report]);

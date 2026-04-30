@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class MongoBeritaPromosi extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'berita_promosi';
+    protected $table = 'berita_promosi';
 
     protected $fillable = [
         'judul',
