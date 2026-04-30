@@ -2,6 +2,7 @@
 
 namespace App\Models\MongoDB;
 
+use MongoDB\Client;
 use MongoDB\Laravel\Eloquent\Model;
 
 /**
@@ -13,7 +14,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class MongoReport extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'reports';
+    protected $table = 'reports';
 
     protected $primaryKey = '_id';
 
@@ -80,5 +81,19 @@ class MongoReport extends Model
         // The Go backend serves images from /uploads
         $goBackendUrl = config('services.go_backend.url', 'http://localhost:8080');
         return rtrim($goBackendUrl, '/') . '/uploads/reports/' . basename($value);
+    }
+
+    /**
+     * Get raw reports directly using the MongoDB PHP Driver.
+     * This bypasses Eloquent and uses the native client as requested.
+     */
+    public static function getRawReports()
+    {
+        // Requires the MongoDB PHP Driver
+        // https://www.mongodb.com/docs/drivers/php/
+        $client = new Client('mongodb+srv://deeny3366_db_user:p1CLeU4YJU48ECRn@cluster0.9gwjswd.mongodb.net/?appName=Cluster0');
+        $collection = $client->selectCollection('smarttourism', 'reports');
+        
+        return $collection->find([]);
     }
 }

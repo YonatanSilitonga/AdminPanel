@@ -14,7 +14,7 @@ class MongoBudaya extends Model
     use SoftDeletes;
 
     protected $connection = 'mongodb';
-    protected $collection = 'budaya';
+    protected $table = 'budaya';
 
     protected $primaryKey = '_id';
 

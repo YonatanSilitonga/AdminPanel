@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class MongoReview extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'ratings';
+    protected $table = 'ratings';
 
     protected $primaryKey = '_id';
 

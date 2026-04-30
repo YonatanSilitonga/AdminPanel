@@ -42,7 +42,7 @@
     async updateStatus(newStatus) {
         this.savingStatus = true;
         try {
-            const res = await fetch(`/admin/reports/${this.viewingReport._id}/status`, {
+            const res = await fetch(`/admin/reports/${this.viewingReport.id}/status`, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',

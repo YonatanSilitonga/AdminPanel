@@ -39,14 +39,7 @@ class ReportController extends BaseAdminController
                 }
             }
 
-            // Search in description
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where('description', 'like', "%{$search}%");
-            }
-
-            $reports = $query->orderBy('created_at', 'desc')
-                ->paginate(15);
+            $reports = $query->paginate(15);
 
             $statuses = ['pending', 'reviewed', 'resolved'];
             $reasons = ['spam', 'inappropriate', 'fake', 'harassment', 'facility_damage', 'other'];
