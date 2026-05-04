@@ -31,7 +31,16 @@ class MongoFasilitasUmum extends Model
         'operational_hours',
         'is_active',
         'image_url',
+        'admin_id',
     ];
+
+    /**
+     * Get the admin who created this facility.
+     */
+    public function admin()
+    {
+        return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
+    }
 
     public $timestamps = true;
 

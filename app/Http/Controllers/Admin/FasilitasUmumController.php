@@ -86,6 +86,8 @@ class FasilitasUmumController extends BaseAdminController
             if ($request->hasFile('image')) {
                 $validated['image_url'] = $this->uploadFile($request->file('image'), 'fasilitas_umum');
             }
+
+            $validated['admin_id'] = $this->admin->id;
             
             $facility = MongoFasilitasUmum::create($validated);
             

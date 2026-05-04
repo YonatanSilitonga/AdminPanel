@@ -28,9 +28,18 @@ class MongoBudaya extends Model
         'description',
         'image_url',
         'is_active',
+        'admin_id',
     ];
 
     public $timestamps = true;
+
+    /**
+     * Get the admin who created this budaya.
+     */
+    public function admin()
+    {
+        return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
+    }
 
     protected $casts = [
         'is_active' => 'boolean',

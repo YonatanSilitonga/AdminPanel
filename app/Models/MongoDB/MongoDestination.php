@@ -29,7 +29,16 @@ class MongoDestination extends Model
         'opening_hours',
         'ticket_price',
         'best_time',
+        'admin_id',
     ];
+
+    /**
+     * Get the admin who created this destination.
+     */
+    public function admin()
+    {
+        return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
+    }
 
     public $timestamps = true; // Use Laravel timestamps, which will be stored in Mongo
 
@@ -54,7 +63,7 @@ class MongoDestination extends Model
      * Get average rating from approved reviews
      */
     public function getAverageRatingAttribute()
-    {
+    {   
         $reviews = $this->reviews()->get();
         
         if ($reviews->isEmpty()) {

@@ -78,6 +78,8 @@ class BudayaController extends BaseAdminController
                 $validated['category_mobile'] = strtoupper($validated['category']);
             }
 
+            $validated['admin_id'] = $this->admin->id;
+
             $budaya = MongoBudaya::create($validated);
             
             $this->logActivity('create', 'budaya', (string)$budaya->_id, null, $budaya->toArray());

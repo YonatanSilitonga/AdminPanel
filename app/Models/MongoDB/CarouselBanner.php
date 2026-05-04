@@ -21,6 +21,14 @@ class CarouselBanner extends Model
         'admin_id',
     ];
 
+    /**
+     * Get the admin who created this banner.
+     */
+    public function admin()
+    {
+        return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
+    }
+
     protected $casts = [
         'is_active' => 'boolean',
         'order' => 'integer',

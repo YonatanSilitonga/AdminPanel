@@ -109,6 +109,7 @@ class DestinationController extends BaseAdminController
 
             $destination->is_active = true;
             $destination->is_featured = false;
+            $destination->admin_id = $this->admin->id;
 
             $images = [];
 

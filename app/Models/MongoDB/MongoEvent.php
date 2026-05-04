@@ -49,6 +49,14 @@ class MongoEvent extends Model
     ];
 
     /**
+     * Get the admin who created this event.
+     */
+    public function admin()
+    {
+        return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
+    }
+
+    /**
      * Get the destination associated with this event (REMOVED)
      */
 }
