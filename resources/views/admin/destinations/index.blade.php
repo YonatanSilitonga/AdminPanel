@@ -429,7 +429,7 @@
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama</label>
                                 <div x-show="editingDest && editingDest.images && editingDest.images.length > 0" class="mb-3">
-                                    <img :src="`/storage/${editingDest && editingDest.images ? editingDest.images[0] : ''}`" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
+                                    <img :src="editingDest.images[0].startsWith('http') ? editingDest.images[0] : `/storage/${editingDest.images[0]}`" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
                                     <p class="text-[10px] text-gray-400 mt-1">Foto saat ini</p>
                                 </div>
                                 <div class="relative group">

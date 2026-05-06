@@ -63,29 +63,44 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(6,100,102,0.2); border-radius: 2px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(6,100,102,0.4); }
+
+        /* Global Gradient for Buttons */
+        button.bg-sidebar, a.bg-sidebar, button.bg-primary, a.bg-primary, button[type="submit"]:not(.bg-[#EF4444]):not(.bg-[#dc2626]) {
+            background: linear-gradient(135deg, #065f46, #047857, #059669) !important;
+            border: none !important;
+            transition: all 0.3s ease !important;
+        }
+        button.bg-sidebar:hover, a.bg-sidebar:hover, button.bg-primary:hover, a.bg-primary:hover, button[type="submit"]:not(.bg-[#EF4444]):not(.bg-[#dc2626]):hover {
+            background: linear-gradient(135deg, #047857, #059669, #065f46) !important;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3) !important;
+            transform: translateY(-1px);
+        }
+        /* Page transition disabled to keep navigation fully static */
+        .page-enter,
+        .page-leave {
+            animation: none !important;
+            transition: none !important;
+            transform: none !important;
+            opacity: 1 !important;
+        }
+
+        /* Sidebar is fixed in expanded mode */
+        .sidebar-collapsed-only {
+            display: none !important;
+        }
+
+        /* ── Sidebar: suppress transition on first paint ── */
+        .sidebar-no-transition,
+        .sidebar-no-transition * {
+            transition: none !important;
+        }
     </style>
 </head>
 <body class="bg-light">
     @auth('admin')
-        <div class="flex h-screen overflow-hidden" 
-             x-data="{ 
-                sidebarOpen: window.innerWidth > 1024,
-                toggleSidebar() { this.sidebarOpen = !this.sidebarOpen }
-             }"
-             @resize.window="if (window.innerWidth <= 1024) sidebarOpen = false">
-            
-            <!-- Mobile Backdrop -->
-            <div x-show="sidebarOpen" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 @click="sidebarOpen = false"
-                 class="fixed inset-0 z-40 bg-black/50 lg:hidden"
-                 x-cloak>
-            </div>
+           <div class="flex h-screen overflow-hidden sidebar-no-transition"
+               x-data="{ sidebarOpen: true }"
+               x-init="">
 
             <!-- Sidebar -->
             @include('admin.layouts.sidebar')
@@ -97,7 +112,7 @@
 
                 <!-- Page Content -->
                 <main class="flex-1 overflow-auto custom-scrollbar">
-                    <div class="max-w-[1700px] mx-auto px-6 md:px-10 py-8">
+                    <div id="page-content" class="max-w-[1700px] mx-auto px-6 md:px-10 py-8 page-enter">
                         <!-- Breadcrumb -->
                         @yield('breadcrumb')
 
@@ -298,6 +313,8 @@
         function formatNumber(value) {
             return new Intl.NumberFormat('id-ID').format(value);
         }
+
+        // Page navigation transition disabled.
     </script>
 
     @stack('scripts')

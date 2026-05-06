@@ -15,17 +15,14 @@
             ulasan: {{ request()->routeIs('admin.reviews.*') || request()->routeIs('admin.reports.*') ? 'true' : 'false' }}
         } 
     }" 
-    class="fixed inset-y-0 left-0 lg:relative bg-sidebar text-white h-screen flex flex-col shadow-2xl lg:shadow-xl overflow-hidden flex-shrink-0 z-50 transition-all duration-300 ease-in-out"
+    class="fixed inset-y-0 left-0 lg:relative text-white h-screen flex flex-col shadow-2xl lg:shadow-xl overflow-hidden flex-shrink-0 z-50 transition-all duration-300 ease-in-out"
+    style="background: linear-gradient(135deg, #065f46, #047857, #059669);"
     :class="sidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-16'"
 >
     <!-- Logo Section -->
     <div class="py-5 flex items-center border-b border-white/10 transition-all duration-300"
          :class="sidebarOpen ? 'px-5 space-x-3' : 'px-3 justify-center'">
-        <div class="w-10 h-10 bg-toba-gold rounded-lg flex items-center justify-center shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21l7-14 4 8 3-4 4 10H3z"></path>
-            </svg>
-        </div>
+        <img src="{{ asset('images/logo.jpeg') }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20">
         <div x-show="sidebarOpen" x-transition:enter="transition ease-out duration-200 delay-100" x-transition:enter-start="opacity-0 -translate-x-2" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="overflow-hidden whitespace-nowrap">
             <h2 class="text-lg font-bold tracking-wider leading-tight">TOBA TOURISM</h2>
             <p class="text-xs text-gray-300 opacity-80">Kawasan Danau Toba</p>
@@ -343,7 +340,7 @@
         font-size: 0.75rem;
         font-weight: 500;
         padding: 6px 12px;
-        border-radius: 8px;
+        border-radius: 0px;
         box-shadow: 0 4px 16px rgba(0,0,0,0.35);
     }
     .sidebar-tooltip-arrow {

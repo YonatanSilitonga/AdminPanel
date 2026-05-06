@@ -31,6 +31,7 @@ class MongoEvent extends Model
         'start_date',
         'end_date',
         'banner_url',
+        'is_active',
         'admin_id',
         'schedule',
         'opening_hours',
@@ -41,11 +42,13 @@ class MongoEvent extends Model
     public $timestamps = true;
 
     protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-        'tags' => 'array',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'start_date'  => 'datetime',
+        'end_date'    => 'datetime',
+        'is_active'   => 'boolean',
+        'tags'        => 'array',
+        'schedule'    => 'array',
+        'created_at'  => 'datetime',
+        'updated_at'  => 'datetime',
     ];
 
     /**
