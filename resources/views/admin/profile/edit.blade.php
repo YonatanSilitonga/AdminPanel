@@ -12,7 +12,7 @@
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Profile Photo with Upload -->
                 <div class="relative group" x-data="{ 
-                    preview: '{{ $admin->profile_photo ? asset('storage/' . $admin->profile_photo) : '' }}',
+                    preview: '{{ $admin->profile_photo ? image_url($admin->profile_photo) : '' }}',
                     handleFile(e) {
                         const file = e.target.files[0];
                         if (file) {

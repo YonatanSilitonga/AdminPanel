@@ -115,20 +115,47 @@ class EventService
     }
 
     /**
-     * Upload banner image
+     * Upload banner image — uses Cloudinary when configured, local public disk as fallback.
      */
     public function uploadBanner(UploadedFile $file): string
     {
+        if (env('CLOUDINARY_CLOUD_NAME')) {
+            $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
+                'folder'        => 'smarttourism/events',
+                'resource_type' => 'image',
+                'quality'       => 'auto',
+                'fetch_format'  => 'auto',
+            ]);
+            return $result['secure_url'];
+        }
+
         $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
         return $file->storeAs('events', $filename, 'public');
     }
 
     /**
-     * Delete banner image
+     * Delete banner image — handles both Cloudinary URLs and local paths.
      */
     public function deleteBanner(?string $path): void
     {
-        if ($path && Storage::disk('public')->exists($path)) {
+        if (!$path) return;
+
+        if (str_starts_with($path, 'https://res.cloudinary.com/')) {
+            try {
+                $parsed          = parse_url($path, PHP_URL_PATH);
+                $segments        = explode('/upload/', $parsed);
+                if (isset($segments[1])) {
+                    $publicIdWithExt = preg_replace('/^v\d+\//', '', $segments[1]);
+                    $publicId        = preg_replace('/\.[^.]+$/', '', $publicIdWithExt);
+                    \cloudinary()->uploadApi()->destroy($publicId);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Cloudinary delete failed: ' . $e->getMessage());
+            }
+            return;
+        }
+
+        if (Storage::disk('public')->exists($path)) {
             Storage::disk('public')->delete($path);
         }
     }

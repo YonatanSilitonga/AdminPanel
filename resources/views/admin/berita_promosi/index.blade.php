@@ -74,7 +74,7 @@
                         <div class="flex items-center">
                             @if($item->thumbnail)
                                 <div class="w-16 h-10 rounded-xl overflow-hidden mr-4 border border-gray-100 flex-shrink-0 shadow-sm">
-                                    <img src="{{ Storage::url($item->thumbnail) }}" alt="" class="w-full h-full object-cover">
+                                    <img src="{{ image_url($item->thumbnail) }}" alt="" class="w-full h-full object-cover">
                                 </div>
                             @else
                                 <div class="w-16 h-10 rounded-xl bg-gray-50 mr-4 border border-dashed border-gray-200 flex-shrink-0 flex items-center justify-center text-gray-300">

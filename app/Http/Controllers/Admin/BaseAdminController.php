@@ -115,7 +115,6 @@ class BaseAdminController extends Controller
                 'fetch_format'  => 'auto',
             ]);
 
-            // $result is an ArrayObject — access secure_url directly
             return $result['secure_url'];
         }
 

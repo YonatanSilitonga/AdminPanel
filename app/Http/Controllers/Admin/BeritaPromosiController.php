@@ -81,9 +81,9 @@ class BeritaPromosiController extends BaseAdminController
             $bp->tanggal_tayang_formatted = $bp->tanggal_tayang->format('Y-m-d');
         }
 
-        // Add full URL for thumbnail
+        // Add full URL for thumbnail — handles both Cloudinary URLs and local paths
         if ($bp->thumbnail) {
-            $bp->thumbnail_url = \Illuminate\Support\Facades\Storage::url($bp->thumbnail);
+            $bp->thumbnail_url = image_url($bp->thumbnail);
         }
 
         return response()->json($bp);
