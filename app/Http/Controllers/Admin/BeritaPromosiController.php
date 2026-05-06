@@ -47,7 +47,7 @@ class BeritaPromosiController extends BaseAdminController
         $request->validate([
             'judul' => 'required|string|max:255',
             'tipe' => 'required|in:BERITA,PROMO,EVENT',
-            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
             'konten' => 'required|string',
             'tanggal_tayang' => 'required|date',
         ]);
@@ -96,7 +96,7 @@ class BeritaPromosiController extends BaseAdminController
         $request->validate([
             'judul' => 'required|string|max:255',
             'tipe' => 'required|in:BERITA,PROMO,EVENT',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'konten' => 'required|string',
             'tanggal_tayang' => 'required|date',
         ]);

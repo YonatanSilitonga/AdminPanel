@@ -37,7 +37,7 @@ class CarouselBannerController extends BaseAdminController
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
-            'image_url' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image_url' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
         ]);
@@ -96,7 +96,7 @@ class CarouselBannerController extends BaseAdminController
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
-            'image_url' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image_url' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
         ]);

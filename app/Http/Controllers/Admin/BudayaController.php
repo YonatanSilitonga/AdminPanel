@@ -62,7 +62,7 @@ class BudayaController extends BaseAdminController
             'longitude' => 'nullable|numeric',
             'description' => 'required|string',
             'is_active' => 'boolean',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
         ]);
 
         try {
@@ -139,7 +139,7 @@ class BudayaController extends BaseAdminController
             'longitude' => 'nullable|numeric',
             'description' => 'required|string',
             'is_active' => 'boolean',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
         ]);
 
         try {

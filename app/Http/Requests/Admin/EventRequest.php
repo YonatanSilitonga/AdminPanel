@@ -42,7 +42,7 @@ class EventRequest extends FormRequest
             'long_description' => 'nullable|string|max:5000',
             'start_date' => 'required|date_format:Y-m-d H:i|after_or_equal:now',
             'end_date' => 'required|date_format:Y-m-d H:i|after:start_date',
-            'banner' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'banner' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'is_active' => 'boolean',
         ];
     }

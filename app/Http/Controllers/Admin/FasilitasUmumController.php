@@ -65,7 +65,7 @@ class FasilitasUmumController extends BaseAdminController
             'tags' => 'nullable|string',
             'operational_hours' => 'required|string|max:255',
             'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
+            'image' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
         ]);
 
         try {
@@ -150,7 +150,7 @@ class FasilitasUmumController extends BaseAdminController
             'tags' => 'nullable|string',
             'operational_hours' => 'required|string|max:255',
             'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,webp|max:5120',
+            'image' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
         ]);
 
         try {

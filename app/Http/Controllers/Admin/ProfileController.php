@@ -28,7 +28,7 @@ class ProfileController extends BaseAdminController
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admins,email,' . $admin->_id . ',_id',
-            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240'
         ]);
 
         $data = [

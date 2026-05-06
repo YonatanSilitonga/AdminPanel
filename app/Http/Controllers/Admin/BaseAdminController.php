@@ -95,7 +95,7 @@ class BaseAdminController extends Controller
         }
 
         // Validate size
-        $maxSize = $options['max_size'] ?? 5; // MB
+        $maxSize = $options['max_size'] ?? 10; // MB
         if ($file->getSize() > $maxSize * 1024 * 1024) {
             throw new \Exception("File size exceeds {$maxSize}MB limit");
         }
