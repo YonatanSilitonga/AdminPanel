@@ -63,6 +63,18 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(6,100,102,0.2); border-radius: 2px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(6,100,102,0.4); }
+
+        /* Global Gradient for Buttons */
+        button.bg-sidebar, a.bg-sidebar, button.bg-primary, a.bg-primary, button[type="submit"]:not(.bg-[#EF4444]):not(.bg-[#dc2626]) {
+            background: linear-gradient(135deg, #065f46, #047857, #059669) !important;
+            border: none !important;
+            transition: all 0.3s ease !important;
+        }
+        button.bg-sidebar:hover, a.bg-sidebar:hover, button.bg-primary:hover, a.bg-primary:hover, button[type="submit"]:not(.bg-[#EF4444]):not(.bg-[#dc2626]):hover {
+            background: linear-gradient(135deg, #047857, #059669, #065f46) !important;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3) !important;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body class="bg-light">
