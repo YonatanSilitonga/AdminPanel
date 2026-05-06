@@ -4,7 +4,7 @@
         <!-- Left: Toggle Button -->
         <div class="flex items-center space-x-4 min-w-0">
             <!-- Sidebar Toggle Button -->
-            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors focus:outline-none flex-shrink-0" aria-label="Toggle Sidebar">
+            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-500 hover:text-primary hover:bg-blue-50 rounded-lg transition-colors focus:outline-none flex-shrink-0" aria-label="Toggle Sidebar">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
@@ -27,7 +27,7 @@
 
             <!-- Notifications -->
             <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="text-white/80 hover:text-white relative p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <button @click="open = !open" class="text-gray-600 hover:text-primary relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                     </svg>
@@ -42,6 +42,7 @@
                 <div x-show="open" 
                      x-transition 
                      @click.outside="open = false"
+                     x-cloak
                      class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
                     <div class="p-4 border-b border-gray-100">
                         <h3 class="text-sm font-bold text-dark mb-3">📢 Notifikasi</h3>
@@ -78,8 +79,8 @@
 
             <!-- User Menu -->
             <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="flex items-center space-x-2 text-white/90 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors">
-                    <div class="w-8 h-8 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm border border-white/20">
+                <button @click="open = !open" class="flex items-center space-x-2 text-gray-700 hover:text-primary p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <div class="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
                         {{ strtoupper(substr(auth('admin')->user()?->name ?? '-', 0, 1)) }}
                     </div>
                     <span class="hidden md:inline text-sm font-medium text-white">{{ \Illuminate\Support\Str::limit(auth('admin')->user()?->name ?? '-', 15) }}</span>
@@ -92,6 +93,7 @@
                 <div x-show="open" 
                      x-transition 
                      @click.outside="open = false"
+                     x-cloak
                      class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 border border-gray-200 overflow-hidden">
                     <!-- User Info -->
                     <div class="px-4 py-3 bg-gradient-to-r from-emerald-50 to-green-50 border-b border-gray-200">

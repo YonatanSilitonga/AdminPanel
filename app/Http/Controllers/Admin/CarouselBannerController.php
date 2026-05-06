@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\CarouselBanner;
+use App\Models\MongoDB\MongoDestination;
+use App\Models\MongoDB\MongoEvent;
+use App\Models\MongoDB\MongoBeritaPromosi;
+use App\Models\MongoDB\MongoBudaya;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class CarouselBannerController extends BaseAdminController
 {
@@ -38,6 +41,8 @@ class CarouselBannerController extends BaseAdminController
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
             'image_url' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'content_id' => 'nullable|string',
+            'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
         ]);
@@ -97,6 +102,8 @@ class CarouselBannerController extends BaseAdminController
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
             'image_url' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'content_id' => 'nullable|string',
+            'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
         ]);
@@ -177,6 +184,70 @@ class CarouselBannerController extends BaseAdminController
                 'success' => true,
                 'message' => $isActive ? 'Slide diaktifkan' : 'Slide dinonaktifkan',
                 'is_active' => $banner->is_active
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get content list by category for carousel selection
+     */
+    public function getContentsByCategory(Request $request)
+    {
+        try {
+            $category = $request->input('category');
+            $contents = [];
+
+            switch ($category) {
+                case 'DESTINASI':
+                    $contents = MongoDestination::select('_id', 'name', 'description')
+                        ->limit(100)
+                        ->get()
+                        ->map(fn($item) => [
+                            'id' => (string)$item->_id,
+                            'title' => $item->name,
+                            'description' => substr($item->description ?? '', 0, 100)
+                        ]);
+                    break;
+                case 'EVENT':
+                    $contents = MongoEvent::select('_id', 'name', 'description')
+                        ->limit(100)
+                        ->get()
+                        ->map(fn($item) => [
+                            'id' => (string)$item->_id,
+                            'title' => $item->name,
+                            'description' => substr($item->description ?? '', 0, 100)
+                        ]);
+                    break;
+                case 'BERITA_PROMOSI':
+                    $contents = MongoBeritaPromosi::select('_id', 'title', 'content')
+                        ->limit(100)
+                        ->get()
+                        ->map(fn($item) => [
+                            'id' => (string)$item->_id,
+                            'title' => $item->title,
+                            'description' => substr($item->content ?? '', 0, 100)
+                        ]);
+                    break;
+                case 'BUDAYA':
+                    $contents = MongoBudaya::select('_id', 'name', 'description')
+                        ->limit(100)
+                        ->get()
+                        ->map(fn($item) => [
+                            'id' => (string)$item->_id,
+                            'title' => $item->name,
+                            'description' => substr($item->description ?? '', 0, 100)
+                        ]);
+                    break;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $contents
             ]);
         } catch (\Exception $e) {
             return response()->json([

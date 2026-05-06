@@ -14,6 +14,8 @@ class CarouselBanner extends Model
         'subtitle',
         'category_badge',
         'image_url',
+        'content_id',
+        'content_type',
         'start_date',
         'end_date',
         'order',
@@ -27,6 +29,29 @@ class CarouselBanner extends Model
     public function admin()
     {
         return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
+    }
+
+    /**
+     * Get the related content (Destination, Event, BeritaPromosi, etc.)
+     */
+    public function getContent()
+    {
+        if (!$this->content_id || !$this->content_type) {
+            return null;
+        }
+
+        switch ($this->content_type) {
+            case 'destinasi':
+                return \App\Models\MongoDB\MongoDestination::find($this->content_id);
+            case 'event':
+                return \App\Models\MongoDB\MongoEvent::find($this->content_id);
+            case 'berita_promosi':
+                return \App\Models\MongoDB\MongoBeritaPromosi::find($this->content_id);
+            case 'budaya':
+                return \App\Models\MongoDB\MongoBudaya::find($this->content_id);
+            default:
+                return null;
+        }
     }
 
     protected $casts = [
