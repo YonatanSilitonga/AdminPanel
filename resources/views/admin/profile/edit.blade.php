@@ -5,6 +5,32 @@
 @section('page_description', 'Kelola informasi profil, foto, dan kata sandi Anda.')
 
 @section('content')
+<style>
+    /* Hide the default empty page title container */
+    .mb-5:has(h1:empty) { display: none !important; }
+    
+    .settings-tab-active {
+        color: #6349A5;
+        border-bottom: 3px solid #6349A5;
+        font-weight: 700;
+    }
+</style>
+
+<!-- Breadcrumb Area -->
+<div class="flex items-center gap-2 text-[14px] text-gray-500 mb-6">
+    <span>Pengaturan</span>
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    <span class="font-bold text-gray-900">Profil Saya</span>
+</div>
+
+<!-- Unified Navigation Tabs -->
+<div class="flex items-center gap-8 border-b border-gray-100 mb-8 px-2 overflow-x-auto whitespace-nowrap custom-scrollbar">
+    <a href="{{ route('admin.profile') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.profile') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">Profil Saya</a>
+    <a href="{{ route('admin.settings.general') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.settings.general') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">Pengaturan Umum</a>
+    <a href="{{ route('admin.settings.api-keys') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.settings.api-keys') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">API & Integrasi</a>
+    <a href="{{ route('admin.settings.ai-config') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.settings.ai-config') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">Konfigurasi AI</a>
+    <a href="{{ route('admin.settings.audit-logs') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.settings.audit-logs') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">Log Audit</a>
+</div>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <!-- Left: Profile Info & Photo -->
     <div class="lg:col-span-1 space-y-6">

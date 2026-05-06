@@ -16,14 +16,14 @@
 @endsection
 
 @section('page_actions')
-<button @click="showCreateModal = true" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
+<button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
     <svg class="w-4 h-4" fill="none" stroke="currentcolor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Slide Baru
 </button>
 @endsection
 
 @section('content')
-<div x-data="carouselManager()" x-init="initSortable()">
+<div x-data="carouselManager()" x-init="initSortable()" @open-create-modal.window="showCreateModal = true">
     <!-- Header Summary Panel -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-wrap items-center justify-between gap-6">
         <div class="flex flex-wrap items-center gap-8">
@@ -83,7 +83,7 @@
                             <!-- Thumbnail -->
                             <div class="w-28 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
                                 @if($banner->image_url)
-                                    <img src="{{ Storage::url($banner->image_url) }}" alt="{{ $banner->title }}" class="w-full h-full object-cover">
+                                  <img src="{{ Str::startsWith($banner->image_url, 'http') ? $banner->image_url : Storage::url($banner->image_url) }}" alt="{{ $banner->title }}" class="w-full h-full object-cover">
                                 @endif
                             </div>
 
@@ -162,8 +162,7 @@
                         <div class="px-5 mt-2">
                             <template x-if="currentPreview">
                                 <div>
-                                    <div class="relative w-full h-40 rounded-2xl overflow-hidden shadow-sm">
-                                        <img :src="currentPreview.image_url ? '/storage/' + currentPreview.image_url : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=400&q=80'" class="w-full h-full object-cover" alt="Banner Preview">
+                                    <img :src="currentPreview.image_url ? (currentPreview.image_url.startsWith('http') ? currentPreview.image_url : '/storage/' + currentPreview.image_url) : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=400&q=80'" class="w-full h-full object-cover" alt="Banner Preview">
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                                         <div class="absolute bottom-0 left-0 p-4 w-full">
                                             <span class="inline-block px-2 py-0.5 bg-sidebar text-white text-[8px] font-bold rounded mb-1 uppercase" x-text="currentPreview.category_badge || 'DESTINASI'"></span>
@@ -254,13 +253,25 @@
                     <!-- Badge Kategori -->
                     <div class="space-y-1.5">
                         <label class="block text-sm font-medium text-gray-700">Badge Kategori</label>
-                        <select name="category_badge" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                        <select name="category_badge" @change="onCategoryChange($event)" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
                             <option value="" disabled selected>Pilih kategori</option>
                             <option value="DESTINASI">Destinasi</option>
                             <option value="EVENT">Event</option>
-                            <option value="KULINER">Kuliner</option>
-                            <option value="BERITA">Berita</option>
+                            <option value="BERITA_PROMOSI">Berita & Promosi</option>
+                            <option value="BUDAYA">Budaya</option>
                         </select>
+                    </div>
+
+                    <!-- Content Selection (appears after category is selected) -->
+                    <div class="space-y-1.5" x-show="selectedCategory" x-cloak>
+                        <label class="block text-sm font-medium text-gray-700">Pilih Konten</label>
+                        <select name="content_id" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                            <option value="" selected>-- Tidak ada konten terhubung --</option>
+                            <template x-for="content in contentsList" :key="content.id">
+                                <option :value="content.id" x-text="content.title"></option>
+                            </template>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Pilih konten untuk diarahkan saat user mengklik carousel</p>
                     </div>
 
                     <!-- Gambar Background -->
@@ -355,12 +366,24 @@
 
                     <div class="space-y-1.5">
                         <label class="block text-sm font-medium text-gray-700">Badge Kategori</label>
-                        <select name="category_badge" x-model="editingBanner.category_badge" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                        <select name="category_badge" @change="onEditCategoryChange($event)" x-model="editingBanner.category_badge" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
                             <option value="DESTINASI">Destinasi</option>
                             <option value="EVENT">Event</option>
-                            <option value="KULINER">Kuliner</option>
-                            <option value="BERITA">Berita</option>
+                            <option value="BERITA_PROMOSI">Berita & Promosi</option>
+                            <option value="BUDAYA">Budaya</option>
                         </select>
+                    </div>
+
+                    <!-- Content Selection for Edit (appears after category is selected) -->
+                    <div class="space-y-1.5" x-show="editSelectedCategory" x-cloak>
+                        <label class="block text-sm font-medium text-gray-700">Pilih Konten</label>
+                        <select name="content_id" x-model="editingBanner.content_id" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                            <option value="" selected>-- Tidak ada konten terhubung --</option>
+                            <template x-for="content in editContentsList" :key="content.id">
+                                <option :value="content.id" x-text="content.title"></option>
+                            </template>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Pilih konten untuk diarahkan saat user mengklik carousel</p>
                     </div>
 
                     <div class="space-y-1.5">
@@ -423,6 +446,10 @@ function carouselManager() {
     return {
         bannersData: @json($banners->items()),
         previewIndex: 0,
+        contentsList: [],
+        editContentsList: [],
+        selectedCategory: '',
+        editSelectedCategory: '',
         
         get currentPreview() {
             return this.bannersData.length > 0 ? this.bannersData[this.previewIndex] : null;
@@ -436,6 +463,58 @@ function carouselManager() {
         prevPreview() {
             if (this.bannersData.length === 0) return;
             this.previewIndex = (this.previewIndex - 1 + this.bannersData.length) % this.bannersData.length;
+        },
+
+        async onCategoryChange(event) {
+            const category = event.target.value;
+            this.selectedCategory = category;
+            
+            if (!category) {
+                this.contentsList = [];
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/carousel-banners/contents-by-category?category=${category}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const result = await response.json();
+                if (result.success) {
+                    this.contentsList = result.data;
+                } else {
+                    console.error(result.message);
+                    this.contentsList = [];
+                }
+            } catch (error) {
+                console.error('Failed to fetch contents:', error);
+                this.contentsList = [];
+            }
+        },
+
+        async onEditCategoryChange(event) {
+            const category = event.target.value;
+            this.editSelectedCategory = category;
+            
+            if (!category) {
+                this.editContentsList = [];
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/carousel-banners/contents-by-category?category=${category}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const result = await response.json();
+                if (result.success) {
+                    this.editContentsList = result.data;
+                } else {
+                    console.error(result.message);
+                    this.editContentsList = [];
+                }
+            } catch (error) {
+                console.error('Failed to fetch contents:', error);
+                this.editContentsList = [];
+            }
         },
 
         initSortable() {
@@ -498,6 +577,23 @@ function carouselManager() {
                     this.editingBanner._id = this.editingBanner.id;
                 }
                 this.fileName = this.editingBanner.image_url ? 'Gambar saat ini' : '';
+
+                // Load contents for current category
+                if (this.editingBanner.category_badge) {
+                    this.editSelectedCategory = this.editingBanner.category_badge;
+                    try {
+                        const contentResponse = await fetch(`/admin/carousel-banners/contents-by-category?category=${this.editingBanner.category_badge}`, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        const contentResult = await contentResponse.json();
+                        if (contentResult.success) {
+                            this.editContentsList = contentResult.data;
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch contents:', error);
+                        this.editContentsList = [];
+                    }
+                }
             } catch (error) {
                 alert('Gagal mengambil data banner');
                 this.showEditModal = false;
@@ -517,11 +613,23 @@ function carouselManager() {
             const form = document.getElementById('editBannerForm');
             const formData = new FormData(form);
             
+            // Add content_type based on category
+            const category = this.editingBanner.category_badge;
+            const contentTypeMap = {
+                'DESTINASI': 'destinasi',
+                'EVENT': 'event',
+                'BERITA_PROMOSI': 'berita_promosi',
+                'BUDAYA': 'budaya'
+            };
+            
+            if (contentTypeMap[category]) {
+                formData.append('content_type', contentTypeMap[category]);
+            }
+            
             try {
                 const response = await fetch(`/admin/carousel-banners/${bannerId}`, {
                     method: 'POST',
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: formData
@@ -535,6 +643,7 @@ function carouselManager() {
                 }
             } catch (error) {
                 alert('Terjadi kesalahan saat menyimpan data');
+                console.error(error);
             } finally {
                 this.loading = false;
             }
@@ -545,11 +654,24 @@ function carouselManager() {
             const form = document.getElementById('createBannerForm');
             const formData = new FormData(form);
 
+            // Add content_type based on category
+            const categorySelect = form.querySelector('select[name="category_badge"]');
+            const category = categorySelect.value;
+            const contentTypeMap = {
+                'DESTINASI': 'destinasi',
+                'EVENT': 'event',
+                'BERITA_PROMOSI': 'berita_promosi',
+                'BUDAYA': 'budaya'
+            };
+            
+            if (contentTypeMap[category]) {
+                formData.append('content_type', contentTypeMap[category]);
+            }
+
             try {
                 const response = await fetch('/admin/carousel-banners', {
                     method: 'POST',
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
                     body: formData
@@ -563,6 +685,7 @@ function carouselManager() {
                 }
             } catch (error) {
                 alert('Terjadi kesalahan saat menyimpan data');
+                console.error(error);
             } finally {
                 this.loading = false;
             }
