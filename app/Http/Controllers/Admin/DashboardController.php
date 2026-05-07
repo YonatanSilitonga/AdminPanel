@@ -49,12 +49,12 @@ class DashboardController extends BaseAdminController
      */
     private function getMonthlyChartData()
     {
-        $months = now()->subMonths(11)->monthsUntil(now()->addMonth());
+        $months = now()->subMonths(11)->monthsUntil(now());
         $data = [];
 
         foreach ($months as $month) {
-            $startDate = $month->startOfMonth();
-            $endDate = $month->endOfMonth();
+            $startDate = $month->copy()->startOfMonth();
+            $endDate = $month->copy()->endOfMonth();
 
             $data[] = [
                 'month' => $month->format('M'),
