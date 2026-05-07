@@ -24,8 +24,6 @@ class EventController extends BaseAdminController
      */
     public function index(Request $request)
     {
-        $this->checkPermission('view_events');
-
         $events = $this->eventService->getPaginatedEvents([
             'search' => $request->get('search'),
             'category' => $request->get('category'),
@@ -40,7 +38,6 @@ class EventController extends BaseAdminController
      */
     public function create()
     {
-        $this->checkPermission('create_event');
         return view('admin.events.create');
     }
 
@@ -49,8 +46,6 @@ class EventController extends BaseAdminController
      */
     public function store(Request $request)
     {
-        $this->checkPermission('create_event');
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
@@ -107,7 +102,6 @@ class EventController extends BaseAdminController
 
     public function edit(string $id, Request $request)
     {
-        $this->checkPermission('edit_event');
         $event = MongoEvent::findOrFail($id);
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -122,7 +116,6 @@ class EventController extends BaseAdminController
      */
     public function update(Request $request, string $id)
     {
-        $this->checkPermission('edit_event');
         $event = MongoEvent::findOrFail($id);
 
         $validated = $request->validate([
@@ -185,7 +178,6 @@ class EventController extends BaseAdminController
      */
     public function destroy(string $id)
     {
-        $this->checkPermission('delete_event');
         $event = MongoEvent::findOrFail($id);
 
         try {
@@ -205,7 +197,6 @@ class EventController extends BaseAdminController
      */
     public function toggleStatus(string $id)
     {
-        $this->checkPermission('toggle_event_status');
         $event = MongoEvent::findOrFail($id);
 
         $oldStatus = $event->is_active;

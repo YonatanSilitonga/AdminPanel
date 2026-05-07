@@ -295,6 +295,17 @@
             });
         }
 
+        // Helper to safely parse JSON from a fetch response
+        window.safeParseJSON = async function(response) {
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (error) {
+                console.error("Invalid JSON response:", text);
+                throw new Error("Server returned an invalid response.");
+            }
+        };
+
         // Show confirmation before delete
         function confirmDelete(message = 'Are you sure you want to delete this item?') {
             return confirm(message);
