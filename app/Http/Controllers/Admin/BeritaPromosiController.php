@@ -46,14 +46,14 @@ class BeritaPromosiController extends BaseAdminController
     {
         $request->validate([
             'judul' => 'required|string|max:255',
-            'tipe' => 'required|in:BERITA,PROMO,EVENT',
-            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'tipe' => 'required|in:BERITA,PROMO',
+            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
             'konten' => 'required|string',
             'tanggal_tayang' => 'required|date',
         ]);
 
         try {
-            $data = $request->except(['thumbnail', '_token', 'tampilkan_di_carousel', 'is_active']);
+            $data = $request->except(['thumbnail', '_token', 'is_active']);
             
             if ($request->hasFile('thumbnail')) {
                 $data['thumbnail'] = $this->uploadFile($request->file('thumbnail'), 'berita_promosi');
@@ -61,7 +61,6 @@ class BeritaPromosiController extends BaseAdminController
 
             $data['admin_id'] = auth('admin')->id() ?? null;
             $data['is_active'] = $request->has('is_active');
-            $data['tampilkan_di_carousel'] = $request->has('tampilkan_di_carousel');
 
             $bp = MongoBeritaPromosi::create($data);
             
@@ -95,14 +94,14 @@ class BeritaPromosiController extends BaseAdminController
 
         $request->validate([
             'judul' => 'required|string|max:255',
-            'tipe' => 'required|in:BERITA,PROMO,EVENT',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'tipe' => 'required|in:BERITA,PROMO',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'konten' => 'required|string',
             'tanggal_tayang' => 'required|date',
         ]);
 
         try {
-            $data = $request->except(['thumbnail', '_token', '_method', 'tampilkan_di_carousel', 'is_active']);
+            $data = $request->except(['thumbnail', '_token', '_method', 'is_active']);
             
             if ($request->hasFile('thumbnail')) {
                 if ($bp->thumbnail) {
@@ -112,7 +111,6 @@ class BeritaPromosiController extends BaseAdminController
             }
 
             $data['is_active'] = $request->has('is_active');
-            $data['tampilkan_di_carousel'] = $request->has('tampilkan_di_carousel');
 
             $oldValues = $bp->toArray();
             $bp->update($data);

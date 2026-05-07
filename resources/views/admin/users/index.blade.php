@@ -43,7 +43,7 @@
                     'Accept': 'application/json'
                 }
             });
-            const fullData = await response.json();
+            const fullData = await window.safeParseJSON(response);
             this.detailUser = fullData;
         } catch (error) {
             console.error('Error:', error);
@@ -76,7 +76,7 @@
                     'Accept': 'application/json'
                 }
             });
-            const result = await response.json();
+            const result = await window.safeParseJSON(response);
             
             if (result.success) {
                 this.successMessage = result.message;

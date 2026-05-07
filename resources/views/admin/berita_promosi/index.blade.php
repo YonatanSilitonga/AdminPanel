@@ -36,7 +36,6 @@
             <option value="">Semua Tipe</option>
             <option value="BERITA" {{ request('tipe') == 'BERITA' ? 'selected' : '' }}>Berita</option>
             <option value="PROMO" {{ request('tipe') == 'PROMO' ? 'selected' : '' }}>Promo</option>
-            <option value="EVENT" {{ request('tipe') == 'EVENT' ? 'selected' : '' }}>Event</option>
         </select>
         <select name="status" class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" onchange="document.getElementById('filter-form').submit()">
             <option value="">Semua Status</option>
@@ -85,9 +84,7 @@
                         </div>
                     </td>
                     <td class="px-10 py-6">
-                        @if($item->tipe === 'EVENT')
-                            <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-green-50 text-green-600">EVENT</span>
-                        @elseif($item->tipe === 'PROMO')
+                        @if($item->tipe === 'PROMO')
                             <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-orange-50 text-orange-500">PROMO</span>
                         @else
                             <span class="px-4 py-1.5 rounded-xl text-xs font-bold bg-teal-50 text-teal-600">BERITA</span>
@@ -140,38 +137,35 @@
 
 <!-- Tambah Modal -->
 <div x-data="{ show: {{ $errors->any() && !old('_method') ? 'true' : 'false' }} }" @open-add-modal.window="show = true" x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
-    <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-2xl text-left align-middle transition-all transform bg-white shadow-2xl rounded-[1.5rem] sm:my-8 relative z-10">
-            <div class="flex justify-between items-center p-6 border-b border-gray-100">
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-8">
                 <h3 class="text-xl font-bold text-gray-900">Tambah Berita/Promosi</h3>
                 <button @click="show = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <form action="{{ route('admin.berita_promosi.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
+            <form action="{{ route('admin.berita_promosi.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                 @csrf
                 <div class="space-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Judul</label>
                         <input type="text" name="judul" value="{{ old('judul') }}" required placeholder="Masukkan judul berita atau promosi" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('judul') border-red-500 @enderror">
                         @error('judul') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tipe</label>
                         <select name="tipe" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm appearance-none bg-white @error('tipe') border-red-500 @enderror">
                             <option value="BERITA" {{ old('tipe') == 'BERITA' ? 'selected' : '' }}>BERITA</option>
                             <option value="PROMO" {{ old('tipe') == 'PROMO' ? 'selected' : '' }}>PROMO</option>
-                            <option value="EVENT" {{ old('tipe') == 'EVENT' ? 'selected' : '' }}>EVENT</option>
                         </select>
                         @error('tipe') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div x-data="{ fileName: '', previewUrl: '' }">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Thumbnail</label>
                         <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors relative overflow-hidden">
                             <template x-if="previewUrl">
                                 <img :src="previewUrl" class="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none">
@@ -190,22 +184,16 @@
                         @error('thumbnail') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Konten</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Konten</label>
                         <textarea name="konten" required rows="4" placeholder="Tulis konten berita/promosi di sini..." class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('konten') border-red-500 @enderror">{{ old('konten') }}</textarea>
                         @error('konten') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Tayang</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Tayang</label>
                         <input type="date" name="tanggal_tayang" value="{{ old('tanggal_tayang') }}" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('tanggal_tayang') border-red-500 @enderror">
                         @error('tanggal_tayang') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                        <span class="text-sm font-medium text-gray-700">Tampilkan di Carousel</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="tampilkan_di_carousel" {{ old('tampilkan_di_carousel') ? 'checked' : '' }} class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
-                        </label>
-                    </div>
+
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                         <span class="text-sm font-medium text-gray-700">Status Aktif <span class="text-xs text-gray-500 font-normal ml-1">(Draft jika nonaktif)</span></span>
                         <label class="relative inline-flex items-center cursor-pointer">
@@ -228,39 +216,36 @@
 <div x-data="{ show: false, previewUrl: '' }" 
      @open-edit-modal.window="show = true; previewUrl = $event.detail.thumbnail_url || ''" 
      x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
-    <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-2xl text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 relative z-10">
-            <div class="flex justify-between items-center p-6 border-b border-gray-100">
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-8">
                 <h3 class="text-xl font-bold text-gray-900">Edit Berita/Promosi</h3>
                 <button @click="show = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <form id="editForm" method="POST" enctype="multipart/form-data" class="p-6">
+            <form id="editForm" method="POST" enctype="multipart/form-data" class="space-y-5">
                 @csrf
                 @method('PUT')
                 <div class="space-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Judul</label>
                         <input type="text" id="edit_judul" name="judul" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('judul') border-red-500 @enderror">
                         @error('judul') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tipe</label>
                         <select id="edit_tipe" name="tipe" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm appearance-none bg-white @error('tipe') border-red-500 @enderror">
                             <option value="BERITA">BERITA</option>
                             <option value="PROMO">PROMO</option>
-                            <option value="EVENT">EVENT</option>
                         </select>
                         @error('tipe') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div x-data="{ fileName: '' }">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Thumbnail</label>
                         <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors relative overflow-hidden">
                             <template x-if="previewUrl">
                                 <img :src="previewUrl" class="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none">
@@ -280,22 +265,16 @@
                         @error('thumbnail') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Konten</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Konten</label>
                         <textarea id="edit_konten" name="konten" required rows="4" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('konten') border-red-500 @enderror"></textarea>
                         @error('konten') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Tayang</label>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Tayang</label>
                         <input type="date" id="edit_tanggal" name="tanggal_tayang" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('tanggal_tayang') border-red-500 @enderror">
                         @error('tanggal_tayang') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                        <span class="text-sm font-medium text-gray-700">Tampilkan di Carousel <span class="text-xs text-gray-500 font-normal ml-1">Konten akan muncul di banner utama</span></span>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="edit_carousel" name="tampilkan_di_carousel" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
-                        </label>
-                    </div>
+
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                         <span class="text-sm font-medium text-gray-700">Status Aktif <span class="text-xs text-gray-500 font-normal ml-1">(Draft jika nonaktif)</span></span>
                         <label class="relative inline-flex items-center cursor-pointer">
@@ -338,25 +317,24 @@
 
 @push('scripts')
 <script>
-    function editItem(id) {
-        fetch(`/admin/berita-promosi/${id}/edit`)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('editForm').action = `/admin/berita-promosi/${id}`;
-                document.getElementById('edit_judul').value = data.judul;
-                document.getElementById('edit_tipe').value = data.tipe;
-                document.getElementById('edit_konten').value = data.konten;
-                document.getElementById('edit_tanggal').value = data.tanggal_tayang_formatted || '';
-                document.getElementById('edit_carousel').checked = data.tampilkan_di_carousel;
-                document.getElementById('edit_status').checked = data.is_active;
-                
-                window.dispatchEvent(new CustomEvent('open-edit-modal', {
-                    detail: { thumbnail_url: data.thumbnail_url }
-                }));
-            })
-            .catch(err => {
-                alert('Gagal mengambil data: ' + err);
-            });
+    async function editItem(id) {
+        try {
+            const res = await fetch(`/admin/berita-promosi/${id}/edit`);
+            const data = await window.safeParseJSON(res);
+            
+            document.getElementById('editForm').action = `/admin/berita-promosi/${id}`;
+            document.getElementById('edit_judul').value = data.judul;
+            document.getElementById('edit_tipe').value = data.tipe;
+            document.getElementById('edit_konten').value = data.konten;
+            document.getElementById('edit_tanggal').value = data.tanggal_tayang_formatted || '';
+            document.getElementById('edit_status').checked = data.is_active;
+            
+            window.dispatchEvent(new CustomEvent('open-edit-modal', {
+                detail: { thumbnail_url: data.thumbnail_url }
+            }));
+        } catch (err) {
+            alert('Gagal mengambil data: ' + err);
+        }
     }
 </script>
 @endpush

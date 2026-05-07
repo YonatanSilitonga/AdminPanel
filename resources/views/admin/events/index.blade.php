@@ -38,7 +38,7 @@
             const response = await fetch(`/admin/events/${id}/edit`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
-            this.editingEvent = await response.json();
+            this.editingEvent = await window.safeParseJSON(response);
             this.schedule = this.editingEvent.schedule || [];
             this.fileName = this.editingEvent.banner_url ? 'Banner saat ini' : '';
             
@@ -95,7 +95,7 @@
                 body: formData
             });
             
-            const result = await response.json();
+            const result = await window.safeParseJSON(response);
             if (result.success) {
                 window.location.reload();
             } else {
@@ -128,7 +128,7 @@
                 body: formData
             });
             
-            const result = await response.json();
+            const result = await window.safeParseJSON(response);
             if (result.success) {
                 window.location.reload();
             } else {

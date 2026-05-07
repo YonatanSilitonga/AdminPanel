@@ -99,8 +99,8 @@
 <body class="bg-light">
     @auth('admin')
            <div class="flex h-screen overflow-hidden sidebar-no-transition"
-               x-data="{ sidebarOpen: true }"
-               x-init="">
+               x-data="{ sidebarOpen: {{ request()->cookie('sidebarOpen', 'true') === 'true' ? 'true' : 'false' }} }"
+               x-init="$watch('sidebarOpen', value => document.cookie = 'sidebarOpen=' + value + '; path=/; max-age=31536000')">
 
             <!-- Sidebar -->
             @include('admin.layouts.sidebar')

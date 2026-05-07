@@ -32,7 +32,7 @@
         this.editingBudaya = null;
         try {
             const res = await fetch(`/admin/budaya/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-            this.editingBudaya = await res.json();
+            this.editingBudaya = await window.safeParseJSON(res);
             if (this.editingBudaya && !this.editingBudaya._id && this.editingBudaya.id) {
                 this.editingBudaya._id = this.editingBudaya.id;
             }
@@ -61,7 +61,7 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
                 body: formData
             });
-            const result = await res.json();
+            const result = await window.safeParseJSON(res);
             if (result.success) { window.location.reload(); }
             else { alert(result.message || 'Gagal menyimpan'); }
         } catch(e) {

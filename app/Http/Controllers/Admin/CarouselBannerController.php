@@ -136,6 +136,11 @@ class CarouselBannerController extends BaseAdminController
                 'message' => 'Slide Carousel berhasil diperbarui'
             ]);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Carousel Update Error: ' . $e->getMessage(), [
+                'id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
@@ -147,8 +152,8 @@ class CarouselBannerController extends BaseAdminController
     {
         $banner = CarouselBanner::findOrFail($id);
         
-        if ($banner->image_url && Storage::disk('public')->exists($banner->image_url)) {
-            Storage::disk('public')->delete($banner->image_url);
+        if ($banner->image_url) {
+            $this->deleteFile($banner->image_url);
         }
         
         $banner->delete();
@@ -224,13 +229,13 @@ class CarouselBannerController extends BaseAdminController
                         ]);
                     break;
                 case 'BERITA_PROMOSI':
-                    $contents = MongoBeritaPromosi::select('_id', 'title', 'content')
+                    $contents = MongoBeritaPromosi::select('_id', 'judul', 'konten')
                         ->limit(100)
                         ->get()
                         ->map(fn($item) => [
                             'id' => (string)$item->_id,
-                            'title' => $item->title,
-                            'description' => substr($item->content ?? '', 0, 100)
+                            'title' => $item->judul,
+                            'description' => substr($item->konten ?? '', 0, 100)
                         ]);
                     break;
                 case 'BUDAYA':

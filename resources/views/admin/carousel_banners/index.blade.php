@@ -20,14 +20,14 @@
 @endsection
 
 @section('page_actions')
-<button @click="showCreateModal = true" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
+<button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
     <svg class="w-4 h-4" fill="none" stroke="currentcolor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Slide Baru
 </button>
 @endsection
 
 @section('content')
-<div x-data="carouselManager()" x-init="initSortable()">
+<div x-data="carouselManager()" x-init="init()" @open-create-modal.window="showCreateModal = true">
     <!-- Header Summary Panel -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-wrap items-center justify-between gap-6">
         <div class="flex flex-wrap items-center gap-8">
@@ -116,9 +116,6 @@
                                     @elseif($banner->category_badge == 'EVENT')
                                         <span
                                             class="px-3 py-1 bg-teal-50 text-teal-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">Event</span>
-                                    @elseif($banner->category_badge == 'KULINER')
-                                        <span
-                                            class="px-3 py-1 bg-orange-50 text-orange-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">Kuliner</span>
                                     @else
                                         <span
                                             class="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">{{ $banner->category_badge }}</span>
@@ -343,13 +340,27 @@
                     <!-- Badge Kategori -->
                     <div class="space-y-1.5">
                         <label class="block text-sm font-medium text-gray-700">Badge Kategori</label>
-                        <select name="category_badge" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                        <select name="category_badge" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')" @change="fetchContents($event.target.value)">
                             <option value="" disabled selected>Pilih kategori</option>
                             <option value="DESTINASI">Destinasi</option>
                             <option value="EVENT">Event</option>
-                            <option value="KULINER">Kuliner</option>
-                            <option value="BERITA">Berita</option>
+                            <option value="BERITA_PROMOSI">Berita & Promosi</option>
+                            <option value="BUDAYA">Budaya</option>
                         </select>
+                    </div>
+
+                    <!-- Konten Terkait -->
+                    <div class="space-y-1.5" x-show="contentsList.length > 0 || contentLoading" x-transition>
+                        <label class="block text-sm font-medium text-gray-700">Tautkan ke Konten (Opsional)</label>
+                        <select name="content_id" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm" :disabled="contentLoading">
+                            <option value="">Tidak ditautkan...</option>
+                            <template x-for="content in contentsList" :key="content.id">
+                                <option :value="content.id" x-text="content.title"></option>
+                            </template>
+                        </select>
+                        <span x-show="contentLoading" class="text-xs text-gray-500 animate-pulse">Memuat konten...</span>
+                        
+                        <input type="hidden" name="content_type" :value="selectedCategory === 'BERITA_PROMOSI' ? 'berita_promosi' : (selectedCategory ? selectedCategory.toLowerCase() : '')">
                     </div>
 
                         <!-- Gambar Background -->
@@ -485,12 +496,26 @@
 
                     <div class="space-y-1.5">
                         <label class="block text-sm font-medium text-gray-700">Badge Kategori</label>
-                        <select name="category_badge" x-model="editingBanner.category_badge" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                        <select name="category_badge" x-model="editingBanner.category_badge" required class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')" @change="fetchContents($event.target.value)">
                             <option value="DESTINASI">Destinasi</option>
                             <option value="EVENT">Event</option>
-                            <option value="KULINER">Kuliner</option>
-                            <option value="BERITA">Berita</option>
+                            <option value="BERITA_PROMOSI">Berita & Promosi</option>
+                            <option value="BUDAYA">Budaya</option>
                         </select>
+                    </div>
+
+                    <!-- Konten Terkait -->
+                    <div class="space-y-1.5" x-show="contentsList.length > 0 || contentLoading" x-transition>
+                        <label class="block text-sm font-medium text-gray-700">Tautkan ke Konten (Opsional)</label>
+                        <select name="content_id" x-model="editingBanner.content_id" class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-[#6349A5]/20 focus:border-[#6349A5] outline-none transition-all text-sm" :disabled="contentLoading">
+                            <option value="">Tidak ditautkan...</option>
+                            <template x-for="content in contentsList" :key="content.id">
+                                <option :value="content.id" x-text="content.title"></option>
+                            </template>
+                        </select>
+                        <span x-show="contentLoading" class="text-xs text-gray-500 animate-pulse">Memuat konten...</span>
+                        
+                        <input type="hidden" name="content_type" :value="selectedCategory === 'BERITA_PROMOSI' ? 'berita_promosi' : (selectedCategory ? selectedCategory.toLowerCase() : '')">
                     </div>
 
                         <div class="space-y-1.5">
@@ -579,7 +604,7 @@
 <script>
 function carouselManager() {
     return {
-        bannersData: @json($banners->items()),
+        bannersData: @json($banners->items()).filter(b => b.is_active),
         previewIndex: 0,
         
         get currentPreview() {
@@ -639,12 +664,48 @@ function carouselManager() {
                     }
                 },
 
+        init() {
+            this.initSortable();
+            // Start autoplay for live preview
+            if (this.bannersData.length > 0) {
+                setInterval(() => {
+                    this.nextPreview();
+                }, 3500);
+            }
+        },
+
         showEditModal: false,
         showCreateModal: false,
         editingBanner: {},
         loading: false,
         fileName: '',
         createFileName: '',
+        contentsList: [],
+        selectedCategory: '',
+        contentLoading: false,
+
+        async fetchContents(category) {
+            if (!category) {
+                this.contentsList = [];
+                this.selectedCategory = category;
+                return;
+            }
+            this.selectedCategory = category;
+            this.contentLoading = true;
+            try {
+                const response = await fetch(`/admin/carousel-banners/contents-by-category?category=${category}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const result = await window.safeParseJSON(response);
+                if (result.success) {
+                    this.contentsList = result.data || [];
+                }
+            } catch (e) {
+                console.error('Failed to fetch contents', e);
+            } finally {
+                this.contentLoading = false;
+            }
+        },
         
         async openEditModal(id) {
             this.loading = true;
@@ -654,12 +715,16 @@ function carouselManager() {
                 const response = await fetch(`/admin/carousel-banners/${id}/edit`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
-                this.editingBanner = await response.json();
+                this.editingBanner = await window.safeParseJSON(response);
                 // Ensure _id is present for submission
                 if (this.editingBanner && !this.editingBanner._id && this.editingBanner.id) {
                     this.editingBanner._id = this.editingBanner.id;
                 }
                 this.fileName = this.editingBanner.image_url ? 'Gambar saat ini' : '';
+                
+                if (this.editingBanner.category_badge) {
+                    await this.fetchContents(this.editingBanner.category_badge);
+                }
             } catch (error) {
                 alert('Gagal mengambil data banner');
                 this.showEditModal = false;
@@ -689,14 +754,16 @@ function carouselManager() {
                     body: formData
                 });
                 
-                const result = await response.json();
+                const result = await window.safeParseJSON(response);
+
                 if (result.success) {
                     window.location.reload();
                 } else {
                     alert(result.message || 'Gagal memperbarui banner');
                 }
             } catch (error) {
-                alert('Terjadi kesalahan saat menyimpan data');
+                console.error(error);
+                alert(error.message || 'Terjadi kesalahan saat menyimpan data');
             } finally {
                 this.loading = false;
             }
@@ -717,14 +784,16 @@ function carouselManager() {
                     body: formData
                 });
                 
-                const result = await response.json();
+                const result = await window.safeParseJSON(response);
+
                 if (result.success) {
                     window.location.reload();
                 } else {
                     alert(result.message || 'Gagal membuat banner');
                 }
             } catch (error) {
-                alert('Terjadi kesalahan saat menyimpan data');
+                console.error(error);
+                alert(error.message || 'Terjadi kesalahan saat menyimpan data');
             } finally {
                 this.loading = false;
             }

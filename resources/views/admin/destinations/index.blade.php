@@ -61,7 +61,7 @@
         this.editingDest = null;
         try {
             const res = await fetch(`/admin/destinations/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-            this.editingDest = await res.json();
+            this.editingDest = await window.safeParseJSON(res);
             this.editFileName = this.editingDest.images && this.editingDest.images.length ? 'Foto saat ini' : '';
             
             if (this.editingDest.opening_hours && this.editingDest.opening_hours.includes(' - ')) {
@@ -91,7 +91,7 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
                 body: formData
             });
-            const result = await res.json();
+            const result = await window.safeParseJSON(res);
             if (result.success) { window.location.reload(); }
             else { alert(result.message || 'Gagal menyimpan'); }
         } catch(e) {

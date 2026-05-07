@@ -176,7 +176,7 @@
                             </div>
                             <div class="w-8 h-8 rounded-full bg-sidebar flex items-center justify-center text-white text-[10px] font-bold" x-text="index + 1"></div>
                             <div class="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 border border-gray-100">
-                                <img :src="item.images && item.images[0] ? '/storage/' + item.images[0] : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=100&q=80'" class="w-full h-full object-cover">
+                                <img :src="item.images && item.images[0] ? (item.images[0].startsWith('http') ? item.images[0] : '/storage/' + item.images[0]) : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=100&q=80'" class="w-full h-full object-cover">
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-bold text-gray-800 text-sm truncate" x-text="item.name"></h4>
@@ -213,7 +213,7 @@
                             <template x-for="res in searchResults" :key="res.id_str || (res._id && res._id.$oid) || res._id">
                                 <div @click="addItem(res)" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0">
                                     <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
-                                        <img :src="res.images && res.images[0] ? '/storage/' + res.images[0] : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=100&q=80'" class="w-full h-full object-cover">
+                                        <img :src="res.images && res.images[0] ? (res.images[0].startsWith('http') ? res.images[0] : '/storage/' + res.images[0]) : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=100&q=80'" class="w-full h-full object-cover">
                                     </div>
                                     <div class="flex-1">
                                         <p class="font-bold text-gray-800 text-sm" x-text="res.name"></p>
@@ -261,7 +261,7 @@
                         <div class="space-y-3">
                             <template x-for="(item, i) in trendingList.slice(0, 4)" :key="item.id_str || (item._id && item._id.$oid) || item._id">
                                 <div class="relative w-full h-24 rounded-xl overflow-hidden shadow-sm">
-                                    <img :src="item.images && item.images[0] ? '/storage/' + item.images[0] : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=400&q=80'" class="w-full h-full object-cover">
+                                    <img :src="item.images && item.images[0] ? (item.images[0].startsWith('http') ? item.images[0] : '/storage/' + item.images[0]) : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=400&q=80'" class="w-full h-full object-cover">
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                                     <div class="absolute top-2 left-2 w-4 h-4 bg-sidebar text-white rounded flex items-center justify-center text-[8px] font-bold border border-white/20" x-text="i + 1"></div>
                                     <div class="absolute bottom-2 left-2 pr-2">
