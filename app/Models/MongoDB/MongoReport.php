@@ -44,7 +44,7 @@ class MongoReport extends Model
         'image_urls' => 'array',
     ];
 
-    protected $appends = ['all_image_urls'];
+    protected $appends = ['all_image_urls', 'image_url'];
 
     /**
      * Get the destination associated with this report
@@ -87,7 +87,7 @@ class MongoReport extends Model
      */
     public function getImageUrlAttribute(?string $value): ?string
     {
-        return $this->formatImageUrl($value);
+        return $this->formatImageUrl($this->image_path ?? $this->attributes['image_url'] ?? $value);
     }
 
     /**
@@ -118,16 +118,11 @@ class MongoReport extends Model
     }
 
     /**
-     * Helper to format image URL consistently
+     * Helper to format image URL consistently.
      */
     private function formatImageUrl(?string $value): ?string
     {
-        if (!$value) return null;
-        if (filter_var($value, FILTER_VALIDATE_URL)) return $value;
-        
-        $goBackendUrl = config('services.go_backend.url', 'http://localhost:8080');
-        return rtrim($goBackendUrl, '/') . '/uploads/reports/' . basename($value);
-
+        return image_url($value);
     }
 
     /**

@@ -76,9 +76,9 @@
                     </div>
 
                     <div class="space-y-3" id="slide-list-container">
-                        @forelse($banners as $index => $banner)
+                        <template x-for="(banner, index) in bannersList" :key="banner.id || banner._id">
                             <div class="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all hover:border-gray-200 group"
-                                data-id="{{ $banner->_id }}">
+                                :data-id="banner.id || banner._id">
                                 <!-- Drag Handle -->
                                 <div class="cursor-grab text-gray-200 hover:text-gray-400 pl-1 drag-handle">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -89,50 +89,47 @@
 
                                 <!-- Slide Number -->
                                 <div
-                                    class="text-[11px] font-bold text-gray-400 w-16 uppercase tracking-wider slide-number-text">
-                                    SLIDE {{ $index + 1 }}
+                                    class="text-[11px] font-bold text-gray-400 w-16 uppercase tracking-wider slide-number-text" x-text="'SLIDE ' + (index + 1)">
                                 </div>
 
-                            <!-- Thumbnail -->
-                            <div class="w-28 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
-                                @if($banner->image_url)
-                                    <img src="{{ Str::startsWith($banner->image_url, 'http') ? $banner->image_url : Storage::url($banner->image_url) }}" alt="{{ $banner->title }}" class="w-full h-full object-cover">
-                                @endif
-                            </div>
+                                <!-- Thumbnail -->
+                                <div class="w-28 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                                    <template x-if="banner.image_url">
+                                        <img :src="banner.image_url.startsWith('http') ? banner.image_url : '/storage/' + banner.image_url" :alt="banner.title" class="w-full h-full object-cover">
+                                    </template>
+                                </div>
 
                                 <!-- Content -->
                                 <div class="flex-1 min-w-0 pr-4">
-                                    <h4 class="font-bold text-gray-800 text-[15px] truncate">{{ $banner->title }}</h4>
-                                    @if ($banner->subtitle)
-                                        <p class="text-[12px] text-gray-500 truncate mt-0.5">{{ $banner->subtitle }}</p>
-                                    @endif
+                                    <h4 class="font-bold text-gray-800 text-[15px] truncate" x-text="banner.title"></h4>
+                                    <template x-if="banner.subtitle">
+                                        <p class="text-[12px] text-gray-500 truncate mt-0.5" x-text="banner.subtitle"></p>
+                                    </template>
                                 </div>
 
                                 <!-- Badges -->
                                 <div class="flex items-center gap-3">
-                                    @if ($banner->category_badge == 'DESTINASI')
-                                        <span
-                                            class="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">Destinasi</span>
-                                    @elseif($banner->category_badge == 'EVENT')
-                                        <span
-                                            class="px-3 py-1 bg-teal-50 text-teal-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">Event</span>
-                                    @else
-                                        <span
-                                            class="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">{{ $banner->category_badge }}</span>
-                                    @endif
+                                    <template x-if="banner.category_badge === 'DESTINASI'">
+                                        <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">Destinasi</span>
+                                    </template>
+                                    <template x-if="banner.category_badge === 'EVENT'">
+                                        <span class="px-3 py-1 bg-teal-50 text-teal-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">Event</span>
+                                    </template>
+                                    <template x-if="banner.category_badge !== 'DESTINASI' && banner.category_badge !== 'EVENT'">
+                                        <span class="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold uppercase tracking-wider" x-text="banner.category_badge"></span>
+                                    </template>
 
-                                    @if ($banner->is_active)
-                                        <span
-                                            class="px-4 py-1.5 bg-[#E6F6F2] text-[#00A884] text-[10px] font-bold rounded-xl uppercase">Aktif</span>
-                                    @else
-                                        <span
-                                            class="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-bold rounded-xl uppercase">Nonaktif</span>
-                                    @endif
+                                    <template x-if="banner.is_active">
+                                        <span class="px-4 py-1.5 bg-[#E6F6F2] text-[#00A884] text-[10px] font-bold rounded-xl uppercase">Aktif</span>
+                                    </template>
+                                    <template x-if="!banner.is_active">
+                                        <span class="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-bold rounded-xl uppercase">Nonaktif</span>
+                                    </template>
                                 </div>
 
                                 <!-- Actions -->
                                 <div class="flex items-center gap-3 pl-4 border-l border-gray-100">
-                                    <button @click="openEditModal('{{ $banner->_id }}')"
+                                    <button @click="openEditModal(banner.id || banner._id)"
                                         class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all"
                                         title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +139,7 @@
                                         </svg>
                                     </button>
                                     <button type="button"
-                                        @click='$dispatch("open-delete-modal", { action: "{{ route('admin.carousel_banners.destroy', $banner->_id) }}", title: "Hapus Slide", type: "slide", name: {{ json_encode($banner->title) }} })'
+                                        @click='$dispatch("open-delete-modal", { action: "/admin/carousel-banners/" + (banner.id || banner._id), title: "Hapus Slide", type: "slide", name: banner.title })'
                                         class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all"
                                         title="Hapus">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,10 +150,19 @@
                                     </button>
                                 </div>
                             </div>
-                        @empty
+                        </template>
+                        <template x-if="bannersList.length === 0">
                             <div class="text-center py-10 text-gray-400 text-sm font-medium">Belum ada slide. Klik "Tambah
                                 Slide Baru" untuk membuat.</div>
-                        @endforelse
+                        </template>
+                    </div>
+
+                    <div class="mt-8 flex gap-4">
+                        <button @click="saveOrder()" class="flex-1 py-4 bg-sidebar text-white rounded-2xl font-bold hover:bg-sidebar-hover transition-all shadow-lg shadow-sidebar/20 flex items-center justify-center gap-2 text-sm" :disabled="loadingOrder">
+                            <svg x-show="loadingOrder" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <svg x-show="!loadingOrder" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            Simpan Urutan Carousel
+                        </button>
                     </div>
                 </div>
 
@@ -217,7 +223,7 @@
                                     </div>
                                     <!-- Dots -->
                                     <div class="flex justify-center gap-1.5 mt-3">
-                                        <template x-for="(b, i) in bannersData" :key="i">
+                                        <template x-for="(b, i) in activeBanners" :key="i">
                                             <span class="rounded-full transition-all" 
                                                 :class="i === previewIndex ? 'w-4 h-1.5 bg-[#6349A5]' : 'w-1.5 h-1.5 bg-gray-200'"></span>
                                         </template>
@@ -275,8 +281,8 @@
                             </svg>
                         </button>
                         <span class="text-xs font-bold text-gray-500">Slide <span
-                                x-text="bannersData.length > 0 ? previewIndex + 1 : 0"></span> / <span
-                                x-text="bannersData.length"></span></span>
+                                x-text="activeBanners.length > 0 ? previewIndex + 1 : 0"></span> / <span
+                                x-text="activeBanners.length"></span></span>
                         <button @click="nextPreview()"
                             class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -604,21 +610,26 @@
 <script>
 function carouselManager() {
     return {
-        bannersData: @json($banners->items()).filter(b => b.is_active),
+        bannersList: @json($banners->items()),
         previewIndex: 0,
+        loadingOrder: false,
+        
+        get activeBanners() {
+            return this.bannersList.filter(b => b.is_active);
+        },
         
         get currentPreview() {
-            return this.bannersData.length > 0 ? this.bannersData[this.previewIndex] : null;
+            return this.activeBanners.length > 0 ? this.activeBanners[this.previewIndex] : null;
         },
         
         nextPreview() {
-            if (this.bannersData.length === 0) return;
-            this.previewIndex = (this.previewIndex + 1) % this.bannersData.length;
+            if (this.activeBanners.length === 0) return;
+            this.previewIndex = (this.previewIndex + 1) % this.activeBanners.length;
         },
         
         prevPreview() {
-            if (this.bannersData.length === 0) return;
-            this.previewIndex = (this.previewIndex - 1 + this.bannersData.length) % this.bannersData.length;
+            if (this.activeBanners.length === 0) return;
+            this.previewIndex = (this.previewIndex - 1 + this.activeBanners.length) % this.activeBanners.length;
         },
 
                 initSortable() {
@@ -627,47 +638,70 @@ function carouselManager() {
                         Sortable.create(list, {
                             handle: '.drag-handle',
                             animation: 150,
-                            onEnd: async (evt) => {
-                                const items = Array.from(list.children).filter(el => el.hasAttribute(
-                                    'data-id'));
+                            onEnd: (evt) => {
+                                const oldIdx = evt.oldDraggableIndex;
+                                const newIdx = evt.newDraggableIndex;
 
-                                // Dynamically update 'SLIDE N' text based on new order
-                                items.forEach((item, idx) => {
-                                    const numEl = item.querySelector('.slide-number-text');
-                                    if (numEl) {
-                                        numEl.innerText = 'SLIDE ' + (idx + 1);
+                                if (oldIdx !== undefined && newIdx !== undefined && oldIdx !== newIdx) {
+                                    // 1. Batalkan perubahan DOM fisik dari Sortable
+                                    const item = evt.item;
+                                    const parent = item.parentNode;
+                                    parent.removeChild(item);
+                                    const referenceNode = parent.children[evt.oldIndex];
+                                    if (referenceNode) {
+                                        parent.insertBefore(item, referenceNode);
+                                    } else {
+                                        parent.appendChild(item);
                                     }
-                                });
 
-                                const orders = items.map((item, index) => ({
-                                    id: item.dataset.id,
-                                    order: index + 1
-                                })).filter(i => i.id); // Filter out empty elements
-
-                                try {
-                                    await fetch('/admin/carousel-banners/order', {
-                                        method: 'PATCH',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': document.querySelector(
-                                                'meta[name="csrf-token"]').getAttribute('content')
-                                        },
-                                        body: JSON.stringify({
-                                            orders
-                                        })
-                                    });
-                                } catch (e) {
-                                    console.error('Failed to sort', e);
+                                    // 2. Paksa Alpine merender ulang array
+                                    const newList = [...this.bannersList];
+                                    const movedItem = newList.splice(oldIdx, 1)[0];
+                                    newList.splice(newIdx, 0, movedItem);
+                                    
+                                    this.bannersList = newList;
+                                    this.previewIndex = 0; // Reset preview
                                 }
                             }
                         });
                     }
                 },
 
+        async saveOrder() {
+            this.loadingOrder = true;
+            const orders = this.bannersList.map((banner, index) => ({
+                id: banner.id || banner._id,
+                order: index + 1
+            }));
+
+            try {
+                const response = await fetch('/admin/carousel-banners/order', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ orders })
+                });
+                
+                const result = await window.safeParseJSON(response);
+                if (result.success) {
+                    alert('Urutan carousel berhasil disimpan!');
+                } else {
+                    alert('Gagal menyimpan urutan: ' + result.message);
+                }
+            } catch (e) {
+                console.error('Failed to sort', e);
+                alert('Terjadi kesalahan saat menyimpan urutan.');
+            } finally {
+                this.loadingOrder = false;
+            }
+        },
+
         init() {
             this.initSortable();
             // Start autoplay for live preview
-            if (this.bannersData.length > 0) {
+            if (this.activeBanners.length > 0) {
                 setInterval(() => {
                     this.nextPreview();
                 }, 3500);

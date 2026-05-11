@@ -37,6 +37,8 @@ class MongoEvent extends Model
         'opening_hours',
         'ticket_price',
         'best_time',
+        'latitude',
+        'longitude',
     ];
 
     public $timestamps = true;

@@ -63,14 +63,22 @@ class EventController extends BaseAdminController
             'opening_hours' => 'nullable|string|max:255',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
+            'latitude' => 'nullable|string|max:255',
+            'longitude' => 'nullable|string|max:255',
+            'is_active' => 'nullable|boolean',
         ]);
 
         try {
             if (isset($validated['tags']) && $validated['tags']) {
-                $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags']))));
+                if (is_string($validated['tags'])) {
+                    $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags']))));
+                }
             } else {
                 $validated['tags'] = [];
             }
+            
+            // Explicitly handle is_active from request if not in validated
+            $validated['is_active'] = $request->boolean('is_active', true);
             
             $event = $this->eventService->createEvent($validated, $request->file('banner'));
             
@@ -135,14 +143,22 @@ class EventController extends BaseAdminController
             'opening_hours' => 'nullable|string|max:255',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
+            'latitude' => 'nullable|string|max:255',
+            'longitude' => 'nullable|string|max:255',
+            'is_active' => 'nullable|boolean',
         ]);
 
         try {
             if (isset($validated['tags']) && $validated['tags']) {
-                $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags']))));
+                if (is_string($validated['tags'])) {
+                    $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags']))));
+                }
             } else {
                 $validated['tags'] = [];
             }
+
+            // Explicitly handle is_active from request
+            $validated['is_active'] = $request->boolean('is_active');
 
             $oldValues = $event->toArray();
             $event = $this->eventService->updateEvent($event, $validated, $request->file('banner'));
@@ -178,20 +194,24 @@ class EventController extends BaseAdminController
      */
     public function destroy(string $id)
     {
-        $event = MongoEvent::findOrFail($id);
-
         try {
+            $event = MongoEvent::findOrFail($id);
+            
+            // Log activity before deletion
             $this->logActivity('delete', 'event', (string)$event->_id, $event->toArray());
+            
             $this->eventService->deleteEvent($event);
 
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil dihapus.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return redirect()->route('admin.events.index')
+                ->with('error', 'Event tidak ditemukan.');
         } catch (\Exception $e) {
             Log::error('Error deleting event: ' . $e->getMessage());
-            return back()->with('error', 'Gagal menghapus event.');
+            return back()->with('error', 'Gagal menghapus event: ' . $e->getMessage());
         }
     }
-
     /**
      * Toggle event status.
      */

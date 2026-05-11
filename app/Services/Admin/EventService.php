@@ -101,8 +101,15 @@ class EventService
      */
     public function deleteEvent(MongoEvent $event): bool
     {
-        $this->deleteBanner($event->banner_url);
-        return $event->delete();
+        try {
+            if ($event->banner_url) {
+                $this->deleteBanner($event->banner_url);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to delete banner during event deletion: ' . $e->getMessage());
+        }
+
+        return (bool) $event->delete();
     }
 
     /**

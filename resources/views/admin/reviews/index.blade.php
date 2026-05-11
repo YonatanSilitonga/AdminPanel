@@ -423,14 +423,29 @@
                             <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
                                 <td class="px-10 py-6">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-sidebar/10 rounded-full flex items-center justify-center text-sidebar text-xs font-bold">
-                                            {{ strtoupper(substr($review->user_id ?? 'A', 0, 1)) }}
+                                        <div class="w-10 h-10 bg-sidebar/5 rounded-full flex items-center justify-center text-sidebar text-xs font-bold border border-sidebar/10 shadow-sm overflow-hidden">
+                                            <span class="opacity-70">{{ strtoupper(substr($review->user_id ?? 'A', 0, 1)) }}</span>
                                         </div>
-                                        <span class="text-sm font-bold text-gray-700">{{ $review->user_id ?? 'Anonim' }}</span>
+                                        <div>
+                                            <div class="text-sm font-bold text-gray-700">{{ $review->user_id ?? 'Anonim' }}</div>
+                                            <div class="text-[10px] text-gray-400 font-medium uppercase tracking-tight">User ID: {{ substr((string)$review->user_id, -6) }}</div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-10 py-6">
-                                    <span class="text-sm text-gray-500 font-medium">{{ optional($review->destination)->name ?? 'Umum' }}</span>
+                                    <div class="flex items-center gap-4">
+                                        @if(optional($review->destination)->images && count($review->destination->images) > 0)
+                                            <img src="{{ image_url($review->destination->images[0]) }}" class="w-20 h-14 object-cover rounded-xl shadow-sm border border-gray-100">
+                                        @else
+                                            <div class="w-20 h-14 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <div class="text-[14px] font-bold text-gray-800">{{ optional($review->destination)->name ?? 'Umum' }}</div>
+                                            <div class="text-[11px] text-gray-400 mt-0.5 truncate max-w-[120px]">{{ optional($review->destination)->location ?? 'Lokasi tidak tersedia' }}</div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="px-10 py-6">
                                     <div class="flex items-center gap-1">

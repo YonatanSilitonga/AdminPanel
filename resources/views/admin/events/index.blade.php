@@ -29,6 +29,8 @@
     closeTime: '17:00',
     editOpenTime: '08:00',
     editCloseTime: '17:00',
+    is_active: true,
+    edit_is_active: true,
     
     async openEditModal(id) {
         this.loading = true;
@@ -50,6 +52,7 @@
                 this.editOpenTime = '08:00';
                 this.editCloseTime = '17:00';
             }
+            this.edit_is_active = this.editingEvent.is_active ?? true;
         } catch (error) {
             alert('Gagal mengambil data event');
             this.showEditModal = false;
@@ -83,6 +86,9 @@
             formData.set(`schedule[${index}][time]`, item.time);
             formData.set(`schedule[${index}][activity]`, item.activity);
         });
+        
+        formData.set('opening_hours', this.editOpenTime + ' - ' + this.editCloseTime);
+        formData.set('is_active', this.edit_is_active ? '1' : '0');
 
         const eventId = this.editingEvent._id || this.editingEvent.id;
         try {
@@ -117,6 +123,9 @@
             formData.set(`schedule[${index}][time]`, item.time);
             formData.set(`schedule[${index}][activity]`, item.activity);
         });
+
+        formData.set('opening_hours', this.openTime + ' - ' + this.closeTime);
+        formData.set('is_active', this.is_active ? '1' : '0');
 
         try {
             const response = await fetch('/admin/events', {
@@ -364,6 +373,28 @@
                             <input type="text" name="organizer" x-model="editingEvent.organizer" placeholder="Contoh: BPODT" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
                         </div>
 
+                        <!-- Info Operasional -->
+                        <div class="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jam Operasional</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="time" x-model="editOpenTime" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                        <span class="text-gray-400">-</span>
+                                        <input type="time" x-model="editCloseTime" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
+                                    <input type="text" name="ticket_price" x-model="editingEvent.ticket_price" placeholder="Gratis / Rp 10rb" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
+                                    <input type="text" name="best_time" x-model="editingEvent.best_time" placeholder="Pagi / Sore" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
                             <textarea name="description" rows="3" x-model="editingEvent.description" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700 placeholder-gray-300"></textarea>
@@ -412,6 +443,11 @@
                                     </div>
                                 </label>
                             </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-2">
+                            <input type="checkbox" x-model="edit_is_active" id="edit_is_active_check" class="w-4 h-4 text-sidebar border-gray-200 rounded-lg focus:ring-sidebar/20">
+                            <label for="edit_is_active_check" class="text-sm font-bold text-gray-600 cursor-pointer">Setel sebagai Aktif</label>
                         </div>
 
                         <div class="flex items-center justify-end gap-3 pt-4">
@@ -498,6 +534,39 @@
                             <input type="text" name="organizer" placeholder="Contoh: BPODT" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
                         </div>
 
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
+                                <input type="text" name="latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
+                                <input type="text" name="longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                            </div>
+                        </div>
+
+                        <!-- Info Operasional -->
+                        <div class="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jam Operasional</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="time" x-model="openTime" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                        <span class="text-gray-400">-</span>
+                                        <input type="time" x-model="closeTime" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
+                                    <input type="text" name="ticket_price" placeholder="Gratis / Rp 10rb" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
+                                    <input type="text" name="best_time" placeholder="Pagi / Sore" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
                             <textarea name="description" rows="3" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700 placeholder-gray-300"></textarea>
@@ -546,6 +615,11 @@
                                     </div>
                                 </label>
                             </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-2">
+                            <input type="checkbox" x-model="is_active" id="is_active_check" class="w-4 h-4 text-sidebar border-gray-200 rounded-lg focus:ring-sidebar/20">
+                            <label for="is_active_check" class="text-sm font-bold text-gray-600 cursor-pointer">Setel sebagai Aktif</label>
                         </div>
 
                         <div class="flex items-center justify-end gap-3 pt-4">

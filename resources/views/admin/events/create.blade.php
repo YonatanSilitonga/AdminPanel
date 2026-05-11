@@ -72,6 +72,19 @@
                 @error('location')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">Latitude</label>
+                    <input type="text" name="latitude" value="{{ old('latitude') }}" placeholder="Contoh: 2.3361" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                    @error('latitude')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">Longitude</label>
+                    <input type="text" name="longitude" value="{{ old('longitude') }}" placeholder="Contoh: 99.0494" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                    @error('longitude')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                </div>
+            </div>
+
             <!-- Quick Info Section (Jam Operasional, Tiket, Best Time) -->
             <div class="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 space-y-4">
                 <div class="flex items-center gap-2 mb-2">

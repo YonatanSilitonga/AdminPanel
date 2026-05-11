@@ -168,7 +168,10 @@ class CarouselBannerController extends BaseAdminController
         try {
             foreach ($orders as $item) {
                 if (isset($item['id']) && isset($item['order'])) {
-                    CarouselBanner::where('_id', $item['id'])->update(['order' => (int) $item['order']]);
+                    $banner = CarouselBanner::find($item['id']);
+                    if ($banner) {
+                        $banner->update(['order' => (int) $item['order']]);
+                    }
                 }
             }
             return response()->json(['success' => true]);
