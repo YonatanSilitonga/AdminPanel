@@ -527,24 +527,24 @@
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-gray-500/20 backdrop-blur-sm" @click="showViewModal = false"></div>
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showViewModal = false"></div>
 
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10">
+                 class="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-6 px-8 pt-6 pb-4 border-b border-gray-100">
                     <h3 class="text-xl font-bold text-gray-900">Detail Ulasan</h3>
                     <button @click="showViewModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <div x-show="loading && !viewingReview" class="py-12 flex justify-center">
+                <div x-show="loading && !viewingReview" class="py-12 flex justify-center px-8">
                     <svg class="animate-spin h-8 w-8 text-sidebar" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                 </div>
 
-                <div x-show="viewingReview" class="space-y-5">
+                <div x-show="viewingReview" class="space-y-5 px-8 py-6">
                     <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
                         <div class="w-12 h-12 bg-sidebar/10 rounded-full flex items-center justify-center text-sidebar font-bold text-lg">
                             <span x-text="viewingReview ? viewingReview.user_id?.charAt(0)?.toUpperCase() || 'A' : 'A'"></span>

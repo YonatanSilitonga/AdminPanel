@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RecommendationLog extends Model
 {
+    protected $connection = 'mysql';
     protected $table = 'recommendation_logs';
     protected $fillable = [
         'user_id',

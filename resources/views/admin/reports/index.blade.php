@@ -78,25 +78,24 @@
     }
 }">
 
-    {{-- Filter Tab --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 inline-flex mb-8">
-        <a href="{{ route('admin.reports.index') }}" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ !request('status') ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Semua</a>
-        <a href="{{ route('admin.reports.index', ['status' => 'pending']) }}" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'pending' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Menunggu</a>
-        <a href="{{ route('admin.reports.index', ['status' => 'reviewed']) }}" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'reviewed' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Ditinjau</a>
-        <a href="{{ route('admin.reports.index', ['status' => 'resolved']) }}" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'resolved' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Diselesaikan</a>
-    </div>
-
     {{-- Filter Search --}}
     <div class="flex flex-wrap items-center gap-4 mb-8">
-        <form method="GET" action="{{ route('admin.reports.index') }}" class="flex flex-wrap items-center gap-4">
-            <input type="hidden" name="status" value="{{ request('status') }}">
-            <div class="relative w-80">
+        <form method="GET" action="{{ route('admin.reports.index') }}" class="flex flex-wrap items-center gap-4 w-full">
+            <div class="relative flex-1 min-w-[280px]">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4">
                     <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </span>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari deskripsi laporan..."
                     class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300">
             </div>
+            
+            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+                <option value="">Semua Status</option>
+                <option value="pending" @selected(request('status') === 'pending')>Menunggu</option>
+                <option value="reviewed" @selected(request('status') === 'reviewed')>Ditinjau</option>
+                <option value="resolved" @selected(request('status') === 'resolved')>Diselesaikan</option>
+            </select>
+            
             <select name="reason" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
                 <option value="">Semua Alasan</option>
                 @foreach(($reasons ?? []) as $reason)
@@ -209,24 +208,24 @@
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-gray-500/20 backdrop-blur-sm" @click="showViewModal = false"></div>
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showViewModal = false"></div>
 
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10">
+                 class="relative w-full max-w-xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-6 px-8 pt-6 pb-4 border-b border-gray-100">
                     <h3 class="text-xl font-bold text-gray-900">Detail Laporan</h3>
                     <button @click="showViewModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <div x-show="loading && !viewingReport" class="py-12 flex justify-center">
+                <div x-show="loading && !viewingReport" class="py-12 flex justify-center px-8">
                     <svg class="animate-spin h-8 w-8 text-sidebar" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                 </div>
 
-                <div x-show="viewingReport" class="space-y-5">
+                <div x-show="viewingReport" class="space-y-5 px-8 py-6">
                     {{-- Reporter & Status --}}
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                         <div class="flex items-center gap-3">

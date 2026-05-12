@@ -212,13 +212,13 @@
     <!-- Global Delete Modal -->
     <div x-data="{ show: false, action: '', title: '', type: '', name: '' }"
          @open-delete-modal.window="show = true; action = $event.detail.action; title = $event.detail.title; type = $event.detail.type; name = $event.detail.name"
-         x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+         x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-md px-8 pt-10 pb-8 overflow-hidden text-center align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800">
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-md bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 <div class="w-20 h-20 bg-[#FEE2E2] rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg class="w-10 h-10 text-[#EF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -230,7 +230,7 @@
                     Apakah Anda yakin ingin menghapus <span x-text="type"></span> <strong class="text-gray-800" x-text="`&quot;${name}&quot;`"></strong>? Tindakan ini tidak dapat dibatalkan.
                 </p>
 
-                <div class="flex items-center justify-center gap-4 bg-gray-50/50 -mx-8 -mb-8 px-8 py-6 border-t border-gray-50">
+                <div class="flex items-center justify-center gap-4 px-8 py-6 border-t border-gray-100 bg-gray-50/50">
                     <button type="button" @click="show = false" class="w-full px-6 py-3.5 text-[15px] font-bold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm">
                         Batal
                     </button>
@@ -249,36 +249,40 @@
     <!-- Logout Modal -->
     <div x-data="{ showLogout: false }"
          @open-logout-modal.window="showLogout = true"
-         x-show="showLogout" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+         x-show="showLogout" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <!-- Backdrop -->
             <div x-show="showLogout" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showLogout = false"></div>
 
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             <!-- Modal Panel -->
-            <div x-show="showLogout" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-[400px] p-8 text-center align-middle transition-all transform bg-white shadow-2xl rounded-[1.5rem] sm:my-8 text-gray-800 relative z-10">
+            <div x-show="showLogout" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-sm bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
-                <div class="w-[72px] h-[72px] bg-[#fef2f2] rounded-full flex items-center justify-center mx-auto mb-6">
+                <div class="px-8 py-6 text-center">
+                    <div class="w-[72px] h-[72px] bg-[#fef2f2] rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg class="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                         <path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                     </svg>
                 </div>
 
-                <h3 class="text-[20px] font-bold text-gray-900 mb-3">Keluar dari Sistem?</h3>
-                <p class="text-[14px] text-gray-500 mb-8 leading-relaxed px-4">
-                    Apakah Anda yakin ingin keluar? Anda harus login kembali untuk mengakses panel admin.
-                </p>
+                    <h3 class="text-[20px] font-bold text-gray-900 mb-3">Keluar dari Sistem?</h3>
+                    <p class="text-[14px] text-gray-500 mb-2 leading-relaxed">
+                        Apakah Anda yakin ingin keluar? Anda harus login kembali untuk mengakses panel admin.
+                    </p>
+                </div>
 
-                <form action="{{ route('admin.logout') }}" method="POST" class="flex flex-col gap-3">
+                <form action="{{ route('admin.logout') }}" method="POST" class="flex flex-col gap-3 px-8 py-6 border-t border-gray-100">
                     @csrf
                     <button type="submit" class="w-full py-3 text-[14px] font-bold text-white bg-[#dc2626] hover:bg-[#b91c1c] rounded-xl transition-all shadow-[0_4px_12px_-4px_rgba(220,38,38,0.5)]">
                         Ya, Keluar
                     </button>
-                    <button type="button" @click="showLogout = false" class="w-full py-3 text-[14px] font-bold text-gray-500 hover:text-gray-800 transition-colors bg-transparent border-none">
+                </form>
+                <div class="flex gap-3 px-8 pb-6">
+                    <button type="button" @click="showLogout = false" class="flex-1 py-3 text-[14px] font-bold text-gray-600 border border-gray-200 rounded-2xl hover:bg-gray-50 transition-colors">
                         Batal
                     </button>
-                </form>
+                </div>
             </div>
         </div>
     </div>

@@ -23,7 +23,7 @@
                 Tidak ada hasil untuk <span class="text-danger">"{{ $query }}"</span>
             @endif
         </h2>
-        <p class="text-gray-500 mt-2">Cari di destinasi, event, berita, dan user</p>
+        <p class="text-gray-500 mt-2">Cari di semua data management content: destinasi, event, budaya, berita/promosi, fasilitas umum, carousel, laporan, ulasan, dan user</p>
     </div>
 
     @if($totalCount > 0)

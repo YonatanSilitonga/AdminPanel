@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ChatHistory extends Model
 {
+    protected $connection = 'mysql';
     protected $table = 'chat_histories';
     protected $fillable = [
         'user_id',

@@ -91,6 +91,11 @@ class BaseAdminController extends Controller
     protected function uploadFile($file, $path = 'uploads', $options = [])
     {
         if (!$file || !$file->isValid()) {
+            \Illuminate\Support\Facades\Log::warning('Invalid file upload attempt', [
+                'has_file' => (bool)$file,
+                'is_valid' => $file ? $file->isValid() : false,
+                'error' => $file ? $file->getError() : 'no file',
+            ]);
             return null;
         }
 
@@ -103,24 +108,48 @@ class BaseAdminController extends Controller
         // Validate mime
         $allowedMimes = $options['mimes'] ?? ['image/jpeg', 'image/png', 'image/webp'];
         if (!in_array($file->getMimeType(), $allowedMimes)) {
-            throw new \Exception('File type not allowed');
+            throw new \Exception('File type not allowed: ' . $file->getMimeType());
         }
 
         // ── Cloudinary ──────────────────────────────────────────────────────
-        if (env('CLOUDINARY_CLOUD_NAME')) {
-            $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
-                'folder'        => 'smarttourism/' . trim($path, '/'),
-                'resource_type' => 'image',
-                'quality'       => 'auto',
-                'fetch_format'  => 'auto',
-            ]);
+        // Use config() instead of env() for reliability
+        $cloudName = config('cloudinary.cloud_url') ?: env('CLOUDINARY_CLOUD_NAME');
+        
+        if ($cloudName) {
+            try {
+                // Use the simpler upload() method which is more robust in this package
+                $result = \cloudinary()->upload($file->getRealPath(), [
+                    'folder'        => 'smarttourism/' . trim($path, '/'),
+                    'resource_type' => 'image',
+                    'quality'       => 'auto',
+                    'fetch_format'  => 'auto',
+                ]);
 
-            return $result['secure_url'];
+                return $result->getSecureUrl();
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Cloudinary upload failed: ' . $e->getMessage(), [
+                    'file' => $file->getClientOriginalName(),
+                    'path' => $path
+                ]);
+                // Fall back to local if Cloudinary fails
+            }
         }
 
         // ── Local fallback ───────────────────────────────────────────────────
-        $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
-        return $file->storeAs($path, $filename, 'public');
+        try {
+            $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
+            $storedPath = $file->storeAs($path, $filename, 'public');
+            
+            if (!$storedPath) {
+                 \Illuminate\Support\Facades\Log::error('Local storage failed for file', ['path' => $path]);
+                 return null;
+            }
+            
+            return $storedPath;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Local storage exception: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

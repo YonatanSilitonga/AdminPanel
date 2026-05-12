@@ -5,6 +5,13 @@
 @section('page_title', 'Budaya & Warisan')
 @section('page_description', 'Kelola konten informasi sejarah, tradisi, dan budaya masyarakat lokal.')
 
+@section('page_actions')
+<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+    Tambah Budaya
+</button>
+@endsection
+
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
     <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
@@ -74,38 +81,32 @@
     {{-- DESKTOP VIEW (ADMIN TABLE LAYOUT)   --}}
     {{-- /////////////////////////////////// --}}
     <div class="hidden md:block">
-        {{-- Tabs/Pills --}}
-        <div class="flex items-center bg-white border border-gray-200 rounded-2xl p-1 mb-6 inline-flex shadow-sm">
-            <a href="{{ route('admin.budaya.index') }}" class="px-6 py-2 {{ request('category') == '' ? 'bg-[#066466] text-white' : 'text-gray-500 hover:text-gray-800' }} rounded-xl text-sm font-bold transition-colors">Semua</a>
-            @foreach(['Sejarah', 'Tradisi', 'Kuliner', 'Cerita Rakyat', 'Rumah Adat'] as $cat)
-                <a href="{{ route('admin.budaya.index', ['category' => $cat]) }}" class="px-6 py-2 {{ request('category') == $cat ? 'bg-[#066466] text-white' : 'text-gray-500 hover:text-gray-800' }} rounded-xl text-sm font-medium transition-colors">{{ $cat }}</a>
-            @endforeach
-        </div>
-
         {{-- Search & Filters --}}
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <form method="GET" action="{{ route('admin.budaya.index') }}" class="flex flex-wrap items-center gap-4">
-                <input type="hidden" name="category" value="{{ request('category') }}">
-                <div class="relative w-72">
+        <div class="flex flex-wrap items-center gap-4 mb-8">
+            <form method="GET" action="{{ route('admin.budaya.index') }}" class="flex flex-wrap items-center gap-4 w-full">
+                <div class="relative flex-1 min-w-[280px]">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4">
                         <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </span>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul/kategori budaya"
-                        class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-400">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul budaya..."
+                        class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
                 </div>
                 
-                <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm font-medium text-gray-600">
+                <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+                    <option value="">Semua Kategori</option>
+                    <option value="Sejarah" @selected(request('category') === 'Sejarah')>Sejarah</option>
+                    <option value="Tradisi" @selected(request('category') === 'Tradisi')>Tradisi</option>
+                    <option value="Kuliner" @selected(request('category') === 'Kuliner')>Kuliner</option>
+                    <option value="Cerita Rakyat" @selected(request('category') === 'Cerita Rakyat')>Cerita Rakyat</option>
+                    <option value="Rumah Adat" @selected(request('category') === 'Rumah Adat')>Rumah Adat</option>
+                </select>
+                
+                <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
                     <option value="">Semua Status</option>
                     <option value="active" @selected(request('status') === 'active')>Aktif</option>
                     <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
                 </select>
-                <!-- Add dates if required -->
             </form>
-
-            <button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                Tambah Konten Budaya
-            </button>
         </div>
 
         {{-- Table --}}
@@ -305,24 +306,24 @@
     {{-- ========================================= --}}
     {{-- MODAL TAMBAH BUDAYA                       --}}
     {{-- ========================================= --}}
-    <div x-show="showCreateModal" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
+    <div x-show="showCreateModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
-            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
+              <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                  class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
 
-            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-[101] max-h-[90vh] overflow-y-auto">
+              <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center justify-between mb-8 px-8 pt-6 pb-4 border-b border-gray-100">
                     <h3 class="text-xl font-bold text-gray-900">Tambah Konten Budaya</h3>
                     <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <form action="{{ route('admin.budaya.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+                <form action="{{ route('admin.budaya.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5 px-8 py-6">
                     @csrf
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2 space-y-2">
@@ -392,28 +393,28 @@
     {{-- ========================================= --}}
     {{-- MODAL EDIT BUDAYA                         --}}
     {{-- ========================================= --}}
-    <div x-show="showEditModal" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
+    <div x-show="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
-            <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showEditModal = false"></div>
+              <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                  class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showEditModal = false"></div>
 
-            <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-[101] max-h-[90vh] overflow-y-auto">
+              <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center justify-between mb-8 px-8 pt-6 pb-4 border-b border-gray-100">
                     <h3 class="text-xl font-bold text-gray-900">Edit Konten Budaya</h3>
                     <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <div x-show="loading && !editingBudaya" class="py-12 flex justify-center">
+                <div x-show="loading && !editingBudaya" class="py-12 flex justify-center px-8">
                     <svg class="animate-spin h-8 w-8 text-sidebar" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 </div>
 
-                <div x-show="editingBudaya">
+                <div x-show="editingBudaya" class="px-8 py-6">
                     <form id="editBudayaForm" @submit.prevent="submitEdit()" class="space-y-5">
                         <input type="hidden" name="_method" value="PUT">
                         <div class="grid grid-cols-2 gap-4">

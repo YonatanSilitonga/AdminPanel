@@ -5,6 +5,13 @@
 @section('page_title', 'Event')
 @section('page_description', 'Kelola konten event dan promosi destinasi')
 
+@section('page_actions')
+<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+    Tambah Event
+</button>
+@endsection
+
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium overflow-x-auto whitespace-nowrap">
     <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
@@ -150,23 +157,10 @@
         }
     }
 }">
-    <!-- Tabs / Filters -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 inline-flex mb-8">
-        <a href="{{ route('admin.events.index', ['status' => 'all', 'search' => request('search'), 'category' => request('category')]) }}" 
-           class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all {{ !request('status') || request('status') === 'all' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Semua</a>
-        <a href="{{ route('admin.events.index', ['status' => 'upcoming', 'search' => request('search'), 'category' => request('category')]) }}" 
-           class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'upcoming' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Akan Datang</a>
-        <a href="{{ route('admin.events.index', ['status' => 'ongoing', 'search' => request('search'), 'category' => request('category')]) }}" 
-           class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'ongoing' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Berlangsung</a>
-        <a href="{{ route('admin.events.index', ['status' => 'completed', 'search' => request('search'), 'category' => request('category')]) }}" 
-           class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all {{ request('status') === 'completed' ? 'bg-sidebar text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50' }}">Selesai</a>
-    </div>
-
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-10">
-        <form method="GET" action="{{ route('admin.events.index') }}" class="flex flex-wrap items-center gap-4 w-full md:w-auto">
-            <input type="hidden" name="status" value="{{ request('status', 'all') }}">
-            
-            <div class="relative w-full md:w-80">
+    <!-- Search & Filters -->
+    <div class="flex flex-wrap items-center gap-4 mb-8">
+        <form method="GET" action="{{ route('admin.events.index') }}" class="flex flex-wrap items-center gap-4 w-full">
+            <div class="relative flex-1 min-w-[280px]">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4">
                     <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </span>
@@ -174,7 +168,14 @@
                     class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
             </div>
 
-            <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 outline-none text-sm shadow-sm transition-all text-gray-600 font-medium">
+            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+                <option value="all" @selected(!request('status') || request('status') === 'all')>Semua Status</option>
+                <option value="upcoming" @selected(request('status') === 'upcoming')>Akan Datang</option>
+                <option value="ongoing" @selected(request('status') === 'ongoing')>Berlangsung</option>
+                <option value="completed" @selected(request('status') === 'completed')>Selesai</option>
+            </select>
+
+            <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
                 <option value="">Semua Kategori</option>
                 <option value="Budaya" @selected(request('category') === 'Budaya')>Budaya</option>
                 <option value="Adat" @selected(request('category') === 'Adat')>Adat</option>
@@ -182,11 +183,6 @@
                 <option value="Kuliner" @selected(request('category') === 'Kuliner')>Kuliner</option>
             </select>
         </form>
-
-        <button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
-            <svg class="w-5 h-5" fill="none" stroke="currentcolor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-            Tambah Event
-        </button>
     </div>
 
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
@@ -194,6 +190,7 @@
             <table class="min-w-full divide-y divide-gray-50">
                 <thead class="bg-white">
                     <tr>
+                        <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Nama Event</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Lokasi</th>
@@ -203,7 +200,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
-                    @forelse($events as $event)
+                    @forelse($events as $index => $event)
                         @php
                             $now = now();
                             if ($event->start_date > $now) {
@@ -226,6 +223,7 @@
                             $catColor = $categoryColors[$event->category] ?? 'text-gray-600';
                         @endphp
                         <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
+                            <td class="px-8 py-5 text-sm font-semibold text-gray-400">{{ $index + 1 }}</td>
                             <td class="px-10 py-7">
                                 <div class="text-[15px] font-bold text-gray-800">{{ $event->name }}</div>
                             </td>
@@ -287,7 +285,7 @@
     <div x-show="showEditModal" 
          class="fixed inset-0 z-50 overflow-y-auto" 
          x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <!-- Background Backdrop -->
             <div x-show="showEditModal"
                  x-transition:enter="ease-out duration-300"
@@ -302,12 +300,12 @@
             <!-- Modal Panel -->
             <div x-show="showEditModal"
                  x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8">
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="relative w-full max-w-2xl bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Edit Event</h3>
@@ -466,7 +464,7 @@
     <div x-show="showCreateModal" 
          class="fixed inset-0 z-50 overflow-y-auto" 
          x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex min-h-screen items-center justify-center px-4 py-8 text-center sm:block sm:p-0">
             <!-- Background Backdrop -->
             <div x-show="showCreateModal"
                  x-transition:enter="ease-out duration-300"
@@ -486,7 +484,7 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8">
+                 class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Tambah Event</h3>

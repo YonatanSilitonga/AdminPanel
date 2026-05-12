@@ -32,6 +32,13 @@
 @section('page_title', 'Destinasi')
 @section('page_description', 'Kelola konten destinasi wisata Danau Toba')
 
+@section('page_actions')
+<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+    Tambah Destinasi
+</button>
+@endsection
+
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
     <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
@@ -101,9 +108,9 @@
 }">
 
     {{-- Search & Filter --}}
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <form method="GET" action="{{ route('admin.destinations.index') }}" class="flex flex-wrap items-center gap-4">
-            <div class="relative w-80">
+    <div class="flex flex-wrap items-center gap-4 mb-8">
+        <form method="GET" action="{{ route('admin.destinations.index') }}" class="flex flex-wrap items-center gap-4 w-full">
+            <div class="relative flex-1 min-w-[280px]">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4">
                     <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </span>
@@ -122,11 +129,6 @@
                 <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
             </select>
         </form>
-
-        <button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-            Tambah Destinasi
-        </button>
     </div>
 
     {{-- Table --}}
@@ -135,6 +137,7 @@
             <table class="min-w-full divide-y divide-gray-50">
                 <thead class="bg-white">
                     <tr>
+                        <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Destinasi</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Kategori</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Rating</th>
@@ -143,8 +146,9 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
-                    @forelse(($destinations ?? []) as $destination)
+                    @forelse(($destinations ?? []) as $index => $destination)
                         <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
+                            <td class="px-8 py-5 text-sm font-semibold text-gray-400">{{ $index + 1 }}</td>
                             <td class="px-10 py-6">
                                 <div class="flex items-center gap-4">
                                     @if(isset($destination->images) && count($destination->images) > 0)
@@ -214,9 +218,9 @@
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
 
-            <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto">
+              <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Tambah Destinasi</h3>
@@ -333,9 +337,9 @@
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                  class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showEditModal = false"></div>
 
-            <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto">
+              <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Edit Destinasi</h3>

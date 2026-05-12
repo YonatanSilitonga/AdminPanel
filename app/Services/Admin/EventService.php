@@ -126,18 +126,40 @@ class EventService
      */
     public function uploadBanner(UploadedFile $file): string
     {
-        if (env('CLOUDINARY_CLOUD_NAME')) {
-            $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
-                'folder'        => 'smarttourism/events',
-                'resource_type' => 'image',
-                'quality'       => 'auto',
-                'fetch_format'  => 'auto',
+        if (!$file->isValid()) {
+            \Illuminate\Support\Facades\Log::warning('Invalid banner upload attempt', [
+                'error' => $file->getError(),
             ]);
-            return $result['secure_url'];
+            throw new \Exception('File upload is invalid: ' . $file->getErrorMessage());
         }
 
+        // ── Cloudinary ──────────────────────────────────────────────────────
+        $cloudName = config('cloudinary.cloud_url') ?: env('CLOUDINARY_CLOUD_NAME');
+        
+        if ($cloudName) {
+            try {
+                $result = \cloudinary()->upload($file->getRealPath(), [
+                    'folder'        => 'smarttourism/events',
+                    'resource_type' => 'image',
+                    'quality'       => 'auto',
+                    'fetch_format'  => 'auto',
+                ]);
+                return $result->getSecureUrl();
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Event banner Cloudinary upload failed: ' . $e->getMessage());
+                // Fallback to local
+            }
+        }
+
+        // ── Local fallback ───────────────────────────────────────────────────
         $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
-        return $file->storeAs('events', $filename, 'public');
+        $storedPath = $file->storeAs('events', $filename, 'public');
+        
+        if (!$storedPath) {
+            throw new \Exception('Failed to store banner locally');
+        }
+        
+        return $storedPath;
     }
 
     /**

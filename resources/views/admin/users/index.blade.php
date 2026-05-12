@@ -258,10 +258,10 @@
 
     <!-- Detail User Modal -->
     <template x-if="showDetailModal">
-        <div class="fixed inset-0 z-[100] flex items-center justify-center px-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center px-4">
             <div @click="showDetailModal = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
             
-            <div class="relative w-full max-w-[580px] bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="relative w-full max-w-[580px] bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] flex flex-col">
                 <!-- Header (Fixed) -->
                 <div class="px-8 py-6 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
                     <h3 class="text-xl font-bold text-gray-900">Detail Pengguna</h3>
@@ -345,10 +345,10 @@
 
     <!-- Edit User Modal -->
     <template x-if="showEditModal">
-        <div class="fixed inset-0 z-[100] flex items-center justify-center px-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
             <div @click="showEditModal = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
             
-            <div class="relative w-full max-w-[480px] bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="relative w-full max-w-[480px] bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 <div class="px-8 py-6 flex items-center justify-between border-b border-gray-100">
                     <h3 class="text-xl font-bold text-gray-900">Edit Pengguna</h3>
                     <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-900 transition-colors">

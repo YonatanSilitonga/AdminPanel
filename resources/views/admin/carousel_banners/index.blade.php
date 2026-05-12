@@ -20,8 +20,8 @@
 @endsection
 
 @section('page_actions')
-<button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-6 py-3 bg-sidebar text-white rounded-xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20 text-sm">
-    <svg class="w-4 h-4" fill="none" stroke="currentcolor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Slide Baru
 </button>
 @endsection
@@ -298,7 +298,7 @@
 
         <!-- Create Modal (From Image 2) -->
         <div x-show="showCreateModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="flex items-center justify-center min-h-screen px-4 py-8">
                 <div x-show="showCreateModal" x-transition:enter="ease-out duration-300"
                     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                     x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
@@ -307,12 +307,10 @@
                     @click="showCreateModal = false"></div>
 
                 <div x-show="showCreateModal" x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                     x-transition:leave="ease-in duration-200"
-                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800">
+                    x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                    class="relative w-full max-w-2xl bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                     <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
                         <h3 class="text-xl font-bold">Tambah Slide Carousel</h3>
@@ -456,12 +454,13 @@
 
         <!-- Edit Modal -->
         <div x-show="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="flex min-h-screen items-center justify-center px-4 py-8 text-center sm:block sm:p-0">
                 <div x-show="showEditModal" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm"
                     @click="showEditModal = false"></div>
 
                 <div x-show="showEditModal"
-                    class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800">
+                    class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
+
                     <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
                         <h3 class="text-xl font-bold">Edit Slide Carousel</h3>
                         <button @click="showEditModal = false"

@@ -15,8 +15,8 @@
 @endsection
 
 @section('page_actions')
-<button type="button" onclick="window.dispatchEvent(new CustomEvent('open-add-modal'))" class="bg-sidebar hover:bg-sidebar-hover text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center transition-colors shadow-sm">
-    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+<button @click="show = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Berita/Promosi
 </button>
 @endsection
@@ -26,30 +26,27 @@
 </div>
 
 <!-- Filters -->
-<div class="bg-white rounded-[1.5rem] p-4 mb-6 shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center">
+<div class="flex flex-wrap items-center gap-4 mb-8">
     <form action="{{ route('admin.berita_promosi.index') }}" method="GET" class="flex flex-wrap w-full gap-4 items-center" id="filter-form">
-        <div class="relative flex-1 min-w-[200px]">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul berita atau promosi.." class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
-            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <div class="relative flex-1 min-w-[280px]">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-4">
+                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </span>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul berita atau promosi.."
+                class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
         </div>
-        <select name="tipe" class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" onchange="document.getElementById('filter-form').submit()">
+        
+        <select name="tipe" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium" onchange="document.getElementById('filter-form').submit()">
             <option value="">Semua Tipe</option>
             <option value="BERITA" {{ request('tipe') == 'BERITA' ? 'selected' : '' }}>Berita</option>
             <option value="PROMO" {{ request('tipe') == 'PROMO' ? 'selected' : '' }}>Promo</option>
         </select>
-        <select name="status" class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" onchange="document.getElementById('filter-form').submit()">
+        
+        <select name="status" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium" onchange="document.getElementById('filter-form').submit()">
             <option value="">Semua Status</option>
             <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
             <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
         </select>
-        <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">Dari:</span>
-            <input type="date" name="start_date" value="{{ request('start_date') }}" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" onchange="document.getElementById('filter-form').submit()">
-        </div>
-        <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-500">Sampai:</span>
-            <input type="date" name="end_date" value="{{ request('end_date') }}" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary" onchange="document.getElementById('filter-form').submit()">
-        </div>
     </form>
 </div>
 
@@ -59,6 +56,7 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-gray-50/50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
                     <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">JUDUL</th>
                     <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">TIPE</th>
                     <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">TANGGAL TAYANG</th>
@@ -67,8 +65,9 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-                @forelse($beritaPromosi as $item)
+                @forelse($beritaPromosi as $index => $item)
                 <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="px-8 py-5 text-sm font-semibold text-gray-400">{{ $index + 1 }}</td>
                     <td class="px-10 py-6">
                         <div class="flex items-center">
                             @if($item->thumbnail)
@@ -136,19 +135,19 @@
 </div>
 
 <!-- Tambah Modal -->
-<div x-data="{ show: {{ $errors->any() && !old('_method') ? 'true' : 'false' }} }" @open-add-modal.window="show = true" x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
+<div x-data="{ show: {{ $errors->any() && !old('_method') ? 'true' : 'false' }} }" x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
     <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-8">
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center mb-8 px-8 pt-6 pb-4 border-b border-gray-100">
                 <h3 class="text-xl font-bold text-gray-900">Tambah Berita/Promosi</h3>
                 <button @click="show = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <form action="{{ route('admin.berita_promosi.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+            <form action="{{ route('admin.berita_promosi.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5 px-8 py-6">
                 @csrf
                 <div class="space-y-5">
                     <div>
@@ -215,11 +214,11 @@
 <!-- Edit Modal -->
 <div x-data="{ show: false, previewUrl: '' }" 
      @open-edit-modal.window="show = true; previewUrl = $event.detail.thumbnail_url || ''" 
-     x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
+     x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
     <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto">
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="flex justify-between items-center mb-8">
                 <h3 class="text-xl font-bold text-gray-900">Edit Berita/Promosi</h3>
                 <button @click="show = false" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -297,17 +296,18 @@
 
 <!-- Custom Success Alert Modal -->
 @if(session('success'))
-<div x-data="{ show: true }" x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
-    <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+<div x-data="{ show: true }" x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-sm p-10 text-center align-middle transition-all transform bg-white shadow-2xl rounded-[1.5rem] sm:my-8 text-gray-800 relative z-10" x-init="setTimeout(() => show = false, 2500)">
-            <div class="w-20 h-20 bg-[#cbf4f5] rounded-full flex items-center justify-center mx-auto mb-6">
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-sm bg-white rounded-[2rem] shadow-2xl p-10 text-gray-800 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <svg class="w-10 h-10 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div class="w-20 h-20 bg-[#cbf4f5] rounded-full flex items-center justify-center mx-auto mb-6 text-center">
                 <svg class="w-10 h-10 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
             </div>
             <h3 class="text-xl font-bold text-gray-900">{{ session('success') }}</h3>
+            <div x-init="setTimeout(() => show = false, 2500)"></div>
         </div>
     </div>
 </div>
