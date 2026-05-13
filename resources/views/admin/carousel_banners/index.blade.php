@@ -89,7 +89,7 @@
                                 </div>
 
                                 <!-- Slide Number -->
-                                <div
+                                <div    
                                     class="text-[11px] font-bold text-gray-400 w-16 uppercase tracking-wider slide-number-text" x-text="'SLIDE ' + (index + 1)">
                                 </div>
 

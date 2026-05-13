@@ -118,14 +118,16 @@ class BaseAdminController extends Controller
         if ($cloudName) {
             try {
                 // Use the simpler upload() method which is more robust in this package
-                $result = \cloudinary()->upload($file->getRealPath(), [
+                $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
                     'folder'        => 'smarttourism/' . trim($path, '/'),
                     'resource_type' => 'image',
-                    'quality'       => 'auto',
-                    'fetch_format'  => 'auto',
+                    'transformation' => [
+                        'quality' => 'auto',
+                        'fetch_format' => 'auto',
+                    ],
                 ]);
 
-                return $result->getSecureUrl();
+                return $result['secure_url'];
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Cloudinary upload failed: ' . $e->getMessage(), [
                     'file' => $file->getClientOriginalName(),
