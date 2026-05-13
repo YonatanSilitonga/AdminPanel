@@ -118,10 +118,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::middleware('admin.role:admin,super_admin')->group(function () {
         Route::get('recommendations', [RecommendationLogController::class, 'index'])
             ->name('admin.recommendations.index');
-        Route::get('recommendations/{log}', [RecommendationLogController::class, 'show'])
-            ->name('admin.recommendations.show');
         Route::get('recommendations/export', [RecommendationLogController::class, 'export'])
             ->name('admin.recommendations.export');
+        Route::get('recommendations/{log}', [RecommendationLogController::class, 'show'])
+            ->name('admin.recommendations.show');
     });
 
     // ============ CHATBOT LOGS (Admin + Moderator) ============

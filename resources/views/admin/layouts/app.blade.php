@@ -94,6 +94,14 @@
         .sidebar-no-transition * {
             transition: none !important;
         }
+
+        /* Content management modal polish */
+        div[x-show="showCreateModal"].fixed.inset-0.z-50.overflow-y-auto > div > div.bg-white,
+        div[x-show="showEditModal"].fixed.inset-0.z-50.overflow-y-auto > div > div.bg-white {
+            border-radius: 1.5rem !important;
+            border: 1px solid rgba(229, 231, 235, 0.9) !important;
+            box-shadow: 0 35px 80px -20px rgba(15, 23, 42, 0.35) !important;
+        }
     </style>
 </head>
 <body class="bg-light">

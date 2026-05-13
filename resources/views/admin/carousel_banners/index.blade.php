@@ -20,7 +20,7 @@
 @endsection
 
 @section('page_actions')
-<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+<button type="button" onclick="document.querySelector('[data-open-create-modal]')?.click()" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Slide Baru
 </button>
@@ -28,6 +28,7 @@
 
 @section('content')
 <div x-data="carouselManager()" x-init="init()" @open-create-modal.window="showCreateModal = true">
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
     <!-- Header Summary Panel -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-wrap items-center justify-between gap-6">
         <div class="flex flex-wrap items-center gap-8">
@@ -307,12 +308,9 @@
                     @click="showCreateModal = false"></div>
 
                 <div x-show="showCreateModal" x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                    x-transition:leave="ease-in duration-200"
-                    x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                    class="relative w-full max-w-2xl bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                    class="relative w-full max-w-2xl bg-white shadow-2xl rounded-[2rem] px-8 py-8 text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                    <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between mb-8">
                         <h3 class="text-xl font-bold">Tambah Slide Carousel</h3>
                         <button @click="showCreateModal = false"
                             class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -430,7 +428,7 @@
                             </label>
                         </div>
 
-                        <div class="pt-2 flex justify-end gap-3 border-t border-gray-100 pt-5">
+                        <div class="flex justify-end gap-3 pt-4">
                             <button type="button" @click="showCreateModal = false"
                                 class="px-6 py-2.5 text-sm font-extrabold text-gray-600 hover:text-gray-800 transition-colors border border-gray-200 rounded-lg bg-white">Batal</button>
                             <button type="submit"
@@ -454,12 +452,15 @@
 
         <!-- Edit Modal -->
         <div x-show="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
-            <div class="flex min-h-screen items-center justify-center px-4 py-8 text-center sm:block sm:p-0">
+            <div class="flex items-center justify-center min-h-screen px-4 py-8">
                 <div x-show="showEditModal" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm"
                     @click="showEditModal = false"></div>
 
-                <div x-show="showEditModal"
-                    class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                <div x-show="showEditModal" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                    class="relative w-full max-w-2xl bg-white shadow-2xl rounded-[2rem] px-8 py-8 text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                     <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
                         <h3 class="text-xl font-bold">Edit Slide Carousel</h3>

@@ -6,7 +6,7 @@
 @section('page_description', 'Kelola konten event dan promosi destinasi')
 
 @section('page_actions')
-<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+<button type="button" onclick="document.querySelector('[data-open-create-modal]')?.click()" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Event
 </button>
@@ -157,6 +157,9 @@
         }
     }
 }">
+
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
+
     <!-- Search & Filters -->
     <div class="flex flex-wrap items-center gap-4 mb-8">
         <form method="GET" action="{{ route('admin.events.index') }}" class="flex flex-wrap items-center gap-4 w-full">
@@ -305,7 +308,7 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100 scale-100"
                  x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-2xl bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 text-gray-800 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Edit Event</h3>
@@ -373,22 +376,22 @@
 
                         <!-- Info Operasional -->
                         <div class="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="space-y-2">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div class="space-y-2 md:col-span-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jam Operasional</label>
                                     <div class="flex items-center gap-2">
-                                        <input type="time" x-model="editOpenTime" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                        <input type="time" x-model="editOpenTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                         <span class="text-gray-400">-</span>
-                                        <input type="time" x-model="editCloseTime" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                        <input type="time" x-model="editCloseTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                     </div>
                                 </div>
-                                <div class="space-y-2">
+                                <div class="space-y-2 md:col-span-1">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
-                                    <input type="text" name="ticket_price" x-model="editingEvent.ticket_price" placeholder="Gratis / Rp 10rb" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                    <input type="text" name="ticket_price" x-model="editingEvent.ticket_price" placeholder="Gratis / Rp 10rb" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                 </div>
-                                <div class="space-y-2">
+                                <div class="space-y-2 md:col-span-1">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
-                                    <input type="text" name="best_time" x-model="editingEvent.best_time" placeholder="Pagi / Sore" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                    <input type="text" name="best_time" x-model="editingEvent.best_time" placeholder="Pagi / Sore" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                 </div>
                             </div>
                         </div>
@@ -464,7 +467,7 @@
     <div x-show="showCreateModal" 
          class="fixed inset-0 z-50 overflow-y-auto" 
          x-cloak>
-        <div class="flex min-h-screen items-center justify-center px-4 py-8 text-center sm:block sm:p-0">
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <!-- Background Backdrop -->
             <div x-show="showCreateModal"
                  x-transition:enter="ease-out duration-300"
@@ -473,18 +476,18 @@
                  x-transition:leave="ease-in duration-200"
                  x-transition:leave-start="opacity-100"
                  x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" 
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" 
                  @click="showCreateModal = false"></div>
 
             <!-- Modal Panel -->
             <div x-show="showCreateModal"
                  x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block w-full max-w-2xl px-8 py-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Tambah Event</h3>
@@ -545,22 +548,22 @@
 
                         <!-- Info Operasional -->
                         <div class="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="space-y-2">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div class="space-y-2 md:col-span-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jam Operasional</label>
                                     <div class="flex items-center gap-2">
-                                        <input type="time" x-model="openTime" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                        <input type="time" x-model="openTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                         <span class="text-gray-400">-</span>
-                                        <input type="time" x-model="closeTime" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                        <input type="time" x-model="closeTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                     </div>
                                 </div>
-                                <div class="space-y-2">
+                                <div class="space-y-2 md:col-span-1">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
-                                    <input type="text" name="ticket_price" placeholder="Gratis / Rp 10rb" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                    <input type="text" name="ticket_price" placeholder="Gratis / Rp 10rb" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                 </div>
-                                <div class="space-y-2">
+                                <div class="space-y-2 md:col-span-1">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
-                                    <input type="text" name="best_time" placeholder="Pagi / Sore" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                                    <input type="text" name="best_time" placeholder="Pagi / Sore" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                 </div>
                             </div>
                         </div>
