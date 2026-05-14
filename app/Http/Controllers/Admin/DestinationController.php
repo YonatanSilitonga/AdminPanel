@@ -12,14 +12,15 @@ use Illuminate\Support\Str;
 class DestinationController extends BaseAdminController
 {
     /**
-     * Display list of destinations from MongoDB
+     * Display list of destinations and trending analytics from MongoDB
      */
     public function index(Request $request)
     {
-        Log::info('Destination index accessed', ['count' => MongoDestination::count()]);
+        $activeTab = $request->get('tab', 'manage');
+        
+        // --- Manage Destinations Logic ---
         $query = MongoDestination::query();
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -28,22 +29,14 @@ class DestinationController extends BaseAdminController
             });
         }
 
-        // Filter by category
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
 
-        // Filter by status
         if ($request->filled('status')) {
             $query->where('is_active', $request->status === 'active');
         }
 
-        // Filter by featured
-        if ($request->filled('featured')) {
-            $query->where('is_featured', $request->featured === 'true');
-        }
-
-        // Advanced Sorting
         $sortColumn = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         $allowedSorts = ['name', 'category', 'is_active', 'created_at'];
@@ -54,16 +47,55 @@ class DestinationController extends BaseAdminController
             $query->orderBy('created_at', 'desc');
         }
 
-        // Rows per page
         $perPage = $request->get('per_page', 10);
         $destinations = $query->paginate($perPage)->withQueryString();
-
         $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
-        return view('admin.destinations.index', [
+        // --- Trending Logic (Only if tab is trending) ---
+        $trendingData = [];
+        if ($activeTab === 'trending') {
+            $mode = \App\Models\AppSetting::get('trending_mode', 'manual');
+            $manualList = \App\Models\AppSetting::get('trending_list', []);
+            
+            $trendingDestinations = [];
+            if ($mode === 'manual' && !empty($manualList)) {
+                $trendingDestinations = collect($manualList)->map(function($id) {
+                    $dest = MongoDestination::find((string)$id);
+                    if ($dest) $dest->id_str = (string)$dest->_id;
+                    return $dest;
+                })->filter()->values();
+            } else {
+                $trendingDestinations = MongoDestination::where('is_active', true)
+                    ->get()
+                    ->sortByDesc(function($dest) {
+                        return ($dest->total_reviews * 10) + $dest->average_rating;
+                    })
+                    ->take(10)
+                    ->map(function($dest) {
+                        $dest->id_str = (string)$dest->_id;
+                        return $dest;
+                    })->values();
+            }
+
+            $trendingData = [
+                'mode' => $mode,
+                'trendingDestinations' => $trendingDestinations,
+                'stats' => [
+                    'total_search' => 7842,
+                    'total_wishlist' => 1543,
+                    'total_review' => 842,
+                    'search_increase' => 12,
+                    'wishlist_increase' => 12,
+                    'review_increase' => 18
+                ]
+            ];
+        }
+
+        return view('admin.destinations.index', array_merge([
             'destinations' => $destinations,
             'categories' => $categories,
-        ]);
+            'activeTab' => $activeTab
+        ], $trendingData));
     }
 
     /**
@@ -328,5 +360,72 @@ class DestinationController extends BaseAdminController
         );
 
         return back()->with('success', 'Status destinasi berhasil diperbarui');
+    }
+
+    // --- Trending Methods ---
+
+    public function updateTrendingMode(Request $request)
+    {
+        $request->validate(['mode' => 'required|in:manual,automatic']);
+        \App\Models\AppSetting::set('trending_mode', $request->mode);
+        return response()->json(['success' => true, 'message' => 'Mode trending diperbarui']);
+    }
+
+    public function updateTrendingOrder(Request $request)
+    {
+        try {
+            $request->validate(['orders' => 'required|array']);
+            $orders = array_map('strval', $request->orders);
+            \App\Models\AppSetting::set('trending_list', $orders, 'json');
+            return response()->json(['success' => true, 'message' => 'Urutan trending diperbarui']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function addTrendingDestination(Request $request)
+    {
+        $request->validate(['destination_id' => 'required']);
+        $currentList = \App\Models\AppSetting::get('trending_list', []);
+        $id = (string)$request->destination_id;
+        if (!in_array($id, $currentList)) {
+            $currentList[] = $id;
+            \App\Models\AppSetting::set('trending_list', $currentList, 'json');
+        }
+        return response()->json(['success' => true, 'message' => 'Destinasi ditambahkan ke trending']);
+    }
+
+    public function removeTrendingDestination($id)
+    {
+        $currentList = \App\Models\AppSetting::get('trending_list', []);
+        $id = (string)$id;
+        $newList = array_values(array_filter($currentList, fn($item) => (string)$item !== $id));
+        \App\Models\AppSetting::set('trending_list', $newList, 'json');
+        return response()->json(['success' => true, 'message' => 'Destinasi dihapus dari trending']);
+    }
+
+    public function resetTrendingToAutomatic()
+    {
+        \App\Models\AppSetting::set('trending_mode', 'automatic');
+        return response()->json(['success' => true, 'message' => 'Sistem dikembalikan ke mode otomatis']);
+    }
+
+    public function searchTrendingDestinations(Request $request)
+    {
+        $search = $request->query('q');
+        $destinations = MongoDestination::where('name', 'regexp', "/{$search}/i")
+            ->limit(5)
+            ->get()
+            ->map(function($dest) {
+                return [
+                    'id_str' => (string)$dest->_id,
+                    'name' => $dest->name,
+                    'location' => $dest->location,
+                    'category' => $dest->category,
+                    'average_rating' => $dest->average_rating,
+                    'images' => $dest->images
+                ];
+            });
+        return response()->json($destinations);
     }
 }

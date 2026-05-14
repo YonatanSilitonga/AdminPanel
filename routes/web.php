@@ -79,20 +79,18 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::delete('destinations/{destination}/facilities/{facility}', [FacilityController::class, 'destroy'])
             ->name('admin.facilities.destroy');
 
-        // Trending Destinations
-        Route::get('trending-destinations', [TrendingDestinationController::class, 'index'])
-            ->name('admin.trending.index');
-        Route::post('trending-destinations/mode', [TrendingDestinationController::class, 'updateMode'])
+        // Trending Destinations (Integrated into DestinationController)
+        Route::post('trending-destinations/mode', [DestinationController::class, 'updateTrendingMode'])
             ->name('admin.trending.update-mode');
-        Route::post('trending-destinations/order', [TrendingDestinationController::class, 'updateOrder'])
+        Route::post('trending-destinations/order', [DestinationController::class, 'updateTrendingOrder'])
             ->name('admin.trending.update-order');
-        Route::post('trending-destinations/add', [TrendingDestinationController::class, 'addDestination'])
+        Route::post('trending-destinations/add', [DestinationController::class, 'addTrendingDestination'])
             ->name('admin.trending.add');
-        Route::delete('trending-destinations/remove/{id}', [TrendingDestinationController::class, 'removeDestination'])
+        Route::delete('trending-destinations/remove/{id}', [DestinationController::class, 'removeTrendingDestination'])
             ->name('admin.trending.remove');
-        Route::post('trending-destinations/reset', [TrendingDestinationController::class, 'resetToAutomatic'])
+        Route::post('trending-destinations/reset', [DestinationController::class, 'resetTrendingToAutomatic'])
             ->name('admin.trending.reset');
-        Route::get('trending-destinations/search', [TrendingDestinationController::class, 'searchDestinations'])
+        Route::get('trending-destinations/search', [DestinationController::class, 'searchTrendingDestinations'])
             ->name('admin.trending.search');
     });
 
