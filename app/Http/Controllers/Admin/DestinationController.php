@@ -43,8 +43,20 @@ class DestinationController extends BaseAdminController
             $query->where('is_featured', $request->featured === 'true');
         }
 
-        $destinations = $query->orderBy('created_at', 'desc')
-            ->paginate(15);
+        // Advanced Sorting
+        $sortColumn = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $allowedSorts = ['name', 'category', 'is_active', 'created_at'];
+        
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Rows per page
+        $perPage = $request->get('per_page', 10);
+        $destinations = $query->paginate($perPage)->withQueryString();
 
         $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
@@ -140,7 +152,7 @@ class DestinationController extends BaseAdminController
 
             return redirect()
                 ->route('admin.destinations.index')
-                ->with('success', 'Destination created in MongoDB successfully');
+                ->with('success', 'Destinasi berhasil ditambahkan');
 
         } catch (\Exception $e) {
             Log::error('Error creating destination in Mongo: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
@@ -179,6 +191,7 @@ class DestinationController extends BaseAdminController
             'longitude' => 'required|numeric|between:-180,180',
             'facilities' => 'nullable|string',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'images.*' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
             'opening_hours' => 'nullable|string|max:255',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
@@ -208,26 +221,52 @@ class DestinationController extends BaseAdminController
 
             $currentImages = $destination->images ?? [];
 
+            // --- Logika Update Thumbnail (Index 0) ---
             if ($request->hasFile('thumbnail')) {
                 $newThumb = $this->processImage($request->file('thumbnail'), 'destinations');
-                if (count($currentImages) > 0) {
-                    $this->deleteFile($currentImages[0]);
-                    $currentImages[0] = $newThumb;
-                } else {
-                    array_unshift($currentImages, $newThumb);
+                if ($newThumb) {
+                    if (count($currentImages) > 0) {
+                        // Hapus thumbnail lama dari storage
+                        $this->deleteFile($currentImages[0]);
+                        $currentImages[0] = $newThumb;
+                    } else {
+                        array_unshift($currentImages, $newThumb);
+                    }
+                }
+            }
+
+            // --- Logika Tambah Gambar ke Gallery ---
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->processImage($file, 'destinations');
+                    if ($path) {
+                        $currentImages[] = $path; // Tambahkan ke akhir array
+                    }
                 }
             }
 
             $destination->images = $currentImages;
             $destination->save();
 
-            $this->logActivity('update_mongo', 'destination', (string)$destination->_id, $oldValues, $destination->toArray());
-
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Destination updated successfully.']);
+            // Wrap logActivity in try-catch to prevent it from breaking the response
+            try {
+                $this->logActivity('update_mongo', 'destination', (string)$destination->_id, $oldValues, $destination->toArray());
+            } catch (\Exception $logEx) {
+                Log::warning('Log activity failed: ' . $logEx->getMessage());
             }
 
-            return redirect()->route('admin.destinations.index')->with('success', 'Destination updated in MongoDB successfully');
+            if ($request->ajax() || $request->wantsJson()) {
+                session()->flash('success', 'Destinasi berhasil diperbarui');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Destinasi berhasil diperbarui',
+                    'destination' => $destination
+                ]);
+            }
+
+            return redirect()
+                ->route('admin.destinations.index')
+                ->with('success', 'Destinasi berhasil diperbarui');
 
         } catch (\Exception $e) {
             Log::error('Error updating destination in Mongo: ' . $e->getMessage());
@@ -262,7 +301,7 @@ class DestinationController extends BaseAdminController
 
             return redirect()
                 ->route('admin.destinations.index')
-                ->with('success', 'Destination deleted from MongoDB successfully');
+                ->with('success', 'Destinasi berhasil dihapus');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Error deleting destination: ' . $e->getMessage());
@@ -288,6 +327,6 @@ class DestinationController extends BaseAdminController
             ['is_active' => $destination->is_active]
         );
 
-        return back()->with('success', 'Status updated in MongoDB');
+        return back()->with('success', 'Status destinasi berhasil diperbarui');
     }
 }

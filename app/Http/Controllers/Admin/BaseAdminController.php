@@ -90,6 +90,8 @@ class BaseAdminController extends Controller
      */
     protected function uploadFile($file, $path = 'uploads', $options = [])
     {
+        set_time_limit(120); // Prevent timeout during slow uploads
+
         if (!$file || !$file->isValid()) {
             \Illuminate\Support\Facades\Log::warning('Invalid file upload attempt', [
                 'has_file' => (bool)$file,
@@ -160,6 +162,8 @@ class BaseAdminController extends Controller
      */
     protected function deleteFile($filePath)
     {
+        set_time_limit(120); // Prevent timeout during API requests
+
         if (!$filePath) {
             return;
         }

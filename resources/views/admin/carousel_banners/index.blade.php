@@ -42,7 +42,7 @@
             <div class="h-8 w-px bg-gray-100 hidden sm:block"></div>
             <div>
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Slides</p>
-                <span class="font-bold text-gray-800 text-sm">{{ $banners->getCollection()->where('is_active', true)->count() }} Slide Aktif</span>
+                <span class="font-bold text-gray-800 text-sm">{{ $banners->where('is_active', true)->count() }} Slide Aktif</span>
             </div>
             <div class="h-8 w-px bg-gray-100 hidden sm:block"></div>
             <div>
@@ -610,7 +610,7 @@
 <script>
 function carouselManager() {
     return {
-        bannersList: @json($banners->items()),
+        bannersList: @json($banners),
         previewIndex: 0,
         loadingOrder: false,
         
@@ -686,7 +686,7 @@ function carouselManager() {
                 
                 const result = await window.safeParseJSON(response);
                 if (result.success) {
-                    alert('Urutan carousel berhasil disimpan!');
+                    window.location.reload();
                 } else {
                     alert('Gagal menyimpan urutan: ' + result.message);
                 }

@@ -26,7 +26,7 @@
 </div>
 
 <!-- Filters -->
-<div class="flex flex-wrap items-center gap-4 mb-8">
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
     <form action="{{ route('admin.berita_promosi.index') }}" method="GET" class="flex flex-wrap w-full gap-4 items-center" id="filter-form">
         <div class="relative flex-1 min-w-[280px]">
             <span class="absolute inset-y-0 left-0 flex items-center pl-4">
@@ -36,6 +36,15 @@
                 class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
         </div>
         
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Tampilkan:</span>
+            <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 transition-all">
+                @foreach([10, 15, 25, 50, 100] as $size)
+                    <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                @endforeach
+            </select>
+        </div>
+
         <select name="tipe" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium" onchange="document.getElementById('filter-form').submit()">
             <option value="">Semua Tipe</option>
             <option value="BERITA" {{ request('tipe') == 'BERITA' ? 'selected' : '' }}>Berita</option>
@@ -47,6 +56,10 @@
             <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
             <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
         </select>
+
+        {{-- Hidden inputs for sorting persistence --}}
+        <input type="hidden" name="sort_by" value="{{ request('sort_by', 'tanggal_tayang') }}">
+        <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
     </form>
 </div>
 
@@ -55,12 +68,44 @@
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
+                @php
+                    $currentSort = request('sort_by', 'tanggal_tayang');
+                    $sortOrder = request('sort_order', 'desc') === 'asc' ? 'desc' : 'asc';
+                @endphp
                 <tr class="bg-gray-50/50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
-                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">JUDUL</th>
-                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">TIPE</th>
-                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">TANGGAL TAYANG</th>
-                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">STATUS</th>
+                    <th class="px-10 py-6 text-left">
+                        <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'judul', 'sort_order' => ($currentSort === 'judul' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                            JUDUL
+                            <svg class="w-4 h-4 {{ $currentSort === 'judul' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'judul' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                            </svg>
+                        </a>
+                    </th>
+                    <th class="px-10 py-6 text-left">
+                        <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'tipe', 'sort_order' => ($currentSort === 'tipe' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                            TIPE
+                            <svg class="w-4 h-4 {{ $currentSort === 'tipe' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'tipe' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                            </svg>
+                        </a>
+                    </th>
+                    <th class="px-10 py-6 text-left">
+                        <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'tanggal_tayang', 'sort_order' => ($currentSort === 'tanggal_tayang' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                            TANGGAL TAYANG
+                            <svg class="w-4 h-4 {{ $currentSort === 'tanggal_tayang' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'tanggal_tayang' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                            </svg>
+                        </a>
+                    </th>
+                    <th class="px-10 py-6 text-left">
+                        <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'is_active', 'sort_order' => ($currentSort === 'is_active' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                            STATUS
+                            <svg class="w-4 h-4 {{ $currentSort === 'is_active' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'is_active' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                            </svg>
+                        </a>
+                    </th>
                     <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">AKSI</th>
                 </tr>
             </thead>
@@ -126,12 +171,16 @@
         </table>
     </div>
     
-    <div class="p-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-        <div>Menampilkan {{ $beritaPromosi->count() }} dari {{ $beritaPromosi->total() }} entri</div>
+    @if($beritaPromosi->hasPages())
+    <div class="px-10 py-6 border-t border-gray-50 flex items-center justify-between">
+        <div class="text-gray-400 text-sm font-medium">
+            Menampilkan {{ $beritaPromosi->firstItem() }} - {{ $beritaPromosi->lastItem() }} dari {{ $beritaPromosi->total() }} data
+        </div>
         <div>
-            {{ $beritaPromosi->links() }}
+            {{ $beritaPromosi->links('vendor.pagination.tailwind') }}
         </div>
     </div>
+    @endif
 </div>
 
 <!-- Tambah Modal -->

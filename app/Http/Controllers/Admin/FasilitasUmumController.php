@@ -43,7 +43,19 @@ class FasilitasUmumController extends BaseAdminController
             $query->where('is_active', $isActive);
         }
 
-        $facilities = $query->orderBy('created_at', 'desc')->paginate(15);
+        // Advanced Sorting
+        $sortColumn = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $allowedSorts = ['name', 'type', 'is_active', 'created_at'];
+        
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $perPage = (int)$request->get('per_page', 15);
+        $facilities = $query->paginate($perPage)->withQueryString();
 
         return view('admin.fasilitas_umum.index', compact('facilities'));
     }
@@ -96,13 +108,13 @@ class FasilitasUmumController extends BaseAdminController
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Fasilitas berhasil ditambahkan.',
+                    'message' => 'Fasilitas berhasil ditambahkan',
                     'facility' => $facility
                 ]);
             }
 
             return redirect()->route('admin.fasilitas_umum.index')
-                ->with('success', 'Fasilitas berhasil ditambahkan.');
+                ->with('success', 'Fasilitas berhasil ditambahkan');
         } catch (\Exception $e) {
             Log::error('Error creating facility: ' . $e->getMessage());
 
@@ -183,13 +195,13 @@ class FasilitasUmumController extends BaseAdminController
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Fasilitas berhasil diperbarui.',
+                    'message' => 'Fasilitas berhasil diperbarui',
                     'facility' => $facility
                 ]);
             }
 
             return redirect()->route('admin.fasilitas_umum.index')
-                ->with('success', 'Fasilitas berhasil diperbarui.');
+                ->with('success', 'Fasilitas berhasil diperbarui');
         } catch (\Exception $e) {
             Log::error('Error updating facility: ' . $e->getMessage());
 
@@ -244,7 +256,7 @@ class FasilitasUmumController extends BaseAdminController
             $facility->delete();
 
             return redirect()->route('admin.fasilitas_umum.index')
-                ->with('success', 'Fasilitas berhasil dihapus.');
+                ->with('success', 'Fasilitas berhasil dihapus');
         } catch (\Exception $e) {
             Log::error('Error deleting facility: ' . $e->getMessage());
             return back()->with('error', 'Gagal menghapus fasilitas.');

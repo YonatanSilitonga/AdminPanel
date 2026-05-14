@@ -5,6 +5,13 @@
 @section('page_title', 'Ulasan Pengguna')
 @section('page_description', 'Moderasi dan analisis ulasan pengguna')
 
+@section('page_actions')
+<a href="{{ route('admin.reviews.export', request()->query()) }}" class="flex items-center gap-2 px-8 py-3 bg-emerald-700 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-emerald-700/20">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+    Export CSV
+</a>
+@endsection
+
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
     <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
@@ -376,21 +383,38 @@
     <div x-show="activeTab === 'list'" class="space-y-8">
         {{-- Filter & Search --}}
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <form method="GET" action="{{ route('admin.reviews.index') }}" class="flex flex-wrap items-center gap-4">
-                <div class="relative w-80">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4">
-                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </span>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari teks ulasan..."
-                        class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300">
-                </div>
-                <select name="rating" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
-                    <option value="">Semua Rating</option>
-                    @foreach([5,4,3,2,1] as $r)
-                        <option value="{{ $r }}" @selected(request('rating') == $r)>{{ $r }} Bintang</option>
-                    @endforeach
-                </select>
-            </form>
+            <div class="flex flex-wrap items-center gap-4">
+                <form method="GET" action="{{ route('admin.reviews.index') }}" class="flex flex-wrap items-center gap-4">
+                    <div class="relative w-80">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4">
+                            <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari teks ulasan..."
+                            class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300">
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Tampilkan:</span>
+                        <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 transition-all">
+                            @foreach([10, 15, 25, 50, 100] as $size)
+                                <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <select name="rating" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+                        <option value="">Semua Rating</option>
+                        @foreach([5,4,3,2,1] as $r)
+                            <option value="{{ $r }}" @selected(request('rating') == $r)>{{ $r }} Bintang</option>
+                        @endforeach
+                    </select>
+
+                    {{-- Hidden inputs for sorting persistence --}}
+                    <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+                    <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+                    <input type="hidden" name="tab" value="list">
+                </form>
+            </div>
 
             <form method="POST" action="{{ route('admin.reviews.analyze-batch') }}">
                 @csrf
@@ -407,14 +431,46 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-50">
                     <thead class="bg-white">
+                        @php
+                            $currentSort = request('sort_by', 'created_at');
+                            $sortOrder = request('sort_order', 'desc') === 'asc' ? 'desc' : 'asc';
+                        @endphp
                         <tr>
                             <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Pengguna</th>
                             <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Destinasi</th>
-                            <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Rating</th>
+                            <th class="px-10 py-6 text-left">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'rating', 'sort_order' => ($currentSort === 'rating' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Rating
+                                    <svg class="w-4 h-4 {{ $currentSort === 'rating' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'rating' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
                             <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Ulasan</th>
-                            <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Sentimen</th>
-                            <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Confidence</th>
-                            <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Waktu</th>
+                            <th class="px-10 py-6 text-left">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'sentiment_label', 'sort_order' => ($currentSort === 'sentiment_label' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Sentimen
+                                    <svg class="w-4 h-4 {{ $currentSort === 'sentiment_label' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'sentiment_label' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
+                            <th class="px-10 py-6 text-left">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'sentiment_confidence', 'sort_order' => ($currentSort === 'sentiment_confidence' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Confidence
+                                    <svg class="w-4 h-4 {{ $currentSort === 'sentiment_confidence' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'sentiment_confidence' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
+                            <th class="px-10 py-6 text-left">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'created_at', 'sort_order' => ($currentSort === 'created_at' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Waktu
+                                    <svg class="w-4 h-4 {{ $currentSort === 'created_at' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'created_at' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
                             <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>

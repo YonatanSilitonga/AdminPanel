@@ -38,7 +38,15 @@ class ReportController extends BaseAdminController
                 }
             }
 
-            $reports = $query->paginate(15);
+            // Pagination & Sorting
+            $perPage = (int) $request->input('per_page', 15);
+            $allowedSorts = ['reason', 'status', 'created_at', 'user_id'];
+            $sortBy = in_array($request->input('sort_by'), $allowedSorts) ? $request->input('sort_by') : 'created_at';
+            $sortOrder = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
+
+            $reports = $query->orderBy($sortBy, $sortOrder)
+                ->paginate($perPage)
+                ->withQueryString();
 
             $statuses = ['pending', 'reviewed', 'resolved'];
             $reasons = ['spam', 'inappropriate', 'fake', 'harassment', 'facility_damage', 'other'];
@@ -179,6 +187,59 @@ class ReportController extends BaseAdminController
         } catch (\Exception $e) {
             Log::error('Error deleting report from Mongo: ' . $e->getMessage());
             return back()->with('error', 'Error deleting report');
+        }
+    }
+
+    /**
+     * Export reports to CSV.
+     */
+    public function export(Request $request)
+    {
+        try {
+            $query = MongoReport::query();
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('reason')) {
+                $query->where('reason', $request->reason);
+            }
+
+            $reports = $query->orderBy('created_at', 'desc')->get();
+
+            $filename = 'reports_data_' . date('Y-m-d_H-i-s') . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($reports) {
+                $file = fopen('php://output', 'w');
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+                fputcsv($file, ['ID', 'Pelapor', 'Target/Destinasi', 'Alasan', 'Deskripsi', 'Status', 'Tanggal'], ';');
+
+                foreach ($reports as $report) {
+                    fputcsv($file, [
+                        $report->_id,
+                        $report->user_id ?? 'Anonim',
+                        $report->destination?->name ?? 'Umum',
+                        $report->reason ?? '-',
+                        $report->description ?? '-',
+                        $report->status ?? 'pending',
+                        $report->created_at?->format('d-m-Y H:i') ?? '-',
+                    ], ';');
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('Report export error: ' . $e->getMessage());
+            return redirect()->route('admin.reports.index')->with('error', 'Gagal mengekspor data laporan.');
         }
     }
 }

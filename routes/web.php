@@ -175,6 +175,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // ============ REVIEWS (Admin + Moderator) ============
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::get('reviews/export', [ReviewController::class, 'export'])->name('admin.reviews.export');
         Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('admin.reviews.show');
         Route::post('reviews/{review}/analyze', [ReviewController::class, 'analyze'])->name('admin.reviews.analyze');
         Route::post('reviews/analyze-batch', [ReviewController::class, 'analyzeBatch'])->name('admin.reviews.analyze-batch');
@@ -186,6 +187,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // ============ REPORTS (Moderator + Admin) ============
     Route::middleware('admin.role:moderator,admin,super_admin')->group(function () {
         Route::get('reports', [ReportController::class, 'index'])->name('admin.reports.index');
+        Route::get('reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
         Route::get('reports/{report}', [ReportController::class, 'show'])->name('admin.reports.show');
         Route::patch('reports/{report}/resolve', [ReportController::class, 'resolve'])->name('admin.reports.resolve');
         Route::post('reports/{report}/action', [ReportController::class, 'takeAction'])->name('admin.reports.action');
@@ -196,17 +198,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
     // ============ USERS (Admin Role) ============
     Route::middleware('admin.role:admin,super_admin')->group(function () {
-        Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
+        Route::get('users', [UserController::class, 'index'])->name('admin.users.index');
+        Route::get('users/export', [UserController::class, 'export'])->name('admin.users.export');
         Route::get('users/{user}/activity', [UserController::class, 'showActivity'])->name('admin.users.activity');
-        Route::resource('users', UserController::class, [
-            'names' => [
-                'index' => 'admin.users.index',
-                'store' => 'admin.users.store',
-                'edit' => 'admin.users.edit',
-                'update' => 'admin.users.update',
-                'destroy' => 'admin.users.destroy',
-            ]
-        ])->only(['index', 'store', 'edit', 'update', 'destroy']);
+        Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
     });
 
     // ============ RECOMMENDATION LOGS (Admin Role) ============
@@ -223,6 +218,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('chatbot-logs', [ChatbotLogController::class, 'index'])
             ->name('admin.chatbot-logs.index');
+        Route::get('chatbot-logs/export', [ChatbotLogController::class, 'export'])
+            ->name('admin.chatbot-logs.export');
         Route::get('chatbot-logs/{log}', [ChatbotLogController::class, 'show'])
             ->name('admin.chatbot-logs.show');
         Route::patch('chatbot-logs/{log}/flag', [ChatbotLogController::class, 'flag'])

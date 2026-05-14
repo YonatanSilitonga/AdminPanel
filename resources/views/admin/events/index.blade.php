@@ -51,7 +51,7 @@
             this.schedule = this.editingEvent.schedule || [];
             this.fileName = this.editingEvent.banner_url ? 'Banner saat ini' : '';
             
-            if (this.editingEvent.opening_hours && this.editingEvent.opening_hours.includes(' - ')) {
+            if (this.editingEvent.opening_hours && String(this.editingEvent.opening_hours).includes(' - ')) {
                 const parts = this.editingEvent.opening_hours.split(' - ');
                 this.editOpenTime = parts[0];
                 this.editCloseTime = parts[1];
@@ -59,7 +59,7 @@
                 this.editOpenTime = '08:00';
                 this.editCloseTime = '17:00';
             }
-            this.edit_is_active = this.editingEvent.is_active ?? true;
+            this.edit_is_active = Boolean(this.editingEvent.is_active);
         } catch (error) {
             alert('Gagal mengambil data event');
             this.showEditModal = false;
@@ -97,25 +97,33 @@
         formData.set('opening_hours', this.editOpenTime + ' - ' + this.editCloseTime);
         formData.set('is_active', this.edit_is_active ? '1' : '0');
 
-        const eventId = this.editingEvent._id || this.editingEvent.id;
+        const eventId = this.editingEvent ? (this.editingEvent._id || this.editingEvent.id) : null;
+        if (!eventId) {
+            alert('ID Event tidak ditemukan');
+            this.loading = false;
+            return;
+        }
+
         try {
             const response = await fetch(`/admin/events/${eventId}`, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
                 },
                 body: formData
             });
             
             const result = await window.safeParseJSON(response);
-            if (result.success) {
+            if (result && result.success) {
                 window.location.reload();
             } else {
-                alert(result.message || 'Gagal memperbarui event');
+                alert(result?.message || 'Gagal memperbarui event');
             }
         } catch (error) {
-            alert('Terjadi kesalahan saat menyimpan data');
+            console.error('Update error:', error);
+            alert('Terjadi kesalahan: ' + error.message);
         } finally {
             this.loading = false;
         }
@@ -139,19 +147,21 @@
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').getAttribute('content')
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
                 },
                 body: formData
             });
             
             const result = await window.safeParseJSON(response);
-            if (result.success) {
+            if (result && result.success) {
                 window.location.reload();
             } else {
-                alert(result.message || 'Gagal membuat event');
+                alert(result?.message || 'Gagal membuat event');
             }
         } catch (error) {
-            alert('Terjadi kesalahan saat menyimpan data');
+            console.error('Create error:', error);
+            alert('Terjadi kesalahan: ' + error.message);
         } finally {
             this.loading = false;
         }
@@ -161,24 +171,38 @@
     <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
 
     <!-- Search & Filters -->
-    <div class="flex flex-wrap items-center gap-4 mb-8">
+    <div class="bg-white rounded-[20px] border border-gray-100 p-6 mb-8 shadow-sm">
         <form method="GET" action="{{ route('admin.events.index') }}" class="flex flex-wrap items-center gap-4 w-full">
+            <!-- Persist current sorting -->
+            <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+            <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+
             <div class="relative flex-1 min-w-[280px]">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4">
                     <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </span>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, lokasi, kategori..."
-                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
+                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
             </div>
 
-            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+            <div class="flex items-center gap-3">
+                <span class="text-[13px] font-bold text-gray-400">Tampilkan:</span>
+                <select name="per_page" onchange="this.form.submit()" 
+                    class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
+                    @foreach([10, 20, 50, 100] as $val)
+                        <option value="{{ $val }}" @selected(request('per_page', 10) == $val)>{{ $val }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-emerald-500 transition-all cursor-pointer">
                 <option value="all" @selected(!request('status') || request('status') === 'all')>Semua Status</option>
                 <option value="upcoming" @selected(request('status') === 'upcoming')>Akan Datang</option>
                 <option value="ongoing" @selected(request('status') === 'ongoing')>Berlangsung</option>
                 <option value="completed" @selected(request('status') === 'completed')>Selesai</option>
             </select>
 
-            <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+            <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-emerald-500 transition-all cursor-pointer">
                 <option value="">Semua Kategori</option>
                 <option value="Budaya" @selected(request('category') === 'Budaya')>Budaya</option>
                 <option value="Adat" @selected(request('category') === 'Adat')>Adat</option>
@@ -188,17 +212,56 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden mb-8">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-50">
                 <thead class="bg-white">
-                    <tr>
+                    <tr class="bg-white border-b border-gray-50">
+                        @php
+                            $sortOrder = request('sort_order') === 'asc' ? 'desc' : 'asc';
+                            $currentSort = request('sort_by', 'created_at');
+                        @endphp
                         <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Nama Event</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Lokasi</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Kategori</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'name', 'sort_order' => ($currentSort === 'name' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Event
+                                <svg class="w-4 h-4 {{ $currentSort === 'name' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'name' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'start_date', 'sort_order' => ($currentSort === 'start_date' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Tanggal
+                                <svg class="w-4 h-4 {{ $currentSort === 'start_date' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'start_date' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'location', 'sort_order' => ($currentSort === 'location' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Lokasi
+                                <svg class="w-4 h-4 {{ $currentSort === 'location' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'location' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'category', 'sort_order' => ($currentSort === 'category' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Kategori
+                                <svg class="w-4 h-4 {{ $currentSort === 'category' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'category' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'is_active', 'sort_order' => ($currentSort === 'is_active' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Status
+                                <svg class="w-4 h-4 {{ $currentSort === 'is_active' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'is_active' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
                         <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -227,10 +290,22 @@
                         @endphp
                         <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
                             <td class="px-8 py-5 text-sm font-semibold text-gray-400">{{ $index + 1 }}</td>
-                            <td class="px-10 py-7">
-                                <div class="text-[15px] font-bold text-gray-800">{{ $event->name }}</div>
+                            <td class="px-10 py-6">
+                                <div class="flex items-center gap-4">
+                                    @if(isset($event->banner_url) && $event->banner_url)
+                                        <img src="{{ image_url($event->banner_url) }}" alt="{{ $event->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100">
+                                    @else
+                                        <div class="w-24 h-16 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <div class="text-[15px] font-bold text-gray-800">{{ $event->name }}</div>
+                                        <div class="text-xs text-gray-400 mt-0.5">{{ $event->organizer ?? '-' }}</div>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="px-10 py-7">
+                            <td class="px-10 py-6">
                                 <div class="text-[14px] text-gray-500 font-medium">
                                     {{ $event->start_date->format('d M Y') }}
                                     @if($event->start_date != $event->end_date)
@@ -238,18 +313,18 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-10 py-7">
+                            <td class="px-10 py-6">
                                 <div class="text-[14px] text-gray-500 font-medium">{{ $event->location ?? '-' }}</div>
                             </td>
-                            <td class="px-10 py-7">
+                            <td class="px-10 py-6">
                                 <span class="font-bold text-xs {{ $catColor }}">
                                     {{ $event->category ?? '-' }}
                                 </span>
                             </td>
-                            <td class="px-10 py-7">
+                            <td class="px-10 py-6">
                                 <span class="{{ $statusClass }}">{{ $statusLabel }}</span>
                             </td>
-                            <td class="px-10 py-7 text-right">
+                            <td class="px-10 py-6 text-right">
                                 <div class="flex items-center justify-end gap-3">
                                     <button @click="openEditModal('{{ $event->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -325,8 +400,9 @@
                 </div>
 
                 <div x-show="editingEvent">
-                    <form id="editEventForm" @submit.prevent="submitUpdate()" class="space-y-6">
+                    <form :action="`/admin/events/${editingEvent._id || editingEvent.id}`" method="POST" enctype="multipart/form-data" class="space-y-6">
                         @method('PUT')
+                        @csrf
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama Event</label>
                             <input type="text" name="name" x-model="editingEvent.name" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
@@ -380,9 +456,9 @@
                                 <div class="space-y-2 md:col-span-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jam Operasional</label>
                                     <div class="flex items-center gap-2">
-                                        <input type="time" x-model="editOpenTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                        <input type="time" name="opening_hours_start" x-model="editOpenTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                         <span class="text-gray-400">-</span>
-                                        <input type="time" x-model="editCloseTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                        <input type="time" name="opening_hours_end" x-model="editCloseTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                     </div>
                                 </div>
                                 <div class="space-y-2 md:col-span-1">
@@ -419,8 +495,8 @@
                             <div class="space-y-3">
                                 <template x-for="(item, index) in schedule" :key="index">
                                     <div class="flex items-center gap-3">
-                                        <input type="time" x-model="item.time" class="w-28 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
-                                        <input type="text" x-model="item.activity" placeholder="Keterangan kegiatan" class="flex-1 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
+                                        <input type="time" :name="`schedule[${index}][time]`" x-model="item.time" class="w-28 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
+                                        <input type="text" :name="`schedule[${index}][activity]`" x-model="item.activity" placeholder="Keterangan kegiatan" class="flex-1 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
                                         <button type="button" @click="removeSchedule(index)" class="p-2 text-red-300 hover:text-red-500 transition-colors">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         </button>
@@ -447,7 +523,8 @@
                         </div>
 
                         <div class="flex items-center gap-2 pt-2">
-                            <input type="checkbox" x-model="edit_is_active" id="edit_is_active_check" class="w-4 h-4 text-sidebar border-gray-200 rounded-lg focus:ring-sidebar/20">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" x-model="edit_is_active" id="edit_is_active_check" class="w-4 h-4 text-sidebar border-gray-200 rounded-lg focus:ring-sidebar/20">
                             <label for="edit_is_active_check" class="text-sm font-bold text-gray-600 cursor-pointer">Setel sebagai Aktif</label>
                         </div>
 
@@ -497,7 +574,7 @@
                 </div>
 
                 <div>
-                    <form id="createEventForm" @submit.prevent="submitCreate()" class="space-y-6">
+                    <form action="{{ route('admin.events.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                         @csrf
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama Event</label>
@@ -552,9 +629,9 @@
                                 <div class="space-y-2 md:col-span-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Jam Operasional</label>
                                     <div class="flex items-center gap-2">
-                                        <input type="time" x-model="openTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                        <input type="time" name="opening_hours_start" x-model="openTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                         <span class="text-gray-400">-</span>
-                                        <input type="time" x-model="closeTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                        <input type="time" name="opening_hours_end" x-model="closeTime" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                     </div>
                                 </div>
                                 <div class="space-y-2 md:col-span-1">
@@ -591,8 +668,8 @@
                             <div class="space-y-3">
                                 <template x-for="(item, index) in createSchedule" :key="index">
                                     <div class="flex items-center gap-3">
-                                        <input type="time" x-model="item.time" class="w-28 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
-                                        <input type="text" x-model="item.activity" placeholder="Keterangan kegiatan" class="flex-1 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
+                                        <input type="time" :name="`schedule[${index}][time]`" x-model="item.time" class="w-28 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
+                                        <input type="text" :name="`schedule[${index}][activity]`" x-model="item.activity" placeholder="Keterangan kegiatan" class="flex-1 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium">
                                         <button type="button" @click="removeCreateSchedule(index)" class="p-2 text-red-300 hover:text-red-500 transition-colors">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         </button>
@@ -619,7 +696,8 @@
                         </div>
 
                         <div class="flex items-center gap-2 pt-2">
-                            <input type="checkbox" x-model="is_active" id="is_active_check" class="w-4 h-4 text-sidebar border-gray-200 rounded-lg focus:ring-sidebar/20">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" x-model="is_active" id="is_active_check" class="w-4 h-4 text-sidebar border-gray-200 rounded-lg focus:ring-sidebar/20">
                             <label for="is_active_check" class="text-sm font-bold text-gray-600 cursor-pointer">Setel sebagai Aktif</label>
                         </div>
 

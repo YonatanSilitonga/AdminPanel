@@ -16,7 +16,7 @@ class EventService
     /**
      * Get paginated events with optional filters
      */
-    public function getPaginatedEvents(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function getPaginatedEvents(array $filters = []): LengthAwarePaginator
     {
         $query = MongoEvent::query();
         $now = now();
@@ -56,17 +56,29 @@ class EventService
             $query->where('is_active', (bool)$filters['is_active']);
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        // Advanced Sorting
+        $sortColumn = $filters['sort_by'] ?? 'created_at';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+        $allowedSorts = ['name', 'start_date', 'category', 'is_active', 'created_at'];
+        
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $perPage = (int)($filters['per_page'] ?? 10);
+        return $query->paginate($perPage)->withQueryString();
     }
 
-    /**
-     * Create a new event
-     */
     public function createEvent(array $data, ?UploadedFile $banner = null): MongoEvent
     {
         if ($banner) {
             $data['banner_url'] = $this->uploadBanner($banner);
         }
+
+        // Remove the UploadedFile object from data array to prevent MongoDB storage errors
+        unset($data['banner']);
 
         if (empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);
@@ -87,6 +99,9 @@ class EventService
             $this->deleteBanner($event->banner_url);
             $data['banner_url'] = $this->uploadBanner($banner);
         }
+
+        // Remove the UploadedFile object from data array to prevent MongoDB storage errors
+        unset($data['banner']);
 
         if (!empty($data['name']) && $data['name'] !== $event->name && empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']) . '-' . Str::random(5);

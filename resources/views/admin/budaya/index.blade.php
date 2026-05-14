@@ -84,7 +84,7 @@
     {{-- /////////////////////////////////// --}}
     <div class="hidden md:block">
         {{-- Search & Filters --}}
-        <div class="flex flex-wrap items-center gap-4 mb-8">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
             <form method="GET" action="{{ route('admin.budaya.index') }}" class="flex flex-wrap items-center gap-4 w-full">
                 <div class="relative flex-1 min-w-[280px]">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4">
@@ -92,6 +92,15 @@
                     </span>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul budaya..."
                         class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Tampilkan:</span>
+                    <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 transition-all">
+                        @foreach([10, 15, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                        @endforeach
+                    </select>
                 </div>
                 
                 <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
@@ -108,6 +117,10 @@
                     <option value="active" @selected(request('status') === 'active')>Aktif</option>
                     <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
                 </select>
+
+                {{-- Hidden inputs for sorting persistence --}}
+                <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+                <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
             </form>
         </div>
 
@@ -116,12 +129,37 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-50">
                     <thead class="bg-gray-50/50">
+                        @php
+                            $currentSort = request('sort_by', 'created_at');
+                            $sortOrder = request('sort_order', 'desc') === 'asc' ? 'desc' : 'asc';
+                        @endphp
                         <tr>
                             <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">#</th>
                             <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Thumbnail</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Judul Topik</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori</th>
-                            <th class="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-8 py-5 text-left">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'name', 'sort_order' => ($currentSort === 'name' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Judul Topik
+                                    <svg class="w-4 h-4 {{ $currentSort === 'name' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'name' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
+                            <th class="px-8 py-5 text-left">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'category', 'sort_order' => ($currentSort === 'category' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Kategori
+                                    <svg class="w-4 h-4 {{ $currentSort === 'category' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'category' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
+                            <th class="px-8 py-5 text-center">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'is_active', 'sort_order' => ($currentSort === 'is_active' ? $sortOrder : 'asc')]) }}" class="group flex items-center justify-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Status
+                                    <svg class="w-4 h-4 {{ $currentSort === 'is_active' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'is_active' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
                             <th class="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>

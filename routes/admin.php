@@ -111,7 +111,6 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::get('users', [UserController::class, 'index'])->name('admin.users.index');
         Route::get('users/{user}/activity', [UserController::class, 'showActivity'])->name('admin.users.activity');
         Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
-        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
     });
 
     // ============ RECOMMENDATION LOGS (Admin Role) ============

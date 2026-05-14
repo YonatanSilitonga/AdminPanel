@@ -1,16 +1,15 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Recommendation Logs')
+@section('navbar_title', 'Recommendation Log')
 @section('page_title', 'Recommendation Log')
-@section('page_description', 'Monitor dan analisis rekomendasi destinasi')
+@section('page_description', 'Monitor dan analisis rekomendasi destinasi yang diberikan sistem AI')
 
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
-    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-400">Monitoring</span>
-    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-400">Fitur AI dan Cerdas</span>
+    <span class="text-gray-400">Monitoring AI</span>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-900 font-bold">Recommendation Log</span>
 </nav>
@@ -18,200 +17,168 @@
 
 @section('content')
 
-{{-- Dashboard Stats Row --}}
-<div class="grid grid-cols-4 gap-4 mb-6">
-    {{-- Hari Ini --}}
-    <div class="bg-white rounded-lg shadow p-5">
-        <div class="flex items-start justify-between">
+<!-- Stats Overview -->
+<div class="bg-white rounded-[20px] border border-gray-100 p-8 mb-8 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+        <div class="flex items-center gap-4 px-6 first:pl-0">
+            <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
             <div>
-                <p class="text-gray-500 text-xs font-medium">HARI INI</p>
-                <p class="text-3xl font-bold text-gray-800 mt-1">{{ number_format($todayLogs) }}</p>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($todayLogs) }}</p>
+                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Hari Ini</p>
             </div>
-            <span class="text-green-500 text-sm font-semibold">↑ 12%</span>
         </div>
-    </div>
-
-    {{-- Minggu Ini --}}
-    <div class="bg-white rounded-lg shadow p-5">
-        <div class="flex items-start justify-between">
+        <div class="flex items-center gap-4 px-8">
+            <div class="w-1 h-10 bg-emerald-500 rounded-full"></div>
             <div>
-                <p class="text-gray-500 text-xs font-medium">MINGGU INI</p>
-                <p class="text-3xl font-bold text-gray-800 mt-1">{{ number_format($weekLogs) }}</p>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($weekLogs) }}</p>
+                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Minggu Ini</p>
             </div>
-            <span class="text-green-500 text-sm font-semibold">↑ 8%</span>
         </div>
-    </div>
-
-    {{-- Bulan Ini --}}
-    <div class="bg-white rounded-lg shadow p-5">
-        <div class="flex items-start justify-between">
+        <div class="flex items-center gap-4 px-8">
+            <div class="w-1 h-10 bg-orange-400 rounded-full"></div>
             <div>
-                <p class="text-gray-500 text-xs font-medium">BULAN INI</p>
-                <p class="text-3xl font-bold text-gray-800 mt-1">{{ number_format($monthLogs) }}</p>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($monthLogs) }}</p>
+                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Bulan Ini</p>
             </div>
-            <span class="text-red-500 text-sm font-semibold">↓ 3.2%</span>
         </div>
-    </div>
-
-    {{-- Rata-rata Durasi --}}
-    <div class="bg-white rounded-lg shadow p-5">
-        <div class="flex items-start justify-between">
+        <div class="flex items-center gap-4 px-8 last:pr-0">
+            <div class="w-1 h-10 bg-blue-400 rounded-full"></div>
             <div>
-                <p class="text-gray-500 text-xs font-medium">RATA-RATA DURASI</p>
-                <p class="text-3xl font-bold text-gray-800 mt-1">{{ number_format($avgDuration, 1) }} Hari</p>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($avgDuration, 1) }}</p>
+                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Avg Durasi (Hari)</p>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Main Content Grid --}}
-<div class="grid grid-cols-3 gap-6 mb-6">
-
-    {{-- LEFT: Chart & Stats --}}
-    <div class="col-span-2">
-        {{-- Rekomendasi Terpopuler --}}
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="font-bold text-gray-800">Destinasi Terpopuler</h3>
-                    <p class="text-xs text-gray-400 mt-1">Top 5 destinasi yang paling banyak direkomendasikan</p>
-                </div>
-                <span class="inline-block bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-semibold">REKOMENDASI TERPOPULER</span>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Analysis Charts -->
+    <div class="lg:col-span-2 bg-white rounded-[20px] border border-gray-100 p-8 shadow-sm">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Distribusi Durasi Trip</h3>
+                <p class="text-sm text-gray-400 mt-1">Preferensi durasi perjalanan yang dipilih pengguna</p>
             </div>
-
-            {{-- Featured Destination Card --}}
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg overflow-hidden mb-6 text-white">
-                <div class="p-6">
-                    @if($popularDestinations->first())
-                        <h4 class="text-xl font-bold mb-2">{{ $popularDestinations->first()->destination?->name ?? 'N/A' }}</h4>
-                        <p class="text-sm text-blue-100 mb-4">
-                            {{ $popularDestinations->first()->destination?->description ?? 'Destinasi populer dari sistem rekomendasi' }}
-                        </p>
-                        <p class="text-sm">
-                            <strong>{{ $popularDestinations->first()->count }}</strong> rekomendasi
-                        </p>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Distribution Chart --}}
-            <div class="mt-6">
-                <p class="text-sm font-semibold text-gray-700 mb-4">Distribusi Durasi Trip</p>
-                <div class="space-y-3">
-                    @foreach($distributionData as $label => $count)
-                        @php
-                            $total = array_sum($distributionData);
-                            $percent = $total > 0 ? ($count / $total) * 100 : 0;
-                        @endphp
-                        <div>
-                            <div class="flex items-center justify-between text-sm mb-1">
-                                <span class="text-gray-600">{{ $label }}</span>
-                                <span class="font-semibold text-gray-800">{{ $count }} ({{ round($percent) }}%)</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-teal-500 h-2 rounded-full" style="width: {{ $percent }}%"></div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+            <span class="px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-bold uppercase tracking-wider">Statistik Real-time</span>
         </div>
+
+        <div class="space-y-6">
+            @foreach($distributionData as $label => $count)
+                @php
+                    $total = array_sum($distributionData);
+                    $percent = $total > 0 ? ($count / $total) * 100 : 0;
+                    $colors = ['bg-emerald-600', 'bg-emerald-500', 'bg-emerald-400', 'bg-emerald-300'];
+                    $color = $colors[$loop->index % count($colors)];
+                @endphp
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[14px] font-bold text-gray-700">{{ $label }}</span>
+                        <span class="text-[13px] font-bold text-emerald-700">{{ $count }} Trip ({{ round($percent) }}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-50 rounded-full h-2.5 overflow-hidden border border-gray-100">
+                        <div class="{{ $color }} h-full rounded-full transition-all duration-1000" style="width: {{ $percent }}%"></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        @if($popularDestinations->first())
+        <div class="mt-10 p-6 bg-gradient-to-br from-emerald-700 to-emerald-800 rounded-2xl text-white relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-[11px] font-bold text-emerald-200 uppercase tracking-[0.2em] mb-2">Destinasi Paling Sering Direkomendasikan</p>
+                <h4 class="text-xl font-bold mb-2">{{ $popularDestinations->first()->destination?->name ?? 'N/A' }}</h4>
+                <div class="flex items-center gap-4 mt-4">
+                    <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl">
+                        <p class="text-[10px] text-emerald-200 uppercase font-bold tracking-wider">Total Rekomendasi</p>
+                        <p class="text-lg font-bold">{{ $popularDestinations->first()->count }} Kali</p>
+                    </div>
+                </div>
+            </div>
+            <svg class="absolute -right-4 -bottom-4 w-40 h-40 text-white/10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </div>
+        @endif
     </div>
 
-    {{-- RIGHT: Preferences Card --}}
-    <div>
-        {{-- Preferensi Populer --}}
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="font-bold text-gray-800 mb-1">Preferensi Populer</h3>
-            <p class="text-xs text-gray-400 mb-6">Kategori pilihan pengunjung</p>
+    <!-- Preferences Breakdown -->
+    <div class="bg-white rounded-[20px] border border-gray-100 p-8 shadow-sm flex flex-col">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Preferensi Populer</h3>
+        <p class="text-sm text-gray-400 mb-8 font-medium">Kategori pilihan yang diminati pengunjung</p>
 
-            <div class="space-y-4">
-                @foreach($userPreferences as $preference => $count)
-                    <div>
-                        <div class="flex items-center justify-between text-sm mb-1">
-                            <span class="text-gray-600">{{ $preference }}</span>
-                            <span class="font-semibold text-gray-800">{{ $count }}%</span>
+        <div class="space-y-6 flex-grow">
+            @foreach($userPreferences as $preference => $count)
+                <div class="flex items-center gap-4">
+                    <div class="flex-grow">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[14px] font-bold text-gray-700">{{ $preference }}</span>
+                            <span class="text-[13px] font-bold text-gray-500">{{ $count }}%</span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-teal-500 h-2 rounded-full" style="width: {{ $count }}%"></div>
+                        <div class="w-full bg-gray-50 rounded-full h-2 border border-gray-100 overflow-hidden">
+                            <div class="bg-emerald-500 h-full rounded-full transition-all duration-1000" style="width: {{ $count }}%"></div>
                         </div>
                     </div>
-                @endforeach
-            </div>
+                </div>
+            @endforeach
+        </div>
 
-            {{-- Trip Distribution --}}
-            <div class="mt-8 pt-6 border-t border-gray-200">
-                <h4 class="text-sm font-bold text-gray-800 mb-4">Distribusi Durasi Trip</h4>
-                <svg width="160" height="120" viewBox="0 0 160 120" class="mx-auto">
-                    {{-- Pie Chart --}}
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="8" stroke-dasharray="65 314" stroke-dashoffset="0"></circle>
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#0f766e" stroke-width="8" stroke-dasharray="78 314" stroke-dashoffset="-65"></circle>
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#99f6e4" stroke-width="8" stroke-dasharray="171 314" stroke-dashoffset="-143"></circle>
-
-                    {{-- Legend --}}
-                    <text x="120" y="30" font-size="10" fill="#666">1-3 Hari (20%)</text>
-                    <text x="120" y="50" font-size="10" fill="#666">4-7 Hari (25%)</text>
-                    <text x="120" y="70" font-size="10" fill="#666">8+ Hari (55%)</text>
-                </svg>
-            </div>
+        <div class="mt-8 pt-8 border-t border-gray-50">
+            <a href="{{ route('admin.recommendations.export') }}" class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-emerald-700 text-white rounded-2xl font-bold text-sm hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-700/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export Laporan CSV
+            </a>
         </div>
     </div>
-
 </div>
 
-{{-- Riwayat Trip Planner Table --}}
-<div class="bg-white rounded-lg shadow">
-    <div class="flex items-center justify-between p-6 border-b border-gray-200">
-        <div>
-            <h3 class="font-bold text-gray-800">Riwayat Trip Planner</h3>
-            <p class="text-xs text-gray-400 mt-1">Menampilkan {{ $logs->count() }} dari {{ $logs->total() }} records</p>
-        </div>
-        <a href="{{ route('admin.recommendations.export') }}" class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors inline-flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            Export CSV
-        </a>
-    </div>
-
+<!-- History Table -->
+<div class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden mb-8">
     <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                    <th class="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">TRIP ID</th>
-                    <th class="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">DURASI PERJALANAN</th>
-                    <th class="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">JML DESTINASI</th>
-                    <th class="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">PREFERENSI</th>
-                    <th class="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">DIBUAT TANGGAL</th>
-                    <th class="text-center px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">AKSI</th>
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-white border-b border-gray-50">
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Trip ID</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Durasi</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Preferensi Utama</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Tgl Dibuat</th>
+                    <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-gray-50">
                 @forelse($logs as $index => $log)
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4">
-                            <span class="font-mono text-xs font-semibold text-teal-600">#TRP-2024-{{ str_pad($logs->firstItem() + $index, 3, '0', STR_PAD_LEFT) }}</span>
+                    <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
+                        <td class="px-10 py-6">
+                            <span class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">#TRP-2024-{{ str_pad($logs->firstItem() + $index, 3, '0', STR_PAD_LEFT) }}</span>
                         </td>
-                        <td class="px-6 py-4">
-                            <span class="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                        <td class="px-10 py-6">
+                            <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">
                                 {{ round($log->recommendation_score) }} Hari
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-gray-700">5 Trik</td>
-                        <td class="px-6 py-4">
-                            <span class="text-gray-600">Alam & Budaya</span>
+                        <td class="px-10 py-6">
+                            <div class="text-[14px] text-gray-700 font-bold uppercase tracking-tight">Alam & Budaya</div>
                         </td>
-                        <td class="px-6 py-4 text-gray-500">
-                            {{ $log->created_at->format('d M Y, H:i') }}
+                        <td class="px-10 py-6">
+                            <div class="text-[13px] text-gray-600 font-medium">
+                                {{ $log->created_at->format('d M Y, H:i') }}
+                            </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <a href="{{ route('admin.recommendations.show', $log->_id) }}" class="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors inline-block" title="Lihat Detail">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                            </a>
+                        <td class="px-10 py-6 text-right">
+                            <div class="flex items-center justify-end gap-3">
+                                <a href="{{ route('admin.recommendations.show', $log->_id) }}"
+                                   class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Lihat Detail">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-                            Tidak ada data rekomendasi ditemukan
+                        <td colspan="5" class="px-10 py-20 text-center text-gray-400">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                </svg>
+                                <p class="text-sm font-bold">Tidak ada data rekomendasi ditemukan</p>
+                            </div>
                         </td>
                     </tr>
                 @endforelse
@@ -219,110 +186,31 @@
         </table>
     </div>
 
-    {{-- Pagination --}}
+    <!-- Pagination -->
     @if($logs->hasPages())
-        <div class="px-6 py-4 border-t border-gray-200">
-            {{ $logs->links() }}
-        </div>
-    @endif
-</div>
-
-{{-- Detail Modal --}}
-<div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-96 overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-            <div>
-                <h3 class="font-bold text-lg text-gray-800">Detail Rencana Trip</h3>
-                <p class="text-sm text-gray-500 mt-1" id="modalTripId"></p>
-            </div>
-            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-        </div>
-
-        <div class="p-6 space-y-4">
-            {{-- Destination Info --}}
-            <div class="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg p-4">
-                <h4 class="font-bold text-lg mb-2" id="modalDestination">Pantai Bulbul</h4>
-                <p class="text-sm text-teal-100">Pantai berpasir putih di tepiaan Danau Toba yang menjadi favorit traveler</p>
-                <p class="text-sm font-semibold mt-3">65% pengunjung dalam perencanaan trip mereka minggu ini</p>
+    <div class="px-8 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
+        <p class="text-[13px] text-gray-400 font-medium">Menampilkan {{ $logs->firstItem() }}-{{ $logs->lastItem() }} dari {{ $logs->total() }} record</p>
+        <div class="flex items-center gap-2">
+            @if($logs->onFirstPage())
+                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Prev</span>
+            @else
+                <a href="{{ $logs->previousPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Prev</a>
+            @endif
+            
+            <div class="flex items-center gap-1">
+                @foreach($logs->getUrlRange(max(1, $logs->currentPage()-1), min($logs->lastPage(), $logs->currentPage()+1)) as $page => $url)
+                    <a href="{{ $url }}" class="w-9 h-9 flex items-center justify-center text-[13px] font-bold {{ $page == $logs->currentPage() ? 'bg-emerald-700 text-white shadow-lg shadow-emerald-700/30' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-all">{{ $page }}</a>
+                @endforeach
             </div>
 
-            {{-- Itinerary --}}
-            <div class="pt-4">
-                <p class="text-xs font-bold text-gray-500 uppercase mb-3">Rencana Perjalanan (Itinerary)</p>
-                <div class="space-y-3">
-                    <div class="flex gap-3">
-                        <div class="flex flex-col items-center">
-                            <div class="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-bold">1</div>
-                            <div class="w-0.5 h-12 bg-gray-300 my-1"></div>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800">Hari Pertama: Wisata Alam</p>
-                            <p class="text-sm text-gray-500">Mulai dari Pantai Bulbul, lalu ke Taman Goa</p>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <div class="flex flex-col items-center">
-                            <div class="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-bold">2</div>
-                            <div class="w-0.5 h-12 bg-gray-300 my-1"></div>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800">Hari Kedua: Eksplorasi Budaya</p>
-                            <p class="text-sm text-gray-500">Museum TB Silalahi Center, Danau Toba Viewing</p>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <div class="flex flex-col items-center">
-                            <div class="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-bold">3</div>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800">Hari Ketiga: Relaksasi</p>
-                            <p class="text-sm text-gray-500">Pantai Paradise, Kolam renang alami</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Stats --}}
-            <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200">
-                <div>
-                    <p class="text-xs text-gray-500 uppercase font-bold">Durasi</p>
-                    <p class="text-2xl font-bold text-teal-600" id="modalDuration">3 Hari</p>
-                </div>
-                <div>
-                    <p class="text-xs text-gray-500 uppercase font-bold">Tanggal Dibuat</p>
-                    <p class="text-sm font-semibold text-gray-800" id="modalDate">24 Mar 2024, 16:20</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="border-t border-gray-200 p-6 text-right">
-            <button onclick="closeDetailModal()" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors mr-2">Tutup</button>
-            <button class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">Lihat Detail</button>
+            @if($logs->hasMorePages())
+                <a href="{{ $logs->nextPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Next</a>
+            @else
+                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Next</span>
+            @endif
         </div>
     </div>
+    @endif
 </div>
-
-<script>
-function openDetailModal(id, destination, duration, date) {
-    document.getElementById('modalTripId').textContent = '#TRP-2024-' + String(id).padStart(3, '0');
-    document.getElementById('modalDestination').textContent = destination;
-    document.getElementById('modalDuration').textContent = duration + ' Hari';
-    document.getElementById('modalDate').textContent = date;
-    document.getElementById('detailModal').classList.remove('hidden');
-}
-
-function closeDetailModal() {
-    document.getElementById('detailModal').classList.add('hidden');
-}
-
-// Close modal on background click
-document.getElementById('detailModal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'detailModal') closeDetailModal();
-});
-</script>
 
 @endsection
