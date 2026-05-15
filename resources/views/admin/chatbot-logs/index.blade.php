@@ -25,7 +25,7 @@
 @section('content')
 
 <!-- Stats Overview -->
-<div class="bg-white rounded-[20px] border border-gray-100 p-8 mb-8 shadow-sm">
+<div class="bg-white rounded-[2rem] border border-gray-100 p-8 mb-8 shadow-sm">
     <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
         <div class="flex items-center gap-4 px-6 first:pl-0">
             <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
@@ -59,7 +59,7 @@
 </div>
 
 <!-- Filter Bar -->
-<div class="bg-white rounded-[20px] border border-gray-100 p-6 mb-6 shadow-sm">
+<div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-6 shadow-sm">
     <form method="GET" action="{{ route('admin.chatbot-logs.index') }}" class="flex flex-wrap items-center gap-4">
         <!-- Persist current sorting -->
         <input type="hidden" name="sort_by" value="{{ request('sort_by', 'updated_at') }}">
@@ -97,7 +97,7 @@
 </div>
 
 <!-- Sessions Table -->
-<div class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden mb-8">
+<div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden mb-8">
     <div class="overflow-x-auto">
         <table class="w-full text-left">
             <thead>

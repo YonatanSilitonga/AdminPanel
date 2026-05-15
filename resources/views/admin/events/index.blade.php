@@ -171,7 +171,7 @@
     <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
 
     <!-- Search & Filters -->
-    <div class="bg-white rounded-[20px] border border-gray-100 p-6 mb-8 shadow-sm">
+    <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
         <form method="GET" action="{{ route('admin.events.index') }}" class="flex flex-wrap items-center gap-4 w-full">
             <!-- Persist current sorting -->
             <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">

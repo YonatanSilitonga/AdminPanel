@@ -8,7 +8,7 @@
 <!-- Header Stats -->
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
     <!-- Card 1: Destinasi -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col justify-between">
         <div class="flex justify-between items-start">
             <div>
                 <p class="text-sm font-medium text-gray-500 mb-1">Destinasi</p>
@@ -27,7 +27,7 @@
     </div>
 
     <!-- Card 2: Event Aktif -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col justify-between">
         <div class="flex justify-between items-start">
             <div>
                 <p class="text-sm font-medium text-gray-500 mb-1">Event</p>
@@ -45,7 +45,7 @@
     </div>
 
     <!-- Card 3: Pengguna -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col justify-between">
         <div class="flex justify-between items-start">
             <div>
                 <p class="text-sm font-medium text-gray-500 mb-1">Pengguna</p>
@@ -63,7 +63,7 @@
     </div>
 
     <!-- Card 4: Laporan -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col justify-between">
         <div class="flex justify-between items-start">
             <div>
                 <p class="text-sm font-medium text-gray-500 mb-1">Laporan Pending</p>
@@ -85,7 +85,7 @@
 <!-- Middle Section: Chart and Activity Timeline -->
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
     <!-- Chart -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 xl:col-span-2">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 xl:col-span-2">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-bold text-gray-900">Aktivitas Bulanan</h2>
             <div class="flex space-x-4 text-sm">
@@ -105,7 +105,7 @@
     </div>
 
     <!-- Activity -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
         <h2 class="text-lg font-bold text-gray-900 mb-6">Aktivitas Terbaru</h2>
         <div class="relative pl-6 border-l-2 border-gray-100 space-y-6">
         @forelse(($recentActivity ?? []) as $index => $log)
@@ -135,7 +135,7 @@
 <!-- Bottom Section: 3 Columns -->
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8 mt-2">
     <!-- Laporan Terbaru (Replacement for Featured) -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
         <div class="flex items-center mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -155,7 +155,7 @@
     </div>
 
     <!-- Top 5 Pencarian Hari Ini -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
         <h2 class="text-lg font-bold text-gray-900 mb-6">Top 5 Pencarian Hari Ini</h2>
         <div class="space-y-3">
             <div class="flex items-center bg-gray-50 p-3 rounded-lg">
@@ -182,7 +182,7 @@
     </div>
 
     <!-- Trip Dibuat -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
         <div class="flex items-center mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -224,8 +224,11 @@
     </div>
 </div>
 
-@push('scripts')
+@push('charts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endpush
+
+@push('scripts')
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const ctx = document.getElementById('monthlyChart');

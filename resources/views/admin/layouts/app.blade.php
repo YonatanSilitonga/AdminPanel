@@ -40,11 +40,11 @@
     <!-- Alpine JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- Chart.js (Conditional) -->
+    @stack('charts')
 
     <!-- Icons (Heroicons) -->
-    <script src="https://cdn.jsdelivr.net/npm/heroicons@1.0.6/solid/index.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/heroicons@1.0.6/solid/index.min.js"></script>
 
     @stack('styles')
     <style>

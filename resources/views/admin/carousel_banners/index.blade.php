@@ -30,7 +30,7 @@
 <div x-data="carouselManager()" x-init="init()" @open-create-modal.window="showCreateModal = true">
     <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
     <!-- Header Summary Panel -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-wrap items-center justify-between gap-6">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 mb-8 flex flex-wrap items-center justify-between gap-6">
         <div class="flex flex-wrap items-center gap-8">
             <div>
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Status Carousel</p>
@@ -62,7 +62,7 @@
             <div class="lg:col-span-2 space-y-8">
 
                 <!-- Slide List Card -->
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
                     <div class="flex items-center justify-between mb-8">
                         <h3 class="font-bold text-gray-800 text-lg">Urutan Slide Tampilan Utama</h3>
                         <div
@@ -171,7 +171,7 @@
 
             <!-- Right Column: Mobile Preview -->
             <div class="lg:col-span-1 hidden lg:block">
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-8">
+                <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 sticky top-8">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="font-bold text-gray-800 text-sm">Pratinjau Mobile</h3>
                         <span

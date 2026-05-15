@@ -382,48 +382,50 @@
 
     <div x-show="activeTab === 'list'" class="space-y-8">
         {{-- Filter & Search --}}
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <div class="flex flex-wrap items-center gap-4">
-                <form method="GET" action="{{ route('admin.reviews.index') }}" class="flex flex-wrap items-center gap-4">
-                    <div class="relative w-80">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-4">
-                            <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </span>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari teks ulasan..."
-                            class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300">
-                    </div>
+        <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-4">
+                    <form method="GET" action="{{ route('admin.reviews.index') }}" class="flex flex-wrap items-center gap-4">
+                        <div class="relative w-80">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4">
+                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </span>
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari teks ulasan..."
+                                class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300">
+                        </div>
 
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Tampilkan:</span>
-                        <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 transition-all">
-                            @foreach([10, 15, 25, 50, 100] as $size)
-                                <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Tampilkan:</span>
+                            <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 transition-all">
+                                @foreach([10, 15, 25, 50, 100] as $size)
+                                    <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <select name="rating" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer">
+                            <option value="">Semua Rating</option>
+                            @foreach([5,4,3,2,1] as $r)
+                                <option value="{{ $r }}" @selected(request('rating') == $r)>{{ $r }} Bintang</option>
                             @endforeach
                         </select>
-                    </div>
 
-                    <select name="rating" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
-                        <option value="">Semua Rating</option>
-                        @foreach([5,4,3,2,1] as $r)
-                            <option value="{{ $r }}" @selected(request('rating') == $r)>{{ $r }} Bintang</option>
-                        @endforeach
-                    </select>
+                        {{-- Hidden inputs for sorting persistence --}}
+                        <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+                        <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+                        <input type="hidden" name="tab" value="list">
+                    </form>
+                </div>
 
-                    {{-- Hidden inputs for sorting persistence --}}
-                    <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
-                    <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
-                    <input type="hidden" name="tab" value="list">
+                <form method="POST" action="{{ route('admin.reviews.analyze-batch') }}">
+                    @csrf
+                    <input type="hidden" name="limit" value="50">
+                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-sidebar text-white text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Analisis Pending
+                    </button>
                 </form>
             </div>
-
-            <form method="POST" action="{{ route('admin.reviews.analyze-batch') }}">
-                @csrf
-                <input type="hidden" name="limit" value="50">
-                <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-sidebar text-white text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Analisis Pending
-                </button>
-            </form>
         </div>
 
         {{-- Table --}}

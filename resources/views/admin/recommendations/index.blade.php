@@ -18,7 +18,7 @@
 @section('content')
 
 <!-- Stats Overview -->
-<div class="bg-white rounded-[20px] border border-gray-100 p-8 mb-8 shadow-sm">
+<div class="bg-white rounded-[2rem] border border-gray-100 p-8 mb-8 shadow-sm">
     <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
         <div class="flex items-center gap-4 px-6 first:pl-0">
             <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
@@ -53,7 +53,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
     <!-- Analysis Charts -->
-    <div class="lg:col-span-2 bg-white rounded-[20px] border border-gray-100 p-8 shadow-sm">
+    <div class="lg:col-span-2 bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm">
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h3 class="text-lg font-bold text-gray-900">Distribusi Durasi Trip</h3>
@@ -100,7 +100,7 @@
     </div>
 
     <!-- Preferences Breakdown -->
-    <div class="bg-white rounded-[20px] border border-gray-100 p-8 shadow-sm flex flex-col">
+    <div class="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm flex flex-col">
         <h3 class="text-lg font-bold text-gray-900 mb-2">Preferensi Populer</h3>
         <p class="text-sm text-gray-400 mb-8 font-medium">Kategori pilihan yang diminati pengunjung</p>
 
@@ -130,7 +130,7 @@
 </div>
 
 <!-- History Table -->
-<div class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden mb-8">
+<div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden mb-8">
     <div class="overflow-x-auto">
         <table class="w-full text-left">
             <thead>

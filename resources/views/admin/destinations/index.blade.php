@@ -144,7 +144,7 @@
     {{-- TAB 1: MANAGE DESTINATIONS --}}
     <div x-show="activeTab === 'manage'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
         {{-- Search & Filter --}}
-        <div class="bg-white rounded-[20px] border border-gray-100 p-6 mb-8 shadow-sm">
+        <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
             <form method="GET" action="{{ route('admin.destinations.index') }}" class="flex flex-wrap items-center gap-4 w-full">
             <!-- Persist current sorting -->
             <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
@@ -168,14 +168,14 @@
                 </select>
             </div>
 
-            <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-emerald-500 transition-all">
+            <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-emerald-500 transition-all cursor-pointer">
                 <option value="">Semua Kategori</option>
                 @foreach(($categories ?? []) as $cat)
                     <option value="{{ $cat }}" @selected(request('category') === $cat)>{{ ucfirst($cat) }}</option>
                 @endforeach
             </select>
 
-            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-emerald-500 transition-all">
+            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-emerald-500 transition-all cursor-pointer">
                 <option value="">Semua Status</option>
                 <option value="active" @selected(request('status') === 'active')>Aktif</option>
                 <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
