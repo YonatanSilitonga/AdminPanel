@@ -509,8 +509,6 @@
     <!-- View Modal -->
     <div x-show="showViewModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
-            <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showViewModal = false"></div>
-            <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" class="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10">
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                  class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showViewModal = false"></div>
@@ -556,6 +554,10 @@
                                     <div>
                                         <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Jam Operasional</h5>
                                         <p class="text-sm font-bold text-emerald-600" x-text="viewingFacility.operational_hours || '-'"></p>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor Telepon</h5>
+                                        <p class="text-sm font-bold text-gray-900" x-text="viewingFacility.phone_number || '-'"></p>
                                     </div>
                                     <div>
                                         <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status Aktif</h5>
@@ -637,7 +639,7 @@ function facilityManager() {
             this.showViewModal = true;
             this.viewingFacility = null;
             try {
-                const response = await fetch(`/admin/fasilitas_umum/${id}/edit`, {
+                const response = await fetch(`/admin/fasilitas-umum/${id}/edit`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 const data = await window.safeParseJSON(response);

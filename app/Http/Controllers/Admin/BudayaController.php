@@ -127,6 +127,7 @@ class BudayaController extends BaseAdminController
     public function edit(string $id, Request $request)
     {
         $budaya = MongoBudaya::findOrFail($id);
+        $budaya->load('admin');
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json($budaya);

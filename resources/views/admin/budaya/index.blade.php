@@ -28,25 +28,36 @@
 <div x-data="{
     showCreateModal: {{ $errors->any() && !old('_method') ? 'true' : 'false' }},
     showEditModal: {{ $errors->any() && old('_method') == 'PUT' ? 'true' : 'false' }},
-    editingBudaya: null,
     showViewModal: false,
-    viewingBudaya: null,
     loading: false,
+    editingBudaya: null,
+    viewingBudaya: null,
     createFileName: '',
     editFileName: '',
+    createPreviewUrl: '',
+    editPreviewUrl: '',
 
     async openEditModal(id) {
+        if (!id) return;
         this.loading = true;
         this.showEditModal = true;
         this.editingBudaya = null;
         try {
-            const res = await fetch(`/admin/budaya/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-            this.editingBudaya = await window.safeParseJSON(res);
-            if (this.editingBudaya && !this.editingBudaya._id && this.editingBudaya.id) {
-                this.editingBudaya._id = this.editingBudaya.id;
+            const res = await fetch(`/admin/budaya/${id}/edit`, { 
+                headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+            });
+            const data = await window.safeParseJSON(res);
+            if (data) {
+                this.editingBudaya = data;
+                if (!this.editingBudaya._id && this.editingBudaya.id) {
+                    this.editingBudaya._id = this.editingBudaya.id;
+                }
+                this.editFileName = this.editingBudaya.image_url ? 'Foto saat ini' : '';
+                this.editPreviewUrl = this.editingBudaya.image_url ? 
+                    (this.editingBudaya.image_url.startsWith('http') ? this.editingBudaya.image_url : '/storage/' + this.editingBudaya.image_url) : '';
             }
-            this.editFileName = this.editingBudaya.image_url ? 'Foto saat ini' : '';
         } catch(e) {
+            console.error('Edit error:', e);
             alert('Gagal mengambil data budaya');
             this.showEditModal = false;
         } finally {
@@ -79,7 +90,7 @@
     },
 
     async submitEdit() {
-        const budayaId = this.editingBudaya._id || this.editingBudaya.id;
+        const budayaId = this.editingBudaya?._id || this.editingBudaya?.id;
         if (!budayaId) {
             alert('ID Budaya tidak ditemukan');
             return;
@@ -91,15 +102,23 @@
         try {
             const res = await fetch(`/admin/budaya/${budayaId}`, {
                 method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest', 
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content 
+                },
                 body: formData
             });
             const result = await window.safeParseJSON(res);
-            if (result.success) { window.location.reload(); }
-            else { alert(result.message || 'Gagal menyimpan'); }
+            if (result.success) { 
+                window.location.reload(); 
+            } else { 
+                alert(result.message || 'Gagal menyimpan'); 
+            }
         } catch(e) {
             alert('Terjadi kesalahan saat menyimpan');
-        } finally { this.loading = false; }
+        } finally { 
+            this.loading = false; 
+        }
     }
 }">
 
@@ -320,7 +339,7 @@
                                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
                                {{ $item->location }}
                            </span>
-                           <span class="text-sm font-bold text-[#7861A5]">Lihat Detail</span>
+                           <button class="text-sm font-bold text-[#7861A5] hover:underline transition-all" @click="openViewModal('{{ (string)$item->_id }}')">Lihat Detail</button>
                        </div>
                    </div>
                </div>
@@ -421,14 +440,14 @@
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Utama (Thumbnail)</label>
                             <div class="relative group" x-data="{ previewUrl: '' }">
-                                <template x-if="previewUrl">
-                                    <img :src="previewUrl" class="absolute inset-0 w-full h-full object-cover rounded-[2rem] opacity-20 pointer-events-none">
+                                 <template x-if="createPreviewUrl">
+                                    <img :src="createPreviewUrl" class="absolute inset-0 w-full h-full object-cover rounded-[2rem] opacity-20 pointer-events-none">
                                 </template>
                                 <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" 
                                     @change="
                                         createFileName = $event.target.files[0].name;
                                         const reader = new FileReader();
-                                        reader.onload = (e) => { previewUrl = e.target.result };
+                                        reader.onload = (e) => { createPreviewUrl = e.target.result };
                                         reader.readAsDataURL($event.target.files[0]);
                                     ">
                                 <label for="create_thumbnail" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
@@ -512,11 +531,17 @@
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama (Opsional)</label>
-                                <div x-show="editingBudaya && editingBudaya.image_url" class="mb-3">
-                                    <img :src="editingBudaya.image_url.startsWith('http') ? editingBudaya.image_url : `/storage/${editingBudaya.image_url}`" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
+                                <div x-show="editPreviewUrl" class="mb-3">
+                                    <img :src="editPreviewUrl" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
                                 </div>
                                 <div class="relative group">
-                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" 
+                                        @change="
+                                            editFileName = $event.target.files[0] ? $event.target.files[0].name : '';
+                                            const reader = new FileReader();
+                                            reader.onload = (e) => { editPreviewUrl = e.target.result };
+                                            if($event.target.files[0]) reader.readAsDataURL($event.target.files[0]);
+                                        ">
                                     <label for="edit_thumbnail" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
                                         <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                             <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -544,27 +569,7 @@
             </div>
         </div>
     </div>
-</div>
 
-
-
-    <!-- Custom Success Alert Modal -->
-    @if(session('success'))
-    <div x-data="{ show: true }" x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
-            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
-
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-sm p-10 text-center align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800 relative z-10" x-init="setTimeout(() => show = false, 2500)">
-                <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900">{{ session('success') }}</h3>
-            </div>
-        </div>
-    </div>
-    @endif
 
     {{-- DETAIL BUDAYA MODAL --}}
     <div x-show="showViewModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
@@ -607,24 +612,47 @@
                         </div>
 
                         <!-- Info Grid -->
-                        <div class="space-y-6">
-                            <div>
-                                <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Judul Topik</h4>
-                                <p class="text-2xl font-bold text-gray-900 leading-tight" x-text="viewingBudaya?.name || '-'"></p>
-                            </div>
-                            
-                            <div>
-                                <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Deskripsi Lengkap</h4>
-                                <div class="text-sm text-gray-600 leading-relaxed max-h-60 overflow-y-auto custom-scrollbar pr-2 whitespace-pre-line" x-text="viewingBudaya?.description || 'Tidak ada deskripsi.'"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Judul Topik</h4>
+                                    <p class="text-xl font-bold text-gray-900 leading-tight" x-text="viewingBudaya?.name || '-'"></p>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Lokasi / Wilayah</h4>
+                                    <div class="flex items-center gap-2 text-emerald-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        <p class="text-sm font-bold" x-text="viewingBudaya?.location || '-'"></p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Koordinat Geografis</h4>
+                                    <p class="text-xs font-mono text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-block" x-text="(viewingBudaya?.latitude || '-') + ', ' + (viewingBudaya?.longitude || '-')"></p>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Status Publikasi</h4>
+                                    <template x-if="viewingBudaya?.is_active">
+                                        <span class="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                            Terpublikasi Aktif
+                                        </span>
+                                    </template>
+                                    <template x-if="!viewingBudaya?.is_active">
+                                        <span class="inline-flex items-center gap-1.5 text-gray-400 text-xs font-bold">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                                            Draft / Nonaktif
+                                        </span>
+                                    </template>
+                                </div>
                             </div>
 
-                            <div class="flex items-center gap-6 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
-                                <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </div>
+                            <div class="space-y-6">
                                 <div>
-                                    <p class="text-[11px] font-bold text-emerald-700 uppercase tracking-widest">Status Publikasi</p>
-                                    <p class="text-xs font-medium text-emerald-600 mt-0.5" x-text="viewingBudaya?.is_active ? 'Konten ini sedang aktif dan dapat dilihat oleh publik di aplikasi mobile.' : 'Konten ini dalam status nonaktif.'"></p>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Deskripsi Lengkap</h4>
+                                    <div class="text-sm text-gray-600 leading-relaxed max-h-80 overflow-y-auto custom-scrollbar pr-2 whitespace-pre-line" x-text="viewingBudaya?.description || 'Tidak ada deskripsi.'"></div>
                                 </div>
                             </div>
                         </div>
@@ -632,8 +660,15 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="px-10 py-6 bg-gray-50 flex items-center justify-end">
-                    <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all">Tutup</button>
+                <div class="px-10 py-6 bg-gray-50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700" x-text="viewingBudaya?.admin?.name ? viewingBudaya.admin.name.split(' ').map(n => n[0]).join('').substring(0,2) : 'A'"></div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Dibuat Oleh</p>
+                            <p class="text-xs font-bold text-gray-700" x-text="viewingBudaya?.admin?.name || 'Administrator'"></p>
+                        </div>
+                    </div>
+                    <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all shadow-sm">Tutup</button>
                 </div>
             </div>
         </div>

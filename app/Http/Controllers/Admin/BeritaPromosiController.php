@@ -95,6 +95,8 @@ class BeritaPromosiController extends BaseAdminController
         if ($bp->thumbnail) {
             $bp->thumbnail_url = image_url($bp->thumbnail);
         }
+        
+        $bp->load('admin');
 
         return response()->json($bp);
     }
