@@ -16,6 +16,9 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\FasilitasUmumController;
+use App\Http\Controllers\Admin\BudayaController;
+use App\Http\Controllers\Admin\BeritaPromosiController;
 
 // PUBLIC ROUTES (No auth required)
 Route::prefix('admin')->group(function () {
@@ -83,6 +86,49 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
         Route::patch('events/{event}/status', [EventController::class, 'toggleStatus'])
             ->name('admin.events.toggle-status');
+    });
+
+    // ============ CONTENT MANAGEMENT (Fasilitas, Budaya, Berita) ============
+    Route::middleware('admin.role:admin,super_admin')->group(function () {
+        // Fasilitas Umum
+        Route::get('fasilitas_umum', [FasilitasUmumController::class, 'index'])
+            ->name('admin.fasilitas_umum.index');
+        Route::post('fasilitas_umum', [FasilitasUmumController::class, 'store'])
+            ->name('admin.fasilitas_umum.store');
+        Route::get('fasilitas_umum/{id}/edit', [FasilitasUmumController::class, 'edit'])
+            ->name('admin.fasilitas_umum.edit');
+        Route::put('fasilitas_umum/{id}', [FasilitasUmumController::class, 'update'])
+            ->name('admin.fasilitas_umum.update');
+        Route::delete('fasilitas_umum/{id}', [FasilitasUmumController::class, 'destroy'])
+            ->name('admin.fasilitas_umum.destroy');
+        Route::patch('fasilitas_umum/{id}/status', [FasilitasUmumController::class, 'toggleStatus'])
+            ->name('admin.fasilitas_umum.toggle-status');
+
+        // Budaya
+        Route::get('budaya', [BudayaController::class, 'index'])
+            ->name('admin.budaya.index');
+        Route::post('budaya', [BudayaController::class, 'store'])
+            ->name('admin.budaya.store');
+        Route::get('budaya/{id}/edit', [BudayaController::class, 'edit'])
+            ->name('admin.budaya.edit');
+        Route::put('budaya/{id}', [BudayaController::class, 'update'])
+            ->name('admin.budaya.update');
+        Route::delete('budaya/{id}', [BudayaController::class, 'destroy'])
+            ->name('admin.budaya.destroy');
+        Route::patch('budaya/{id}/status', [BudayaController::class, 'toggleStatus'])
+            ->name('admin.budaya.toggle-status');
+
+        // Berita Promosi
+        Route::get('berita_promosi', [BeritaPromosiController::class, 'index'])
+            ->name('admin.berita_promosi.index');
+        Route::post('berita_promosi', [BeritaPromosiController::class, 'store'])
+            ->name('admin.berita_promosi.store');
+        Route::get('berita_promosi/{id}/edit', [BeritaPromosiController::class, 'edit'])
+            ->name('admin.berita_promosi.edit');
+        Route::put('berita_promosi/{id}', [BeritaPromosiController::class, 'update'])
+            ->name('admin.berita_promosi.update');
+        Route::delete('berita_promosi/{id}', [BeritaPromosiController::class, 'destroy'])
+            ->name('admin.berita_promosi.destroy');
     });
 
     // ============ REVIEWS (Admin + Moderator) ============

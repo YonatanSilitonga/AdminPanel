@@ -185,14 +185,14 @@
                                             </div>
                                         @endif
                                     </div>
-                                    <div>
-                                        <span class="text-sm font-bold text-gray-700 block">{{ $report->user_id ?? 'Anonim' }}</span>
+                                    <div class="min-w-0">
+                                        <span class="text-sm font-bold text-gray-700 block truncate" title="{{ $report->user_id ?? '' }}">{{ $report->user_id ?? 'Anonim' }}</span>
                                         <span class="text-[10px] text-gray-400 font-medium">{{ $report->_id }}</span>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-10 py-6">
-                                <p class="text-sm font-bold text-gray-800">{{ optional($report->destination)->name ?? 'Umum' }}</p>
+                                <p class="text-sm font-bold text-gray-800 max-w-[150px] truncate" title="{{ optional($report->destination)->name ?? '' }}">{{ optional($report->destination)->name ?? 'Umum' }}</p>
                                 <span class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">{{ str_replace('_', ' ', $report->reason ?? '-') }}</span>
                             </td>
                             <td class="px-10 py-6 max-w-xs">

@@ -146,14 +146,17 @@
                     </td>
                     <td class="px-10 py-6 text-right">
                         <div class="flex items-center justify-end gap-3">
-                            <button type="button" onclick="editItem('{{ $item->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
+                            <button type="button" onclick="viewItem('{{ (string)$item->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Detail">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                            <button type="button" onclick="editItem('{{ (string)$item->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                             <button type="button" 
                                 @click="$dispatch('open-delete-modal', { 
                                     action: '{{ route('admin.berita_promosi.destroy', (string)$item->_id) }}', 
-                                    title: 'Hapus Konten', 
-                                    type: '{{ strtolower($item->tipe) }}', 
+                                    title: 'Hapus Berita/Promosi', 
+                                    type: 'berita', 
                                     name: '{{ addslashes($item->judul) }}' 
                                 })" 
                                 class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all" title="Hapus">
@@ -339,6 +342,45 @@
                     <button type="submit" class="px-6 py-2.5 bg-sidebar hover:bg-sidebar-hover text-white rounded-xl transition-colors text-sm font-medium">Simpan Perubahan</button>
                 </div>
             </form>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div x-data="{ show: false, item: null, loading: false }" 
+     @open-view-modal.window="show = true; item = $event.detail.item; loading = false" 
+     x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="show = false"></div>
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center px-10 pt-8 pb-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900">Detail Konten</h3>
+                <button @click="show = false" class="text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 p-2 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-10">
+                <template x-if="item">
+                    <div class="space-y-6">
+                        <div class="rounded-[2rem] overflow-hidden bg-gray-100 aspect-video relative group">
+                            <img :src="item.thumbnail_url && (item.thumbnail_url.startsWith('http') ? item.thumbnail_url : '/storage/' + item.thumbnail_url)" class="w-full h-full object-cover">
+                            <div class="absolute top-6 right-6">
+                                <span :class="item.tipe === 'PROMO' ? 'bg-orange-500' : 'bg-teal-600'" class="px-4 py-2 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg" x-text="item.tipe"></span>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-2xl font-bold text-gray-900 leading-tight" x-text="item.judul"></h4>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Diterbitkan pada: <span class="text-emerald-600" x-text="item.tanggal_tayang_formatted"></span></p>
+                        </div>
+                        <div class="pt-6 border-t border-gray-50">
+                            <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Isi Konten</h5>
+                            <div class="text-sm text-gray-600 leading-relaxed whitespace-pre-line" x-text="item.konten"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="px-10 py-6 bg-gray-50 flex justify-end">
+                <button @click="show = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all shadow-sm">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
@@ -351,14 +393,11 @@
     <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-sm bg-white rounded-[2rem] shadow-2xl p-10 text-gray-800 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <svg class="w-10 h-10 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <div class="w-20 h-20 bg-[#cbf4f5] rounded-full flex items-center justify-center mx-auto mb-6 text-center">
-                <svg class="w-10 h-10 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-sm p-10 text-center align-middle transition-all transform bg-white shadow-2xl rounded-[2rem] sm:my-8 text-gray-800 relative z-10" x-init="setTimeout(() => show = false, 2500)">
+            <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
             </div>
             <h3 class="text-xl font-bold text-gray-900">{{ session('success') }}</h3>
-            <div x-init="setTimeout(() => show = false, 2500)"></div>
         </div>
     </div>
 </div>
@@ -370,10 +409,10 @@
 <script>
     async function editItem(id) {
         try {
-            const res = await fetch(`/admin/berita-promosi/${id}/edit`);
+            const res = await fetch(`/admin/berita_promosi/${id}/edit`);
             const data = await window.safeParseJSON(res);
             
-            document.getElementById('editForm').action = `/admin/berita-promosi/${id}`;
+            document.getElementById('editForm').action = `/admin/berita_promosi/${id}`;
             document.getElementById('edit_judul').value = data.judul;
             document.getElementById('edit_tipe').value = data.tipe;
             document.getElementById('edit_konten').value = data.konten;
@@ -382,6 +421,18 @@
             
             window.dispatchEvent(new CustomEvent('open-edit-modal', {
                 detail: { thumbnail_url: data.thumbnail_url }
+            }));
+        } catch (err) {
+            alert('Gagal mengambil data: ' + err);
+        }
+    }
+
+    async function viewItem(id) {
+        try {
+            const res = await fetch(`/admin/berita_promosi/${id}/edit`);
+            const data = await window.safeParseJSON(res);
+            window.dispatchEvent(new CustomEvent('open-view-modal', {
+                detail: { item: data }
             }));
         } catch (err) {
             alert('Gagal mengambil data: ' + err);

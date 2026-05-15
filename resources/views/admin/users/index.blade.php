@@ -228,16 +228,16 @@
                                 <div class="w-10 h-10 rounded-full bg-sidebar-active/10 flex items-center justify-center text-sidebar-active font-bold shadow-sm">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </div>
-                                <div>
-                                    <div class="text-[15px] font-bold text-gray-800">{{ $user->name }}</div>
+                                <div class="min-w-0">
+                                    <div class="text-[15px] font-bold text-gray-800 max-w-[150px] truncate" title="{{ $user->name }}">{{ $user->name }}</div>
                                     <div class="text-xs text-gray-400 mt-0.5">ID: {{ substr($user->_id, -8) }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-10 py-6">
                             <div class="flex flex-col gap-1">
-                                <div class="flex items-center gap-2 text-sm text-gray-600">
-                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7 8.9a2.2 2.2 0 003.3 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <div class="flex items-center gap-2 text-sm text-gray-600 max-w-[180px] truncate">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7 8.9a2.2 2.2 0 003.3 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                     {{ $user->email }}
                                 </div>
                                 @if(isset($user->phone))

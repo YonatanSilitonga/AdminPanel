@@ -27,6 +27,8 @@
     showEditModal: false,
     showCreateModal: false,
     editingEvent: null,
+    showViewModal: false,
+    viewingEvent: null,
     loading: false,
     fileName: '',
     createFileName: '',
@@ -124,6 +126,30 @@
         } catch (error) {
             console.error('Update error:', error);
             alert('Terjadi kesalahan: ' + error.message);
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async openViewModal(id) {
+        if (!id) return;
+        this.loading = true;
+        this.showViewModal = true;
+        this.viewingEvent = null;
+        try {
+            const response = await fetch(`/admin/events/${id}/edit`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await window.safeParseJSON(response);
+            if (data) {
+                this.viewingEvent = data;
+            } else {
+                throw new Error('Data tidak valid');
+            }
+        } catch (error) {
+            console.error('View error:', error);
+            alert('Gagal memuat detail event');
+            this.showViewModal = false;
         } finally {
             this.loading = false;
         }
@@ -299,14 +325,14 @@
                                             <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                         </div>
                                     @endif
-                                    <div>
-                                        <div class="text-[15px] font-bold text-gray-800">{{ $event->name }}</div>
-                                        <div class="text-xs text-gray-400 mt-0.5">{{ $event->organizer ?? '-' }}</div>
+                                    <div class="min-w-0">
+                                        <div class="text-[15px] font-bold text-gray-800 max-w-[200px] truncate" title="{{ $event->name }}">{{ $event->name }}</div>
+                                        <div class="text-xs text-gray-400 mt-0.5 max-w-[150px] truncate">{{ $event->organizer ?? '-' }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-10 py-6">
-                                <div class="text-[14px] text-gray-500 font-medium">
+                                <div class="text-[14px] text-gray-500 font-medium whitespace-nowrap">
                                     {{ $event->start_date->format('d M Y') }}
                                     @if($event->start_date != $event->end_date)
                                          - {{ $event->end_date->format('d M Y') }}
@@ -314,7 +340,7 @@
                                 </div>
                             </td>
                             <td class="px-10 py-6">
-                                <div class="text-[14px] text-gray-500 font-medium">{{ $event->location ?? '-' }}</div>
+                                <div class="text-[14px] text-gray-500 font-medium max-w-[150px] truncate">{{ $event->location ?? '-' }}</div>
                             </td>
                             <td class="px-10 py-6">
                                 <span class="font-bold text-xs {{ $catColor }}">
@@ -326,7 +352,10 @@
                             </td>
                             <td class="px-10 py-6 text-right">
                                 <div class="flex items-center justify-end gap-3">
-                                    <button @click="openEditModal('{{ $event->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all">
+                                    <button @click="openViewModal('{{ $event->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Detail">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                    <button @click="openEditModal('{{ $event->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
                                     <button type="button" @click="$dispatch('open-delete-modal', { action: '{{ route('admin.events.destroy', $event->_id) }}', title: 'Hapus Event', type: 'event', name: {{ json_encode($event->name) }} })" class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all">
@@ -709,6 +738,118 @@
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- DETAIL EVENT MODAL --}}
+    <div x-show="showViewModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+            <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showViewModal = false"></div>
+
+            <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between px-10 pt-8 pb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Detail Event</h3>
+                        <p class="text-sm text-gray-400 mt-0.5">Informasi lengkap kegiatan dan acara</p>
+                    </div>
+                    <button @click="showViewModal = false" class="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-10">
+                    <div x-show="loading && !viewingEvent" class="py-12 flex flex-col items-center justify-center gap-4">
+                        <div class="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+                        <p class="text-sm font-bold text-emerald-600 animate-pulse">Memuat data...</p>
+                    </div>
+
+                    <div x-show="viewingEvent" class="space-y-8">
+                        <!-- Banner Image -->
+                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group">
+                            <template x-if="viewingEvent?.banner_url">
+                                <img :src="viewingEvent.banner_url.startsWith('http') ? viewingEvent.banner_url : '/storage/' + viewingEvent.banner_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                            </template>
+                            <template x-if="!viewingEvent?.banner_url">
+                                <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                    <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <p class="text-xs font-bold uppercase tracking-widest">Tidak ada foto</p>
+                                </div>
+                            </template>
+                            <div class="absolute top-6 right-6">
+                                <span :class="viewingEvent?.is_active ? 'bg-emerald-500' : 'bg-gray-400'" class="px-4 py-2 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg" x-text="viewingEvent?.is_active ? 'AKTIF' : 'NONAKTIF'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Info Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Nama Event</h4>
+                                    <p class="text-lg font-bold text-gray-900" x-text="viewingEvent?.name || '-'"></p>
+                                </div>
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Penyelenggara</h4>
+                                    <p class="text-sm font-bold text-emerald-600" x-text="viewingEvent?.organizer || '-'"></p>
+                                </div>
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Lokasi</h4>
+                                    <p class="text-sm font-medium text-gray-600 leading-relaxed" x-text="viewingEvent?.location || '-'"></p>
+                                </div>
+                            </div>
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Deskripsi</h4>
+                                    <div class="text-sm text-gray-500 leading-relaxed max-h-40 overflow-y-auto custom-scrollbar pr-2" x-text="viewingEvent?.description || 'Tidak ada deskripsi.'"></div>
+                                </div>
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Jadwal Operasional</h4>
+                                    <p class="text-sm font-bold text-gray-700" x-text="viewingEvent?.opening_hours || '-'"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Timeline -->
+                        <div class="space-y-4 pt-6 border-t border-gray-50">
+                            <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">Rangkaian Kegiatan</h4>
+                            <div class="space-y-4 relative pl-4">
+                                <div class="absolute left-[19px] top-4 bottom-4 w-[1px] bg-gray-100"></div>
+                                <template x-if="viewingEvent?.schedule && viewingEvent.schedule.length > 0">
+                                    <div class="space-y-4">
+                                        <template x-for="item in viewingEvent.schedule">
+                                            <div class="flex items-center gap-4 relative z-10">
+                                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm"></div>
+                                                <div class="flex-1 bg-gray-50/50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                                                    <span class="text-sm font-bold text-gray-700" x-text="item.activity"></span>
+                                                    <span class="text-xs font-mono font-bold text-emerald-600 bg-white px-2 py-1 rounded-lg" x-text="item.time"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template x-if="!viewingEvent?.schedule || viewingEvent.schedule.length === 0">
+                                    <p class="text-sm text-gray-400 italic">Belum ada rangkaian kegiatan yang ditambahkan.</p>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-10 py-6 bg-gray-50 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                         <p class="text-xs text-gray-400 font-medium">Terakhir diperbarui: <span x-text="viewingEvent?.updated_at ? new Date(viewingEvent.updated_at).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-'"></span></p>
+                    </div>
+                    <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all">Tutup Detail</button>
                 </div>
             </div>
         </div>
