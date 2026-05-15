@@ -61,13 +61,15 @@ class UserController extends BaseAdminController
         $perPage = $request->get('per_page', 10);
         $users = $query->paginate($perPage)->withQueryString();
         
-        // Fetch statistics for the status bar
-        $stats = [
-            'total' => User::count(),
-            'active' => User::where('is_active', true)->count(),
-            'guests' => ChatSession::whereNull('user_id')->count(),
-            'suspended' => User::where('is_active', false)->count(),
-        ];
+        // Fetch statistics for the status bar with caching
+        $stats = \Illuminate\Support\Facades\Cache::remember('admin.users.stats', now()->addMinutes(10), function() {
+            return [
+                'total' => User::count(),
+                'active' => User::where('is_active', true)->count(),
+                'guests' => ChatSession::whereNull('user_id')->count(),
+                'suspended' => User::where('is_active', false)->count(),
+            ];
+        });
 
         return view('admin.users.index', compact('users', 'stats'));
     }

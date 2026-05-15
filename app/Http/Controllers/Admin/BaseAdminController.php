@@ -230,17 +230,35 @@ class BaseAdminController extends Controller
     }
 
     /**
-     * Get dashboard summary statistics
+     * Get dashboard summary statistics with caching
      */
     protected function getDashboardStats()
     {
-        return [
-            'total_destinations' => \App\Models\MongoDB\MongoDestination::count(),
-            'total_events'       => \App\Models\MongoDB\MongoEvent::count(),
-            'total_users'        => DB::table('users')->where('is_active', true)->count(),
-            'pending_reviews'    => \App\Models\MongoDB\MongoReview::where('status', 'pending')->count(),
-            'pending_reports'    => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
-        ];
+        $cacheKey = 'admin.dashboard.stats_summary';
+        
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () {
+            try {
+                return [
+                    'total_destinations' => \App\Models\MongoDB\MongoDestination::count(),
+                    'total_events'       => \App\Models\MongoDB\MongoEvent::count(),
+                    'total_users'        => DB::table('users')->where('is_active', true)->count(),
+                    'pending_reviews'    => \App\Models\MongoDB\MongoReview::where('status', 'pending')->count(),
+                    'pending_reports'    => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
+                    'total_reviews'      => \App\Models\MongoDB\MongoReview::count(),
+                    'total_facilities'   => DB::table('fasilitas_umum')->count(),
+                ];
+            } catch (\Exception $e) {
+                return [
+                    'total_destinations' => 0,
+                    'total_events'       => 0,
+                    'total_users'        => 0,
+                    'pending_reviews'    => 0,
+                    'pending_reports'    => 0,
+                    'total_reviews'      => 0,
+                    'total_facilities'   => 0,
+                ];
+            }
+        });
     }
 
     /**

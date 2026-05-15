@@ -37,11 +37,17 @@ class DashboardController extends BaseAdminController
     }
 
     /**
-     * Get monthly chart data (AJAX)
+     * Get monthly chart data (AJAX) with caching
      */
     public function getChartData()
     {
-        return response()->json($this->getMonthlyChartData());
+        $cacheKey = 'admin.dashboard.monthly_chart';
+        
+        $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->getMonthlyChartData();
+        });
+
+        return response()->json($data);
     }
 
     /**
