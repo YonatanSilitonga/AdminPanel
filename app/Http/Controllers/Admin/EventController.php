@@ -28,6 +28,9 @@ class EventController extends BaseAdminController
             'search' => $request->get('search'),
             'category' => $request->get('category'),
             'status' => $request->get('status', 'all'),
+            'sort_by' => $request->get('sort_by', 'created_at'),
+            'sort_order' => $request->get('sort_order', 'desc'),
+            'per_page' => $request->get('per_page', 10),
         ]);
 
         return view('admin.events.index', compact('events'));
@@ -58,42 +61,85 @@ class EventController extends BaseAdminController
             'end_date' => 'required|date|after_or_equal:start_date',
             'banner' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
             'schedule' => 'nullable|array',
-            'schedule.*.time' => 'required_with:schedule|string',
-            'schedule.*.activity' => 'required_with:schedule|string',
+            'schedule.*.time' => 'nullable|string',
+            'schedule.*.activity' => 'nullable|string',
             'opening_hours' => 'nullable|string|max:255',
+            'opening_hours_start' => 'nullable|date_format:H:i',
+            'opening_hours_end' => 'nullable|date_format:H:i',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
-            'latitude' => 'nullable|string|max:255',
-            'longitude' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'nullable|boolean',
         ]);
 
         try {
-            if (isset($validated['tags']) && $validated['tags']) {
-                if (is_string($validated['tags'])) {
-                    $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags']))));
-                }
-            } else {
-                $validated['tags'] = [];
+            // Combine opening hours if separate fields are provided
+            $openingHours = $validated['opening_hours'] ?? null;
+            if (!$openingHours && !empty($validated['opening_hours_start']) && !empty($validated['opening_hours_end'])) {
+                $openingHours = $validated['opening_hours_start'] . ' - ' . $validated['opening_hours_end'];
             }
+
+            $event = new MongoEvent();
+            $event->name = $validated['name'];
+            $event->category = $validated['category'];
+            $event->location = $validated['location'];
+            $event->organizer = $validated['organizer'] ?? null;
+            $event->description = $validated['description'];
+            $event->long_description = $validated['long_description'] ?? null;
+            $event->start_date = $validated['start_date'];
+            $event->end_date = $validated['end_date'];
+            $event->opening_hours = $openingHours ?? '08:00 - 17:00';
+            $event->ticket_price = $validated['ticket_price'] ?? 'Gratis';
+            $event->best_time = $validated['best_time'] ?? 'Kapan saja';
+            $event->latitude = isset($validated['latitude']) ? (float)$validated['latitude'] : null;
+            $event->longitude = isset($validated['longitude']) ? (float)$validated['longitude'] : null;
+            $event->is_active = $request->boolean('is_active', true);
+            $event->admin_id = auth('admin')->id();
+            $event->slug = \Illuminate\Support\Str::slug($validated['name']) . '-' . \Illuminate\Support\Str::random(5);
+
+            // Tags handling
+            if (!empty($request->tags)) {
+                $event->tags = array_values(array_filter(array_map('trim', explode(',', $request->tags))));
+            } else {
+                $event->tags = [];
+            }
+
+            // Schedule handling
+            if (!empty($request->schedule) && is_array($request->schedule)) {
+                $event->schedule = array_values(array_filter($request->schedule, function($item) {
+                    return !empty($item['activity']);
+                }));
+            } else {
+                $event->schedule = [];
+            }
+
+            // Image handling (Identical to Destination)
+            if ($request->hasFile('banner')) {
+                $path = $this->processImage($request->file('banner'), 'events');
+                if ($path) {
+                    $event->banner_url = $path;
+                }
+            }
+
+            $event->save();
             
-            // Explicitly handle is_active from request if not in validated
-            $validated['is_active'] = $request->boolean('is_active', true);
-            
-            $event = $this->eventService->createEvent($validated, $request->file('banner'));
-            
-            $this->logActivity('create', 'event', (string)$event->_id, null, $event->toArray());
+            try {
+                $this->logActivity('create', 'event', (string)$event->_id, null, $event->toArray());
+            } catch (\Exception $logEx) {
+                Log::warning('Event activity log failed: ' . $logEx->getMessage());
+            }
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Event berhasil dibuat.',
+                    'message' => 'Event berhasil ditambahkan',
                     'event' => $event
                 ]);
             }
 
             return redirect()->route('admin.events.index')
-                ->with('success', 'Event berhasil dibuat.');
+                ->with('success', 'Event berhasil ditambahkan');
         } catch (\Exception $e) {
             Log::error('Error creating event: ' . $e->getMessage());
 
@@ -138,43 +184,88 @@ class EventController extends BaseAdminController
             'end_date' => 'required|date|after_or_equal:start_date',
             'banner' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
             'schedule' => 'nullable|array',
-            'schedule.*.time' => 'required_with:schedule|string',
-            'schedule.*.activity' => 'required_with:schedule|string',
+            'schedule.*.time' => 'nullable|string',
+            'schedule.*.activity' => 'nullable|string',
             'opening_hours' => 'nullable|string|max:255',
+            'opening_hours_start' => 'nullable|date_format:H:i',
+            'opening_hours_end' => 'nullable|date_format:H:i',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
-            'latitude' => 'nullable|string|max:255',
-            'longitude' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'is_active' => 'nullable|boolean',
         ]);
 
         try {
-            if (isset($validated['tags']) && $validated['tags']) {
-                if (is_string($validated['tags'])) {
-                    $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags']))));
-                }
-            } else {
-                $validated['tags'] = [];
+            $oldValues = $event->toArray();
+
+            // Combine opening hours if separate fields are provided
+            $openingHours = $validated['opening_hours'] ?? null;
+            if (!$openingHours && !empty($validated['opening_hours_start']) && !empty($validated['opening_hours_end'])) {
+                $openingHours = $validated['opening_hours_start'] . ' - ' . $validated['opening_hours_end'];
             }
 
-            // Explicitly handle is_active from request
-            $validated['is_active'] = $request->boolean('is_active');
+            $event->name = $validated['name'];
+            $event->category = $validated['category'];
+            $event->location = $validated['location'];
+            $event->organizer = $validated['organizer'] ?? $event->organizer;
+            $event->description = $validated['description'];
+            $event->long_description = $validated['long_description'] ?? $event->long_description;
+            $event->start_date = $validated['start_date'];
+            $event->end_date = $validated['end_date'];
+            $event->opening_hours = $openingHours ?? $event->opening_hours;
+            $event->ticket_price = $validated['ticket_price'] ?? $event->ticket_price;
+            $event->best_time = $validated['best_time'] ?? $event->best_time;
+            $event->latitude = isset($validated['latitude']) ? (float)$validated['latitude'] : $event->latitude;
+            $event->longitude = isset($validated['longitude']) ? (float)$validated['longitude'] : $event->longitude;
+            $event->is_active = $request->boolean('is_active');
 
-            $oldValues = $event->toArray();
-            $event = $this->eventService->updateEvent($event, $validated, $request->file('banner'));
+            // Tags handling
+            if ($request->has('tags')) {
+                $event->tags = array_values(array_filter(array_map('trim', explode(',', $request->tags))));
+            }
+
+            // Schedule handling
+            if ($request->has('schedule') && is_array($request->schedule)) {
+                $event->schedule = array_values(array_filter($request->schedule, function($item) {
+                    return !empty($item['activity']);
+                }));
+            }
+
+            // Image handling (Identical to Destination)
+            if ($request->hasFile('banner')) {
+                if ($event->banner_url) {
+                    $this->deleteFile($event->banner_url);
+                }
+                $path = $this->processImage($request->file('banner'), 'events');
+                if ($path) {
+                    $event->banner_url = $path;
+                }
+            }
+
+            // Slug update
+            if ($event->isDirty('name')) {
+                $event->slug = \Illuminate\Support\Str::slug($event->name) . '-' . \Illuminate\Support\Str::random(5);
+            }
             
-            $this->logActivity('update', 'event', (string)$event->_id, $oldValues, $event->toArray());
+            $event->save();
+            
+            try {
+                $this->logActivity('update', 'event', (string)$event->_id, $oldValues, $event->toArray());
+            } catch (\Exception $logEx) {
+                Log::warning('Event activity log failed: ' . $logEx->getMessage());
+            }
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Event berhasil diperbarui.',
+                    'message' => 'Event berhasil diperbarui',
                     'event' => $event
                 ]);
             }
 
             return redirect()->route('admin.events.index')
-                ->with('success', 'Event berhasil diperbarui.');
+                ->with('success', 'Event berhasil diperbarui');
         } catch (\Exception $e) {
             Log::error('Error updating event: ' . $e->getMessage());
 
@@ -203,7 +294,7 @@ class EventController extends BaseAdminController
             $this->eventService->deleteEvent($event);
 
             return redirect()->route('admin.events.index')
-                ->with('success', 'Event berhasil dihapus.');
+                ->with('success', 'Event berhasil dihapus');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return redirect()->route('admin.events.index')
                 ->with('error', 'Event tidak ditemukan.');
@@ -227,6 +318,6 @@ class EventController extends BaseAdminController
             ['is_active' => $event->is_active]
         );
 
-        return back()->with('success', 'Status event berhasil diperbarui.');
+        return back()->with('success', 'Status event berhasil diperbarui');
     }
 }

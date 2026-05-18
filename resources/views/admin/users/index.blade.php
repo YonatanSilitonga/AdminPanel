@@ -5,6 +5,13 @@
 @section('page_title', 'Manajemen Pengguna')
 @section('page_description', 'Kelola data pengguna, hak akses, dan lihat riwayat aktivitas pengguna')
 
+@section('page_actions')
+<a href="{{ route('admin.users.export', request()->query()) }}" class="flex items-center gap-2 px-8 py-3 bg-emerald-700 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-emerald-700/20">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+    Export CSV
+</a>
+@endsection
+
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
     <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
@@ -19,13 +26,11 @@
 
 <div x-data="{
     showDetailModal: false,
-    showEditModal: false,
-    showConfirmDelete: false,
     showSuccessModal: false,
     loadingDetail: false,
     detailUser: null,
-    userToDelete: { id: null, name: '' },
     successMessage: '',
+    statusLoading: false,
     
     getInitials(name) {
         if (!name) return 'U';
@@ -53,23 +58,13 @@
         }
     },
 
-    async openUserEdit(user) {
-        this.detailUser = { user: user };
-        this.showEditModal = true;
-    },
-
-    confirmDelete(userId, userName) {
-        this.userToDelete = { id: userId, name: userName };
-        this.showConfirmDelete = true;
-        this.showDetailModal = false; // Close detail modal if open
-    },
-
-    async processDelete() {
-        if (!this.userToDelete.id) return;
+    async toggleStatus(userId) {
+        if (!userId) return;
+        this.statusLoading = true;
         
         try {
-            const response = await fetch(`/admin/users/${this.userToDelete.id}`, {
-                method: 'DELETE',
+            const response = await fetch(`/admin/users/${userId}/status`, {
+                method: 'PATCH',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'X-Requested-With': 'XMLHttpRequest',
@@ -80,18 +75,22 @@
             
             if (result.success) {
                 this.successMessage = result.message;
-                this.showConfirmDelete = false;
+                this.showDetailModal = false;
                 this.showSuccessModal = true;
                 setTimeout(() => window.location.reload(), 2000);
+            } else {
+                alert(result.message || 'Gagal mengubah status akun.');
             }
         } catch (error) {
-            alert('Gagal menghapus akun.');
+            alert('Terjadi kesalahan saat mengubah status.');
+        } finally {
+            this.statusLoading = false;
         }
     }
 }">
 
     <!-- Stats Overview -->
-    <div class="bg-white rounded-[20px] border border-gray-100 p-8 mb-8 shadow-sm">
+    <div class="bg-white rounded-[2rem] border border-gray-100 p-8 mb-8 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
             <div class="flex items-center gap-4 px-6 first:pl-0">
                 <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
@@ -125,8 +124,12 @@
     </div>
 
     <!-- Filter Bar -->
-    <div class="bg-white rounded-[20px] border border-gray-100 p-6 mb-6 shadow-sm">
+    <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-6 shadow-sm">
         <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-wrap items-center gap-4">
+            <!-- Persist current sorting -->
+            <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+            <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+
             <div class="relative flex-grow max-w-md">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -135,6 +138,16 @@
                     class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium placeholder-gray-400 focus:border-emerald-500 transition-all shadow-sm">
             </div>
             
+            <div class="flex items-center gap-3">
+                <span class="text-[13px] font-bold text-gray-400">Tampilkan:</span>
+                <select name="per_page" onchange="this.form.submit()" 
+                    class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
+                    @foreach([10, 20, 50, 100] as $val)
+                        <option value="{{ $val }}" @selected(request('per_page', 10) == $val)>{{ $val }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <select name="status" onchange="this.form.submit()" 
                 class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
                 <option value="">Semua Status</option>
@@ -155,14 +168,55 @@
     </div>
 
     <!-- Table -->
-    <div class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden mb-8">
+    <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden mb-8">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
                     <tr class="bg-white border-b border-gray-50">
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Nama Pengguna</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Kontak</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        @php
+                            $sortOrder = request('sort_order') === 'asc' ? 'desc' : 'asc';
+                            $currentSort = request('sort_by', 'created_at');
+                        @endphp
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'name', 'sort_order' => ($currentSort === 'name' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Nama Pengguna
+                                <svg class="w-4 h-4 {{ $currentSort === 'name' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'name' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'email', 'sort_order' => ($currentSort === 'email' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Kontak
+                                <svg class="w-4 h-4 {{ $currentSort === 'email' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'email' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'role', 'sort_order' => ($currentSort === 'role' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Role
+                                <svg class="w-4 h-4 {{ $currentSort === 'role' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'role' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'is_active', 'sort_order' => ($currentSort === 'is_active' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Status
+                                <svg class="w-4 h-4 {{ $currentSort === 'is_active' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'is_active' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'created_at', 'sort_order' => ($currentSort === 'created_at' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Bergabung
+                                <svg class="w-4 h-4 {{ $currentSort === 'created_at' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'created_at' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
                         <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -174,16 +228,16 @@
                                 <div class="w-10 h-10 rounded-full bg-sidebar-active/10 flex items-center justify-center text-sidebar-active font-bold shadow-sm">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </div>
-                                <div>
-                                    <div class="text-[15px] font-bold text-gray-800">{{ $user->name }}</div>
+                                <div class="min-w-0">
+                                    <div class="text-[15px] font-bold text-gray-800 max-w-[150px] truncate" title="{{ $user->name }}">{{ $user->name }}</div>
                                     <div class="text-xs text-gray-400 mt-0.5">ID: {{ substr($user->_id, -8) }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-10 py-6">
                             <div class="flex flex-col gap-1">
-                                <div class="flex items-center gap-2 text-sm text-gray-600">
-                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7 8.9a2.2 2.2 0 003.3 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <div class="flex items-center gap-2 text-sm text-gray-600 max-w-[180px] truncate">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7 8.9a2.2 2.2 0 003.3 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                     {{ $user->email }}
                                 </div>
                                 @if(isset($user->phone))
@@ -195,11 +249,17 @@
                             </div>
                         </td>
                         <td class="px-10 py-6">
+                            <span class="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-xs font-bold uppercase tracking-wider">{{ $user->role ?? 'user' }}</span>
+                        </td>
+                        <td class="px-10 py-6">
                             @if($user->is_active)
                                 <span class="px-4 py-1.5 bg-[#E6F6F2] text-[#00A884] text-xs font-bold rounded-xl">Aktif</span>
                             @else
                                 <span class="px-4 py-1.5 bg-red-50 text-red-500 text-xs font-bold rounded-xl">Suspended</span>
                             @endif
+                        </td>
+                        <td class="px-10 py-6">
+                            <div class="text-[13px] text-gray-500 font-medium">{{ $user->created_at?->format('d M Y') ?? '-' }}</div>
                         </td>
                         <td class="px-10 py-6 text-right">
                             <div class="flex items-center justify-end gap-3">
@@ -207,16 +267,6 @@
                                     class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all"
                                     title="Detail">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                </button>
-                                <button @click="openUserEdit({ id: '{{ $user->_id }}', name: '{{ $user->name }}', email: '{{ $user->email }}', is_active: {{ $user->is_active ? 'true' : 'false' }} })" 
-                                    class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all"
-                                    title="Edit">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                </button>
-                                <button @click="confirmDelete('{{ $user->_id }}', '{{ $user->name }}')" 
-                                    class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all"
-                                    title="Hapus">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </div>
                         </td>
@@ -332,78 +382,29 @@
 
                         <!-- Footer Action -->
                         <div class="flex justify-center pt-6 border-t border-gray-50">
-                            <button @click="confirmDelete(detailUser.user._id, detailUser.user.name)" class="flex items-center gap-3 px-12 py-4 bg-red-500 text-white rounded-2xl font-bold text-sm hover:bg-red-600 transition-all shadow-lg shadow-red-500/20">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                Hapus Akun Pengguna
+                            <button @click="toggleStatus(detailUser.user._id)" 
+                                :disabled="statusLoading"
+                                :class="detailUser.user.is_active ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'"
+                                class="flex items-center gap-3 px-12 py-4 text-white rounded-2xl font-bold text-sm transition-all shadow-lg disabled:opacity-50">
+                                
+                                <template x-if="statusLoading">
+                                    <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                </template>
+                                
+                                <template x-if="!statusLoading">
+                                    <div class="flex items-center gap-3">
+                                        <template x-if="detailUser.user.is_active">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                        </template>
+                                        <template x-if="!detailUser.user.is_active">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        </template>
+                                        <span x-text="detailUser.user.is_active ? 'Suspend Akun Pengguna' : 'Aktifkan Akun Pengguna'"></span>
+                                    </div>
+                                </template>
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Edit User Modal -->
-    <template x-if="showEditModal">
-        <div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
-            <div @click="showEditModal = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-            
-            <div class="relative w-full max-w-[480px] bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <div class="px-8 py-6 flex items-center justify-between border-b border-gray-100">
-                    <h3 class="text-xl font-bold text-gray-900">Edit Pengguna</h3>
-                    <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-900 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-
-                <form :action="`/admin/users/${detailUser.user.id}`" method="POST" class="p-8 space-y-6">
-                    @csrf
-                    @method('PUT')
-                    
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nama Lengkap</label>
-                        <input type="text" name="name" :value="detailUser.user.name" required class="w-full border border-gray-200 bg-gray-50/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all text-sm font-medium text-gray-700">
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Email</label>
-                        <input type="email" name="email" :value="detailUser.user.email" required class="w-full border border-gray-200 bg-gray-50/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all text-sm font-medium text-gray-700">
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Status Akun</label>
-                        <select name="is_active" class="w-full border border-gray-200 bg-gray-50/30 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22currentColor%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
-                            <option value="1" :selected="detailUser.user.is_active">Aktif</option>
-                            <option value="0" :selected="!detailUser.user.is_active">Suspended</option>
-                        </select>
-                    </div>
-
-                    <div class="pt-4 flex items-center gap-3">
-                        <button type="button" @click="showEditModal = false" class="flex-1 py-3.5 text-sm font-bold text-gray-400 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all">Batal</button>
-                        <button type="submit" class="flex-1 py-3.5 text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-lg shadow-emerald-700/20">Simpan Perubahan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </template>
-
-    <!-- Custom Confirmation Modal -->
-    <template x-if="showConfirmDelete">
-        <div class="fixed inset-0 z-[200] flex items-center justify-center px-4">
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showConfirmDelete = false"></div>
-            <div class="relative w-full max-w-[420px] bg-white rounded-[2rem] p-12 text-center animate-in zoom-in duration-300 shadow-2xl">
-                <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner ring-4 ring-red-50/50">
-                    <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-3">Konfirmasi Hapus</h3>
-                <p class="text-sm text-gray-500 font-medium leading-relaxed mb-10">
-                    Apakah Anda yakin ingin menghapus akun <span class="font-bold text-gray-900" x-text="userToDelete.name"></span>? Tindakan ini tidak dapat dibatalkan.
-                </p>
-                <div class="flex items-center gap-3">
-                    <button @click="showConfirmDelete = false" class="flex-1 py-4 text-sm font-bold text-gray-500 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all">Batal</button>
-                    <button @click="processDelete()" class="flex-1 py-4 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-all shadow-xl shadow-red-500/20">Ya, Hapus</button>
                 </div>
             </div>
         </div>
@@ -413,7 +414,7 @@
     <template x-if="showSuccessModal">
         <div class="fixed inset-0 z-[200] flex items-center justify-center px-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-            <div class="relative w-full max-w-[420px] bg-white rounded-[2rem] p-12 text-center animate-in zoom-in duration-300">
+            <div class="relative w-full max-w-[420px] bg-white rounded-[2rem] p-12 text-center animate-in zoom-in duration-300 shadow-2xl">
                 <div class="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner ring-4 ring-emerald-50/50">
                     <svg class="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>

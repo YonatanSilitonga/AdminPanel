@@ -36,8 +36,19 @@ class BeritaPromosiController extends BaseAdminController
             $query->where('tanggal_tayang', '<=', \Carbon\Carbon::parse($request->end_date)->endOfDay());
         }
 
-        $beritaPromosi = $query->orderBy('tanggal_tayang', 'desc')
-            ->paginate(15);
+        // Advanced Sorting
+        $sortColumn = $request->get('sort_by', 'tanggal_tayang');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $allowedSorts = ['judul', 'tanggal_tayang', 'tipe', 'is_active'];
+        
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortOrder);
+        } else {
+            $query->orderBy('tanggal_tayang', 'desc');
+        }
+
+        $perPage = (int)$request->get('per_page', 15);
+        $beritaPromosi = $query->paginate($perPage)->withQueryString();
 
         return view('admin.berita_promosi.index', compact('beritaPromosi'));
     }
@@ -84,6 +95,8 @@ class BeritaPromosiController extends BaseAdminController
         if ($bp->thumbnail) {
             $bp->thumbnail_url = image_url($bp->thumbnail);
         }
+        
+        $bp->load('admin');
 
         return response()->json($bp);
     }

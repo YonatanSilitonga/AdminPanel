@@ -42,7 +42,19 @@ class BudayaController extends BaseAdminController
             $query->where('is_active', $isActive);
         }
 
-        $budayas = $query->orderBy('created_at', 'desc')->paginate(15);
+        // Advanced Sorting
+        $sortColumn = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $allowedSorts = ['name', 'category', 'is_active', 'created_at'];
+        
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $perPage = (int)$request->get('per_page', 15);
+        $budayas = $query->paginate($perPage)->withQueryString();
         $categories = ['Sejarah', 'Tradisi', 'Rumah Adat', 'Cerita Rakyat', 'Kuliner'];
 
         return view('admin.budaya.index', compact('budayas', 'categories'));
@@ -115,6 +127,7 @@ class BudayaController extends BaseAdminController
     public function edit(string $id, Request $request)
     {
         $budaya = MongoBudaya::findOrFail($id);
+        $budaya->load('admin');
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json($budaya);

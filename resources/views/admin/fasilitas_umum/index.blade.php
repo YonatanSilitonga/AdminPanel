@@ -43,7 +43,11 @@
 @endsection
 
 @section('page_actions')
+<<<<<<< HEAD
 <button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+=======
+<button type="button" onclick="document.querySelector('[data-open-create-modal]')?.click()" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+>>>>>>> c877ab79b93880db5dabcb4655b2ab956c1d3c35
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Fasilitas
 </button>
@@ -51,18 +55,28 @@
 
 @section('content')
 <div x-data="facilityManager()" @open-create-modal.window="showCreateModal = true">
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
     <!-- Filters & Search Bar -->
-    <div class="flex flex-wrap items-center gap-4 mb-8">
+    <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
         <form method="GET" action="{{ route('admin.fasilitas_umum.index') }}" class="flex flex-wrap items-center gap-4 w-full">
             <div class="relative flex-1 min-w-[280px]">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-4">
                     <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </span>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, alamat, jenis..."
-                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
+                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
             </div>
 
-            <select name="type" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Tampilkan:</span>
+                <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 transition-all">
+                    @foreach([10, 15, 25, 50, 100] as $size)
+                        <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <select name="type" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
                 <option value="">Semua Jenis</option>
                 <option value="SPBU" @selected(request('type') === 'SPBU')>SPBU</option>
                 <option value="Hotel" @selected(request('type') === 'Hotel')>Hotel</option>
@@ -71,11 +85,15 @@
                 <option value="ATM" @selected(request('type') === 'ATM')>ATM</option>
             </select>
 
-            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
                 <option value="all">Semua Status</option>
                 <option value="active" @selected(request('status') === 'active')>Aktif</option>
                 <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
             </select>
+
+            {{-- Hidden inputs for sorting persistence --}}
+            <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+            <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
         </form>
     </div>
 
@@ -84,13 +102,38 @@
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-50">
                 <thead class="bg-white">
+                    @php
+                        $currentSort = request('sort_by', 'created_at');
+                        $sortOrder = request('sort_order', 'desc') === 'asc' ? 'desc' : 'asc';
+                    @endphp
                     <tr>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
-                            <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-400 uppercase tracking-wider">Fasilitas</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-400 uppercase tracking-wider">Jenis</th>
+                        <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'name', 'sort_order' => ($currentSort === 'name' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Fasilitas
+                                <svg class="w-4 h-4 {{ $currentSort === 'name' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'name' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'type', 'sort_order' => ($currentSort === 'type' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Jenis
+                                <svg class="w-4 h-4 {{ $currentSort === 'type' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'type' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-400 uppercase tracking-wider">Alamat</th>
                         <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-400 uppercase tracking-wider">Jam Buka</th>
-                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-10 py-6 text-left">
+                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'is_active', 'sort_order' => ($currentSort === 'is_active' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                Status
+                                <svg class="w-4 h-4 {{ $currentSort === 'is_active' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'is_active' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                </svg>
+                            </a>
+                        </th>
                         <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-400 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -107,7 +150,7 @@
                                             <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                         </div>
                                     @endif
-                                    <div class="text-[14px] font-bold text-gray-800">{{ $facility->name }}</div>
+                                    <div class="text-[14px] font-bold text-gray-800 max-w-[180px] truncate" title="{{ $facility->name }}">{{ $facility->name }}</div>
                                 </div>
                             </td>
                             <td class="px-10 py-6">
@@ -140,7 +183,10 @@
                             </td>
                             <td class="px-10 py-6 text-right">
                                 <div class="flex items-center justify-end gap-3">
-                                    <button @click="openEditModal('{{ $facility->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
+                                    <button @click="openViewModal('{{ (string)$facility->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Detail">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                    <button @click="openEditModal('{{ (string)$facility->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                     </button>
                                     <button @click="$dispatch('open-delete-modal', { action: '{{ route('admin.fasilitas_umum.destroy', $facility->_id) }}', title: 'Hapus Fasilitas', type: 'fasilitas', name: '{{ $facility->name }}' })" class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all" title="Hapus">
@@ -151,7 +197,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-10 py-20 text-center">
+                            <td colspan="7" class="px-10 py-20 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                         <svg class="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
@@ -320,8 +366,7 @@
                  class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showEditModal = false"></div>
 
               <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold">Edit Fasilitas Umum</h3>
@@ -464,6 +509,102 @@
             </div>
         </div>
     </div>
+
+    <!-- View Modal -->
+    <div x-show="showViewModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+            <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showViewModal = false"></div>
+
+            <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between px-10 pt-8 pb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Detail Fasilitas</h3>
+                        <p class="text-sm text-gray-400 mt-0.5">Informasi lengkap mengenai fasilitas umum</p>
+                    </div>
+                    <button @click="showViewModal = false" class="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-10">
+                    <div x-show="loading && !viewingFacility" class="py-12 flex flex-col items-center justify-center gap-4">
+                        <div class="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+                        <p class="text-sm font-bold text-emerald-600 animate-pulse">Memuat data...</p>
+                    </div>
+
+                    <template x-if="viewingFacility">
+                        <div class="space-y-8">
+                            <div class="rounded-[2rem] overflow-hidden bg-gray-100 aspect-video relative group">
+                                <img x-show="viewingFacility.image_url" :src="viewingFacility.image_url && (viewingFacility.image_url.startsWith('http') ? viewingFacility.image_url : '/storage/' + viewingFacility.image_url)" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                <div class="absolute top-6 right-6">
+                                    <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingFacility.type"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="text-2xl font-bold text-gray-900 leading-tight" x-text="viewingFacility.name"></h4>
+                                    <p class="text-sm font-medium text-gray-400 mt-1" x-text="viewingFacility.address"></p>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-6 pt-6 border-t border-gray-50">
+                                    <div>
+                                        <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Jam Operasional</h5>
+                                        <p class="text-sm font-bold text-emerald-600" x-text="viewingFacility.operational_hours || '-'"></p>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor Telepon</h5>
+                                        <p class="text-sm font-bold text-gray-900" x-text="viewingFacility.phone_number || '-'"></p>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status Aktif</h5>
+                                        <template x-if="viewingFacility.is_active">
+                                            <span class="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                                Terverifikasi Aktif
+                                            </span>
+                                        </template>
+                                        <template x-if="!viewingFacility.is_active">
+                                            <span class="inline-flex items-center gap-1.5 text-red-500 text-xs font-bold">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                                Nonaktif
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-gray-50 rounded-2xl flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-sidebar shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Koordinat Peta</p>
+                                        <p class="text-xs font-mono text-gray-600" x-text="(viewingFacility.latitude || '-') + ', ' + (viewingFacility.longitude || '-')"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-10 py-6 bg-gray-50 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                         <p class="text-xs text-gray-400 font-medium">Terakhir diperbarui: <span x-text="viewingFacility?.updated_at ? new Date(viewingFacility.updated_at).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-'"></span></p>
+                    </div>
+                    <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all shadow-sm">Tutup Detail</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -471,6 +612,8 @@ function facilityManager() {
     return {
         showCreateModal: false,
         showEditModal: false,
+        showViewModal: false,
+        viewingFacility: null,
         loading: false,
         createIsActive: true,
         editingFacility: {},
@@ -492,6 +635,30 @@ function facilityManager() {
             if (this.statusFilter !== 'all') params.append('status', this.statusFilter);
             
             window.location.href = `{{ route('admin.fasilitas_umum.index') }}?${params.toString()}`;
+        },
+
+        async openViewModal(id) {
+            if (!id) return;
+            this.loading = true;
+            this.showViewModal = true;
+            this.viewingFacility = null;
+            try {
+                const response = await fetch(`/admin/fasilitas-umum/${id}/edit`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await window.safeParseJSON(response);
+                if (data) {
+                    this.viewingFacility = data;
+                } else {
+                    throw new Error('Data tidak valid');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Gagal mengambil detail fasilitas');
+                this.showViewModal = false;
+            } finally {
+                this.loading = false;
+            }
         },
 
         async openEditModal(id) {

@@ -90,6 +90,8 @@ class BaseAdminController extends Controller
      */
     protected function uploadFile($file, $path = 'uploads', $options = [])
     {
+        set_time_limit(120); // Prevent timeout during slow uploads
+
         if (!$file || !$file->isValid()) {
             \Illuminate\Support\Facades\Log::warning('Invalid file upload attempt', [
                 'has_file' => (bool)$file,
@@ -117,12 +119,18 @@ class BaseAdminController extends Controller
         
         if ($cloudName) {
             try {
+<<<<<<< HEAD
                 // Use the uploadApi() method for the modern Cloudinary SDK
+=======
+                // Use the simpler upload() method which is more robust in this package
+>>>>>>> c877ab79b93880db5dabcb4655b2ab956c1d3c35
                 $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
                     'folder'        => 'smarttourism/' . trim($path, '/'),
                     'resource_type' => 'image',
-                    'quality'       => 'auto',
-                    'fetch_format'  => 'auto',
+                    'transformation' => [
+                        'quality' => 'auto',
+                        'fetch_format' => 'auto',
+                    ],
                 ]);
 
                 return $result['secure_url'];
@@ -158,6 +166,8 @@ class BaseAdminController extends Controller
      */
     protected function deleteFile($filePath)
     {
+        set_time_limit(120); // Prevent timeout during API requests
+
         if (!$filePath) {
             return;
         }
@@ -224,17 +234,35 @@ class BaseAdminController extends Controller
     }
 
     /**
-     * Get dashboard summary statistics
+     * Get dashboard summary statistics with caching
      */
     protected function getDashboardStats()
     {
-        return [
-            'total_destinations' => \App\Models\MongoDB\MongoDestination::count(),
-            'total_events'       => \App\Models\MongoDB\MongoEvent::count(),
-            'total_users'        => DB::table('users')->where('is_active', true)->count(),
-            'pending_reviews'    => \App\Models\MongoDB\MongoReview::where('status', 'pending')->count(),
-            'pending_reports'    => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
-        ];
+        $cacheKey = 'admin.dashboard.stats_summary';
+        
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () {
+            try {
+                return [
+                    'total_destinations' => \App\Models\MongoDB\MongoDestination::count(),
+                    'total_events'       => \App\Models\MongoDB\MongoEvent::count(),
+                    'total_users'        => DB::table('users')->where('is_active', true)->count(),
+                    'pending_reviews'    => \App\Models\MongoDB\MongoReview::where('status', 'pending')->count(),
+                    'pending_reports'    => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
+                    'total_reviews'      => \App\Models\MongoDB\MongoReview::count(),
+                    'total_facilities'   => DB::table('fasilitas_umum')->count(),
+                ];
+            } catch (\Exception $e) {
+                return [
+                    'total_destinations' => 0,
+                    'total_events'       => 0,
+                    'total_users'        => 0,
+                    'pending_reviews'    => 0,
+                    'pending_reports'    => 0,
+                    'total_reviews'      => 0,
+                    'total_facilities'   => 0,
+                ];
+            }
+        });
     }
 
     /**

@@ -16,21 +16,7 @@ class CarouselBannerController extends BaseAdminController
 {
     public function index(Request $request)
     {
-        $query = CarouselBanner::query();
-
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where('title', 'like', "%{$search}%");
-        }
-
-        if ($request->has('category_badge') && $request->category_badge != '') {
-            $query->where('category_badge', $request->category_badge);
-        }
-
-        $banners = $query->orderBy('order', 'asc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-
+        $banners = CarouselBanner::orderBy('order', 'asc')->get();
         return view('admin.carousel_banners.index', compact('banners'));
     }
 
@@ -65,6 +51,8 @@ class CarouselBannerController extends BaseAdminController
             if (empty($data['end_date'])) $data['end_date'] = null;
 
             CarouselBanner::create($data);
+
+            session()->flash('success', 'Slide Carousel berhasil ditambahkan');
 
             return response()->json([
                 'success' => true,
@@ -131,6 +119,8 @@ class CarouselBannerController extends BaseAdminController
 
             $banner->update($data);
 
+            session()->flash('success', 'Slide Carousel berhasil diperbarui');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Slide Carousel berhasil diperbarui'
@@ -174,6 +164,7 @@ class CarouselBannerController extends BaseAdminController
                     }
                 }
             }
+            session()->flash('success', 'Urutan carousel berhasil disimpan');
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

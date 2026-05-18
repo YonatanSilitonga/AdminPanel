@@ -37,8 +37,15 @@ class ReviewController extends BaseAdminController
                 $query->where('review', 'like', "%{$search}%");
             }
 
-            $reviews = $query->orderBy('created_at', 'desc')
-                ->paginate(15);
+            // Pagination
+            $perPage = (int) $request->input('per_page', 15);
+            $allowedSorts = ['rating', 'created_at', 'sentiment_label', 'sentiment_confidence'];
+            $sortBy = in_array($request->input('sort_by'), $allowedSorts) ? $request->input('sort_by') : 'created_at';
+            $sortOrder = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
+
+            $reviews = $query->orderBy($sortBy, $sortOrder)
+                ->paginate($perPage)
+                ->withQueryString();
 
             $ratings = [1, 2, 3, 4, 5];
             $totalReviews = MongoReview::count();
@@ -342,6 +349,61 @@ class ReviewController extends BaseAdminController
         } catch (\Exception $e) {
             Log::error('Error deleting review from Mongo: ' . $e->getMessage());
             return back()->with('error', 'Error deleting review');
+        }
+    }
+
+    /**
+     * Export reviews to CSV.
+     */
+    public function export(Request $request)
+    {
+        try {
+            $query = MongoReview::with('destination');
+
+            if ($request->filled('rating')) {
+                $query->where('rating', (int)$request->rating);
+            }
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where('review', 'like', "%{$search}%");
+            }
+
+            $reviews = $query->orderBy('created_at', 'desc')->get();
+
+            $filename = 'reviews_report_' . date('Y-m-d_H-i-s') . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($reviews) {
+                $file = fopen('php://output', 'w');
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+                fputcsv($file, ['ID', 'User', 'Destinasi', 'Rating', 'Ulasan', 'Sentimen', 'Confidence', 'Tanggal'], ';');
+
+                foreach ($reviews as $review) {
+                    fputcsv($file, [
+                        $review->_id,
+                        $review->user_id ?? 'Anonim',
+                        $review->destination?->name ?? 'Umum',
+                        $review->rating ?? 0,
+                        $review->review ?? '-',
+                        $review->sentiment_label ?? 'Pending',
+                        $review->sentiment_confidence ?? 0,
+                        $review->created_at?->format('d-m-Y H:i') ?? '-',
+                    ], ';');
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('Review export error: ' . $e->getMessage());
+            return redirect()->route('admin.reviews.index')->with('error', 'Gagal mengekspor data ulasan.');
         }
     }
 

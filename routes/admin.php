@@ -16,6 +16,9 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\FasilitasUmumController;
+use App\Http\Controllers\Admin\BudayaController;
+use App\Http\Controllers\Admin\BeritaPromosiController;
 
 // PUBLIC ROUTES (No auth required)
 Route::prefix('admin')->group(function () {
@@ -85,6 +88,49 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
             ->name('admin.events.toggle-status');
     });
 
+    // ============ CONTENT MANAGEMENT (Fasilitas, Budaya, Berita) ============
+    Route::middleware('admin.role:admin,super_admin')->group(function () {
+        // Fasilitas Umum
+        Route::get('fasilitas_umum', [FasilitasUmumController::class, 'index'])
+            ->name('admin.fasilitas_umum.index');
+        Route::post('fasilitas_umum', [FasilitasUmumController::class, 'store'])
+            ->name('admin.fasilitas_umum.store');
+        Route::get('fasilitas_umum/{id}/edit', [FasilitasUmumController::class, 'edit'])
+            ->name('admin.fasilitas_umum.edit');
+        Route::put('fasilitas_umum/{id}', [FasilitasUmumController::class, 'update'])
+            ->name('admin.fasilitas_umum.update');
+        Route::delete('fasilitas_umum/{id}', [FasilitasUmumController::class, 'destroy'])
+            ->name('admin.fasilitas_umum.destroy');
+        Route::patch('fasilitas_umum/{id}/status', [FasilitasUmumController::class, 'toggleStatus'])
+            ->name('admin.fasilitas_umum.toggle-status');
+
+        // Budaya
+        Route::get('budaya', [BudayaController::class, 'index'])
+            ->name('admin.budaya.index');
+        Route::post('budaya', [BudayaController::class, 'store'])
+            ->name('admin.budaya.store');
+        Route::get('budaya/{id}/edit', [BudayaController::class, 'edit'])
+            ->name('admin.budaya.edit');
+        Route::put('budaya/{id}', [BudayaController::class, 'update'])
+            ->name('admin.budaya.update');
+        Route::delete('budaya/{id}', [BudayaController::class, 'destroy'])
+            ->name('admin.budaya.destroy');
+        Route::patch('budaya/{id}/status', [BudayaController::class, 'toggleStatus'])
+            ->name('admin.budaya.toggle-status');
+
+        // Berita Promosi
+        Route::get('berita_promosi', [BeritaPromosiController::class, 'index'])
+            ->name('admin.berita_promosi.index');
+        Route::post('berita_promosi', [BeritaPromosiController::class, 'store'])
+            ->name('admin.berita_promosi.store');
+        Route::get('berita_promosi/{id}/edit', [BeritaPromosiController::class, 'edit'])
+            ->name('admin.berita_promosi.edit');
+        Route::put('berita_promosi/{id}', [BeritaPromosiController::class, 'update'])
+            ->name('admin.berita_promosi.update');
+        Route::delete('berita_promosi/{id}', [BeritaPromosiController::class, 'destroy'])
+            ->name('admin.berita_promosi.destroy');
+    });
+
     // ============ REVIEWS (Admin + Moderator) ============
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
@@ -111,17 +157,16 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::get('users', [UserController::class, 'index'])->name('admin.users.index');
         Route::get('users/{user}/activity', [UserController::class, 'showActivity'])->name('admin.users.activity');
         Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
-        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
     });
 
     // ============ RECOMMENDATION LOGS (Admin Role) ============
     Route::middleware('admin.role:admin,super_admin')->group(function () {
         Route::get('recommendations', [RecommendationLogController::class, 'index'])
             ->name('admin.recommendations.index');
-        Route::get('recommendations/{log}', [RecommendationLogController::class, 'show'])
-            ->name('admin.recommendations.show');
         Route::get('recommendations/export', [RecommendationLogController::class, 'export'])
             ->name('admin.recommendations.export');
+        Route::get('recommendations/{log}', [RecommendationLogController::class, 'show'])
+            ->name('admin.recommendations.show');
     });
 
     // ============ CHATBOT LOGS (Admin + Moderator) ============

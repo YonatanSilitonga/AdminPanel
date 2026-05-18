@@ -92,15 +92,18 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        // Compose recent activities for sidebar with null safety
+        // Compose recent activities for sidebar with caching
         View::composer('admin.layouts.sidebar', function ($view) {
             try {
-                // Get recent admin activities without caching to ensure freshness
-                $recentActivities = AdminActivityLog::with('admin')
-                    ->latest()
-                    ->limit(5)
-                    ->get(['id', 'admin_id', 'action', 'description', 'created_at'])
-                    ?? collect();
+                // Cache recent activities for 2 minutes to reduce DB load
+                $cacheKey = 'admin.sidebar.activities';
+                
+                $recentActivities = Cache::remember($cacheKey, now()->addMinutes(2), function () {
+                    return AdminActivityLog::with('admin')
+                        ->latest()
+                        ->limit(5)
+                        ->get(['id', 'admin_id', 'action', 'description', 'created_at']);
+                }) ?? collect();
 
                 $view->with('recentActivities', $recentActivities);
             } catch (\Exception $e) {

@@ -33,11 +33,11 @@
     <!-- Alpine JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- Chart.js (Conditional) -->
+    @stack('charts')
 
     <!-- Icons (Heroicons) -->
-    <script src="https://cdn.jsdelivr.net/npm/heroicons@1.0.6/solid/index.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/heroicons@1.0.6/solid/index.min.js"></script>
 
     @stack('styles')
     <style>
@@ -86,13 +86,32 @@
         .sidebar-no-transition * {
             transition: none !important;
         }
+
+        /* Content management modal polish */
+        div[x-show="showCreateModal"].fixed.inset-0.z-50.overflow-y-auto > div > div.bg-white,
+        div[x-show="showEditModal"].fixed.inset-0.z-50.overflow-y-auto > div > div.bg-white {
+            border-radius: 1.5rem !important;
+            border: 1px solid rgba(229, 231, 235, 0.9) !important;
+            box-shadow: 0 35px 80px -20px rgba(15, 23, 42, 0.35) !important;
+        }
     </style>
 </head>
 <body class="bg-light">
     @auth('admin')
            <div class="flex h-screen overflow-hidden sidebar-no-transition"
                x-data="{ sidebarOpen: {{ request()->cookie('sidebarOpen', 'true') === 'true' ? 'true' : 'false' }} }"
-               x-init="$watch('sidebarOpen', value => document.cookie = 'sidebarOpen=' + value + '; path=/; max-age=31536000')">
+               x-init="
+                    $watch('sidebarOpen', value => document.cookie = 'sidebarOpen=' + value + '; path=/; max-age=31536000');
+                    window.addEventListener('resize', () => {
+                        if (window.innerWidth < 1024 && sidebarOpen && !window.hasClosedSidebarForMobile) {
+                            sidebarOpen = false;
+                            window.hasClosedSidebarForMobile = true;
+                        } else if (window.innerWidth >= 1024) {
+                            window.hasClosedSidebarForMobile = false;
+                        }
+                    });
+                    if (window.innerWidth < 1024) { sidebarOpen = false; }
+               ">
 
             <!-- Mobile Backdrop -->
             <div x-show="sidebarOpen" 
@@ -109,6 +128,13 @@
 
             <!-- Sidebar -->
             @include('admin.layouts.sidebar')
+
+            <!-- Mobile Sidebar Backdrop -->
+            <div x-show="sidebarOpen" 
+                 x-transition.opacity 
+                 class="fixed inset-0 z-40 bg-gray-900/50 lg:hidden backdrop-blur-sm"
+                 @click="sidebarOpen = false"
+                 x-cloak></div>
 
             <!-- Main Content -->
             <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -224,6 +250,7 @@
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-md bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+<<<<<<< HEAD
                 
                 <div class="px-8 pt-10 pb-6 text-center">
                     <div class="w-20 h-20 bg-[#FEE2E2] rounded-full flex items-center justify-center mx-auto mb-6">
@@ -236,6 +263,18 @@
                         Apakah Anda yakin ingin menghapus <span x-text="type"></span> <strong class="text-gray-800" x-text="`&quot;${name}&quot;`"></strong>?
                     </p>
                     <p class="text-[13px] text-red-500 font-medium">Tindakan ini tidak dapat dibatalkan.</p>
+=======
+                <div class="px-8 py-6 text-center mt-4">
+                    <div class="w-20 h-20 bg-[#FEE2E2] rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-10 h-10 text-[#EF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4" x-text="title"></h3>
+                    
+                    <p class="text-[15px] text-gray-500 mb-4 leading-relaxed px-2">
+                        Apakah Anda yakin ingin menghapus <span x-text="type"></span> <strong class="text-gray-800" x-text="`&quot;${name}&quot;`"></strong>? Tindakan ini tidak dapat dibatalkan.
+                    </p>
+>>>>>>> c877ab79b93880db5dabcb4655b2ab956c1d3c35
                 </div>
 
                 <div class="flex items-center justify-center gap-4 px-8 py-6 border-t border-gray-100 bg-gray-50/50">
@@ -245,8 +284,8 @@
                     <form :action="action" method="POST" class="w-full m-0">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="w-full px-6 py-3.5 text-[15px] font-bold text-white bg-[#EF4444] rounded-2xl hover:bg-red-600 transition-all shadow-[0_8px_20px_-6px_rgba(239,68,68,0.5)]">
-                            <span x-text="title"></span>
+                        <button type="submit" class="w-full px-6 py-3.5 text-[15px] font-bold text-white bg-[#EF4444] rounded-2xl hover:bg-red-600 transition-all shadow-[0_8px_20px_-6px_rgba(239,68,68,0.5)] whitespace-nowrap">
+                            Ya, Hapus
                         </button>
                     </form>
                 </div>
@@ -307,12 +346,25 @@
             });
         }
 
-        // Helper to safely parse JSON from a fetch response
+        // Helper to safely parse JSON from a fetch response (handles prepended PHP warnings)
         window.safeParseJSON = async function(response) {
             const text = await response.text();
             try {
                 return JSON.parse(text);
             } catch (error) {
+                try {
+                    // Find the first { or [ to extract valid JSON
+                    const firstBrace = text.indexOf('{');
+                    const firstBracket = text.indexOf('[');
+                    const startIdx = (firstBrace !== -1 && firstBracket !== -1) 
+                        ? Math.min(firstBrace, firstBracket) 
+                        : Math.max(firstBrace, firstBracket);
+                        
+                    if (startIdx !== -1) {
+                        return JSON.parse(text.substring(startIdx));
+                    }
+                } catch (fallbackError) {}
+                
                 console.error("Invalid JSON response:", text);
                 throw new Error("Server returned an invalid response.");
             }

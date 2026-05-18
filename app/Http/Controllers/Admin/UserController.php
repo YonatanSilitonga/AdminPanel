@@ -46,70 +46,63 @@ class UserController extends BaseAdminController
             $query->where('created_at', '<=', $request->end_date);
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(10);
+        // Advanced Sorting
+        $sortColumn = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $allowedSorts = ['name', 'email', 'role', 'is_active', 'created_at'];
         
-        // Fetch statistics for the status bar
-        $stats = [
-            'total' => User::count(),
-            'active' => User::where('is_active', true)->count(),
-            'guests' => ChatSession::whereNull('user_id')->count(),
-            'suspended' => User::where('is_active', false)->count(),
-        ];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortOrder);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Rows per page
+        $perPage = $request->get('per_page', 10);
+        $users = $query->paginate($perPage)->withQueryString();
+        
+        // Fetch statistics for the status bar with caching
+        $stats = \Illuminate\Support\Facades\Cache::remember('admin.users.stats', now()->addMinutes(10), function() {
+            return [
+                'total' => User::count(),
+                'active' => User::where('is_active', true)->count(),
+                'guests' => ChatSession::whereNull('user_id')->count(),
+                'suspended' => User::where('is_active', false)->count(),
+            ];
+        });
 
         return view('admin.users.index', compact('users', 'stats'));
     }
 
     /**
-     * Update the specified user in storage.
+     * Toggle the specified user's active status.
      */
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id . ',_id',
-            'is_active' => 'required|boolean'
-        ]);
-
-        try {
-            $user->update([
-                'name' => $request->name,
-                'email' => $request->email,
-                'is_active' => (bool)$request->is_active,
-            ]);
-
-            return redirect()->route('admin.users.index')->with('success', 'Data pengguna berhasil diperbarui.');
-        } catch (\Exception $e) {
-            Log::error('Error updating user: ' . $e->getMessage());
-            return back()->with('error', 'Gagal memperbarui data pengguna.');
-        }
-    }
-
-    /**
-     * Remove the specified user from storage.
-     */
-    public function destroy($id)
+    public function toggleStatus(Request $request, $id)
     {
         try {
             $user = User::findOrFail($id);
-            $userName = $user->name;
-            $user->delete();
+            $newStatus = !$user->is_active;
+            $user->is_active = $newStatus;
+            $user->save();
 
-            if (request()->ajax()) {
+            $statusText = $newStatus ? 'diaktifkan' : 'ditangguhkan (suspend)';
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                session()->flash('success', "Akun {$user->name} berhasil {$statusText}");
                 return response()->json([
-                    'success' => true, 
-                    'message' => "Akun {$userName} telah berhasil dihapus dari sistem."
+                    'success' => true,
+                    'message' => "Akun {$user->name} berhasil {$statusText}",
+                    'is_active' => $newStatus
                 ]);
             }
 
-            return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
+            return redirect()->route('admin.users.index')->with('success', "Akun {$user->name} berhasil {$statusText}");
         } catch (\Exception $e) {
-            Log::error('Error deleting user: ' . $e->getMessage());
-            if (request()->ajax()) {
-                return response()->json(['success' => false, 'message' => 'Gagal menghapus user.']);
+            Log::error('Error toggling user status: ' . $e->getMessage());
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal mengubah status akun.'], 500);
             }
-            return back()->with('error', 'Gagal menghapus user.');
+            return back()->with('error', 'Gagal mengubah status akun.');
         }
     }
 
@@ -164,5 +157,67 @@ class UserController extends BaseAdminController
         }
 
         return view('admin.users.activity', compact('user'));
+    }
+
+    /**
+     * Export users to CSV.
+     */
+    public function export(Request $request)
+    {
+        try {
+            $query = User::query();
+
+            // Apply same filters as index
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('email', 'LIKE', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('role')) {
+                $query->where('role', $request->role);
+            }
+
+            if ($request->filled('status')) {
+                $status = $request->status === 'active';
+                $query->where('is_active', $status);
+            }
+
+            $users = $query->orderBy('created_at', 'desc')->get();
+
+            $filename = 'users_report_' . date('Y-m-d_H-i-s') . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($users) {
+                $file = fopen('php://output', 'w');
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+                fputcsv($file, ['ID', 'Nama', 'Email', 'Role', 'Status', 'Tanggal Bergabung'], ';');
+
+                foreach ($users as $user) {
+                    fputcsv($file, [
+                        $user->id,
+                        $user->name,
+                        $user->email,
+                        $user->role ?? 'user',
+                        $user->is_active ? 'Aktif' : 'Suspended',
+                        $user->created_at?->format('d-m-Y H:i') ?? '-',
+                    ], ';');
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('User export error: ' . $e->getMessage());
+            return redirect()->route('admin.users.index')->with('error', 'Gagal mengekspor data pengguna.');
+        }
     }
 }

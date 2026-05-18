@@ -22,15 +22,11 @@
             'label' => 'Content Management'
         ],
         [
-            'type' => 'dropdown',
+            'type' => 'link',
             'label' => 'Destinasi',
-            'openKey' => 'destinasi',
+            'route' => route('admin.destinations.index'),
             'active' => request()->routeIs('admin.destinations.*') || request()->routeIs('admin.trending.*'),
-            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>',
-            'subItems' => [
-                ['label' => 'Kelola Destinasi', 'route' => route('admin.destinations.index'), 'active' => request()->routeIs('admin.destinations.index')],
-                ['label' => 'Trending Destinasi', 'route' => route('admin.trending.index'), 'active' => request()->routeIs('admin.trending.index')]
-            ]
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>'
         ],
         [
             'type' => 'link',
@@ -151,7 +147,7 @@
         </button>
     </div>
 
-    <!-- User Profile Section -->
+    {{-- <!-- User Profile Section -->
     <div class="sidebar-header py-4 px-5 flex items-center border-b border-white/10 mb-2 transition-all duration-300">
         <div class="relative group/avatar flex-shrink-0">
             <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center border border-white/20 text-sm font-bold transition-transform duration-200 group-hover/avatar:scale-110 group-hover/avatar:border-toba-gold cursor-default">
@@ -170,7 +166,7 @@
             <p class="text-sm font-semibold truncate">{{ $name }}</p>
             <p class="text-xs text-gray-400 truncate">{{ $email }}</p>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Navigation Menu (Dihasilkan Otomatis oleh Template) -->
     <nav class="sidebar-nav flex-1 overflow-y-auto py-4 px-4 space-y-1 custom-scrollbar transition-all duration-300">

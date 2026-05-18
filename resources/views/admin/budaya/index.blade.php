@@ -6,7 +6,11 @@
 @section('page_description', 'Kelola konten informasi sejarah, tradisi, dan budaya masyarakat lokal.')
 
 @section('page_actions')
+<<<<<<< HEAD
 <button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+=======
+<button type="button" onclick="document.querySelector('[data-open-create-modal]')?.click()" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+>>>>>>> c877ab79b93880db5dabcb4655b2ab956c1d3c35
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Budaya
 </button>
@@ -28,23 +32,36 @@
 <div x-data="{
     showCreateModal: {{ $errors->any() && !old('_method') ? 'true' : 'false' }},
     showEditModal: {{ $errors->any() && old('_method') == 'PUT' ? 'true' : 'false' }},
-    editingBudaya: null,
+    showViewModal: false,
     loading: false,
+    editingBudaya: null,
+    viewingBudaya: null,
     createFileName: '',
     editFileName: '',
+    createPreviewUrl: '',
+    editPreviewUrl: '',
 
     async openEditModal(id) {
+        if (!id) return;
         this.loading = true;
         this.showEditModal = true;
         this.editingBudaya = null;
         try {
-            const res = await fetch(`/admin/budaya/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-            this.editingBudaya = await window.safeParseJSON(res);
-            if (this.editingBudaya && !this.editingBudaya._id && this.editingBudaya.id) {
-                this.editingBudaya._id = this.editingBudaya.id;
+            const res = await fetch(`/admin/budaya/${id}/edit`, { 
+                headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+            });
+            const data = await window.safeParseJSON(res);
+            if (data) {
+                this.editingBudaya = data;
+                if (!this.editingBudaya._id && this.editingBudaya.id) {
+                    this.editingBudaya._id = this.editingBudaya.id;
+                }
+                this.editFileName = this.editingBudaya.image_url ? 'Foto saat ini' : '';
+                this.editPreviewUrl = this.editingBudaya.image_url ? 
+                    (this.editingBudaya.image_url.startsWith('http') ? this.editingBudaya.image_url : '/storage/' + this.editingBudaya.image_url) : '';
             }
-            this.editFileName = this.editingBudaya.image_url ? 'Foto saat ini' : '';
         } catch(e) {
+            console.error('Edit error:', e);
             alert('Gagal mengambil data budaya');
             this.showEditModal = false;
         } finally {
@@ -52,8 +69,32 @@
         }
     },
 
+    async openViewModal(id) {
+        if (!id) return;
+        this.loading = true;
+        this.showViewModal = true;
+        this.viewingBudaya = null;
+        try {
+            const res = await fetch(`/admin/budaya/${id}/edit`, { 
+                headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+            });
+            const data = await window.safeParseJSON(res);
+            if (data) {
+                this.viewingBudaya = data;
+            } else {
+                throw new Error('Data tidak valid');
+            }
+        } catch(e) {
+            console.error('View error:', e);
+            alert('Gagal mengambil data budaya');
+            this.showViewModal = false;
+        } finally {
+            this.loading = false;
+        }
+    },
+
     async submitEdit() {
-        const budayaId = this.editingBudaya._id || this.editingBudaya.id;
+        const budayaId = this.editingBudaya?._id || this.editingBudaya?.id;
         if (!budayaId) {
             alert('ID Budaya tidak ditemukan');
             return;
@@ -65,34 +106,53 @@
         try {
             const res = await fetch(`/admin/budaya/${budayaId}`, {
                 method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest', 
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content 
+                },
                 body: formData
             });
             const result = await window.safeParseJSON(res);
-            if (result.success) { window.location.reload(); }
-            else { alert(result.message || 'Gagal menyimpan'); }
+            if (result.success) { 
+                window.location.reload(); 
+            } else { 
+                alert(result.message || 'Gagal menyimpan'); 
+            }
         } catch(e) {
             alert('Terjadi kesalahan saat menyimpan');
-        } finally { this.loading = false; }
+        } finally { 
+            this.loading = false; 
+        }
     }
 }" @open-create-modal.window="showCreateModal = true">
+
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
 
     {{-- /////////////////////////////////// --}}
     {{-- DESKTOP VIEW (ADMIN TABLE LAYOUT)   --}}
     {{-- /////////////////////////////////// --}}
     <div class="hidden md:block">
         {{-- Search & Filters --}}
-        <div class="flex flex-wrap items-center gap-4 mb-8">
+        <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
             <form method="GET" action="{{ route('admin.budaya.index') }}" class="flex flex-wrap items-center gap-4 w-full">
                 <div class="relative flex-1 min-w-[280px]">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4">
                         <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </span>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul budaya..."
-                        class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
+                        class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Tampilkan:</span>
+                    <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 transition-all">
+                        @foreach([10, 15, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                        @endforeach
+                    </select>
                 </div>
                 
-                <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+                <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
                     <option value="">Semua Kategori</option>
                     <option value="Sejarah" @selected(request('category') === 'Sejarah')>Sejarah</option>
                     <option value="Tradisi" @selected(request('category') === 'Tradisi')>Tradisi</option>
@@ -101,11 +161,15 @@
                     <option value="Rumah Adat" @selected(request('category') === 'Rumah Adat')>Rumah Adat</option>
                 </select>
                 
-                <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
+                <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium">
                     <option value="">Semua Status</option>
                     <option value="active" @selected(request('status') === 'active')>Aktif</option>
                     <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
                 </select>
+
+                {{-- Hidden inputs for sorting persistence --}}
+                <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+                <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
             </form>
         </div>
 
@@ -114,12 +178,37 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-50">
                     <thead class="bg-gray-50/50">
+                        @php
+                            $currentSort = request('sort_by', 'created_at');
+                            $sortOrder = request('sort_order', 'desc') === 'asc' ? 'desc' : 'asc';
+                        @endphp
                         <tr>
                             <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">#</th>
                             <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Thumbnail</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Judul Topik</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori</th>
-                            <th class="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-8 py-5 text-left">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'name', 'sort_order' => ($currentSort === 'name' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Judul Topik
+                                    <svg class="w-4 h-4 {{ $currentSort === 'name' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'name' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
+                            <th class="px-8 py-5 text-left">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'category', 'sort_order' => ($currentSort === 'category' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Kategori
+                                    <svg class="w-4 h-4 {{ $currentSort === 'category' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'category' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
+                            <th class="px-8 py-5 text-center">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'is_active', 'sort_order' => ($currentSort === 'is_active' ? $sortOrder : 'asc')]) }}" class="group flex items-center justify-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Status
+                                    <svg class="w-4 h-4 {{ $currentSort === 'is_active' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'is_active' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                            </th>
                             <th class="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>
@@ -139,7 +228,7 @@
                                     @endif
                                 </td>
                                 <td class="px-8 py-5">
-                                    <p class="text-[14px] font-bold text-gray-800">{{ $item->name }}</p>
+                                    <p class="text-[14px] font-bold text-gray-800 max-w-[200px] truncate" title="{{ $item->name }}">{{ $item->name }}</p>
                                 </td>
                                 <td class="px-8 py-5">
                                     <span class="px-3 py-1 text-xs font-bold text-sidebar bg-sidebar/10 rounded-lg whitespace-nowrap">
@@ -155,7 +244,10 @@
                                 </td>
                                 <td class="px-8 py-5 text-right">
                                     <div class="flex items-center justify-end gap-3">
-                                        <button @click="openEditModal('{{ $item->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
+                                        <button @click="openViewModal('{{ (string)$item->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Detail">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                        </button>
+                                        <button @click="openEditModal('{{ (string)$item->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Edit">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                         </button>
                                         <button type="button" 
@@ -251,7 +343,7 @@
                                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
                                {{ $item->location }}
                            </span>
-                           <span class="text-sm font-bold text-[#7861A5]">Lihat Detail</span>
+                           <button class="text-sm font-bold text-[#7861A5] hover:underline transition-all" @click="openViewModal('{{ (string)$item->_id }}')">Lihat Detail</button>
                        </div>
                    </div>
                </div>
@@ -313,17 +405,16 @@
                   class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
 
               <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                <div class="flex items-center justify-between mb-8 px-8 pt-6 pb-4 border-b border-gray-100">
+                <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Tambah Konten Budaya</h3>
                     <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <form action="{{ route('admin.budaya.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5 px-8 py-6">
+                <form action="{{ route('admin.budaya.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                     @csrf
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2 space-y-2">
@@ -353,14 +444,14 @@
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Utama (Thumbnail)</label>
                             <div class="relative group" x-data="{ previewUrl: '' }">
-                                <template x-if="previewUrl">
-                                    <img :src="previewUrl" class="absolute inset-0 w-full h-full object-cover rounded-[2rem] opacity-20 pointer-events-none">
+                                 <template x-if="createPreviewUrl">
+                                    <img :src="createPreviewUrl" class="absolute inset-0 w-full h-full object-cover rounded-[2rem] opacity-20 pointer-events-none">
                                 </template>
                                 <input type="file" name="thumbnail" id="create_thumbnail" required class="absolute inset-0 opacity-0 cursor-pointer" 
                                     @change="
                                         createFileName = $event.target.files[0].name;
                                         const reader = new FileReader();
-                                        reader.onload = (e) => { previewUrl = e.target.result };
+                                        reader.onload = (e) => { createPreviewUrl = e.target.result };
                                         reader.readAsDataURL($event.target.files[0]);
                                     ">
                                 <label for="create_thumbnail" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
@@ -381,7 +472,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                    <div class="flex items-center justify-end gap-3 pt-4">
                         <button type="button" @click="showCreateModal = false" class="px-8 py-3.5 text-sm font-bold text-gray-400 bg-gray-50 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">Batal</button>
                         <button type="submit" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all">Simpan Budaya</button>
                     </div>
@@ -401,20 +492,20 @@
 
               <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                   x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                <div class="flex items-center justify-between mb-8 px-8 pt-6 pb-4 border-b border-gray-100">
+                <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Edit Konten Budaya</h3>
                     <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <div x-show="loading && !editingBudaya" class="py-12 flex justify-center px-8">
+                <div x-show="loading && !editingBudaya" class="py-12 flex justify-center">
                     <svg class="animate-spin h-8 w-8 text-sidebar" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 </div>
 
-                <div x-show="editingBudaya" class="px-8 py-6">
+                <div x-show="editingBudaya">
                     <form id="editBudayaForm" @submit.prevent="submitEdit()" class="space-y-5">
                         <input type="hidden" name="_method" value="PUT">
                         <div class="grid grid-cols-2 gap-4">
@@ -444,11 +535,21 @@
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama (Opsional)</label>
-                                <div x-show="editingBudaya && editingBudaya.image_url" class="mb-3">
-                                    <img :src="editingBudaya.image_url.startsWith('http') ? editingBudaya.image_url : `/storage/${editingBudaya.image_url}`" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
+                                <div x-show="editPreviewUrl" class="mb-3">
+                                    <img :src="editPreviewUrl" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
                                 </div>
                                 <div class="relative group">
+<<<<<<< HEAD
                                     <input type="file" name="thumbnail" id="edit_thumbnail" class="absolute inset-0 opacity-0 cursor-pointer" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+=======
+                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" 
+                                        @change="
+                                            editFileName = $event.target.files[0] ? $event.target.files[0].name : '';
+                                            const reader = new FileReader();
+                                            reader.onload = (e) => { editPreviewUrl = e.target.result };
+                                            if($event.target.files[0]) reader.readAsDataURL($event.target.files[0]);
+                                        ">
+>>>>>>> c877ab79b93880db5dabcb4655b2ab956c1d3c35
                                     <label for="edit_thumbnail" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
                                         <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                             <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -476,27 +577,110 @@
             </div>
         </div>
     </div>
-</div>
 
 
+    {{-- DETAIL BUDAYA MODAL --}}
+    <div x-show="showViewModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+            <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showViewModal = false"></div>
 
-    <!-- Custom Success Alert Modal -->
-    @if(session('success'))
-    <div x-data="{ show: true }" x-show="show" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
-            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
+            <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block w-full max-w-sm p-10 text-center align-middle transition-all transform bg-white shadow-2xl rounded-[1.5rem] sm:my-8 text-gray-800 relative z-10" x-init="setTimeout(() => show = false, 2500)">
-                <div class="w-20 h-20 bg-[#cbf4f5] rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-10 h-10 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                <!-- Header -->
+                <div class="flex items-center justify-between px-10 pt-8 pb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Detail Budaya</h3>
+                        <p class="text-sm text-gray-400 mt-0.5">Warisan tradisi dan sejarah lokal</p>
+                    </div>
+                    <button @click="showViewModal = false" class="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900">{{ session('success') }}</h3>
+
+                <!-- Content -->
+                <div class="p-10">
+                    <div x-show="loading && !viewingBudaya" class="py-12 flex flex-col items-center justify-center gap-4">
+                        <div class="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+                        <p class="text-sm font-bold text-emerald-600 animate-pulse">Memuat data...</p>
+                    </div>
+
+                    <div x-show="viewingBudaya" class="space-y-8">
+                        <!-- Image -->
+                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group">
+                            <template x-if="viewingBudaya?.image_url">
+                                <img :src="viewingBudaya.image_url.startsWith('http') ? viewingBudaya.image_url : '/storage/' + viewingBudaya.image_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                            </template>
+                            <div class="absolute top-6 right-6">
+                                <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingBudaya?.category || '-'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Info Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Judul Topik</h4>
+                                    <p class="text-xl font-bold text-gray-900 leading-tight" x-text="viewingBudaya?.name || '-'"></p>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Lokasi / Wilayah</h4>
+                                    <div class="flex items-center gap-2 text-emerald-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        <p class="text-sm font-bold" x-text="viewingBudaya?.location || '-'"></p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Koordinat Geografis</h4>
+                                    <p class="text-xs font-mono text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-block" x-text="(viewingBudaya?.latitude || '-') + ', ' + (viewingBudaya?.longitude || '-')"></p>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Status Publikasi</h4>
+                                    <template x-if="viewingBudaya?.is_active">
+                                        <span class="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                            Terpublikasi Aktif
+                                        </span>
+                                    </template>
+                                    <template x-if="!viewingBudaya?.is_active">
+                                        <span class="inline-flex items-center gap-1.5 text-gray-400 text-xs font-bold">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                                            Draft / Nonaktif
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Deskripsi Lengkap</h4>
+                                    <div class="text-sm text-gray-600 leading-relaxed max-h-80 overflow-y-auto custom-scrollbar pr-2 whitespace-pre-line" x-text="viewingBudaya?.description || 'Tidak ada deskripsi.'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-10 py-6 bg-gray-50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700" x-text="viewingBudaya?.admin?.name ? viewingBudaya.admin.name.split(' ').map(n => n[0]).join('').substring(0,2) : 'A'"></div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Dibuat Oleh</p>
+                            <p class="text-xs font-bold text-gray-700" x-text="viewingBudaya?.admin?.name || 'Administrator'"></p>
+                        </div>
+                    </div>
+                    <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all shadow-sm">Tutup</button>
+                </div>
             </div>
         </div>
     </div>
-    @endif
 </div>
 
 <style>

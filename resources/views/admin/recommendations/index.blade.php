@@ -1,55 +1,216 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Recommendation Logs')
+@section('navbar_title', 'Recommendation Log')
+@section('page_title', 'Recommendation Log')
+@section('page_description', 'Monitor dan analisis rekomendasi destinasi yang diberikan sistem AI')
+
 @section('breadcrumb')
 <nav class="flex text-sm mb-6 text-gray-500 font-medium">
-    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Home</a>
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Home</a>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-400">Monitoring</span>
+    <span class="text-gray-400">Monitoring AI</span>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-400">Fitur AI dan Cerdas</span>
-    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-900 font-bold">Log Rekomendasi</span>
+    <span class="text-gray-900 font-bold">Recommendation Log</span>
 </nav>
 @endsection
 
 @section('content')
-<div class="flex items-center justify-between mb-6">
-    <div></div>
-    <a href="{{ route('admin.recommendations.export') }}" class="px-4 py-2 bg-primary text-white rounded-lg">Export</a>
+
+<!-- Stats Overview -->
+<div class="bg-white rounded-[2rem] border border-gray-100 p-8 mb-8 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+        <div class="flex items-center gap-4 px-6 first:pl-0">
+            <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
+            <div>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($todayLogs) }}</p>
+                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Hari Ini</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 px-8">
+            <div class="w-1 h-10 bg-emerald-500 rounded-full"></div>
+            <div>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($weekLogs) }}</p>
+                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Minggu Ini</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 px-8">
+            <div class="w-1 h-10 bg-orange-400 rounded-full"></div>
+            <div>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($monthLogs) }}</p>
+                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Bulan Ini</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 px-8 last:pr-0">
+            <div class="w-1 h-10 bg-blue-400 rounded-full"></div>
+            <div>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($avgDuration, 1) }}</p>
+                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Avg Durasi (Hari)</p>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="bg-white rounded-lg shadow overflow-x-auto">
-    <table class="min-w-full text-sm">
-        <thead class="bg-gray-50 text-gray-600">
-            <tr>
-                <th class="text-left px-10 py-6 text-[13px] font-bold text-gray-500 uppercase tracking-wider">User</th>
-                <th class="text-left px-10 py-6 text-[13px] font-bold text-gray-500 uppercase tracking-wider">Query</th>
-                <th class="text-left px-10 py-6 text-[13px] font-bold text-gray-500 uppercase tracking-wider">Created</th>
-                <th class="text-right px-10 py-6 text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse(($logs ?? []) as $log)
-                <tr class="border-t">
-                    <td class="px-4 py-3">{{ optional($log->user)->name ?? '-' }}</td>
-                    <td class="px-4 py-3">{{ $log->query ?? '-' }}</td>
-                    <td class="px-4 py-3">{{ optional($log->created_at)->format('d M Y H:i') ?? '-' }}</td>
-                    <td class="px-10 py-6 text-right">
-                        <div class="flex items-center justify-end">
-                            <a href="{{ route('admin.recommendations.show', $log) }}" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="View Detail">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                            </a>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Analysis Charts -->
+    <div class="lg:col-span-2 bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Distribusi Durasi Trip</h3>
+                <p class="text-sm text-gray-400 mt-1">Preferensi durasi perjalanan yang dipilih pengguna</p>
+            </div>
+            <span class="px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-bold uppercase tracking-wider">Statistik Real-time</span>
+        </div>
+
+        <div class="space-y-6">
+            @foreach($distributionData as $label => $count)
+                @php
+                    $total = array_sum($distributionData);
+                    $percent = $total > 0 ? ($count / $total) * 100 : 0;
+                    $colors = ['bg-emerald-600', 'bg-emerald-500', 'bg-emerald-400', 'bg-emerald-300'];
+                    $color = $colors[$loop->index % count($colors)];
+                @endphp
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[14px] font-bold text-gray-700">{{ $label }}</span>
+                        <span class="text-[13px] font-bold text-emerald-700">{{ $count }} Trip ({{ round($percent) }}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-50 rounded-full h-2.5 overflow-hidden border border-gray-100">
+                        <div class="{{ $color }} h-full rounded-full transition-all duration-1000" style="width: {{ $percent }}%"></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        @if($popularDestinations->first())
+        <div class="mt-10 p-6 bg-gradient-to-br from-emerald-700 to-emerald-800 rounded-2xl text-white relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-[11px] font-bold text-emerald-200 uppercase tracking-[0.2em] mb-2">Destinasi Paling Sering Direkomendasikan</p>
+                <h4 class="text-xl font-bold mb-2">{{ $popularDestinations->first()->destination?->name ?? 'N/A' }}</h4>
+                <div class="flex items-center gap-4 mt-4">
+                    <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl">
+                        <p class="text-[10px] text-emerald-200 uppercase font-bold tracking-wider">Total Rekomendasi</p>
+                        <p class="text-lg font-bold">{{ $popularDestinations->first()->count }} Kali</p>
+                    </div>
+                </div>
+            </div>
+            <svg class="absolute -right-4 -bottom-4 w-40 h-40 text-white/10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </div>
+        @endif
+    </div>
+
+    <!-- Preferences Breakdown -->
+    <div class="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm flex flex-col">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Preferensi Populer</h3>
+        <p class="text-sm text-gray-400 mb-8 font-medium">Kategori pilihan yang diminati pengunjung</p>
+
+        <div class="space-y-6 flex-grow">
+            @foreach($userPreferences as $preference => $count)
+                <div class="flex items-center gap-4">
+                    <div class="flex-grow">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[14px] font-bold text-gray-700">{{ $preference }}</span>
+                            <span class="text-[13px] font-bold text-gray-500">{{ $count }}%</span>
                         </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="4" class="px-4 py-6 text-center text-gray-500">No logs found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+                        <div class="w-full bg-gray-50 rounded-full h-2 border border-gray-100 overflow-hidden">
+                            <div class="bg-emerald-500 h-full rounded-full transition-all duration-1000" style="width: {{ $count }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="mt-8 pt-8 border-t border-gray-50">
+            <a href="{{ route('admin.recommendations.export') }}" class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-emerald-700 text-white rounded-2xl font-bold text-sm hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-700/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export Laporan CSV
+            </a>
+        </div>
+    </div>
 </div>
 
-@if (isset($logs) && method_exists($logs, 'links'))
-    <div class="mt-4">{{ $logs->links() }}</div>
-@endif
+<!-- History Table -->
+<div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden mb-8">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-white border-b border-gray-50">
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Trip ID</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Durasi</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Preferensi Utama</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Tgl Dibuat</th>
+                    <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-50">
+                @forelse($logs as $index => $log)
+                    <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
+                        <td class="px-10 py-6">
+                            <span class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">#TRP-2024-{{ str_pad($logs->firstItem() + $index, 3, '0', STR_PAD_LEFT) }}</span>
+                        </td>
+                        <td class="px-10 py-6">
+                            <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">
+                                {{ round($log->recommendation_score) }} Hari
+                            </span>
+                        </td>
+                        <td class="px-10 py-6">
+                            <div class="text-[14px] text-gray-700 font-bold uppercase tracking-tight">Alam & Budaya</div>
+                        </td>
+                        <td class="px-10 py-6">
+                            <div class="text-[13px] text-gray-600 font-medium">
+                                {{ $log->created_at->format('d M Y, H:i') }}
+                            </div>
+                        </td>
+                        <td class="px-10 py-6 text-right">
+                            <div class="flex items-center justify-end gap-3">
+                                <a href="{{ route('admin.recommendations.show', $log->_id) }}"
+                                   class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all" title="Lihat Detail">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="px-10 py-20 text-center text-gray-400">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                </svg>
+                                <p class="text-sm font-bold">Tidak ada data rekomendasi ditemukan</p>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    @if($logs->hasPages())
+    <div class="px-8 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
+        <p class="text-[13px] text-gray-400 font-medium">Menampilkan {{ $logs->firstItem() }}-{{ $logs->lastItem() }} dari {{ $logs->total() }} record</p>
+        <div class="flex items-center gap-2">
+            @if($logs->onFirstPage())
+                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Prev</span>
+            @else
+                <a href="{{ $logs->previousPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Prev</a>
+            @endif
+            
+            <div class="flex items-center gap-1">
+                @foreach($logs->getUrlRange(max(1, $logs->currentPage()-1), min($logs->lastPage(), $logs->currentPage()+1)) as $page => $url)
+                    <a href="{{ $url }}" class="w-9 h-9 flex items-center justify-center text-[13px] font-bold {{ $page == $logs->currentPage() ? 'bg-emerald-700 text-white shadow-lg shadow-emerald-700/30' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-all">{{ $page }}</a>
+                @endforeach
+            </div>
+
+            @if($logs->hasMorePages())
+                <a href="{{ $logs->nextPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Next</a>
+            @else
+                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Next</span>
+            @endif
+        </div>
+    </div>
+    @endif
+</div>
+
 @endsection
