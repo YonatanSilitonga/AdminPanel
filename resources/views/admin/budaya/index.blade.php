@@ -6,7 +6,7 @@
 @section('page_description', 'Kelola konten informasi sejarah, tradisi, dan budaya masyarakat lokal.')
 
 @section('page_actions')
-<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+<button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Budaya
 </button>
@@ -75,7 +75,7 @@
             alert('Terjadi kesalahan saat menyimpan');
         } finally { this.loading = false; }
     }
-}">
+}" @open-create-modal.window="showCreateModal = true">
 
     {{-- /////////////////////////////////// --}}
     {{-- DESKTOP VIEW (ADMIN TABLE LAYOUT)   --}}
@@ -356,7 +356,7 @@
                                 <template x-if="previewUrl">
                                     <img :src="previewUrl" class="absolute inset-0 w-full h-full object-cover rounded-[2rem] opacity-20 pointer-events-none">
                                 </template>
-                                <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" 
+                                <input type="file" name="thumbnail" id="create_thumbnail" required class="absolute inset-0 opacity-0 cursor-pointer" 
                                     @change="
                                         createFileName = $event.target.files[0].name;
                                         const reader = new FileReader();
@@ -448,7 +448,7 @@
                                     <img :src="editingBudaya.image_url.startsWith('http') ? editingBudaya.image_url : `/storage/${editingBudaya.image_url}`" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
                                 </div>
                                 <div class="relative group">
-                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="absolute inset-0 opacity-0 cursor-pointer" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                                     <label for="edit_thumbnail" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
                                         <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                             <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>

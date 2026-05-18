@@ -33,7 +33,7 @@
 @section('page_description', 'Kelola konten destinasi wisata Danau Toba')
 
 @section('page_actions')
-<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+<button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Destinasi
 </button>
@@ -105,7 +105,7 @@
             alert('Terjadi kesalahan');
         } finally { this.loading = false; }
     }
-}">
+}" @open-create-modal.window="showCreateModal = true">
 
     {{-- Search & Filter --}}
     <div class="flex flex-wrap items-center gap-4 mb-8">
@@ -220,7 +220,7 @@
 
               <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                   x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-xl font-bold text-gray-900">Tambah Destinasi</h3>
@@ -248,15 +248,15 @@
                         </div>
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
-                            <input type="text" name="latitude" id="create_latitude" required placeholder="2.6845" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
+                            <input type="text" name="latitude" id="create_latitude" required placeholder="2.6845" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
-                            <input type="text" name="longitude" id="create_longitude" required placeholder="98.8756" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
+                            <input type="text" name="longitude" id="create_longitude" required placeholder="98.8756" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
                         </div>
                         {{-- Map Picker for Create --}}
                         <div class="col-span-2 space-y-3">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Pilih Lokasi di Peta</label>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi Destinasi (Klik/Geser untuk mengubah)</label>
                             
                             {{-- Search Box --}}
                             <div class="flex gap-2">
@@ -309,7 +309,7 @@
                         <div class="col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Utama (Thumbnail)</label>
                             <div class="relative group">
-                                <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                                <input type="file" name="thumbnail" id="create_thumbnail" required class="absolute inset-0 opacity-0 cursor-pointer" @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                                 <label for="create_thumbnail" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
                                     <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                         <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -372,11 +372,11 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
-                                <input type="text" name="latitude" id="edit_latitude" x-model="editingDest.latitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
+                                <input type="text" name="latitude" id="edit_latitude" x-model="editingDest.latitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
                             </div>
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
-                                <input type="text" name="longitude" id="edit_longitude" x-model="editingDest.longitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
+                                <input type="text" name="longitude" id="edit_longitude" x-model="editingDest.longitude" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
                             </div>
                             {{-- Map Picker for Edit --}}
                             <div class="col-span-2 space-y-3">
@@ -437,7 +437,7 @@
                                     <p class="text-[10px] text-gray-400 mt-1">Foto saat ini</p>
                                 </div>
                                 <div class="relative group">
-                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="absolute inset-0 opacity-0 cursor-pointer" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                                     <label for="edit_thumbnail" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
                                         <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                             <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -512,6 +512,22 @@
                 lngInput.dispatchEvent(new Event('input'));
             }
         };
+
+        const latInput = document.getElementById(latId);
+        const lngInput = document.getElementById(lngId);
+        if (latInput && lngInput) {
+            const updateFromInput = () => {
+                const lat = parseFloat(latInput.value);
+                const lng = parseFloat(lngInput.value);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const pos = { lat, lng };
+                    marker.setPosition(pos);
+                    map.setCenter(pos);
+                }
+            };
+            latInput.addEventListener('change', updateFromInput);
+            lngInput.addEventListener('change', updateFromInput);
+        }
 
         // --- Location Search Feature using standard Autocomplete ---
         const searchInputId = elementId.includes('create') ? 'create_location_search' : 'edit_location_search';

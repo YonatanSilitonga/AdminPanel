@@ -20,7 +20,7 @@
 @endsection
 
 @section('page_actions')
-<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+<button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Slide Baru
 </button>
@@ -372,7 +372,7 @@
                             <label class="block text-sm font-medium text-gray-700">Gambar Background</label>
                             <div class="relative group">
                                 <input type="file" name="image_url" id="image_create" accept="image/*" required
-                                    class="hidden"
+                                    class="absolute inset-0 opacity-0 cursor-pointer"
                                     @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                                 <label for="image_create"
                                     class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#6349A5]/30 rounded-xl cursor-pointer hover:bg-gray-50 transition-all bg-[#F8F7FA]">
@@ -526,7 +526,7 @@
                         <div class="space-y-1.5">
                             <label class="block text-sm font-medium text-gray-700">Gambar Background</label>
                             <div class="relative group">
-                                <input type="file" name="image_url" id="image_edit" accept="image/*" class="hidden"
+                                <input type="file" name="image_url" id="image_edit" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer"
                                     @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                                 <label for="image_edit"
                                     class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#6349A5]/30 rounded-xl cursor-pointer hover:bg-gray-50 transition-all bg-[#F8F7FA]">

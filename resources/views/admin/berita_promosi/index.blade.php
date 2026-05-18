@@ -15,7 +15,7 @@
 @endsection
 
 @section('page_actions')
-<button @click="show = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+<button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Berita/Promosi
 </button>
@@ -135,7 +135,7 @@
 </div>
 
 <!-- Tambah Modal -->
-<div x-data="{ show: {{ $errors->any() && !old('_method') ? 'true' : 'false' }} }" x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+<div x-data="{ show: {{ $errors->any() && !old('_method') ? 'true' : 'false' }} }" @open-create-modal.window="show = true" x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
     <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
 

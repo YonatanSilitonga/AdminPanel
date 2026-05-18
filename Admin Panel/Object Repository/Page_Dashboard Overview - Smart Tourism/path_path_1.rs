@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>path_path_1</name>
+   <tag></tag>
+   <elementGuidId>3fc99f0f-a78c-40cd-8f68-bcd7d6f0dc4d</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//*[@aria-label = 'Toggle Sidebar']//path[(@stroke-linejoin = 'round') and (@stroke-linecap = 'round')]</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value>[aria-label=&quot;Toggle\ Sidebar&quot;] path[stroke-linejoin=&quot;round&quot;][stroke-linecap=&quot;round&quot;]</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:label=&quot;Toggle Sidebar&quot;i</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>path</value>
+      <webElementGuid>dd078b44-7a35-475c-9fca-25bbcac01e3d</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>stroke-linecap</name>
+      <type>Main</type>
+      <value>round</value>
+      <webElementGuid>95f04a5a-5e4e-442f-9a85-d1480e030c37</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>stroke-linejoin</name>
+      <type>Main</type>
+      <value>round</value>
+      <webElementGuid>5aa39542-11a4-48e2-9460-090bbbb18162</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>stroke-width</name>
+      <type>Main</type>
+      <value>2</value>
+      <webElementGuid>d351dfc2-9172-4ee6-85a7-092adcdd4bda</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>d</name>
+      <type>Main</type>
+      <value>M4 6h16M4 12h16M4 18h16</value>
+      <webElementGuid>1d4016b7-ef31-490c-9ac7-cc2c431660d4</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>parent</name>
+      <type>Main</type>
+      <value>md5.v1-8389a531aa5389a7900a905a2af6fad8</value>
+      <webElementGuid>415cae65-0d06-420b-8023-0f2ef5055451</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>//*[@aria-label = 'Toggle Sidebar']//path[(@stroke-linejoin = 'round') and (@stroke-linecap = 'round')]</value>
+      <webElementGuid>cd4521cd-b32d-4498-bab6-4f64a883980c</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>//*[@aria-label = 'Toggle Sidebar']//path[(@stroke-linejoin = 'round') and (@stroke-linecap = 'round')]</value>
+      <webElementGuid>57d569c6-8669-45ae-8933-9b6877906101</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

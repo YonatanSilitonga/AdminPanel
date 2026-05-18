@@ -138,13 +138,13 @@ class EventService
         
         if ($cloudName) {
             try {
-                $result = \cloudinary()->upload($file->getRealPath(), [
+                $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
                     'folder'        => 'smarttourism/events',
                     'resource_type' => 'image',
                     'quality'       => 'auto',
                     'fetch_format'  => 'auto',
                 ]);
-                return $result->getSecureUrl();
+                return $result['secure_url'];
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Event banner Cloudinary upload failed: ' . $e->getMessage());
                 // Fallback to local

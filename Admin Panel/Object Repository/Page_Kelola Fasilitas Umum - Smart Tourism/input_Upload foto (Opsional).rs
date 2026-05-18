@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>input_Upload foto (Opsional)</name>
+   <tag></tag>
+   <elementGuidId>dc80fb10-1e23-48ed-a824-77e9c88c9a2f</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>CSS</key>
+         <value>#create_image</value>
+      </entry>
+      <entry>
+         <key>XPATH</key>
+         <value>//*[@id = 'create_image']</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:label=&quot;Upload foto (Opsional)\n                                PNG, JPG, WEBP (Maks. 5MB)&quot;i</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>input</value>
+      <webElementGuid>e29ae99f-fa70-45a6-9f72-4abca39d90ce</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>type</name>
+      <type>Main</type>
+      <value>file</value>
+      <webElementGuid>06ebb76f-a659-4ac1-88f3-e2b5697fc82e</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>name</name>
+      <type>Main</type>
+      <value>image</value>
+      <webElementGuid>73cd33a0-b18a-4320-bfd8-f353f3c2c8a5</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>id</name>
+      <type>Main</type>
+      <value>create_image</value>
+      <webElementGuid>2b541cf3-8267-4bdb-bfd1-63d29a17fda9</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>absolute inset-0 opacity-0 cursor-pointer</value>
+      <webElementGuid>709cd819-a47d-4f57-a88a-bc575e51c08d</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>@change</name>
+      <type>Main</type>
+      <value>createFileName = $event.target.files[0] ? $event.target.files[0].name : ''</value>
+      <webElementGuid>adea22f1-f206-4493-9ce9-84057cfc06d2</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>parent</name>
+      <type>Main</type>
+      <value>md5.v1-3b945f82a87bfd967fd0ed67d6f75dd0</value>
+      <webElementGuid>ea158891-2e7d-488e-bc15-b1ad28794833</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>//*[@id = 'create_image']</value>
+      <webElementGuid>4ed92951-1b8d-4838-a18a-c5fd11d1ba65</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>//*[@id = 'create_image']</value>
+      <webElementGuid>3a1193c1-925f-4fa8-a289-7f1719e16541</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//input[@type = 'file' and @name = 'image' and @id = 'create_image']</value>
+      <webElementGuid>bb3b8d5c-683f-41df-8ecb-7f1c287a683b</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

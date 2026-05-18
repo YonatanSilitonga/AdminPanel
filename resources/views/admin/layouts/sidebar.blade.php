@@ -126,17 +126,29 @@
             ulasan: {{ request()->routeIs('admin.reviews.*') || request()->routeIs('admin.reports.*') ? 'true' : 'false' }}
         } 
     }" 
-    class="fixed inset-y-0 left-0 lg:relative text-white h-screen flex flex-col shadow-2xl lg:shadow-xl overflow-hidden flex-shrink-0 z-50 transition-all duration-300 ease-in-out group/sidebar {{ $isSidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-16 sidebar-collapsed' }}"
+    class="fixed inset-y-0 left-0 lg:relative text-white h-screen flex flex-col shadow-2xl lg:shadow-xl overflow-hidden flex-shrink-0 z-50 transition-all duration-300 ease-in-out group/sidebar"
     style="background: linear-gradient(135deg, #065f46, #047857, #059669);"
-    :class="sidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-16 sidebar-collapsed'"
+    :class="{
+        'w-72 translate-x-0': sidebarOpen,
+        '-translate-x-full lg:translate-x-0 lg:w-16 sidebar-collapsed': !sidebarOpen
+    }"
 >
     <!-- Logo Section -->
-    <div class="sidebar-header py-5 px-5 flex items-center border-b border-white/10 transition-all duration-300">
-        <img src="{{ asset('images/logo.jpeg') }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20">
-        <div class="sidebar-text ml-3 overflow-hidden whitespace-nowrap transition-all duration-300">
-            <h2 class="text-lg font-bold tracking-wider leading-tight">TOBA TOURISM</h2>
-            <p class="text-xs text-gray-300 opacity-80">Kawasan Danau Toba</p>
+    <div class="sidebar-header py-5 px-5 flex items-center justify-between border-b border-white/10 transition-all duration-300">
+        <div class="flex items-center">
+            <img src="{{ asset('images/logo.jpeg') }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20" width="40" height="40" style="width: 40px; height: 40px;">
+            <div class="sidebar-text ml-3 overflow-hidden whitespace-nowrap transition-all duration-300">
+                <h2 class="text-lg font-bold tracking-wider leading-tight">TOBA TOURISM</h2>
+                <p class="text-xs text-gray-300 opacity-80">Kawasan Danau Toba</p>
+            </div>
         </div>
+        
+        <!-- Mobile Close Button -->
+        <button @click="sidebarOpen = false" class="lg:hidden text-white hover:text-toba-gold transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
     </div>
 
     <!-- User Profile Section -->
@@ -172,8 +184,8 @@
             @elseif($item['type'] === 'link')
                 <!-- Normal Link -->
                 <div class="relative group/item">
-                    <a href="{{ $item['route'] }}" class="sidebar-link px-4 py-2 flex items-center rounded-xl transition-all duration-300 {{ $item['active'] ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
-                        <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ $item['route'] }}" class="sidebar-link px-4 py-2 flex items-center justify-start text-left rounded-xl transition-all duration-300 {{ $item['active'] ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
+                        <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="width: 20px; height: 20px;">
                             {!! $item['icon'] !!}
                         </svg>
                         <span class="sidebar-text ml-3 font-medium whitespace-nowrap overflow-hidden transition-all duration-300">{{ $item['label'] }}</span>
@@ -186,13 +198,13 @@
                 <div x-data="{ open: openMenus.{{ $item['openKey'] }} }" class="relative group/item">
                     <!-- Collapsed Icon Only Link -->
                     <a href="{{ $item['subItems'][0]['route'] ?? '#' }}" class="sidebar-collapsed-only flex justify-center items-center py-2 rounded-xl transition-all duration-200 {{ $item['active'] ? 'bg-sidebar-active text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
-                        <svg class="sidebar-icon w-5 h-5 transition-transform duration-200 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="sidebar-icon w-5 h-5 transition-transform duration-200 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="width: 20px; height: 20px;">
                             {!! $item['icon'] !!}
                         </svg>
                     </a>
                     <!-- Expanded Button -->
                     <button @click="open = !open" class="sidebar-expanded-only w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 {{ $item['active'] ? 'text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
-                        <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="width: 20px; height: 20px;">
                             {!! $item['icon'] !!}
                         </svg>
                         <span class="sidebar-text ml-3 font-medium flex-1 text-left whitespace-nowrap overflow-hidden transition-all duration-300">{{ $item['label'] }}</span>
@@ -219,8 +231,8 @@
     <div class="sidebar-header mt-auto py-6 px-5 border-t border-white/10 transition-all duration-300">
         <div class="relative group/item">
             <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-logout-modal'))"
-                    class="sidebar-link w-full px-4 py-2 flex items-center rounded-xl transition-all duration-300 text-gray-300 hover:bg-red-500/10 hover:text-red-400 group">
-                <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover:-translate-x-0.5 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="sidebar-link w-full px-4 py-2 flex items-center justify-start text-right rounded-xl transition-all duration-300 text-gray-300 hover:bg-red-500/10 hover:text-red-400 group">
+                <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover:-translate-x-0.5 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="width: 20px; height: 20px;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                 </svg>
                 <span class="sidebar-text ml-3 font-medium whitespace-nowrap overflow-hidden transition-all duration-300">Logout</span>

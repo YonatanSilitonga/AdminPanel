@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>button_Aktif_p-2.5 bg-sidebar-active5 text-sidebar-active rounded-full hoverbg-sidebar-active10 transition-all</name>
+   <tag></tag>
+   <elementGuidId>86f2bd2d-ba08-44fc-a91d-0997daa662e2</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='dest-manager']/div[2]/div/table/tbody/tr/td[6]/div/button</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=row[name=&quot;1 Pantai Bul Bul Pantai Bul Bul Balige, Toba Beach 0.0 Aktif&quot;i] >> internal:role=button >> nth=0</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>9880307f-262a-40a8-96a8-07a4ed4e5fd6</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>@click</name>
+      <type>Main</type>
+      <value>openEditModal('6a09a128e92daff40b053e5a')</value>
+      <webElementGuid>0e3d9baf-a907-46d1-97f9-0d3a10eca46c</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all</value>
+      <webElementGuid>1277f0c4-8c8f-4ef9-84d6-32b74272aa5c</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;dest-manager&quot;)/div[@class=&quot;bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden&quot;]/div[@class=&quot;overflow-x-auto&quot;]/table[@class=&quot;min-w-full divide-y divide-gray-50&quot;]/tbody[@class=&quot;bg-white divide-y divide-gray-50&quot;]/tr[@class=&quot;hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0&quot;]/td[@class=&quot;px-10 py-6 text-right&quot;]/div[@class=&quot;flex items-center justify-end gap-3&quot;]/button[@class=&quot;p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all&quot;]</value>
+      <webElementGuid>348a1c21-d2cd-40bf-ab7b-cda6d655c092</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='dest-manager']/div[2]/div/table/tbody/tr/td[6]/div/button</value>
+      <webElementGuid>2c41bd2a-c742-4af0-a0cc-8f632c92bf11</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Aktif'])[2]/following::button[1]</value>
+      <webElementGuid>fb641f46-fa14-4568-83e1-6d217ce3ee56</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Beach'])[2]/following::button[1]</value>
+      <webElementGuid>beb13f14-2a6d-4572-905b-be8ca80436fa</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Pantai Bul Bul'])[2]/preceding::button[2]</value>
+      <webElementGuid>ef88d18a-b60a-465d-a7b3-96fc32e451c6</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Balige, Toba'])[2]/preceding::button[2]</value>
+      <webElementGuid>ba55e0af-19ae-4baf-818c-e45acbbe1358</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//td[6]/div/button</value>
+      <webElementGuid>ed908faa-2625-4987-9484-dd83c69e3123</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

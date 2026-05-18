@@ -4,8 +4,8 @@
         <!-- Left: Toggle Button -->
         <div class="flex items-center space-x-4 min-w-0">
             <!-- Sidebar Toggle Button -->
-            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors focus:outline-none flex-shrink-0" aria-label="Toggle Sidebar">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-gray-600 bg-gray-50/50 hover:bg-emerald-50 hover:text-emerald-600 border border-gray-200 hover:border-emerald-200 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/20 flex-shrink-0 shadow-sm" aria-label="Toggle Sidebar">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>

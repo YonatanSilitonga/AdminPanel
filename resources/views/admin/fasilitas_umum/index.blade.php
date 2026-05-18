@@ -43,7 +43,7 @@
 @endsection
 
 @section('page_actions')
-<button @click="showCreateModal = true" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+<button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Fasilitas
 </button>
@@ -219,11 +219,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Latitude</label>
-                            <input type="text" name="latitude" id="create_latitude" required placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <input type="text" name="latitude" id="create_latitude" required placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Longitude</label>
-                            <input type="text" name="longitude" id="create_longitude" required placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <input type="text" name="longitude" id="create_longitude" required placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
                         </div>
                     </div>
 
@@ -277,7 +277,7 @@
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Foto Fasilitas</label>
                         <div class="relative group">
-                            <input type="file" name="image" id="create_image" class="hidden" @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                            <input type="file" name="image" id="create_image" class="absolute inset-0 opacity-0 cursor-pointer" @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                             <label for="create_image" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
                                 <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                     <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -359,11 +359,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Latitude</label>
-                            <input type="text" name="latitude" id="edit_latitude" x-model="editingFacility.latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <input type="text" name="latitude" id="edit_latitude" x-model="editingFacility.latitude" required class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold text-gray-700">
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Longitude</label>
-                            <input type="text" name="longitude" id="edit_longitude" x-model="editingFacility.longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <input type="text" name="longitude" id="edit_longitude" x-model="editingFacility.longitude" required class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold text-gray-700">
                         </div>
                     </div>
 
@@ -427,7 +427,7 @@
                             <p class="text-[10px] text-gray-400 mt-1">Foto saat ini</p>
                         </div>
                         <div class="relative group">
-                            <input type="file" name="image" id="edit_image" class="hidden" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                            <input type="file" name="image" id="edit_image" class="absolute inset-0 opacity-0 cursor-pointer" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                             <label for="edit_image" class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
                                 <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                     <svg class="w-5 h-5 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -621,6 +621,22 @@ function initGoogleMap(elementId, latId, lngId, initialPos = { lat: 2.3361, lng:
         }
     };
 
+    const latInput = document.getElementById(latId);
+    const lngInput = document.getElementById(lngId);
+    if (latInput && lngInput) {
+        const updateFromInput = () => {
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const pos = { lat, lng };
+                marker.setPosition(pos);
+                map.setCenter(pos);
+            }
+        };
+        latInput.addEventListener('change', updateFromInput);
+        lngInput.addEventListener('change', updateFromInput);
+    }
+
     // --- Location Search Feature using standard Autocomplete ---
     const isCreate = elementId.includes('create');
     const searchInput = document.getElementById(isCreate ? 'create_location_search' : 'edit_location_search');
@@ -725,8 +741,14 @@ function getCurrentLocation(latId, lngId, mapElementId) {
             
             const latInput = document.getElementById(latId);
             const lngInput = document.getElementById(lngId);
-            if (latInput) latInput.value = pos.lat.toFixed(8);
-            if (lngInput) lngInput.value = pos.lng.toFixed(8);
+            if (latInput) {
+                latInput.value = pos.lat.toFixed(8);
+                latInput.dispatchEvent(new Event('change'));
+            }
+            if (lngInput) {
+                lngInput.value = pos.lng.toFixed(8);
+                lngInput.dispatchEvent(new Event('change'));
+            }
 
             // Update Map & Marker
             const isCreate = mapElementId.includes('create');

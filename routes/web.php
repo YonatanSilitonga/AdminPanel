@@ -28,6 +28,26 @@ Route::get('/', function () {
     return redirect()->route('admin.login');
 });
 
+// Redirect /dashboard to /admin/dashboard
+Route::get('/dashboard', function () {
+    return redirect()->route('admin.dashboard');
+});
+
+// Redirect semua rute sidebar utama tanpa prefix /admin
+Route::middleware('guest')->group(function () {
+    $sidebarRoutes = [
+        'destinations', 'trending-destinations', 'events', 'carousel-banners',
+        'fasilitas-umum', 'berita-promosi', 'budaya', 'users',
+        'chatbot-logs', 'recommendations', 'reviews', 'reports', 'settings', 'profile'
+    ];
+
+    foreach ($sidebarRoutes as $route) {
+        Route::get("/$route", function () use ($route) {
+            return redirect("/admin/$route");
+        });
+    }
+});
+
 // PUBLIC ROUTES (No auth required)
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');

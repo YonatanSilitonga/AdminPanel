@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>div_fixed inset-0 bg-black_50 z-40 lg_hidden</name>
+   <tag></tag>
+   <elementGuidId>2b81e2b0-583b-4778-8910-678a81403948</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' h-screen ') and contains(concat(' ', normalize-space(@class), ' '), ' sidebar-no-transition ')]//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' fixed ') and (position() = 1)]</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value>.h-screen.sidebar-no-transition .fixed:nth-child(1)</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>.fixed >> nth=0</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>div</value>
+      <webElementGuid>670770c9-43c3-4fd3-bbf6-345808963919</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>x-show</name>
+      <type>Main</type>
+      <value>sidebarOpen</value>
+      <webElementGuid>4e61c7d3-9812-46f4-8c27-33e7a50bb4df</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>@click</name>
+      <type>Main</type>
+      <value>sidebarOpen = false</value>
+      <webElementGuid>a8ef9b44-dfc0-4026-acfe-954e1640e30c</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>x-transition:enter</name>
+      <type>Main</type>
+      <value>transition-opacity ease-linear duration-300</value>
+      <webElementGuid>b68486e6-42b6-493f-a39c-6a0b2bdf99bc</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>x-transition:enter-start</name>
+      <type>Main</type>
+      <value>opacity-0</value>
+      <webElementGuid>45a54f32-4bd2-4e82-ad3b-f8842ffb93f6</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>x-transition:enter-end</name>
+      <type>Main</type>
+      <value>opacity-100</value>
+      <webElementGuid>7a11def6-c058-4be1-b7e0-3774aa634330</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>x-transition:leave</name>
+      <type>Main</type>
+      <value>transition-opacity ease-linear duration-300</value>
+      <webElementGuid>08804f8a-3968-4643-89bb-49481c5cb252</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>x-transition:leave-start</name>
+      <type>Main</type>
+      <value>opacity-100</value>
+      <webElementGuid>a4a13d2c-f076-4179-a57b-88f630005846</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>x-transition:leave-end</name>
+      <type>Main</type>
+      <value>opacity-0</value>
+      <webElementGuid>0cd568fe-8387-4606-97a9-ec3c6cfaaeb9</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>fixed inset-0 bg-black/50 z-40 lg:hidden</value>
+      <webElementGuid>0e8b2a7f-dd31-413c-94c3-dca9faa98226</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>parent</name>
+      <type>Main</type>
+      <value>md5.v1-197cb35a2ec1cf45baa548c209cf42e2</value>
+      <webElementGuid>a3cbeb83-8966-41b1-a5ad-cce3f76cc23f</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' h-screen ') and contains(concat(' ', normalize-space(@class), ' '), ' sidebar-no-transition ')]//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' fixed ') and (position() = 1)]</value>
+      <webElementGuid>322768d8-fd41-46ab-b40c-4f4be4258b43</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' h-screen ') and contains(concat(' ', normalize-space(@class), ' '), ' sidebar-no-transition ')]//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' fixed ') and (position() = 1)]</value>
+      <webElementGuid>27bf4203-133e-4014-bb75-62853c8f0e95</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

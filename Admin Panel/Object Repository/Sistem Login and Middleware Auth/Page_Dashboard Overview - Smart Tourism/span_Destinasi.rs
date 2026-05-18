@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>span_Destinasi</name>
+   <tag></tag>
+   <elementGuidId>0e3c0611-6dc8-4e78-afbf-6ff0e9bbe9ad</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//*[@x-data = '{ open: openMenus.destinasi }']//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' sidebar-text ') and contains(concat(' ', normalize-space(@class), ' '), ' whitespace-nowrap ') and contains(concat(' ', normalize-space(@class), ' '), ' text-left ')]</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value>[x-data=&quot;\{\ open\:\ openMenus\.destinasi\ \}&quot;] .sidebar-text.whitespace-nowrap.text-left</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=button[name=&quot;Destinasi&quot;i]</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>span</value>
+      <webElementGuid>babbd6b6-32a5-4478-9389-baf852482f10</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>sidebar-text ml-3 font-medium flex-1 text-left whitespace-nowrap overflow-hidden transition-all duration-300</value>
+      <webElementGuid>a0b1072f-161b-4fde-8a28-df0c168b6ecf</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>Destinasi</value>
+      <webElementGuid>63af2c6e-f8d9-4e63-8505-4d7355785a23</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>parent</name>
+      <type>Main</type>
+      <value>md5.v1-af3ed3e8bf76c981f3c9f16112d5323c</value>
+      <webElementGuid>c170d8d3-fca2-434c-b912-62026096c7f5</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>//*[@x-data = '{ open: openMenus.destinasi }']//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' sidebar-text ') and contains(concat(' ', normalize-space(@class), ' '), ' whitespace-nowrap ') and contains(concat(' ', normalize-space(@class), ' '), ' text-left ')]</value>
+      <webElementGuid>7f7351fc-54e7-4128-bf2f-7cba14b52a93</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>//*[@x-data = '{ open: openMenus.destinasi }']//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' sidebar-text ') and contains(concat(' ', normalize-space(@class), ' '), ' whitespace-nowrap ') and contains(concat(' ', normalize-space(@class), ' '), ' text-left ')]</value>
+      <webElementGuid>fcee4062-fc6f-46dd-a353-9aef89d48274</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//span[(text() = 'Destinasi' or . = 'Destinasi')]</value>
+      <webElementGuid>ba20034e-ac30-42bf-acc6-af72e02100b8</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

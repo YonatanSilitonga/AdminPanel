@@ -9,28 +9,21 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
 
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS (Local via Vite) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- Tailwind Play CDN (Fail-safe Fallback) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3B82F6',
-                        secondary: '#10B981',
-                        danger: '#EF4444',
-                        warning: '#F59E0B',
-                        info: '#06B6D4',
-                        dark: '#1F2937',
+                        sidebar: '#066466',
+                        'sidebar-hover': '#055456',
+                        'sidebar-active': '#197a7c',
+                        'toba-gold': '#e5bc3d',
                         light: '#F9FAFB',
-                        sidebar: {
-                            DEFAULT: '#066466',
-                            hover: '#055456',
-                            active: '#197a7c',
-                        },
-                        toba: {
-                            gold: '#e5bc3d',
-                        }
                     }
                 }
             }
@@ -56,8 +49,7 @@
                 font-size: 14px;
             }
         }
-        [x-cloak] { display: none !important; }
-
+        
         /* Custom scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -102,6 +94,19 @@
                x-data="{ sidebarOpen: {{ request()->cookie('sidebarOpen', 'true') === 'true' ? 'true' : 'false' }} }"
                x-init="$watch('sidebarOpen', value => document.cookie = 'sidebarOpen=' + value + '; path=/; max-age=31536000')">
 
+            <!-- Mobile Backdrop -->
+            <div x-show="sidebarOpen" 
+                 @click="sidebarOpen = false" 
+                 x-transition:enter="transition-opacity ease-linear duration-300" 
+                 x-transition:enter-start="opacity-0" 
+                 x-transition:enter-end="opacity-100" 
+                 x-transition:leave="transition-opacity ease-linear duration-300" 
+                 x-transition:leave-start="opacity-100" 
+                 x-transition:leave-end="opacity-0" 
+                 class="fixed inset-0 bg-black/50 z-40 lg:hidden" 
+                 x-cloak>
+            </div>
+
             <!-- Sidebar -->
             @include('admin.layouts.sidebar')
 
@@ -117,7 +122,7 @@
                         @yield('breadcrumb')
 
                         <!-- Page Title & Actions -->
-                        <div class="mb-5 flex flex-col md:flex-row md:items-start md:items-center justify-between gap-4">
+                        <div class="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <h1 class="text-2xl font-bold text-gray-900">@yield('page_title')</h1>
                                 <p class="text-gray-500 text-sm mt-1">@yield('page_description')</p>
@@ -220,15 +225,18 @@
 
             <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-md bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
-                <div class="w-20 h-20 bg-[#FEE2E2] rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-10 h-10 text-[#EF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                </div>
+                <div class="px-8 pt-10 pb-6 text-center">
+                    <div class="w-20 h-20 bg-[#FEE2E2] rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-10 h-10 text-[#EF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="40" height="40" style="width: 40px; height: 40px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
 
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" x-text="title"></h3>
-                
-                <p class="text-[15px] text-gray-500 mb-10 leading-relaxed px-2">
-                    Apakah Anda yakin ingin menghapus <span x-text="type"></span> <strong class="text-gray-800" x-text="`&quot;${name}&quot;`"></strong>? Tindakan ini tidak dapat dibatalkan.
-                </p>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-3" x-text="title"></h3>
+                    
+                    <p class="text-[15px] text-gray-500 mb-4 leading-relaxed">
+                        Apakah Anda yakin ingin menghapus <span x-text="type"></span> <strong class="text-gray-800" x-text="`&quot;${name}&quot;`"></strong>?
+                    </p>
+                    <p class="text-[13px] text-red-500 font-medium">Tindakan ini tidak dapat dibatalkan.</p>
+                </div>
 
                 <div class="flex items-center justify-center gap-4 px-8 py-6 border-t border-gray-100 bg-gray-50/50">
                     <button type="button" @click="show = false" class="w-full px-6 py-3.5 text-[15px] font-bold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm">
