@@ -94,7 +94,7 @@
                                 </div>
 
                                 <!-- Thumbnail -->
-                                <div class="w-28 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                                <div class="w-28 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" @click="lightboxImage = (banner.image_url.startsWith('http') ? banner.image_url : '/storage/' + banner.image_url); showLightbox = true" title="Klik untuk memperbesar">
                                     <template x-if="banner.image_url">
                                         <img :src="banner.image_url.startsWith('http') ? banner.image_url : '/storage/' + banner.image_url" :alt="banner.title" class="w-full h-full object-cover">
                                     </template>
@@ -213,7 +213,7 @@
                         <div class="px-5 mt-2">
                             <template x-if="currentPreview">
                                 <div>
-                                    <div class="relative w-full h-40 rounded-2xl overflow-hidden shadow-sm">
+                                    <div class="relative w-full h-40 rounded-2xl overflow-hidden shadow-sm cursor-pointer" @click="lightboxImage = (currentPreview.image_url ? (currentPreview.image_url.startsWith('http') ? currentPreview.image_url : '/storage/' + currentPreview.image_url) : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=400&q=80'); showLightbox = true" title="Klik untuk memperbesar">
                                         <img :src="currentPreview.image_url ? (currentPreview.image_url.startsWith('http') ? currentPreview.image_url : '/storage/' + currentPreview.image_url) : 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=400&q=80'" class="w-full h-full object-cover" alt="Banner Preview">
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                                         <div class="absolute bottom-0 left-0 p-4 w-full">
@@ -524,8 +524,21 @@
                         <input type="hidden" name="content_type" :value="selectedCategory === 'BERITA_PROMOSI' ? 'berita_promosi' : (selectedCategory ? selectedCategory.toLowerCase() : '')">
                     </div>
 
+                        <!-- Current Image Preview -->
                         <div class="space-y-1.5">
-                            <label class="block text-sm font-medium text-gray-700">Gambar Background</label>
+                            <label class="block text-sm font-medium text-gray-700">Gambar Saat Ini</label>
+                            <template x-if="editingBanner?.image_url">
+                                <div class="relative rounded-2xl overflow-hidden bg-gray-100 h-32 w-full border border-gray-100 mb-3 group cursor-pointer" @click="lightboxImage = (editingBanner.image_url.startsWith('http') ? editingBanner.image_url : '/storage/' + editingBanner.image_url); showLightbox = true" title="Klik untuk memperbesar">
+                                    <img :src="editingBanner.image_url.startsWith('http') ? editingBanner.image_url : '/storage/' + editingBanner.image_url" class="w-full h-full object-cover" alt="Gambar Saat Ini">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Gambar Saat Ini (Klik untuk memperbesar)</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="block text-sm font-medium text-gray-700">Ganti Gambar Background</label>
                             <div class="relative group">
                                 <input type="file" name="image_url" id="image_edit" accept="image/*" class="hidden"
                                     @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''">
@@ -604,7 +617,16 @@
                 </div>
             </div>
         </div>
+    <!-- Image Lightbox Modal -->
+    <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak @click="showLightbox = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="relative max-w-4xl max-h-[90vh] p-4 flex items-center justify-center" @click.stop>
+            <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showLightbox = false" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
     </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
@@ -714,6 +736,8 @@ function carouselManager() {
         loading: false,
         fileName: '',
         createFileName: '',
+        showLightbox: false,
+        lightboxImage: '',
         contentsList: [],
         selectedCategory: '',
         contentLoading: false,

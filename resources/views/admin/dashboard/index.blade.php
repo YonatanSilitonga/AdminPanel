@@ -88,15 +88,14 @@
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 xl:col-span-2">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-bold text-gray-900">Aktivitas Bulanan</h2>
-            <div class="flex space-x-4 text-sm">
-                <div class="flex items-center">
-                    <span class="w-3 h-0.5 bg-purple-600 mr-2"></span>
-                    <span class="text-gray-500">Destinasi</span>
-                </div>
-                <div class="flex items-center">
-                    <span class="w-3 h-0.5 bg-green-600 mr-2"></span>
-                    <span class="text-gray-500">Event</span>
-                </div>
+            <div class="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-gray-500">
+                <div class="flex items-center"><span class="w-3 h-0.5 bg-purple-600 mr-2 rounded-full"></span>Destinasi</div>
+                <div class="flex items-center"><span class="w-3 h-0.5 bg-green-600 mr-2 rounded-full"></span>Event</div>
+                <div class="flex items-center"><span class="w-3 h-0.5 bg-blue-500 mr-2 rounded-full"></span>Berita</div>
+                <div class="flex items-center"><span class="w-3 h-0.5 bg-orange-500 mr-2 rounded-full"></span>Budaya</div>
+                <div class="flex items-center"><span class="w-3 h-0.5 bg-pink-500 mr-2 rounded-full"></span>Fasilitas</div>
+                <div class="flex items-center"><span class="w-3 h-0.5 bg-teal-500 mr-2 rounded-full"></span>Ulasan</div>
+                <div class="flex items-center"><span class="w-3 h-0.5 bg-red-500 mr-2 rounded-full"></span>Laporan</div>
             </div>
         </div>
         <div class="relative h-64 md:h-72 w-full mt-6">
@@ -105,9 +104,9 @@
     </div>
 
     <!-- Activity -->
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
-        <h2 class="text-lg font-bold text-gray-900 mb-6">Aktivitas Terbaru</h2>
-        <div class="relative pl-6 border-l-2 border-gray-100 space-y-6">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col h-full">
+        <h2 class="text-lg font-bold text-gray-900 mb-6 shrink-0">Aktivitas Terbaru</h2>
+        <div class="relative pl-6 border-l-2 border-gray-100 space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2 max-h-[290px]">
         @forelse(($recentActivity ?? []) as $index => $log)
             <div class="relative">
                 <div class="absolute -left-[33px] bg-white p-1 rounded-full">
@@ -126,7 +125,7 @@
                 </div>
             </div>
         @empty
-            <p class="text-sm text-gray-500">No recent activity.</p>
+            <p class="text-sm text-gray-500">Belum ada aktivitas.</p>
         @endforelse
         </div>
     </div>
@@ -135,7 +134,7 @@
 <!-- Bottom Section: 3 Columns -->
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8 mt-2">
     <!-- Laporan Terbaru (Replacement for Featured) -->
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 h-full flex flex-col">
         <div class="flex items-center mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -151,38 +150,49 @@
                 <span class="text-sm text-gray-600">Total Fasilitas</span>
                 <span class="text-sm font-bold text-gray-900">{{ number_format($stats['total_facilities'] ?? 0) }}</span>
             </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm text-gray-600">Total Berita & Promo</span>
+                <span class="text-sm font-bold text-gray-900">{{ number_format($stats['total_berita'] ?? 0) }}</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span class="text-sm text-gray-600">Total Budaya & Warisan</span>
+                <span class="text-sm font-bold text-gray-900">{{ number_format($stats['total_budaya'] ?? 0) }}</span>
+            </div>
         </div>
     </div>
 
-    <!-- Top 5 Pencarian Hari Ini -->
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
-        <h2 class="text-lg font-bold text-gray-900 mb-6">Top 5 Pencarian Hari Ini</h2>
-        <div class="space-y-3">
-            <div class="flex items-center bg-gray-50 p-3 rounded-lg">
-                <span class="text-gray-400 text-sm w-6 font-medium">1.</span>
-                <span class="text-sm text-gray-700 font-medium ml-2">"pantai"</span>
+    <!-- Top 5 Destinasi Terbaik -->
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 h-full flex flex-col">
+        <h2 class="text-lg font-bold text-gray-900 mb-6">Top 5 Destinasi Terbaik</h2>
+        <div class="space-y-4">
+            @forelse($topDestinations ?? [] as $index => $dest)
+            <div class="flex items-center gap-3 bg-gray-50 p-2.5 rounded-2xl hover:bg-gray-100 transition-colors">
+                <span class="text-gray-400 text-sm w-5 font-bold text-center">{{ $index + 1 }}</span>
+                <div class="w-10 h-10 rounded-xl overflow-hidden bg-gray-200 shrink-0">
+                    @if(isset($dest->images) && count($dest->images) > 0)
+                        <img src="{{ image_url($dest->images[0]) }}" class="w-full h-full object-cover">
+                    @else
+                        <div class="w-full h-full flex items-center justify-center text-gray-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                    @endif
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-gray-800 truncate" title="{{ $dest->name }}">{{ $dest->name }}</p>
+                    <div class="flex items-center gap-1 mt-0.5">
+                        <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <span class="text-[11px] font-bold text-gray-600">{{ number_format($dest->average_rating ?? 0, 1) }}</span>
+                    </div>
+                </div>
             </div>
-            <div class="flex items-center bg-gray-50 p-3 rounded-lg">
-                <span class="text-gray-400 text-sm w-6 font-medium">2.</span>
-                <span class="text-sm text-gray-700 font-medium ml-2">"hotel balige"</span>
-            </div>
-            <div class="flex items-center bg-gray-50 p-3 rounded-lg">
-                <span class="text-gray-400 text-sm w-6 font-medium">3.</span>
-                <span class="text-sm text-gray-700 font-medium ml-2">"festival toba"</span>
-            </div>
-            <div class="flex items-center bg-gray-50 p-3 rounded-lg">
-                <span class="text-gray-400 text-sm w-6 font-medium">4.</span>
-                <span class="text-sm text-gray-700 font-medium ml-2">"wisata alam"</span>
-            </div>
-            <div class="flex items-center bg-gray-50 p-3 rounded-lg">
-                <span class="text-gray-400 text-sm w-6 font-medium">5.</span>
-                <span class="text-sm text-gray-700 font-medium ml-2">"kuliner batak"</span>
-            </div>
+            @empty
+            <p class="text-sm text-gray-500 text-center py-4">Belum ada data destinasi.</p>
+            @endforelse
         </div>
     </div>
 
     <!-- Trip Dibuat -->
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 h-full flex flex-col">
         <div class="flex items-center mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -239,6 +249,11 @@
             const labels = chartData.map(item => item.month ?? '-');
             const destinations = chartData.map(item => item.destinations ?? 0);
             const events = chartData.map(item => item.events ?? 0);
+            const berita = chartData.map(item => item.berita ?? 0);
+            const budaya = chartData.map(item => item.budaya ?? 0);
+            const fasilitas = chartData.map(item => item.fasilitas ?? 0);
+            const reviews = chartData.map(item => item.reviews ?? 0);
+            const reports = chartData.map(item => item.reports ?? 0);
 
             new Chart(ctx, {
                 type: 'line',
@@ -248,21 +263,78 @@
                         {
                             label: 'Destinasi',
                             data: destinations.length ? destinations : [0, 0, 0, 0, 0, 0],
-                            borderColor: '#7e22ce', // purple-700
+                            borderColor: '#9333ea', // purple-600
+                            backgroundColor: '#9333ea',
                             borderWidth: 2,
                             tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
                             fill: false
                         },
                         {
                             label: 'Event',
                             data: events.length ? events : [0, 0, 0, 0, 0, 0],
                             borderColor: '#16a34a', // green-600
+                            backgroundColor: '#16a34a',
                             borderWidth: 2,
                             tension: 0.4,
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
+                            fill: false
+                        },
+                        {
+                            label: 'Berita',
+                            data: berita.length ? berita : [0, 0, 0, 0, 0, 0],
+                            borderColor: '#3b82f6', // blue-500
+                            backgroundColor: '#3b82f6',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
+                            fill: false
+                        },
+                        {
+                            label: 'Budaya',
+                            data: budaya.length ? budaya : [0, 0, 0, 0, 0, 0],
+                            borderColor: '#f97316', // orange-500
+                            backgroundColor: '#f97316',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
+                            fill: false
+                        },
+                        {
+                            label: 'Fasilitas',
+                            data: fasilitas.length ? fasilitas : [0, 0, 0, 0, 0, 0],
+                            borderColor: '#ec4899', // pink-500
+                            backgroundColor: '#ec4899',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
+                            fill: false
+                        },
+                        {
+                            label: 'Ulasan',
+                            data: reviews.length ? reviews : [0, 0, 0, 0, 0, 0],
+                            borderColor: '#14b8a6', // teal-500
+                            backgroundColor: '#14b8a6',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
+                            fill: false
+                        },
+                        {
+                            label: 'Laporan',
+                            data: reports.length ? reports : [0, 0, 0, 0, 0, 0],
+                            borderColor: '#ef4444', // red-500
+                            backgroundColor: '#ef4444',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            pointRadius: 2,
+                            pointHoverRadius: 5,
                             fill: false
                         }
                     ]

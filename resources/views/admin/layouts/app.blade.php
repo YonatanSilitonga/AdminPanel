@@ -137,8 +137,8 @@
                 @include('admin.layouts.navbar')
 
                 <!-- Page Content -->
-                <main class="flex-1 overflow-auto custom-scrollbar">
-                    <div id="page-content" class="max-w-[1700px] mx-auto px-6 md:px-10 py-8 page-enter">
+                <main class="flex-1 overflow-auto custom-scrollbar flex flex-col">
+                    <div id="page-content" class="max-w-[1700px] w-full mx-auto px-6 md:px-10 py-8 page-enter flex-1">
                         <!-- Breadcrumb -->
                         @yield('breadcrumb')
 
@@ -224,6 +224,18 @@
                         <!-- Page Content -->
                         @yield('content')
                     </div>
+
+                    <!-- Footer -->
+                    <footer class="w-full px-6 md:px-10 py-6 mt-auto">
+                        <div class="max-w-[1700px] mx-auto border-t border-gray-100 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <p class="text-[13px] text-gray-400 font-medium">
+                                &copy; {{ date('Y') }} <span class="text-sidebar font-bold">Aplikasi Wisata Toba</span>. Hak Cipta Dilindungi.
+                            </p>
+                            <p class="text-[13px] text-gray-400 font-medium">
+                                Versi 1.0.0
+                            </p>
+                        </div>
+                    </footer>
                 </main>
             </div>
         </div>

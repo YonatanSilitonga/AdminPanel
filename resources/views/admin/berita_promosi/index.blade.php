@@ -32,6 +32,8 @@
     createPreviewUrl: '',
     createFileName: '',
     editFileName: '',
+    showLightbox: false,
+    lightboxImage: '',
 
     async openViewModal(id) {
         if (!id) return;
@@ -163,7 +165,7 @@
                         <td class="px-10 py-6">
                             <div class="flex items-center gap-4">
                                 @if($item->thumbnail)
-                                    <img src="{{ image_url($item->thumbnail) }}" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-100 group-hover:scale-105 transition-transform" alt="">
+                                    <img src="{{ image_url($item->thumbnail) }}" @click.stop="lightboxImage = '{{ image_url($item->thumbnail) }}'; showLightbox = true" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-100 cursor-pointer group-hover:scale-105 transition-transform" alt="" title="Klik untuk memperbesar">
                                 @else
                                     <div class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-300">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -345,21 +347,30 @@
                             @error('tipe') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Thumbnail</label>
-                            <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:bg-gray-50 transition-colors relative overflow-hidden">
-                                <template x-if="editPreviewUrl">
-                                    <img :src="editPreviewUrl" class="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none">
-                                </template>
-                                <input type="file" name="thumbnail" accept="image/png, image/jpeg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Ganti Thumbnail</label>
+                            <template x-if="editPreviewUrl">
+                                <div class="mb-3">
+                                    <div class="relative rounded-2xl overflow-hidden bg-gray-100 h-40 w-full border border-gray-100 group cursor-pointer" @click="lightboxImage = editPreviewUrl; showLightbox = true" title="Klik untuk memperbesar">
+                                        <img :src="editPreviewUrl" class="w-full h-full object-cover" alt="Foto Preview">
+                                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Foto Preview (Klik untuk memperbesar)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <div class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors relative overflow-hidden group">
+                                <input type="file" name="thumbnail" accept="image/png, image/jpeg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     @change="
                                         editFileName = $event.target.files[0].name;
                                         const reader = new FileReader();
                                         reader.onload = (e) => { editPreviewUrl = e.target.result };
                                         reader.readAsDataURL($event.target.files[0]);
                                     ">
-                                <svg class="w-8 h-8 text-sidebar mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                <p class="text-sm text-gray-700 font-medium" x-text="editFileName || 'Klik untuk ganti foto'"></p>
-                                <p class="text-xs text-gray-400 mt-1">PNG, JPG (Maks. 2MB, Rekomendasi 1920x1080px)</p>
+                                <div class="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm mb-2 w-fit mx-auto group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                </div>
+                                <p class="text-[13px] text-gray-700 font-bold" x-text="editFileName || 'Pilih foto baru'"></p>
+                                <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tight">PNG, JPG (Maks. 2MB)</p>
                             </div>
                             @error('thumbnail') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -418,9 +429,12 @@
 
                     <div x-show="viewingItem" class="space-y-8">
                         <!-- Banner Image -->
-                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group">
+                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group" :class="viewingItem?.thumbnail_url ? 'cursor-pointer' : ''" @click="if(viewingItem?.thumbnail_url) { lightboxImage = viewingItem.thumbnail_url; showLightbox = true; }">
                             <template x-if="viewingItem?.thumbnail_url">
                                 <img :src="viewingItem.thumbnail_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Klik untuk memperbesar</span>
+                                </div>
                             </template>
                             <template x-if="!viewingItem?.thumbnail_url">
                                 <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
@@ -485,6 +499,15 @@
         </div>
     </div>
 
+    <!-- Image Lightbox Modal -->
+    <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak @click="showLightbox = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="relative max-w-4xl max-h-[90vh] p-4 flex items-center justify-center" @click.stop>
+            <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showLightbox = false" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
 
 </div>
 @endsection

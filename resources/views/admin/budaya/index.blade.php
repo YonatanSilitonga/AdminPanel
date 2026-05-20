@@ -36,6 +36,8 @@
     editFileName: '',
     createPreviewUrl: '',
     editPreviewUrl: '',
+    showLightbox: false,
+    lightboxImage: '',
 
     async openEditModal(id) {
         if (!id) return;
@@ -216,7 +218,7 @@
                                 </td>
                                 <td class="px-8 py-5">
                                     @if(isset($item->image_url))
-                                        <img src="{{ image_url($item->image_url) }}" alt="{{ $item->name }}" class="w-20 h-14 object-cover rounded-xl shadow-sm border border-gray-100 group-hover:scale-105 transition-transform">
+                                        <img src="{{ image_url($item->image_url) }}" @click.stop="lightboxImage = '{{ image_url($item->image_url) }}'; showLightbox = true" alt="{{ $item->name }}" class="w-20 h-14 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer group-hover:scale-105 transition-transform" title="Klik untuk memperbesar">
                                     @else
                                         <div class="w-20 h-14 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
                                             <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -531,9 +533,16 @@
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama (Opsional)</label>
-                                <div x-show="editPreviewUrl" class="mb-3">
-                                    <img :src="editPreviewUrl" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
-                                </div>
+                                <template x-if="editPreviewUrl">
+                                    <div class="mb-3">
+                                        <div class="relative rounded-2xl overflow-hidden bg-gray-100 h-40 w-full border border-gray-100 group cursor-pointer" @click="lightboxImage = editPreviewUrl; showLightbox = true" title="Klik untuk memperbesar">
+                                            <img :src="editPreviewUrl" class="w-full h-full object-cover" alt="Foto Preview">
+                                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Foto Preview (Klik untuk memperbesar)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
                                 <div class="relative group">
                                     <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" 
                                         @change="
@@ -602,9 +611,12 @@
 
                     <div x-show="viewingBudaya" class="space-y-8">
                         <!-- Image -->
-                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group">
+                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group" :class="viewingBudaya?.image_url ? 'cursor-pointer' : ''" @click="if(viewingBudaya?.image_url) { lightboxImage = viewingBudaya.image_url.startsWith('http') ? viewingBudaya.image_url : '/storage/' + viewingBudaya.image_url; showLightbox = true; }" title="Klik untuk memperbesar">
                             <template x-if="viewingBudaya?.image_url">
                                 <img :src="viewingBudaya.image_url.startsWith('http') ? viewingBudaya.image_url : '/storage/' + viewingBudaya.image_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Klik untuk memperbesar</span>
+                                </div>
                             </template>
                             <div class="absolute top-6 right-6">
                                 <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingBudaya?.category || '-'"></span>
@@ -627,10 +639,6 @@
                                     </div>
                                 </div>
 
-                                <div>
-                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Koordinat Geografis</h4>
-                                    <p class="text-xs font-mono text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-block" x-text="(viewingBudaya?.latitude || '-') + ', ' + (viewingBudaya?.longitude || '-')"></p>
-                                </div>
 
                                 <div>
                                     <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Status Publikasi</h4>
@@ -673,6 +681,17 @@
             </div>
         </div>
     </div>
+
+    <!-- Image Lightbox Modal -->
+    <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak @click="showLightbox = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="relative max-w-4xl max-h-[90vh] p-4 flex items-center justify-center" @click.stop>
+            <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showLightbox = false" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+
 </div>
 
 <style>

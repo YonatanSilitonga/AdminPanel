@@ -245,7 +245,9 @@ class BaseAdminController extends Controller
                     'pending_reviews'    => \App\Models\MongoDB\MongoReview::where('status', 'pending')->count(),
                     'pending_reports'    => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
                     'total_reviews'      => \App\Models\MongoDB\MongoReview::count(),
-                    'total_facilities'   => DB::table('fasilitas_umum')->count(),
+                    'total_facilities'   => \App\Models\MongoDB\MongoFasilitasUmum::count(),
+                    'total_budaya'       => \App\Models\MongoDB\MongoBudaya::count(),
+                    'total_berita'       => \App\Models\MongoDB\MongoBeritaPromosi::count(),
                 ];
             } catch (\Exception $e) {
                 return [
@@ -256,6 +258,8 @@ class BaseAdminController extends Controller
                     'pending_reports'    => 0,
                     'total_reviews'      => 0,
                     'total_facilities'   => 0,
+                    'total_budaya'       => 0,
+                    'total_berita'       => 0,
                 ];
             }
         });

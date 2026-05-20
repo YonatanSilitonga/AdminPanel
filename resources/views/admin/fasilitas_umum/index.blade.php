@@ -50,7 +50,7 @@
 @endsection
 
 @section('content')
-<div x-data="facilityManager()" @open-create-modal.window="showCreateModal = true">
+<div id="facility-manager" x-data="facilityManager()" @open-create-modal.window="showCreateModal = true">
     <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
     <!-- Filters & Search Bar -->
     <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
@@ -140,7 +140,7 @@
                             <td class="px-10 py-6">
                                 <div class="flex items-center gap-4">
                                     @if($facility->image_url)
-                                        <img src="{{ image_url($facility->image_url) }}" alt="{{ $facility->name }}" class="w-20 h-14 object-cover rounded-xl shadow-sm border border-gray-100 flex-shrink-0">
+                                        <img src="{{ image_url($facility->image_url) }}" alt="{{ $facility->name }}" @click="lightboxImage = '{{ image_url($facility->image_url) }}'; showLightbox = true" class="w-20 h-14 object-cover rounded-xl shadow-sm border border-gray-100 flex-shrink-0 cursor-pointer hover:scale-105 transition-transform" title="Klik untuk memperbesar">
                                     @else
                                         <div class="w-20 h-14 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center flex-shrink-0">
                                             <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -235,7 +235,7 @@
                     </button>
                 </div>
 
-                <form @submit.prevent="submitCreate()" class="space-y-6">
+                <form id="createFacilityForm" @submit.prevent="submitCreate()" class="space-y-6">
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nama Fasilitas</label>
                         <input type="text" name="name" required placeholder="Contoh: SPBU Balige Utara" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
@@ -375,7 +375,8 @@
                     <svg class="animate-spin h-8 w-8 text-sidebar" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 </div>
 
-                <form x-show="editingFacility" @submit.prevent="submitUpdate()" class="space-y-6">
+                <div x-show="editingFacility" class="w-full">
+                    <form id="editFacilityForm" @submit.prevent="submitUpdate()" class="space-y-6">
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nama Fasilitas</label>
                         <input type="text" name="name" x-model="editingFacility.name" required class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
@@ -463,10 +464,16 @@
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Ganti Foto Fasilitas</label>
-                        <div x-show="editingFacility && editingFacility.image_url" class="mb-3">
-                            <img :src="editingFacility.image_url && (editingFacility.image_url.startsWith('http') ? editingFacility.image_url : '/storage/' + editingFacility.image_url)" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
-                            <p class="text-[10px] text-gray-400 mt-1">Foto saat ini</p>
-                        </div>
+                        <template x-if="editingFacility?.image_url">
+                            <div class="mb-3">
+                                <div class="relative rounded-2xl overflow-hidden bg-gray-100 h-40 w-full border border-gray-100 group cursor-pointer" @click="lightboxImage = (editingFacility.image_url.startsWith('http') ? editingFacility.image_url : '/storage/' + editingFacility.image_url); showLightbox = true" title="Klik untuk memperbesar">
+                                    <img :src="editingFacility.image_url.startsWith('http') ? editingFacility.image_url : '/storage/' + editingFacility.image_url" class="w-full h-full object-cover" alt="Foto Saat Ini">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Foto Saat Ini (Klik untuk memperbesar)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                         <div class="relative group">
                             <input type="file" name="image" id="edit_image" class="hidden" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                             <label for="edit_image" class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
@@ -502,6 +509,7 @@
                         </button>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </div>
@@ -535,63 +543,83 @@
                         <p class="text-sm font-bold text-emerald-600 animate-pulse">Memuat data...</p>
                     </div>
 
-                    <template x-if="viewingFacility">
-                        <div class="space-y-8">
-                            <div class="rounded-[2rem] overflow-hidden bg-gray-100 aspect-video relative group">
-                                <img x-show="viewingFacility.image_url" :src="viewingFacility.image_url && (viewingFacility.image_url.startsWith('http') ? viewingFacility.image_url : '/storage/' + viewingFacility.image_url)" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                                <div class="absolute top-6 right-6">
-                                    <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingFacility.type"></span>
-                                </div>
-                            </div>
-                            
-                            <div class="space-y-6">
-                                <div>
-                                    <h4 class="text-2xl font-bold text-gray-900 leading-tight" x-text="viewingFacility.name"></h4>
-                                    <p class="text-sm font-medium text-gray-400 mt-1" x-text="viewingFacility.address"></p>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-6 pt-6 border-t border-gray-50">
-                                    <div>
-                                        <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Jam Operasional</h5>
-                                        <p class="text-sm font-bold text-emerald-600" x-text="viewingFacility.operational_hours || '-'"></p>
-                                    </div>
-                                    <div>
-                                        <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor Telepon</h5>
-                                        <p class="text-sm font-bold text-gray-900" x-text="viewingFacility.phone_number || '-'"></p>
-                                    </div>
-                                    <div>
-                                        <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status Aktif</h5>
-                                        <template x-if="viewingFacility.is_active">
-                                            <span class="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                                Terverifikasi Aktif
-                                            </span>
-                                        </template>
-                                        <template x-if="!viewingFacility.is_active">
-                                            <span class="inline-flex items-center gap-1.5 text-red-500 text-xs font-bold">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                                                Nonaktif
-                                            </span>
-                                        </template>
+                    <div x-show="viewingFacility" class="space-y-8">
+                        <div class="rounded-[2rem] overflow-hidden bg-gray-100 aspect-video relative group cursor-pointer" title="Klik untuk memperbesar">
+                            <template x-if="viewingFacility?.image_url">
+                                <div class="w-full h-full" @click="lightboxImage = (viewingFacility.image_url.startsWith('http') ? viewingFacility.image_url : '/storage/' + viewingFacility.image_url); showLightbox = true">
+                                    <img :src="viewingFacility.image_url.startsWith('http') ? viewingFacility.image_url : '/storage/' + viewingFacility.image_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Klik untuk memperbesar</span>
                                     </div>
                                 </div>
-
-                                <div class="p-4 bg-gray-50 rounded-2xl flex items-center gap-4">
-                                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-sidebar shadow-sm">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Koordinat Peta</p>
-                                        <p class="text-xs font-mono text-gray-600" x-text="(viewingFacility.latitude || '-') + ', ' + (viewingFacility.longitude || '-')"></p>
-                                    </div>
+                            </template>
+                            <template x-if="viewingFacility !== null && !viewingFacility.image_url">
+                                <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                    <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <p class="text-xs font-bold uppercase tracking-widest">Tidak ada foto</p>
                                 </div>
+                            </template>
+                            <div class="absolute top-6 right-6 z-10">
+                                <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingFacility?.type || '-'"></span>
                             </div>
                         </div>
-                    </template>
+
+                        <!-- Info Grid -->
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="text-2xl font-bold text-gray-900 leading-tight" x-text="viewingFacility?.name || '-'"></h4>
+                                <p class="text-sm font-medium text-gray-400 mt-1" x-text="viewingFacility?.address || '-'"></p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-6 pt-6 border-t border-gray-50">
+                                <div>
+                                    <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Jam Operasional</h5>
+                                    <p class="text-sm font-bold text-emerald-600" x-text="viewingFacility?.operational_hours || '-'"></p>
+                                </div>
+                                <div>
+                                    <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor Telepon</h5>
+                                    <p class="text-sm font-bold text-gray-900" x-text="viewingFacility?.phone_number || '-'"></p>
+                                </div>
+                                <div>
+                                    <h5 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Status Aktif</h5>
+                                    <template x-if="viewingFacility?.is_active">
+                                        <span class="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                            Terverifikasi Aktif
+                                        </span>
+                                    </template>
+                                    <template x-if="viewingFacility !== null && !viewingFacility.is_active">
+                                        <span class="inline-flex items-center gap-1.5 text-red-500 text-xs font-bold">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                            Nonaktif
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Map Preview -->
+                            <div class="space-y-3 pt-4 border-t border-gray-50">
+                                <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em]">Kordinat Geografis</h4>
+                                <div class="flex items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-4 rounded-2xl">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-gray-400">LAT:</span>
+                                        <span x-text="viewingFacility?.latitude || '-'"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 border-l border-gray-200 pl-4">
+                                        <span class="font-bold text-gray-400">LNG:</span>
+                                        <span x-text="viewingFacility?.longitude || '-'"></span>
+                                    </div>
+                                </div>
+                                
+                                {{-- Google Map Container for Detail View --}}
+                                <div id="view_map_picker" class="w-full mt-4" style="height: 250px; border-radius: 1.5rem; border: 1px solid #eee;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Footer -->
-                <div class="px-10 py-6 bg-gray-50 flex items-center justify-between">
+                <div class="px-10 py-6 bg-gray-50 flex items-center justify-between border-t border-gray-100">
                     <div class="flex items-center gap-2">
                          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                          <p class="text-xs text-gray-400 font-medium">Terakhir diperbarui: <span x-text="viewingFacility?.updated_at ? new Date(viewingFacility.updated_at).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-'"></span></p>
@@ -599,6 +627,16 @@
                     <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all shadow-sm">Tutup Detail</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak @click="showLightbox = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="relative max-w-4xl max-h-[90vh] p-4 flex items-center justify-center" @click.stop>
+            <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showLightbox = false" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
     </div>
 </div>
@@ -612,8 +650,10 @@ function facilityManager() {
         viewingFacility: null,
         loading: false,
         createIsActive: true,
-        editingFacility: {},
+        editingFacility: null,
         createFileName: '',
+        showLightbox: false,
+        lightboxImage: '',
         activeType: '{{ request('type', 'Semua') }}',
         searchQuery: '{{ request('search', '') }}',
         statusFilter: '{{ request('status', 'all') }}',
@@ -635,6 +675,7 @@ function facilityManager() {
 
         async openViewModal(id) {
             if (!id) return;
+            this.showEditModal = false;
             this.loading = true;
             this.showViewModal = true;
             this.viewingFacility = null;
@@ -659,16 +700,16 @@ function facilityManager() {
 
         async openEditModal(id) {
             if (!id) return;
+            this.showViewModal = false;
             this.loading = true;
             this.showEditModal = true;
-            this.editingFacility = {};
+            this.editingFacility = null;
             this.editFileName = '';
             try {
                 const response = await fetch(`/admin/fasilitas-umum/${id}/edit`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
                 const data = await window.safeParseJSON(response);
-                // Ensure ID is present in the object
                 if (data && !data._id && data.id) data._id = data.id;
                 this.editingFacility = data;
             } catch (error) {
@@ -682,7 +723,7 @@ function facilityManager() {
 
         async submitCreate() {
             this.loading = true;
-            const form = event.target;
+            const form = document.getElementById('createFacilityForm');
             const formData = new FormData(form);
             
             try {
@@ -708,14 +749,14 @@ function facilityManager() {
         },
 
         async submitUpdate() {
-            const facilityId = this.editingFacility._id || this.editingFacility.id;
+            const facilityId = this.editingFacility?._id || this.editingFacility?.id;
             if (!facilityId) {
                 alert('ID Fasilitas tidak ditemukan');
                 return;
             }
 
             this.loading = true;
-            const form = event.target;
+            const form = document.getElementById('editFacilityForm');
             const formData = new FormData(form);
             formData.append('_method', 'PUT');
 
@@ -749,7 +790,7 @@ function facilityManager() {
 }
 
 // Map Initialization and Logic
-let createMap, editMap, createMarker, editMarker;
+let createMap, editMap, viewMap, createMarker, editMarker, viewMarker;
 
 function initGoogleMap(elementId, latId, lngId, initialPos = { lat: 2.3361, lng: 99.0631 }) {
     if (typeof google === 'undefined') return null;
@@ -834,9 +875,43 @@ function initGoogleMap(elementId, latId, lngId, initialPos = { lat: 2.3361, lng:
     return { map, marker };
 }
 
+function initGoogleMapReadOnly(elementId, initialPos = { lat: 2.3361, lng: 99.0631 }) {
+    if (typeof google === 'undefined') {
+        console.warn('Google Maps API not yet loaded');
+        return null;
+    }
+
+    const mapElement = document.getElementById(elementId);
+    if (!mapElement) return null;
+
+    const map = new google.maps.Map(mapElement, {
+        zoom: 15,
+        center: initialPos,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        zoomControl: true,
+    });
+
+    const marker = new google.maps.Marker({
+        position: initialPos,
+        map: map,
+        draggable: false,
+        animation: google.maps.Animation.DROP,
+    });
+
+    // Ensure map renders correctly
+    setTimeout(() => {
+        google.maps.event.trigger(map, "resize");
+        map.setCenter(initialPos);
+    }, 300);
+
+    return { map, marker };
+}
+
 // Monitor Alpine.js for modal changes
 setInterval(() => {
-    const el = document.querySelector('[x-data^="facilityManager"]');
+    const el = document.getElementById('facility-manager');
     if (el && window.Alpine) {
         const data = Alpine.$data(el);
         if (data) {
@@ -863,6 +938,20 @@ setInterval(() => {
                     else { editMap = null; }
                 }, 500);
             } else if (!data.showEditModal) { editMap = null; }
+
+            // View Map (Read-Only)
+            if (data.showViewModal && data.viewingFacility && !viewMap && typeof google !== 'undefined') {
+                viewMap = true;
+                setTimeout(() => {
+                    const pos = { 
+                        lat: parseFloat(data.viewingFacility.latitude) || 2.3361, 
+                        lng: parseFloat(data.viewingFacility.longitude) || 99.0631 
+                    };
+                    const res = initGoogleMapReadOnly('view_map_picker', pos);
+                    if(res) { viewMap = res.map; viewMarker = res.marker; }
+                    else { viewMap = null; }
+                }, 500);
+            } else if (!data.showViewModal) { viewMap = null; }
         }
     }
 }, 500);

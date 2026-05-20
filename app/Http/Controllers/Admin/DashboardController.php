@@ -5,6 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\MongoEvent;
+use App\Models\MongoDB\MongoDestination;
+use App\Models\MongoDB\MongoReview;
+use App\Models\MongoDB\MongoReport;
+use App\Models\MongoDB\MongoBeritaPromosi;
+use App\Models\MongoDB\MongoBudaya;
+use App\Models\MongoDB\MongoFasilitasUmum;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends BaseAdminController
@@ -24,6 +30,9 @@ class DashboardController extends BaseAdminController
         $pendingReviews = $stats['pending_reviews'] ?? 0;
         $pendingReports = $stats['pending_reports'] ?? 0;
 
+        // Top 5 Destinasi (Real Data dari MongoDB)
+        $topDestinations = MongoDestination::orderBy('average_rating', 'desc')->limit(5)->get();
+
         // Chart data is now handled via AJAX to speed up page load
         $chartData = []; 
 
@@ -32,6 +41,7 @@ class DashboardController extends BaseAdminController
             'recentActivity' => $recentActivity,
             'pendingReviews' => $pendingReviews,
             'pendingReports' => $pendingReports,
+            'topDestinations' => $topDestinations,
             'chartData' => $chartData,
         ]);
     }
@@ -64,17 +74,13 @@ class DashboardController extends BaseAdminController
 
             $data[] = [
                 'month' => $month->format('M'),
-                'destinations' => DB::table('destinations')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->count(),
-                'events' => MongoEvent::whereBetween('created_at', [$startDate, $endDate])
-                    ->count(),
-                'reviews' => DB::table('reviews')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->count(),
-                'reports' => DB::table('reports')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->count(),
+                'destinations' => MongoDestination::whereBetween('created_at', [$startDate, $endDate])->count(),
+                'events' => MongoEvent::whereBetween('created_at', [$startDate, $endDate])->count(),
+                'reviews' => MongoReview::whereBetween('created_at', [$startDate, $endDate])->count(),
+                'reports' => MongoReport::whereBetween('created_at', [$startDate, $endDate])->count(),
+                'berita' => MongoBeritaPromosi::whereBetween('created_at', [$startDate, $endDate])->count(),
+                'budaya' => MongoBudaya::whereBetween('created_at', [$startDate, $endDate])->count(),
+                'fasilitas' => MongoFasilitasUmum::whereBetween('created_at', [$startDate, $endDate])->count(),
             ];
         }
 

@@ -1,5 +1,9 @@
 @extends('admin.layouts.app')
 
+@push('charts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endpush
+
 @push('styles')
 <style>
     /* Fix Google Autocomplete Suggestions in Modals */
@@ -64,6 +68,8 @@
     editCloseTime: '17:00',
     showViewModal: false,
     viewingDest: null,
+    showLightbox: false,
+    lightboxImage: '',
 
     // Tab switcher
     switchTab(tab) {
@@ -261,7 +267,7 @@
                             <td class="px-10 py-6">
                                 <div class="flex items-center gap-4">
                                     @if(isset($destination->images) && count($destination->images) > 0)
-                                        <img src="{{ image_url($destination->images[0]) }}" alt="{{ $destination->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100">
+                                        <img src="{{ image_url($destination->images[0]) }}" alt="{{ $destination->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" @click="lightboxImage = '{{ image_url($destination->images[0]) }}'; showLightbox = true" title="Klik untuk memperbesar">
                                     @else
                                         <div class="w-24 h-16 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
                                             <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -646,8 +652,9 @@
                     <svg class="animate-spin h-8 w-8 text-sidebar" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 </div>
 
-                <div x-show="editingDest">
-                    <form id="editDestForm" @submit.prevent="submitEdit()" class="space-y-5">
+                <template x-if="editingDest">
+                    <div class="w-full">
+                        <form id="editDestForm" @submit.prevent="submitEdit()" class="space-y-5">
                         <input type="hidden" name="_method" value="PUT">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-span-2 space-y-2">
@@ -727,8 +734,12 @@
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama</label>
                                 <div x-show="editingDest && editingDest.images && editingDest.images.length > 0" class="mb-3">
-                                    <img :src="editingDest.images[0].startsWith('http') ? editingDest.images[0] : `/storage/${editingDest.images[0]}`" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100">
-                                    <p class="text-[10px] text-gray-400 mt-1">Foto saat ini</p>
+                                    <div class="relative rounded-2xl overflow-hidden bg-gray-100 h-40 w-full border border-gray-100 group cursor-pointer" @click="lightboxImage = (editingDest.images[0].startsWith('http') ? editingDest.images[0] : '/storage/' + editingDest.images[0]); showLightbox = true" title="Klik untuk memperbesar">
+                                        <img :src="editingDest.images[0].startsWith('http') ? editingDest.images[0] : `/storage/${editingDest.images[0]}`" class="w-full h-full object-cover" alt="Foto Saat Ini">
+                                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Foto Saat Ini (Klik untuk memperbesar)</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="relative group">
                                     <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
@@ -751,6 +762,7 @@
                         </div>
                     </form>
                 </div>
+            </template>
             </div>
         </div>
     </div>
@@ -786,7 +798,7 @@
 
                     <div x-show="viewingDest" class="space-y-8">
                         <!-- Image Gallery (Main Image) -->
-                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group">
+                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group cursor-pointer" @click="lightboxImage = (viewingDest.images[0].startsWith('http') ? viewingDest.images[0] : '/storage/' + viewingDest.images[0]); showLightbox = true" title="Klik untuk memperbesar">
                             <template x-if="viewingDest?.images && viewingDest.images.length > 0">
                                 <img :src="viewingDest.images[0].startsWith('http') ? viewingDest.images[0] : '/storage/' + viewingDest.images[0]" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
                             </template>
@@ -847,6 +859,9 @@
                                     <span x-text="viewingDest?.longitude || '-'"></span>
                                 </div>
                             </div>
+                            
+                            {{-- Google Map Container for Detail View --}}
+                            <div id="view_map_picker" class="w-full mt-4" style="height: 250px; border-radius: 1.5rem; border: 1px solid #eee;"></div>
                         </div>
                     </div>
                 </div>
@@ -857,6 +872,16 @@
                     <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all">Tutup Detail</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak @click="showLightbox = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="relative max-w-4xl max-h-[90vh] p-4 flex items-center justify-center" @click.stop>
+            <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showLightbox = false" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
     </div>
 </div>
@@ -875,7 +900,41 @@
         });
     };
 
-    let createMap, editMap, createMarker, editMarker;
+    let createMap, editMap, viewMap, createMarker, editMarker, viewMarker;
+
+    function initGoogleMapReadOnly(elementId, initialPos = { lat: 2.3361, lng: 99.0631 }) {
+        if (typeof google === 'undefined') {
+            console.warn('Google Maps API not yet loaded');
+            return null;
+        }
+
+        const mapElement = document.getElementById(elementId);
+        if (!mapElement) return null;
+
+        const map = new google.maps.Map(mapElement, {
+            zoom: 15,
+            center: initialPos,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            zoomControl: true,
+        });
+
+        const marker = new google.maps.Marker({
+            position: initialPos,
+            map: map,
+            draggable: false,
+            animation: google.maps.Animation.DROP,
+        });
+
+        // Ensure map renders correctly
+        setTimeout(() => {
+            google.maps.event.trigger(map, "resize");
+            map.setCenter(initialPos);
+        }, 300);
+
+        return { map, marker };
+    }
 
     function initGoogleMap(elementId, latId, lngId, initialPos = { lat: 2.3361, lng: 99.0631 }) {
         if (typeof google === 'undefined') {
@@ -1158,6 +1217,24 @@
                     }, 500); // Wait for modal animation
                 } else if (!data.showEditModal) {
                     editMap = null;
+                }
+
+                // Initialize View Map (Read-Only)
+                if (data.showViewModal && data.viewingDest && !viewMap && typeof google !== 'undefined') {
+                    viewMap = true; // Temporary flag
+                    setTimeout(() => {
+                        const pos = { 
+                            lat: parseFloat(data.viewingDest.latitude) || 2.3361, 
+                            lng: parseFloat(data.viewingDest.longitude) || 99.0631 
+                        };
+                        const res = initGoogleMapReadOnly('view_map_picker', pos);
+                        if(res) {
+                            viewMap = res.map;
+                            viewMarker = res.marker;
+                        } else { viewMap = null; }
+                    }, 500); // Wait for modal animation
+                } else if (!data.showViewModal) {
+                    viewMap = null;
                 }
             }
         }

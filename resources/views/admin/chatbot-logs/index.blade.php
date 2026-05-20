@@ -59,38 +59,33 @@
 </div>
 
 <!-- Filter Bar -->
-<div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-6 shadow-sm">
-    <form method="GET" action="{{ route('admin.chatbot-logs.index') }}" class="flex flex-wrap items-center gap-4">
+<div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
+    <form method="GET" action="{{ route('admin.chatbot-logs.index') }}" class="flex flex-wrap w-full gap-4 items-center" id="filter-form">
         <!-- Persist current sorting -->
         <input type="hidden" name="sort_by" value="{{ request('sort_by', 'updated_at') }}">
         <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
 
-        <div class="relative flex-grow max-w-md">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
+        <div class="flex-1 min-w-[300px] relative">
+            <input type="text" name="user_id" value="{{ request('user_id') }}" placeholder="Cari User ID..." class="w-full pl-12 pr-6 py-3 bg-gray-50 border-none rounded-2xl outline-none text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </span>
-            <input type="text" name="user_id" value="{{ request('user_id') }}" placeholder="Cari User ID..." 
-                class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium placeholder-gray-400 focus:border-emerald-500 transition-all shadow-sm">
+            </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <span class="text-[13px] font-bold text-gray-400">Tampilkan:</span>
-            <select name="per_page" onchange="this.form.submit()" 
-                class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
-                @foreach([10, 20, 50, 100] as $val)
-                    <option value="{{ $val }}" @selected(request('per_page', 10) == $val)>{{ $val }}</option>
-                @endforeach
-            </select>
-        </div>
+        <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors">
+            <option value="10" @selected(request('per_page', 10) == 10)>10 Baris</option>
+            <option value="20" @selected(request('per_page', 10) == 20)>20 Baris</option>
+            <option value="50" @selected(request('per_page', 10) == 50)>50 Baris</option>
+            <option value="100" @selected(request('per_page', 10) == 100)>100 Baris</option>
+        </select>
         
-        <select name="type" onchange="this.form.submit()" 
-            class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
+        <select name="type" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors">
             <option value="">Semua Tipe</option>
             <option value="user" @selected(request('type') === 'user')>👤 User</option>
             <option value="guest" @selected(request('type') === 'guest')>👥 Tamu</option>
         </select>
 
-        <a href="{{ route('admin.chatbot-logs.index') }}" class="px-6 py-3 bg-gray-50 text-gray-500 rounded-xl text-[14px] font-bold hover:bg-gray-100 transition-all">
+        <a href="{{ route('admin.chatbot-logs.index') }}" class="px-6 py-3 bg-gray-50 border border-gray-100 text-gray-500 rounded-2xl text-sm font-medium hover:bg-gray-100 transition-all shadow-sm">
             Reset
         </a>
     </form>

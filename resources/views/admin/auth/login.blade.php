@@ -486,7 +486,7 @@
         </div>
 
         <div class="page-footer">
-            &copy; 2026 Toba Tourism. All rights reserved.
+            &copy; {{ date('Y') }} Aplikasi Wisata Toba. Hak Cipta Dilindungi.
         </div>
     </div>
 
