@@ -38,3 +38,17 @@ if (!function_exists('image_url')) {
         return asset('storage/' . $path);
     }
 }
+
+if (!function_exists('app_setting')) {
+    /**
+     * Get a setting value from AppSetting model.
+     *
+     * @param  string  $key
+     * @param  mixed  $default
+     * @return mixed
+     */
+    function app_setting(string $key, mixed $default = null): mixed
+    {
+        return \App\Models\AppSetting::get($key, $default);
+    }
+}

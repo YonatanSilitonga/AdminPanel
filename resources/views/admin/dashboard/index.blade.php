@@ -11,7 +11,25 @@
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col justify-between">
         <div class="flex justify-between items-start">
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Destinasi</p>
+                <div class="flex items-center gap-1.5 mb-1">
+                    <p class="text-sm font-medium text-gray-500">Destinasi</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah total destinasi pariwisata yang terdaftar di dalam sistem.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Dashboard Utama untuk pemantauan kapasitas data konten pariwisata.</p>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <p class="text-3xl font-bold text-gray-900">{{ $stats['total_destinations'] ?? 0 }}</p>
             </div>
             <div class="p-3 bg-purple-50 rounded-lg">
@@ -30,7 +48,25 @@
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col justify-between">
         <div class="flex justify-between items-start">
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Event</p>
+                <div class="flex items-center gap-1.5 mb-1">
+                    <p class="text-sm font-medium text-gray-500">Event</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah total event pariwisata atau kegiatan yang terdaftar.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Dashboard Utama untuk pemantauan agenda kegiatan wisata.</p>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <p class="text-3xl font-bold text-gray-900">{{ $stats['total_events'] ?? 0 }}</p>
             </div>
             <div class="p-3 bg-green-50 rounded-lg">
@@ -48,7 +84,25 @@
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col justify-between">
         <div class="flex justify-between items-start">
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Pengguna</p>
+                <div class="flex items-center gap-1.5 mb-1">
+                    <p class="text-sm font-medium text-gray-500">Pengguna</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah total pengguna (wisatawan) terdaftar pada sistem.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Dashboard Utama untuk memantau pertumbuhan basis pengguna.</p>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <p class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_users'] ?? 0) }}</p>
             </div>
             <div class="p-3 bg-orange-50 rounded-lg">
@@ -66,7 +120,25 @@
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col justify-between">
         <div class="flex justify-between items-start">
             <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Laporan Pending</p>
+                <div class="flex items-center gap-1.5 mb-1">
+                    <p class="text-sm font-medium text-gray-500">Laporan Pending</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah laporan pengaduan dari wisatawan yang statusnya masih pending dan perlu ditindaklanjuti.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Dashboard Utama sebagai pengingat aksi moderasi admin.</p>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <p class="text-3xl font-bold text-gray-900">{{ $pendingReports ?? 0 }}</p>
             </div>
             <div class="p-3 bg-red-50 rounded-lg">
@@ -87,7 +159,25 @@
     <!-- Chart -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 xl:col-span-2">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold text-gray-900">Aktivitas Bulanan</h2>
+            <div class="flex items-center gap-1.5">
+                <h2 class="text-lg font-bold text-gray-900">Aktivitas Bulanan</h2>
+                <div class="relative group cursor-pointer inline-flex items-center">
+                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                        <div class="space-y-2">
+                            <div>
+                                <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                <p class="text-slate-200 font-normal">Memvisualisasikan tren pembuatan konten dan aktivitas di sistem secara grafis.</p>
+                            </div>
+                            <div class="pt-1.5 border-t border-slate-800">
+                                <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                <p class="text-slate-200 font-normal">Dashboard Utama sebagai representasi visual data tahun berjalan.</p>
+                            </div>
+                        </div>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                    </div>
+                </div>
+            </div>
             <div class="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-gray-500">
                 <div class="flex items-center"><span class="w-3 h-0.5 bg-purple-600 mr-2 rounded-full"></span>Destinasi</div>
                 <div class="flex items-center"><span class="w-3 h-0.5 bg-green-600 mr-2 rounded-full"></span>Event</div>
@@ -105,7 +195,25 @@
 
     <!-- Activity -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 flex flex-col h-full">
-        <h2 class="text-lg font-bold text-gray-900 mb-6 shrink-0">Aktivitas Terbaru</h2>
+        <div class="flex items-center gap-1.5 mb-6 shrink-0">
+            <h2 class="text-lg font-bold text-gray-900">Aktivitas Terbaru</h2>
+            <div class="relative group cursor-pointer inline-flex items-center">
+                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                    <div class="space-y-2">
+                        <div>
+                            <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                            <p class="text-slate-200 font-normal">Melacak secara realtime log aktivitas atau tindakan yang dilakukan oleh seluruh administrator.</p>
+                        </div>
+                        <div class="pt-1.5 border-t border-slate-800">
+                            <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                            <p class="text-slate-200 font-normal">Dashboard Utama untuk pemantauan keamanan operasional harian.</p>
+                        </div>
+                    </div>
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                </div>
+            </div>
+        </div>
         <div class="relative pl-6 border-l-2 border-gray-100 space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2 max-h-[290px]">
         @forelse(($recentActivity ?? []) as $index => $log)
             <div class="relative">
@@ -135,11 +243,29 @@
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8 mt-2">
     <!-- Laporan Terbaru (Replacement for Featured) -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 h-full flex flex-col">
-        <div class="flex items-center mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h2 class="text-lg font-bold text-gray-900">Statistik Sistem</h2>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <h2 class="text-lg font-bold text-gray-900">Statistik Sistem</h2>
+            </div>
+            <div class="relative group cursor-pointer inline-flex items-center">
+                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-3 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                    <div class="space-y-2">
+                        <div>
+                            <span class="block font-bold text-indigo-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                            <p class="text-slate-200 font-normal">Menampilkan rangkuman statistik data ulasan, fasilitas, berita, dan budaya.</p>
+                        </div>
+                        <div class="pt-1.5 border-t border-slate-800">
+                            <span class="block font-bold text-indigo-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                            <p class="text-slate-200 font-normal">Dashboard Utama sebagai ikhtisar volume data pendukung aplikasi.</p>
+                        </div>
+                    </div>
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                </div>
+            </div>
         </div>
         <div class="space-y-4">
             <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
@@ -163,7 +289,25 @@
 
     <!-- Top 5 Destinasi Terbaik -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 h-full flex flex-col">
-        <h2 class="text-lg font-bold text-gray-900 mb-6">Top 5 Destinasi Terbaik</h2>
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-bold text-gray-900">Top 5 Destinasi Terbaik</h2>
+            <div class="relative group cursor-pointer inline-flex items-center">
+                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                    <div class="space-y-2">
+                        <div>
+                            <span class="block font-bold text-yellow-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                            <p class="text-slate-200 font-normal">Menampilkan lima destinasi wisata dengan rata-rata rating ulasan tertinggi.</p>
+                        </div>
+                        <div class="pt-1.5 border-t border-slate-800">
+                            <span class="block font-bold text-yellow-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                            <p class="text-slate-200 font-normal">Dashboard Utama untuk memantau performa destinasi terpopuler.</p>
+                        </div>
+                    </div>
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                </div>
+            </div>
+        </div>
         <div class="space-y-4">
             @forelse($topDestinations ?? [] as $index => $dest)
             <div class="flex items-center gap-3 bg-gray-50 p-2.5 rounded-2xl hover:bg-gray-100 transition-colors">
@@ -193,11 +337,29 @@
 
     <!-- Trip Dibuat -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 h-full flex flex-col">
-        <div class="flex items-center mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-            </svg>
-            <h2 class="text-lg font-bold text-gray-900">Trip Dibuat</h2>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                <h2 class="text-lg font-bold text-gray-900">Trip Dibuat</h2>
+            </div>
+            <div class="relative group cursor-pointer inline-flex items-center">
+                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                    <div class="space-y-2">
+                        <div>
+                            <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                            <p class="text-slate-200 font-normal">Memantau jumlah pembuatan rencana perjalanan (trip planner) oleh wisatawan secara berkala (hari, minggu, bulan ini).</p>
+                        </div>
+                        <div class="pt-1.5 border-t border-slate-800">
+                            <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                            <p class="text-slate-200 font-normal">Dashboard Utama untuk memantau keaktifan wisatawan menggunakan fitur trip planner.</p>
+                        </div>
+                    </div>
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                </div>
+            </div>
         </div>
         <div class="space-y-6 mt-4">
             <!-- Hari ini -->

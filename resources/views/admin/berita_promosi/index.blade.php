@@ -92,28 +92,135 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
-        <form action="{{ route('admin.berita_promosi.index') }}" method="GET" class="flex flex-wrap w-full gap-4 items-center" id="filter-form">
-            <div class="flex-1 min-w-[300px] relative">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul berita atau promosi..." class="w-full pl-12 pr-6 py-3 bg-gray-50 border-none rounded-2xl outline-none text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all">
-                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-            </div>
-            
-            <select name="tipe" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium" onchange="document.getElementById('filter-form').submit()">
-                <option value="">Semua Tipe</option>
-                <option value="BERITA" {{ request('tipe') == 'BERITA' ? 'selected' : '' }}>Berita</option>
-                <option value="PROMO" {{ request('tipe') == 'PROMO' ? 'selected' : '' }}>Promo</option>
-            </select>
-            
-            <select name="status" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium" onchange="document.getElementById('filter-form').submit()">
-                <option value="">Semua Status</option>
-                <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-            </select>
-
+        <form action="{{ route('admin.berita_promosi.index') }}" method="GET" class="space-y-4" id="filter-form">
+            <!-- Persist current sorting -->
             <input type="hidden" name="sort_by" value="{{ request('sort_by', 'tanggal_tayang') }}">
             <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Kata Kunci -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        Kata Kunci
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
+                                        <p class="text-slate-200 font-normal">Menyaring daftar berita & promosi berdasarkan kata kunci pada judul.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Digunakan Di</span>
+                                        <p class="text-slate-200 font-normal">Pencarian berita dan promosi di Panel Admin.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4">
+                            <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul berita/promo..."
+                            class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm transition-all shadow-sm placeholder-gray-300">
+                    </div>
+                </div>
+
+                <!-- Tipe -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        Tipe
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
+                                        <p class="text-slate-200 font-normal">Memilah tipe konten antara Berita (informasi umum/artikel) atau Promo (diskon/penawaran spesial).</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-normal">Halaman Berita & Promosi pada aplikasi mobile wisatawan.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </label>
+                    <select name="tipe" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-sidebar transition-all cursor-pointer">
+                        <option value="">Semua Tipe</option>
+                        <option value="BERITA" {{ request('tipe') == 'BERITA' ? 'selected' : '' }}>Berita</option>
+                        <option value="PROMO" {{ request('tipe') == 'PROMO' ? 'selected' : '' }}>Promo</option>
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        Status
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
+                                        <p class="text-slate-200 font-normal">Menyaring konten berdasarkan status publikasi (Aktif/Terbit atau Draft/Nonaktif).</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-normal">Tampilan daftar berita dan promo aplikasi mobile (hanya status Aktif yang tampil).</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </label>
+                    <select name="status" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-sidebar transition-all cursor-pointer">
+                        <option value="">Semua Status</option>
+                        <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                        <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                    </select>
+                </div>
+
+                <!-- Tampilkan -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        Tampilkan
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
+                                        <p class="text-slate-200 font-normal">Menentukan jumlah baris data berita dan promosi yang ditampilkan per halaman.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Digunakan Di</span>
+                                        <p class="text-slate-200 font-normal">Pagination tabel berita & promosi di Panel Admin.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <select name="per_page" onchange="this.form.submit()" 
+                            class="flex-1 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm font-bold text-gray-700 shadow-sm hover:border-sidebar transition-all cursor-pointer">
+                            @foreach([15, 30, 50, 100] as $val)
+                                <option value="{{ $val }}" @selected(request('per_page', 15) == $val)>{{ $val }}</option>
+                            @endforeach
+                        </select>
+                        @if(request('search') || request('tipe') || request('status') || request('per_page') != 15)
+                            <a href="{{ route('admin.berita_promosi.index') }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
+                                Reset
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </form>
     </div>
 

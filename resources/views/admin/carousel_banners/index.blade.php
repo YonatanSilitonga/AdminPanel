@@ -33,7 +33,25 @@
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 mb-8 flex flex-wrap items-center justify-between gap-6">
         <div class="flex flex-wrap items-center gap-8">
             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Status Carousel</p>
+                <div class="flex items-center gap-1.5 mb-1">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status Carousel</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-sans">Menunjukkan status keaktifan tayangan carousel di aplikasi mobile.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-sans">Halaman beranda utama pada aplikasi mobile wisatawan.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
                     <span class="font-bold text-gray-800 text-sm">Aktif Meluncur</span>
@@ -41,12 +59,48 @@
             </div>
             <div class="h-8 w-px bg-gray-100 hidden sm:block"></div>
             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Slides</p>
+                <div class="flex items-center gap-1.5 mb-1">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Slides</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-sans">Menghitung jumlah total slide/banner aktif yang saat ini sedang ditayangkan.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-sans">Jumlah dots/indikator halaman slider di aplikasi mobile.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <span class="font-bold text-gray-800 text-sm">{{ $banners->where('is_active', true)->count() }} Slide Aktif</span>
             </div>
             <div class="h-8 w-px bg-gray-100 hidden sm:block"></div>
             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Auto-Play</p>
+                <div class="flex items-center gap-1.5 mb-1">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Auto-Play</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-sans">Mengindikasikan bahwa slide berputar otomatis dengan interval bawaan sistem 3.5 detik per slide.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-sans">Slider beranda utama aplikasi mobile.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="flex items-center gap-1.5 text-green-600 font-bold text-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                     On (3.5s)
@@ -64,7 +118,25 @@
                 <!-- Slide List Card -->
                 <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
                     <div class="flex items-center justify-between mb-8">
-                        <h3 class="font-bold text-gray-800 text-lg">Urutan Slide Tampilan Utama</h3>
+                        <div class="flex items-center gap-1.5">
+                            <h3 class="font-bold text-gray-800 text-lg">Urutan Slide Tampilan Utama</h3>
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-4 h-4 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
+                                            <p class="text-slate-200 font-sans">Mengatur prioritas urutan tampil banner di aplikasi mobile dengan fitur drag-and-drop.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Ditampilkan Di</span>
+                                            <p class="text-slate-200 font-sans">Slider beranda utama aplikasi mobile (slide pertama adalah prioritas tertinggi).</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </div>
                         <div
                             class="text-xs text-gray-400 font-medium flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                             Drag Handle

@@ -128,7 +128,11 @@
 >
     <!-- Logo Section -->
     <div class="sidebar-header py-5 px-5 flex items-center border-b border-white/10 transition-all duration-300">
-        <img src="{{ asset('images/logo.jpeg') }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20">
+        @if(app_setting('logo'))
+            <img src="{{ image_url(app_setting('logo')) }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20">
+        @else
+            <img src="{{ asset('images/logo.jpeg') }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20">
+        @endif
         <div class="sidebar-text ml-3 overflow-hidden whitespace-nowrap transition-all duration-300">
             <h2 class="text-lg font-bold tracking-wider leading-tight">TOBA TOURISM</h2>
             <p class="text-xs text-gray-300 opacity-80">Kawasan Danau Toba</p>

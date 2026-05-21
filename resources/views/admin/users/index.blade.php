@@ -96,28 +96,100 @@
                 <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
                 <div>
                     <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($stats['total'] ?? 0) }}</p>
-                    <p class="text-[13px] font-bold text-gray-400">Total</p>
+                    <div class="flex items-center gap-1.5">
+                        <p class="text-[13px] font-bold text-gray-400">Total</p>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-sans">Menampilkan akumulasi jumlah seluruh akun pengguna yang terdaftar di sistem database.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-sans">Dashboard Utama dan Halaman Analitik Pengguna.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="flex items-center gap-4 px-8">
                 <div class="w-1 h-10 bg-emerald-500 rounded-full"></div>
                 <div>
                     <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($stats['active'] ?? 0) }}</p>
-                    <p class="text-[13px] font-bold text-gray-400">Aktif Hari Ini</p>
+                    <div class="flex items-center gap-1.5">
+                        <p class="text-[13px] font-bold text-gray-400">Aktif Hari Ini</p>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-sans">Menunjukkan jumlah pengguna yang melakukan login atau interaksi aktif dalam 24 jam terakhir.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-sans">Dashboard Analitik Aktivitas Harian.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="flex items-center gap-4 px-8">
                 <div class="w-1 h-10 bg-orange-400 rounded-full"></div>
                 <div>
                     <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($stats['guests'] ?? 0) }}</p>
-                    <p class="text-[13px] font-bold text-gray-400">Guest Sessions</p>
+                    <div class="flex items-center gap-1.5">
+                        <p class="text-[13px] font-bold text-gray-400">Guest Sessions</p>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-sans">Menghitung jumlah sesi pengunjung tanpa login (tamu) yang menjelajahi aplikasi.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-sans">Laporan statistik lalu lintas pengguna non-terdaftar.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="flex items-center gap-4 px-8 last:pr-0">
                 <div class="w-1 h-10 bg-red-400 rounded-full"></div>
                 <div>
                     <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($stats['suspended'] ?? 0) }}</p>
-                    <p class="text-[13px] font-bold text-gray-400">Suspended</p>
+                    <div class="flex items-center gap-1.5">
+                        <p class="text-[13px] font-bold text-gray-400">Suspended</p>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-sans">Menghitung jumlah akun pengguna yang dibekukan karena pelanggaran atau kebijakan sistem.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-sans">Manajemen Admin Panel untuk pengawasan pemblokiran akses.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -125,44 +197,137 @@
 
     <!-- Filter Bar -->
     <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-6 shadow-sm">
-        <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-wrap items-center gap-4">
+        <form method="GET" action="{{ route('admin.users.index') }}">
             <!-- Persist current sorting -->
             <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
             <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
 
-            <div class="relative flex-grow max-w-md">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </span>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari pengguna..." 
-                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium placeholder-gray-400 focus:border-emerald-500 transition-all shadow-sm">
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <span class="text-[13px] font-bold text-gray-400">Tampilkan:</span>
-                <select name="per_page" onchange="this.form.submit()" 
-                    class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
-                    @foreach([10, 20, 50, 100] as $val)
-                        <option value="{{ $val }}" @selected(request('per_page', 10) == $val)>{{ $val }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Cari Pengguna -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        Cari Pengguna
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-sans">Mencari pengguna berdasarkan nama lengkap atau alamat email.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                        <p class="text-slate-200 font-sans">Proses pencarian dan pemfilteran data tabel pengguna.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </span>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama/email..." 
+                            class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-[#066466] outline-none text-[14px] font-medium placeholder-gray-400 transition-all shadow-sm">
+                    </div>
+                </div>
 
-            <select name="status" onchange="this.form.submit()" 
-                class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
-                <option value="">Semua Status</option>
-                <option value="active" @selected(request('status') === 'active')>Aktif</option>
-                <option value="inactive" @selected(request('status') === 'inactive')>Suspended</option>
-            </select>
+                <!-- Status -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        Status Akun
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-sans">Menyaring pengguna berdasarkan status akun (Aktif atau Suspended).</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                        <p class="text-slate-200 font-sans">Kontrol status hak masuk/akses pengguna ke aplikasi mobile.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </label>
+                    <select name="status" onchange="this.form.submit()" 
+                        class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                        <option value="">Semua Status</option>
+                        <option value="active" @selected(request('status') === 'active')>Aktif</option>
+                        <option value="inactive" @selected(request('status') === 'inactive')>Suspended</option>
+                    </select>
+                </div>
 
-            <div class="flex items-center gap-3">
-                <span class="text-[13px] font-bold text-gray-400">Dari:</span>
-                <input type="date" name="start_date" value="{{ request('start_date') }}" onchange="this.form.submit()" 
-                    class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium text-gray-500 shadow-sm focus:border-emerald-500 transition-all">
-                
-                <span class="text-[13px] font-bold text-gray-400">Hingga:</span>
-                <input type="date" name="end_date" value="{{ request('end_date') }}" onchange="this.form.submit()" 
-                    class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-medium text-gray-500 shadow-sm focus:border-emerald-500 transition-all">
+                <!-- Rentang Tanggal Bergabung -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        Tanggal Bergabung
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-sans">Menyaring daftar pengguna berdasarkan rentang tanggal akun tersebut dibuat (bergabung).</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                        <p class="text-slate-200 font-sans">Pemantauan pertumbuhan pengguna baru dalam rentang waktu tertentu.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="date" name="start_date" value="{{ request('start_date') }}" onchange="this.form.submit()" 
+                            class="w-1/2 px-2 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[13px] font-medium text-gray-500 shadow-sm focus:border-[#066466] transition-all">
+                        <span class="text-xs text-gray-400 font-bold">s/d</span>
+                        <input type="date" name="end_date" value="{{ request('end_date') }}" onchange="this.form.submit()" 
+                            class="w-1/2 px-2 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[13px] font-medium text-gray-500 shadow-sm focus:border-[#066466] transition-all">
+                    </div>
+                </div>
+
+                <!-- Tampilkan & Reset -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        Tampilkan
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-sans">Mengatur jumlah baris pengguna yang ditampilkan dalam satu halaman tabel.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                        <p class="text-slate-200 font-sans">Navigasi halaman (pagination) tabel pengguna.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <select name="per_page" onchange="this.form.submit()" 
+                            class="flex-1 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                            @foreach([10, 20, 50, 100] as $val)
+                                <option value="{{ $val }}" @selected(request('per_page', 10) == $val)>{{ $val }}</option>
+                            @endforeach
+                        </select>
+                        @if(request('search') || request('status') || request('start_date') || request('end_date') || request('per_page') != 10)
+                            <a href="{{ route('admin.users.index') }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
+                                Reset
+                            </a>
+                        @endif
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -202,12 +367,30 @@
                             </a>
                         </th>
                         <th class="px-10 py-6 text-left">
-                            <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'is_active', 'sort_order' => ($currentSort === 'is_active' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
-                                Status
-                                <svg class="w-4 h-4 {{ $currentSort === 'is_active' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'is_active' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
-                                </svg>
-                            </a>
+                            <div class="flex items-center gap-1.5">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'is_active', 'sort_order' => ($currentSort === 'is_active' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
+                                    Status
+                                    <svg class="w-4 h-4 {{ $currentSort === 'is_active' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'is_active' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                    </svg>
+                                </a>
+                                <div class="relative group cursor-pointer inline-flex items-center">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200 font-sans">Menampilkan status aktif/tidaknya akun pengguna. Akun suspended tidak dapat masuk ke sistem.</p>
+                                            </div>
+                                            <div class="pt-1.5 border-t border-slate-800">
+                                                <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                                <p class="text-slate-200 font-sans">Aplikasi mobile saat proses autentikasi (login) pengguna.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </th>
                         <th class="px-10 py-6 text-left">
                             <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'created_at', 'sort_order' => ($currentSort === 'created_at' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">

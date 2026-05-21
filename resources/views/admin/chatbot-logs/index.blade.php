@@ -31,28 +31,100 @@
             <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
             <div>
                 <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($totalSessions) }}</p>
-                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Total Sesi</p>
+                <div class="flex items-center gap-1.5">
+                    <p class="text-[13px] font-bold text-gray-400">Total Sesi</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menunjukkan total keseluruhan sesi percakapan chatbot yang pernah terinisiasi.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Halaman log chatbot dan laporan monitoring AI.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-4 px-8">
             <div class="w-1 h-10 bg-emerald-500 rounded-full"></div>
             <div>
                 <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($userSessions) }}</p>
-                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Sesi Pengguna</p>
+                <div class="flex items-center gap-1.5">
+                    <p class="text-[13px] font-bold text-gray-400">Sesi Pengguna</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menghitung jumlah sesi percakapan chatbot yang dilakukan oleh pengguna yang telah login.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Statistik keaktifan pengguna terdaftar di modul AI.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-4 px-8">
             <div class="w-1 h-10 bg-orange-400 rounded-full"></div>
             <div>
                 <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($guestSessions) }}</p>
-                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Sesi Tamu</p>
+                <div class="flex items-center gap-1.5">
+                    <p class="text-[13px] font-bold text-gray-400">Sesi Tamu</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menghitung jumlah sesi percakapan chatbot yang diajukan oleh pengguna tanpa login (tamu).</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Statistik keterlibatan pengunjung publik pada asisten AI.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-4 px-8 last:pr-0">
             <div class="w-1 h-10 bg-blue-400 rounded-full"></div>
             <div>
                 <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">87%</p>
-                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Aktivitas</p>
+                <div class="flex items-center gap-1.5">
+                    <p class="text-[13px] font-bold text-gray-400">Rasio Respon</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan tingkat efektivitas AI dalam membalas pesan secara instan dan tepat.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Laporan performa asisten cerdas AI.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -60,34 +132,109 @@
 
 <!-- Filter Bar -->
 <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
-    <form method="GET" action="{{ route('admin.chatbot-logs.index') }}" class="flex flex-wrap w-full gap-4 items-center" id="filter-form">
+    <form method="GET" action="{{ route('admin.chatbot-logs.index') }}" id="filter-form">
         <!-- Persist current sorting -->
         <input type="hidden" name="sort_by" value="{{ request('sort_by', 'updated_at') }}">
         <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
 
-        <div class="flex-1 min-w-[300px] relative">
-            <input type="text" name="user_id" value="{{ request('user_id') }}" placeholder="Cari User ID..." class="w-full pl-12 pr-6 py-3 bg-gray-50 border-none rounded-2xl outline-none text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all">
-            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Cari User ID -->
+            <div class="space-y-2 sm:col-span-2">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                    Cari User ID
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-sans">Mencari sesi chatbot berdasarkan kode User ID spesifik.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                    <p class="text-slate-200 font-sans">Pemfilteran log percakapan untuk audit sesi pengguna tertentu.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </span>
+                    <input type="text" name="user_id" value="{{ request('user_id') }}" placeholder="Cari User ID..." 
+                        class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-[#066466] outline-none text-sm transition-all shadow-sm placeholder-gray-400">
+                </div>
+            </div>
+
+            <!-- Tipe User -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                    Tipe User
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-sans">Memisahkan tipe penanya antara Pengguna Terdaftar (User) atau Pengunjung Anonim (Tamu).</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                    <p class="text-slate-200 font-sans">Analisis demografi pengunjung yang aktif menggunakan asisten AI.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </label>
+                <select name="type" onchange="this.form.submit()" 
+                    class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-[#066466] transition-all cursor-pointer">
+                    <option value="">Semua Tipe</option>
+                    <option value="user" @selected(request('type') === 'user')>👤 User</option>
+                    <option value="guest" @selected(request('type') === 'guest')>👥 Tamu</option>
+                </select>
+            </div>
+
+            <!-- Tampilkan & Reset -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                    Tampilkan
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-sans">Menentukan jumlah baris log percakapan yang ditampilkan per halaman.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                    <p class="text-slate-200 font-sans">Pagination tabel daftar log chatbot Panel Admin.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </label>
+                <div class="flex items-center gap-2">
+                    <select name="per_page" onchange="this.form.submit()" 
+                        class="flex-1 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                        <option value="10" @selected(request('per_page', 10) == 10)>10 Baris</option>
+                        <option value="20" @selected(request('per_page', 10) == 20)>20 Baris</option>
+                        <option value="50" @selected(request('per_page', 10) == 50)>50 Baris</option>
+                        <option value="100" @selected(request('per_page', 10) == 100)>100 Baris</option>
+                    </select>
+                    @if(request('user_id') || request('type') || request('per_page') != 10)
+                        <a href="{{ route('admin.chatbot-logs.index') }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
+                            Reset
+                        </a>
+                    @endif
+                </div>
             </div>
         </div>
-
-        <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors">
-            <option value="10" @selected(request('per_page', 10) == 10)>10 Baris</option>
-            <option value="20" @selected(request('per_page', 10) == 20)>20 Baris</option>
-            <option value="50" @selected(request('per_page', 10) == 50)>50 Baris</option>
-            <option value="100" @selected(request('per_page', 10) == 100)>100 Baris</option>
-        </select>
-        
-        <select name="type" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors">
-            <option value="">Semua Tipe</option>
-            <option value="user" @selected(request('type') === 'user')>👤 User</option>
-            <option value="guest" @selected(request('type') === 'guest')>👥 Tamu</option>
-        </select>
-
-        <a href="{{ route('admin.chatbot-logs.index') }}" class="px-6 py-3 bg-gray-50 border border-gray-100 text-gray-500 rounded-2xl text-sm font-medium hover:bg-gray-100 transition-all shadow-sm">
-            Reset
-        </a>
     </form>
 </div>
 

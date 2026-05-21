@@ -24,28 +24,100 @@
             <div class="w-1 h-10 bg-emerald-700 rounded-full"></div>
             <div>
                 <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($todayLogs) }}</p>
-                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Hari Ini</p>
+                <div class="flex items-center gap-1.5">
+                    <p class="text-[13px] font-bold text-gray-400">Hari Ini</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah rekomendasi itinerary yang dihasilkan oleh AI untuk pengguna pada hari ini.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Monitoring Dashboard AI dan Admin Panel.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-4 px-8">
             <div class="w-1 h-10 bg-emerald-500 rounded-full"></div>
             <div>
                 <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($weekLogs) }}</p>
-                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Minggu Ini</p>
+                <div class="flex items-center gap-1.5">
+                    <p class="text-[13px] font-bold text-gray-400">Minggu Ini</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan akumulasi jumlah rekomendasi itinerary yang dihasilkan dalam satu minggu terakhir.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Panel Admin.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-4 px-8">
             <div class="w-1 h-10 bg-orange-400 rounded-full"></div>
             <div>
                 <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($monthLogs) }}</p>
-                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Bulan Ini</p>
+                <div class="flex items-center gap-1.5">
+                    <p class="text-[13px] font-bold text-gray-400">Bulan Ini</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menunjukkan total rekomendasi itinerary yang dibuat oleh AI sepanjang bulan berjalan ini.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Laporan AI bulanan.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-4 px-8 last:pr-0">
             <div class="w-1 h-10 bg-blue-400 rounded-full"></div>
             <div>
                 <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($avgDuration, 1) }}</p>
-                <p class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Avg Durasi (Hari)</p>
+                <div class="flex items-center gap-1.5">
+                    <p class="text-[13px] font-bold text-gray-400">Avg Durasi (Hari)</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Rata-rata durasi perjalanan (hari) yang dipilih oleh pengguna saat menggunakan fitur generator itinerary AI.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Dashboard Analitik AI.</p>
+                                </div>
+                            </div>
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

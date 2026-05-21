@@ -168,43 +168,139 @@
     <div x-show="activeTab === 'manage'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
         {{-- Search & Filter --}}
         <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
-            <form method="GET" action="{{ route('admin.destinations.index') }}" class="flex flex-wrap items-center gap-4 w-full">
-            <!-- Persist current sorting -->
-            <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
-            <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+            <form method="GET" action="{{ route('admin.destinations.index') }}" class="space-y-4">
+                <!-- Persist current sorting -->
+                <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+                <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Kata Kunci -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Kata Kunci
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-3 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-normal">Menyaring daftar destinasi berdasarkan kecocokan nama atau deskripsi.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                            <p class="text-slate-200 font-normal">Pencarian cepat destinasi di Panel Admin.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4">
+                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </span>
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau deskripsi..."
+                                class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300">
+                        </div>
+                    </div>
 
-            <div class="relative flex-1 min-w-[280px]">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-4">
-                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </span>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau deskripsi..."
-                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300">
-            </div>
+                    <!-- Kategori -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Kategori
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-3 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-normal">Menyaring destinasi berdasarkan jenis kategori pariwisata (misal: alam, budaya, sejarah).</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-purple-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                            <p class="text-slate-200 font-normal">Aplikasi mobile sebagai filter kategori navigasi.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </label>
+                        <select name="category" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-sidebar transition-all cursor-pointer">
+                            <option value="">Semua Kategori</option>
+                            @foreach(($categories ?? []) as $cat)
+                                <option value="{{ $cat }}" @selected(request('category') === $cat)>{{ ucfirst($cat) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-            <div class="flex items-center gap-3">
-                <span class="text-[13px] font-bold text-gray-400">Tampilkan:</span>
-                <select name="per_page" onchange="this.form.submit()" 
-                    class="px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-emerald-500 transition-all cursor-pointer">
-                    @foreach([10, 20, 50, 100] as $val)
-                        <option value="{{ $val }}" @selected(request('per_page', 10) == $val)>{{ $val }}</option>
-                    @endforeach
-                </select>
-            </div>
+                    <!-- Status -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Status
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-3 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-normal">Menyaring destinasi berdasarkan status keaktifan publikasinya di aplikasi.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-green-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                            <p class="text-slate-200 font-normal">Halaman pencarian dan daftar destinasi aplikasi mobile (hanya yang berstatus Aktif).</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </label>
+                        <select name="status" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-sidebar transition-all cursor-pointer">
+                            <option value="">Semua Status</option>
+                            <option value="active" @selected(request('status') === 'active')>Aktif</option>
+                            <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
+                        </select>
+                    </div>
 
-            <select name="category" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-emerald-500 transition-all cursor-pointer">
-                <option value="">Semua Kategori</option>
-                @foreach(($categories ?? []) as $cat)
-                    <option value="{{ $cat }}" @selected(request('category') === $cat)>{{ ucfirst($cat) }}</option>
-                @endforeach
-            </select>
-
-            <select name="status" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-emerald-500 transition-all cursor-pointer">
-                <option value="">Semua Status</option>
-                <option value="active" @selected(request('status') === 'active')>Aktif</option>
-                <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
-            </select>
-        </form>
-    </div>
+                    <!-- Tampilkan & Action -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Tampilkan
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-3 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-normal">Menentukan jumlah baris data destinasi yang ditampilkan dalam satu halaman.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                            <p class="text-slate-200 font-normal">Pagination tabel destinasi di Panel Admin.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <select name="per_page" onchange="this.form.submit()" 
+                                class="flex-1 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm font-bold text-gray-700 shadow-sm hover:border-sidebar transition-all cursor-pointer">
+                                @foreach([10, 20, 50, 100] as $val)
+                                    <option value="{{ $val }}" @selected(request('per_page', 10) == $val)>{{ $val }}</option>
+                                @endforeach
+                            </select>
+                            
+                            @if(request('search') || request('category') || request('status') || request('per_page') != 10)
+                                <a href="{{ route('admin.destinations.index') }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
+                                    Reset
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
 
     {{-- Table --}}
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">

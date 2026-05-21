@@ -244,22 +244,6 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::put('settings/general', [SettingsController::class, 'updateGeneral'])
             ->name('admin.settings.general.update');
 
-        // API Keys
-        Route::get('settings/api-keys', [SettingsController::class, 'editApiKeys'])
-            ->name('admin.settings.api-keys');
-        Route::put('settings/api-keys', [SettingsController::class, 'updateApiKeys'])
-            ->name('admin.settings.api-keys.update');
-
-        // AI Configuration
-        Route::get('settings/ai-config', [SettingsController::class, 'editAiConfig'])
-            ->name('admin.settings.ai-config');
-        Route::put('settings/ai-config', [SettingsController::class, 'updateAiConfig'])
-            ->name('admin.settings.ai-config.update');
-
-        // Maintenance Mode
-        Route::patch('settings/maintenance', [SettingsController::class, 'toggleMaintenance'])
-            ->name('admin.settings.maintenance');
-
         // Audit Logs
         Route::get('settings/audit-logs', [AuditLogController::class, 'index'])
             ->name('admin.settings.audit-logs');

@@ -9,10 +9,11 @@ use MongoDB\Laravel\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Admin extends Authenticatable
 {
-    use SoftDeletes, Notifiable;
+    use SoftDeletes, Notifiable, HasFactory;
 
     protected $connection = 'mongodb';
     protected $collection = 'admins';

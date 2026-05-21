@@ -162,20 +162,92 @@
 
     <div x-show="activeTab === 'summary'" class="space-y-8">
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-[2rem] bg-white border border-gray-100 shadow-sm p-5">
-                <p class="text-xs uppercase tracking-widest text-gray-400 font-bold">Total Ulasan</p>
+            <div class="rounded-[2rem] bg-white border border-gray-100 shadow-sm p-5 relative">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs uppercase tracking-widest text-gray-400 font-bold">Total Ulasan</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan akumulasi seluruh ulasan destinasi wisata dari pengguna.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Halaman monitoring ulasan and analitik sentimen.</p>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <p class="mt-3 text-3xl font-black text-gray-900">{{ number_format($sentimentSummary['total']) }}</p>
             </div>
-            <div class="rounded-[2rem] bg-emerald-50 border border-emerald-100 shadow-sm p-5">
-                <p class="text-xs uppercase tracking-widest text-emerald-500 font-bold">Ulasan Positif</p>
+            <div class="rounded-[2rem] bg-emerald-50 border border-emerald-100 shadow-sm p-5 relative">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs uppercase tracking-widest text-emerald-500 font-bold">Ulasan Positif</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-emerald-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh AI model IndoBERT dan dikategorikan bersentimen positif.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Halaman ringkasan ulasan dan dashboard utama.</p>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <p class="mt-3 text-3xl font-black text-emerald-700">{{ number_format($sentimentSummary['positive']) }}</p>
             </div>
-            <div class="rounded-[2rem] bg-amber-50 border border-amber-100 shadow-sm p-5">
-                <p class="text-xs uppercase tracking-widest text-amber-500 font-bold">Ulasan Netral</p>
+            <div class="rounded-[2rem] bg-amber-50 border border-amber-100 shadow-sm p-5 relative">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs uppercase tracking-widest text-amber-500 font-bold">Ulasan Netral</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-amber-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-amber-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh AI model IndoBERT dan dikategorikan bersentimen netral.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-amber-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Halaman ringkasan ulasan.</p>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <p class="mt-3 text-3xl font-black text-amber-700">{{ number_format($sentimentSummary['neutral']) }}</p>
             </div>
-            <div class="rounded-[2rem] bg-red-50 border border-red-100 shadow-sm p-5">
-                <p class="text-xs uppercase tracking-widest text-red-500 font-bold">Ulasan Negatif</p>
+            <div class="rounded-[2rem] bg-red-50 border border-red-100 shadow-sm p-5 relative">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs uppercase tracking-widest text-red-500 font-bold">Ulasan Negatif</p>
+                    <div class="relative group cursor-pointer inline-flex items-center">
+                        <svg class="w-3.5 h-3.5 text-red-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh AI model IndoBERT dan dikategorikan bersentimen negatif.</p>
+                                </div>
+                                <div class="pt-1.5 border-t border-slate-800">
+                                    <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                    <p class="text-slate-200 font-normal">Halaman ringkasan ulasan, dashboard, dan laporan keluhan.</p>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                        </div>
+                    </div>
+                </div>
                 <p class="mt-3 text-3xl font-black text-red-700">{{ number_format($sentimentSummary['negative']) }}</p>
             </div>
         </div>
@@ -383,48 +455,132 @@
     <div x-show="activeTab === 'list'" class="space-y-8">
         {{-- Filter & Search --}}
         <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div class="flex flex-wrap items-center gap-4">
-                    <form method="GET" action="{{ route('admin.reviews.index') }}" class="flex flex-wrap items-center gap-4">
-                        <div class="relative w-80">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-4">
-                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </span>
-                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari teks ulasan..."
-                                class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <form method="GET" action="{{ route('admin.reviews.index') }}" class="flex-1">
+                    <!-- Persist current sorting and tab -->
+                    <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+                    <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+                    <input type="hidden" name="tab" value="list">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Cari Ulasan -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                Cari Ulasan
+                                <div class="relative group cursor-pointer inline-flex items-center">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200 font-sans">Mencari teks ulasan pengguna yang mengandung kata kunci tertentu.</p>
+                                            </div>
+                                            <div class="pt-1.5 border-t border-slate-800">
+                                                <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                                <p class="text-slate-200 font-sans">Penyaringan baris data tabel ulasan.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </span>
+                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari teks ulasan..."
+                                    class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-[#066466] outline-none text-[14px] font-medium placeholder-gray-400 transition-all shadow-sm">
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Tampilkan:</span>
-                            <select name="per_page" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 transition-all">
-                                @foreach([10, 15, 25, 50, 100] as $size)
-                                    <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                        <!-- Rating Bintang -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                Rating Bintang
+                                <div class="relative group cursor-pointer inline-flex items-center">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200 font-sans">Menyaring ulasan berdasarkan jumlah bintang rating (1 s/d 5) yang diberikan pengguna.</p>
+                                            </div>
+                                            <div class="pt-1.5 border-t border-slate-800">
+                                                <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                                <p class="text-slate-200 font-sans">Analisis tingkat kepuasan ulasan pengguna.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </label>
+                            <select name="rating" onchange="this.form.submit()"
+                                class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                                <option value="">Semua Rating</option>
+                                @foreach([5,4,3,2,1] as $r)
+                                    <option value="{{ $r }}" @selected(request('rating') == $r)>{{ $r }} Bintang</option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <select name="rating" onchange="this.form.submit()" class="px-6 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer">
-                            <option value="">Semua Rating</option>
-                            @foreach([5,4,3,2,1] as $r)
-                                <option value="{{ $r }}" @selected(request('rating') == $r)>{{ $r }} Bintang</option>
-                            @endforeach
-                        </select>
+                        <!-- Tampilkan -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                Tampilkan
+                                <div class="relative group cursor-pointer inline-flex items-center">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200 font-sans">Mengatur jumlah ulasan yang ditampilkan dalam satu halaman tabel.</p>
+                                            </div>
+                                            <div class="pt-1.5 border-t border-slate-800">
+                                                <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                                <p class="text-slate-200 font-sans">Pagination halaman tabel ulasan.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <select name="per_page" onchange="this.form.submit()"
+                                    class="flex-1 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                                    @foreach([10, 15, 25, 50, 100] as $size)
+                                        <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                                    @endforeach
+                                </select>
+                                @if(request('search') || request('rating') || request('per_page') != 15)
+                                    <a href="{{ route('admin.reviews.index', ['tab' => 'list']) }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
+                                        Reset
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
 
-                        {{-- Hidden inputs for sorting persistence --}}
-                        <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
-                        <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
-                        <input type="hidden" name="tab" value="list">
+                        <!-- Action Submit -->
+                        <div class="space-y-2 flex items-end">
+                            <button type="submit" class="w-full py-3 bg-sidebar hover:bg-[#055355] text-white rounded-xl transition-all text-sm font-bold shadow-sm flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                Cari & Saring
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Batch Analysis -->
+                <div class="flex items-center gap-4 lg:mb-[2px] mt-4 lg:mt-0">
+                    <form method="POST" action="{{ route('admin.reviews.analyze-batch') }}">
+                        @csrf
+                        <input type="hidden" name="limit" value="50">
+                        <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#066466] hover:bg-[#055355] text-white text-sm font-bold shadow-sm transition-all whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Analisis Pending
+                        </button>
                     </form>
                 </div>
-
-                <form method="POST" action="{{ route('admin.reviews.analyze-batch') }}">
-                    @csrf
-                    <input type="hidden" name="limit" value="50">
-                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-sidebar text-white text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        Analisis Pending
-                    </button>
-                </form>
             </div>
         </div>
 
@@ -447,23 +603,58 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'rating' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
                                     </svg>
                                 </a>
-                            </th>
-                            <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Ulasan</th>
+                                                        <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Ulasan</th>
                             <th class="px-10 py-6 text-left">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'sentiment_label', 'sort_order' => ($currentSort === 'sentiment_label' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
-                                    Sentimen
-                                    <svg class="w-4 h-4 {{ $currentSort === 'sentiment_label' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'sentiment_label' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
-                                    </svg>
-                                </a>
+                                <div class="flex items-center gap-1.5">
+                                    <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'sentiment_label', 'sort_order' => ($currentSort === 'sentiment_label' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-[#066466] transition-colors">
+                                        Sentimen
+                                        <svg class="w-4 h-4 {{ $currentSort === 'sentiment_label' ? 'text-[#066466]' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'sentiment_label' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                        </svg>
+                                    </a>
+                                    <div class="relative group cursor-pointer inline-flex items-center">
+                                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                            <div class="space-y-2">
+                                                <div>
+                                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                    <p class="text-slate-200 font-normal font-sans">Label klasifikasi sentimen ulasan (Positif, Netral, atau Negatif) yang diprediksi oleh model IndoBERT.</p>
+                                                </div>
+                                                <div class="pt-1.5 border-t border-slate-800">
+                                                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                                    <p class="text-slate-200 font-normal font-sans">Dashboard monitoring ulasan admin.</p>
+                                                </div>
+                                            </div>
+                                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </th>
                             <th class="px-10 py-6 text-left">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'sentiment_confidence', 'sort_order' => ($currentSort === 'sentiment_confidence' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
-                                    Confidence
-                                    <svg class="w-4 h-4 {{ $currentSort === 'sentiment_confidence' ? 'text-emerald-600' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'sentiment_confidence' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
-                                    </svg>
-                                </a>
+                                <div class="flex items-center gap-1.5">
+                                    <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'sentiment_confidence', 'sort_order' => ($currentSort === 'sentiment_confidence' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-[#066466] transition-colors">
+                                        Confidence
+                                        <svg class="w-4 h-4 {{ $currentSort === 'sentiment_confidence' ? 'text-[#066466]' : 'text-gray-300 opacity-0 group-hover:opacity-100' }} transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $currentSort === 'sentiment_confidence' && request('sort_order') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"></path>
+                                        </svg>
+                                    </a>
+                                    <div class="relative group cursor-pointer inline-flex items-center">
+                                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                            <div class="space-y-2">
+                                                <div>
+                                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                    <p class="text-slate-200 font-normal font-sans">Tingkat akurasi kepercayaan/probabilitas model IndoBERT dalam menentukan label sentimen (rentang 0 s/d 1).</p>
+                                                </div>
+                                                <div class="pt-1.5 border-t border-slate-800">
+                                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                                    <p class="text-slate-200 font-normal font-sans">Halaman ulasan dan analitik sentimen.</p>
+                                                </div>
+                                            </div>
+                                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </th>
                             <th class="px-10 py-6 text-left">
                                 <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'created_at', 'sort_order' => ($currentSort === 'created_at' ? $sortOrder : 'asc')]) }}" class="group flex items-center gap-2 text-[13px] font-bold text-gray-500 uppercase tracking-wider hover:text-emerald-600 transition-colors">
