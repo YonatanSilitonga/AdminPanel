@@ -27,7 +27,10 @@ class AppSetting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = self::where('key', $key)->first();
+        $cacheKey = 'app_settings_' . $key;
+        $setting = \Illuminate\Support\Facades\Cache::rememberForever($cacheKey, function () use ($key) {
+            return self::where('key', $key)->first();
+        });
 
         if (!$setting) {
             return $default;
@@ -46,6 +49,8 @@ class AppSetting extends Model
         $setting->type = $type;
         $setting->save();
 
+        \Illuminate\Support\Facades\Cache::forget('app_settings_' . $key);
+
         return $setting;
     }
 
@@ -54,7 +59,11 @@ class AppSetting extends Model
      */
     public static function has(string $key): bool
     {
-        return self::where('key', $key)->exists();
+        $cacheKey = 'app_settings_' . $key;
+        $setting = \Illuminate\Support\Facades\Cache::rememberForever($cacheKey, function () use ($key) {
+            return self::where('key', $key)->first();
+        });
+        return $setting !== null;
     }
 
     /**

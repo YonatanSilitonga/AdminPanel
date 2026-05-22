@@ -173,6 +173,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // ============ REVIEWS (Admin + Moderator) ============
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::match(['get', 'post'], 'reviews/analytics/print', [ReviewController::class, 'printAnalytics'])->name('admin.reviews.print-analytics');
         Route::get('reviews/export', [ReviewController::class, 'export'])->name('admin.reviews.export');
         Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('admin.reviews.show');
         Route::post('reviews/{review}/analyze', [ReviewController::class, 'analyze'])->name('admin.reviews.analyze');
@@ -186,6 +187,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::middleware('admin.role:moderator,admin,super_admin')->group(function () {
         Route::get('reports', [ReportController::class, 'index'])->name('admin.reports.index');
         Route::get('reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
+        Route::match(['get', 'post'], 'reports/print', [ReportController::class, 'printReport'])->name('admin.reports.print');
         Route::get('reports/{report}', [ReportController::class, 'show'])->name('admin.reports.show');
         Route::patch('reports/{report}/resolve', [ReportController::class, 'resolve'])->name('admin.reports.resolve');
         Route::post('reports/{report}/action', [ReportController::class, 'takeAction'])->name('admin.reports.action');

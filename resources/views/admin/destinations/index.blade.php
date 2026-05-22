@@ -438,7 +438,25 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 mb-1">Total Pencarian</p>
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <p class="text-sm font-medium text-gray-500">Total Pencarian</p>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-normal">Menampilkan jumlah pencarian destinasi wisata oleh wisatawan.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-normal">Panel Admin untuk analisis statistik pencarian populer.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                     <h3 class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_search']) }}</h3>
                     <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
@@ -452,7 +470,25 @@
 
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 mb-1">Wishlist Tertambah</p>
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <p class="text-sm font-medium text-gray-500">Wishlist Tertambah</p>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-normal">Melacak frekuensi wisatawan menambahkan destinasi ke daftar wishlist/simpanan mereka.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-normal">Panel Admin untuk mengukur tingkat minat destinasi.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                     <h3 class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_wishlist']) }}</h3>
                     <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
@@ -466,7 +502,25 @@
 
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 mb-1">Total Ulasan</p>
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <p class="text-sm font-medium text-gray-500">Total Ulasan</p>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                        <p class="text-slate-200 font-normal">Jumlah akumulasi ulasan yang dikirimkan oleh wisatawan untuk seluruh destinasi.</p>
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-800">
+                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                        <p class="text-slate-200 font-normal">Panel Admin sebagai indikator umpan balik aktif.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                     <h3 class="text-3xl font-bold text-orange-500">{{ number_format($stats['total_review']) }}</h3>
                     <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
@@ -480,7 +534,25 @@
         </div>
 
         <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8">
-            <h3 class="text-lg font-bold text-gray-800 mb-6">Tren Pencarian Destinasi — 7 Hari Terakhir</h3>
+            <div class="flex items-center gap-1.5 mb-6">
+                <h3 class="text-lg font-bold text-gray-800">Tren Pencarian Destinasi — 7 Hari Terakhir</h3>
+                <div class="relative group cursor-pointer inline-flex items-center">
+                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                        <div class="space-y-2">
+                            <div>
+                                <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                <p class="text-slate-200 font-normal">Menganalisis grafik tren pencarian wisatawan selama 7 hari terakhir.</p>
+                            </div>
+                            <div class="pt-1.5 border-t border-slate-800">
+                                <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                <p class="text-slate-200 font-normal">Dashboard Analitik untuk memantau lonjakan minat.</p>
+                            </div>
+                        </div>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                    </div>
+                </div>
+            </div>
             <div class="h-80 w-full">
                 <canvas id="trendChart"></canvas>
             </div>
@@ -509,7 +581,25 @@
             <div class="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-6">
                     <div>
-                        <h3 class="text-lg font-bold text-gray-800">Urutan Trending</h3>
+                        <div class="flex items-center gap-1.5">
+                            <h3 class="text-lg font-bold text-gray-800">Urutan Trending</h3>
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-normal">Mengatur peringkat/urutan destinasi trending secara manual atau memantau urutan otomatis.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                            <p class="text-slate-200 font-normal">Layar Beranda utama aplikasi mobile.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </div>
                         <p class="text-xs text-gray-400 mt-1" x-show="mode === 'manual'">Drag & drop untuk mengubah urutan</p>
                     </div>
                     <span class="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">

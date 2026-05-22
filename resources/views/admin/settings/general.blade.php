@@ -198,7 +198,7 @@
                     </div>
                     @if(isset($settings['logo']) && $settings['logo'])
                         <div class="mb-3 p-4 bg-gray-50 rounded-xl border border-gray-100 max-w-[200px]">
-                            <img src="{{ asset('storage/' . $settings['logo']) }}" alt="Logo" class="h-16 object-contain">
+                            <img src="{{ image_url($settings['logo']) }}" alt="Logo" class="h-16 object-contain">
                         </div>
                     @endif
                     <input type="file" name="logo" accept="image/png,image/jpg,image/jpeg,image/svg+xml"
@@ -230,7 +230,7 @@
                     </div>
                     @if(isset($settings['favicon']) && $settings['favicon'])
                         <div class="mb-3 p-4 bg-gray-50 rounded-xl border border-gray-100 max-w-[100px]">
-                            <img src="{{ asset('storage/' . $settings['favicon']) }}" alt="Favicon" class="h-8 object-contain">
+                            <img src="{{ image_url($settings['favicon']) }}" alt="Favicon" class="h-8 object-contain">
                         </div>
                     @endif
                     <input type="file" name="favicon" accept="image/png,image/jpg,image/jpeg,image/x-icon"

@@ -48,25 +48,34 @@ class ReviewController extends BaseAdminController
                 ->withQueryString();
 
             $ratings = [1, 2, 3, 4, 5];
-            $totalReviews = MongoReview::count();
-            $ratingDistribution = [];
-
-            foreach ([5, 4, 3, 2, 1] as $rating) {
-                $count = MongoReview::where('rating', $rating)->count();
-
-                $ratingDistribution[$rating] = [
-                    'count' => $count,
-                    'percentage' => $totalReviews > 0 ? round(($count / $totalReviews) * 100) : 0,
+            
+            // Cache the aggregation queries for 5 minutes to avoid 10 sequential DB hits
+            $statsCacheKey = 'review_stats_summary';
+            $statsData = \Illuminate\Support\Facades\Cache::remember($statsCacheKey, now()->addMinutes(5), function () {
+                $total = \App\Models\MongoReview::count();
+                $dist = [];
+                foreach ([5, 4, 3, 2, 1] as $rating) {
+                    $count = \App\Models\MongoReview::where('rating', $rating)->count();
+                    $dist[$rating] = [
+                        'count' => $count,
+                        'percentage' => $total > 0 ? round(($count / $total) * 100) : 0,
+                    ];
+                }
+                
+                $sentiments = [
+                    'total' => $total,
+                    'positive' => \App\Models\MongoReview::where('sentiment_label', 'positive')->count(),
+                    'neutral' => \App\Models\MongoReview::where('sentiment_label', 'neutral')->count(),
+                    'negative' => \App\Models\MongoReview::where('sentiment_label', 'negative')->count(),
+                    'pending' => \App\Models\MongoReview::whereNull('sentiment_label')->count(),
                 ];
-            }
+                
+                return ['total' => $total, 'distribution' => $dist, 'sentiments' => $sentiments];
+            });
 
-            $sentimentSummary = [
-                'total' => $totalReviews,
-                'positive' => MongoReview::where('sentiment_label', 'positive')->count(),
-                'neutral' => MongoReview::where('sentiment_label', 'neutral')->count(),
-                'negative' => MongoReview::where('sentiment_label', 'negative')->count(),
-                'pending' => MongoReview::whereNull('sentiment_label')->count(),
-            ];
+            $totalReviews = $statsData['total'];
+            $ratingDistribution = $statsData['distribution'];
+            $sentimentSummary = $statsData['sentiments'];
 
             $keywordSummary = [
                 'overall' => [
@@ -88,26 +97,30 @@ class ReviewController extends BaseAdminController
             $predictionSummary = [];
             $keywordModelVersion = null;
 
-            $reviewsForKeywords = MongoReview::whereNotNull('sentiment_label')
-                ->orderBy('created_at', 'desc')
-                ->limit(500)
-                ->get(['_id', 'destination_id', 'review']);
+            $cacheKey = 'review_keyword_summary_' . date('Y-m-d_H'); // Cache per jam
+            $cachedSummary = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(2), function () {
+                $reviewsForKeywords = \App\Models\MongoReview::whereNotNull('sentiment_label')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(500)
+                    ->get(['_id', 'destination_id', 'review']);
 
-            if ($reviewsForKeywords->isNotEmpty()) {
-                $summaryPayload = $reviewsForKeywords->map(fn ($review) => [
-                    'id' => (string) $review->_id,
-                    'text' => (string) ($review->review ?? ''),
-                    'destination_id' => $review->destination_id ? (string) $review->destination_id : null,
-                ])->values()->all();
+                if ($reviewsForKeywords->isNotEmpty()) {
+                    $summaryPayload = $reviewsForKeywords->map(fn ($review) => [
+                        'id' => (string) $review->_id,
+                        'text' => (string) ($review->review ?? ''),
+                        'destination_id' => $review->destination_id ? (string) $review->destination_id : null,
+                    ])->values()->all();
 
-                $summaryResponse = $this->sentimentService->summaryKeywords($summaryPayload, 50);
-
-                if ($summaryResponse['success'] ?? false) {
-                    $summaryData = $summaryResponse['data'] ?? [];
-                    $keywordSummary = $summaryData['keyword_summary'] ?? $keywordSummary;
-                    $predictionSummary = $summaryData['prediction_summary'] ?? [];
-                    $keywordModelVersion = $summaryData['model_version'] ?? null;
+                    return $this->sentimentService->summaryKeywords($summaryPayload, 50);
                 }
+                return null;
+            });
+
+            if ($cachedSummary && ($cachedSummary['success'] ?? false)) {
+                $summaryData = $cachedSummary['data'] ?? [];
+                $keywordSummary = $summaryData['keyword_summary'] ?? $keywordSummary;
+                $predictionSummary = $summaryData['prediction_summary'] ?? [];
+                $keywordModelVersion = $summaryData['model_version'] ?? null;
             }
 
             return view('admin.reviews.index', [
@@ -404,6 +417,107 @@ class ReviewController extends BaseAdminController
         } catch (\Exception $e) {
             Log::error('Review export error: ' . $e->getMessage());
             return redirect()->route('admin.reviews.index')->with('error', 'Gagal mengekspor data ulasan.');
+        }
+    }
+
+    /**
+     * Print reviews analytics to PDF view
+     */
+    public function printAnalytics(Request $request)
+    {
+        try {
+            $totalReviews = MongoReview::count();
+            $ratingDistribution = [];
+
+            foreach ([5, 4, 3, 2, 1] as $rating) {
+                $count = MongoReview::where('rating', $rating)->count();
+                $ratingDistribution[$rating] = [
+                    'count' => $count,
+                    'percentage' => $totalReviews > 0 ? round(($count / $totalReviews) * 100) : 0,
+                ];
+            }
+
+            $sentimentSummary = [
+                'total' => $totalReviews,
+                'positive' => MongoReview::where('sentiment_label', 'positive')->count(),
+                'neutral' => MongoReview::where('sentiment_label', 'neutral')->count(),
+                'negative' => MongoReview::where('sentiment_label', 'negative')->count(),
+                'pending' => MongoReview::whereNull('sentiment_label')->count(),
+            ];
+
+            $keywordSummary = [
+                'overall' => [
+                    'review_count' => 0,
+                    'sentiment_counts' => ['negative' => 0, 'neutral' => 0, 'positive' => 0],
+                    'top_keywords' => [],
+                    'top_keywords_by_sentiment' => ['negative' => [], 'neutral' => [], 'positive' => []],
+                ],
+            ];
+
+            $cacheKey = 'review_keyword_summary_' . date('Y-m-d_H'); // Cache per jam
+            $cachedSummary = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(2), function () {
+                $reviewsForKeywords = \App\Models\MongoReview::whereNotNull('sentiment_label')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(500)
+                    ->get(['_id', 'destination_id', 'review']);
+
+                if ($reviewsForKeywords->isNotEmpty()) {
+                    $summaryPayload = $reviewsForKeywords->map(fn ($review) => [
+                        'id' => (string) $review->_id,
+                        'text' => (string) ($review->review ?? ''),
+                        'destination_id' => $review->destination_id ? (string) $review->destination_id : null,
+                    ])->values()->all();
+
+                    return $this->sentimentService->summaryKeywords($summaryPayload, 50);
+                }
+                return null;
+            });
+
+            if ($cachedSummary && ($cachedSummary['success'] ?? false)) {
+                $summaryData = $cachedSummary['data'] ?? [];
+                $keywordSummary = $summaryData['keyword_summary'] ?? $keywordSummary;
+            }
+
+            $instansi = $request->input('instansi', 'PEMERINTAH KABUPATEN TOBA/DINAS KEBUDAYAAN DAN PARIWISATA');
+            $alamat = $request->input('alamat', 'Jl. Bukit Pagar Batu No. 1, Balige, Kabupaten Toba, Sumatera Utara');
+            $email = $request->input('email', 'disbudpar@tobakab.go.id');
+            $telp = $request->input('telp', '(0632) 123456');
+            $website = $request->input('website', 'https://disbudpar.tobakab.go.id');
+            $nomorSurat = $request->input('nomor_surat', '050/322/Disbudpar/' . date('Y'));
+            $hal = $request->input('hal', 'Laporan Analitik Ulasan Pengguna');
+            $namaPenandatangan = $request->input('nama_penandatangan', 'Sandro M. S. Simanjuntak, S.T., M.Si.');
+            $nipPenandatangan = $request->input('nip_penandatangan', '19780512 200501 1 003');
+            $jabatan = $request->input('jabatan', 'Kepala Dinas Kebudayaan dan Pariwisata');
+            
+            $logoUrl = null;
+            if ($request->hasFile('custom_logo')) {
+                $file = $request->file('custom_logo');
+                $extension = $file->getClientOriginalExtension();
+                $logoUrl = 'data:image/' . ($extension == 'svg' ? 'svg+xml' : $extension) . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            } else {
+                $logoPath = \App\Models\AppSetting::get('logo');
+                $logoUrl = $logoPath ? (str_starts_with($logoPath, 'http') ? $logoPath : \Illuminate\Support\Facades\Storage::url($logoPath)) : null;
+            }
+
+            return view('admin.reviews.print_analytics', compact(
+                'ratingDistribution',
+                'sentimentSummary',
+                'keywordSummary',
+                'instansi',
+                'alamat',
+                'email',
+                'telp',
+                'website',
+                'nomorSurat',
+                'hal',
+                'namaPenandatangan',
+                'nipPenandatangan',
+                'jabatan',
+                'logoUrl'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error generating print analytics: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memuat data analitik ulasan untuk dicetak.');
         }
     }
 

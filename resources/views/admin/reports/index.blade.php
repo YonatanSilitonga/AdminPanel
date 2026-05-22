@@ -6,10 +6,10 @@
 @section('page_description', 'Tangani dan monitor laporan dari pengguna')
 
 @section('page_actions')
-<a href="{{ route('admin.reports.export', request()->query()) }}" class="flex items-center gap-2 px-8 py-3 bg-emerald-700 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-emerald-700/20">
+<button type="button" onclick="window.dispatchEvent(new CustomEvent('open-export-modal'))" class="flex items-center gap-2 px-8 py-3 bg-[#066466] text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-[#066466]/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-    Export CSV
-</a>
+    Ekspor Laporan
+</button>
 @endsection
 
 @section('breadcrumb')
@@ -25,8 +25,35 @@
 @endsection
 
 @section('content')
-<div x-data="{
+<div x-on:open-export-modal.window="showExportModal = true" x-data="{
     showViewModal: false,
+    showExportModal: false,
+    exportFormat: 'pdf',
+    instansi: 'PEMERINTAH KABUPATEN TOBA/DINAS KEBUDAYAAN DAN PARIWISATA',
+    alamat: 'Jl. Bukit Pagar Batu No. 1, Balige, Kabupaten Toba, Sumatera Utara',
+    email: 'disbudpar@tobakab.go.id',
+    telp: '(0632) 123456',
+    website: 'https://disbudpar.tobakab.go.id',
+    nomor_surat: '050/321/Disbudpar/2026',
+    hal: 'Laporan Pengaduan dan Penanganan Keluhan Wisatawan',
+    nama_penandatangan: 'Sandro M. S. Simanjuntak, S.T., M.Si.',
+    nip_penandatangan: '19780512 200501 1 003',
+    jabatan: 'Kepala Dinas Kebudayaan dan Pariwisata',
+
+    submitExport() {
+        const form = this.$refs.exportForm;
+        if (this.exportFormat === 'pdf') {
+            form.action = '{{ route("admin.reports.print") }}';
+            form.target = '_blank';
+            form.method = 'POST';
+        } else {
+            form.action = '{{ route("admin.reports.export") }}';
+            form.target = '_self';
+            form.method = 'GET';
+        }
+        form.submit();
+        setTimeout(() => this.showExportModal = false, 100);
+    },
     viewingReport: null,
     loading: false,
     savingStatus: false,
@@ -52,7 +79,7 @@
         this.savingStatus = true;
         try {
             const res = await fetch(`/admin/reports/${this.viewingReport.id}/status`, {
-                method: 'POST',
+                method: 'PUT',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
@@ -240,7 +267,7 @@
                                 </a>
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -251,7 +278,7 @@
                                                 <p class="text-slate-200 font-sans">Daftar baris laporan masuk di halaman pemantauan.</p>
                                             </div>
                                         </div>
-                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                     </div>
                                 </div>
                             </div>
@@ -266,7 +293,7 @@
                                 </a>
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -277,7 +304,7 @@
                                                 <p class="text-slate-200 font-sans">Daftar laporan untuk mempermudah identifikasi masalah konten.</p>
                                             </div>
                                         </div>
-                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                     </div>
                                 </div>
                             </div>
@@ -287,7 +314,7 @@
                                 <span class="text-[13px] font-bold text-gray-400 uppercase tracking-wider">Deskripsi</span>
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -298,7 +325,7 @@
                                                 <p class="text-slate-200 font-sans">Detail baris laporan untuk memahami masalah secara kronologis.</p>
                                             </div>
                                         </div>
-                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                     </div>
                                 </div>
                             </div>
@@ -313,7 +340,7 @@
                                 </a>
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-indigo-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -324,7 +351,7 @@
                                                 <p class="text-slate-200 font-sans">Status tindak lanjut yang dapat diubah di modal detail laporan.</p>
                                             </div>
                                         </div>
-                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                     </div>
                                 </div>
                             </div>
@@ -339,7 +366,7 @@
                                 </a>
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-sky-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -350,7 +377,7 @@
                                                 <p class="text-slate-200 font-sans">Kolom waktu untuk melacak laporan terbaru.</p>
                                             </div>
                                         </div>
-                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                     </div>
                                 </div>
                             </div>
@@ -545,6 +572,205 @@
                         <button @click="showViewModal = false" class="px-8 py-3 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">Tutup</button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- EXPORT REPORT MODAL --}}
+    <div x-show="showExportModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+            <div x-show="showExportModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showExportModal = false"></div>
+
+            <div x-show="showExportModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+
+                <div class="flex items-center justify-between mb-6 px-8 pt-6 pb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Ekspor Laporan</h3>
+                        <p class="text-xs text-gray-400 font-medium mt-0.5">Saring data laporan masuk dan pilih format dokumen ekspor</p>
+                    </div>
+                    <button @click="showExportModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form x-ref="exportForm" enctype="multipart/form-data" @submit.prevent="submitExport()" class="px-8 pb-8 space-y-6">
+                    @csrf
+                    <input type="hidden" name="format" :value="exportFormat">
+
+                    {{-- Format Selection --}}
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest block">Pilih Format Ekspor</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <!-- PDF Kedinasan -->
+                            <div @click="exportFormat = 'pdf'" 
+                                 :class="exportFormat === 'pdf' ? 'border-[#066466] bg-[#066466]/5 ring-2 ring-[#066466]/20' : 'border-gray-100 hover:border-gray-300 bg-white'"
+                                 class="border-2 rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all">
+                                <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 mb-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                                <span class="text-sm font-bold text-gray-800 block">PDF Dinas</span>
+                                <span class="text-[10px] text-gray-400 font-medium">Kop Dinas Resmi</span>
+                            </div>
+
+                            <!-- Excel -->
+                            <div @click="exportFormat = 'excel'" 
+                                 :class="exportFormat === 'excel' ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-600/20' : 'border-gray-100 hover:border-gray-300 bg-white'"
+                                 class="border-2 rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all">
+                                <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                                <span class="text-sm font-bold text-gray-800 block">Excel (.xls)</span>
+                                <span class="text-[10px] text-gray-400 font-medium">Spreadsheet Data</span>
+                            </div>
+
+                            <!-- CSV -->
+                            <div @click="exportFormat = 'csv'" 
+                                 :class="exportFormat === 'csv' ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600/20' : 'border-gray-100 hover:border-gray-300 bg-white'"
+                                 class="border-2 rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all">
+                                <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                </div>
+                                <span class="text-sm font-bold text-gray-800 block">CSV Data</span>
+                                <span class="text-[10px] text-gray-400 font-medium">Delimiter Titik Koma</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Filters Section --}}
+                    <div class="space-y-4 pt-4 border-t border-gray-50">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest block">Filter Data Laporan</label>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Tanggal Mulai -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Tanggal Mulai</label>
+                                <input type="date" name="start_date" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                            <!-- Tanggal Selesai -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Tanggal Selesai</label>
+                                <input type="date" name="end_date" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Status Laporan -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Status Laporan</label>
+                                <select name="status" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all cursor-pointer">
+                                    <option value="">Semua Status</option>
+                                    <option value="pending">Menunggu</option>
+                                    <option value="reviewed">Ditinjau</option>
+                                    <option value="resolved">Selesai / Diselesaikan</option>
+                                </select>
+                            </div>
+                            <!-- Kategori Laporan -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Kategori / Alasan</label>
+                                <select name="reason" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all cursor-pointer">
+                                    <option value="">Semua Kategori</option>
+                                    @foreach(($reasons ?? []) as $reason)
+                                        <option value="{{ $reason }}">{{ ucfirst(str_replace('_', ' ', $reason)) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Kop Dinas Custom Parameters (Only for PDF) --}}
+                    <div x-show="exportFormat === 'pdf'" x-transition class="space-y-4 pt-4 border-t border-gray-50">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest block">Pengaturan Kop & Tanda Tangan Dinas</label>
+                            <span class="text-[10px] bg-red-50 text-red-500 font-bold px-2 py-0.5 rounded-lg">Konsep Kedinasan</span>
+                        </div>
+
+                        <!-- Custom Logo -->
+                        <div class="space-y-1.5 p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                            <label class="text-xs font-bold text-gray-700">Logo Instansi Kustom (Opsional)</label>
+                            <p class="text-xs text-gray-500 mb-2">Upload logo baru jika Anda ingin mengganti logo dari Pengaturan hanya untuk dokumen ini.</p>
+                            <input type="file" name="custom_logo" accept="image/png, image/jpeg, image/jpg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#066466]/10 file:text-[#066466] hover:file:bg-[#066466]/20 transition-all cursor-pointer">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Instansi -->
+                            <div class="space-y-1.5 col-span-2">
+                                <label class="text-xs font-bold text-gray-500 flex items-center gap-1.5">
+                                    Nama Instansi / Lembaga
+                                    <span class="text-[10px] text-gray-400 font-normal">(pisahkan dengan / untuk baris baru)</span>
+                                </label>
+                                <input type="text" name="instansi" x-model="instansi" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Nomor Surat -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Nomor Surat Dinas</label>
+                                <input type="text" name="nomor_surat" x-model="nomor_surat" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                            <!-- Perihal / Hal -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Perihal / Judul Surat</label>
+                                <input type="text" name="hal" x-model="hal" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                            <!-- Nama Penandatangan -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Nama Pejabat</label>
+                                <input type="text" name="nama_penandatangan" x-model="nama_penandatangan" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                            <!-- NIP -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">NIP Pejabat</label>
+                                <input type="text" name="nip_penandatangan" x-model="nip_penandatangan" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                            <!-- Jabatan -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Jabatan Pejabat</label>
+                                <input type="text" name="jabatan" x-model="jabatan" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-gray-500">Alamat Lengkap Dinas</label>
+                            <input type="text" name="alamat" x-model="alamat" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                            <!-- Email -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Email Dinas</label>
+                                <input type="text" name="email" x-model="email" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                            <!-- Telp -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">No. Telpon Dinas</label>
+                                <input type="text" name="telp" x-model="telp" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                            <!-- Website -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500">Website Dinas</label>
+                                <input type="text" name="website" x-model="website" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Action buttons --}}
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-50">
+                        <button type="button" @click="showExportModal = false" class="px-6 py-2.5 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-8 py-2.5 text-sm font-bold text-white bg-[#066466] rounded-xl hover:opacity-90 shadow-md shadow-[#066466]/10 transition-all">
+                            Proses Ekspor
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

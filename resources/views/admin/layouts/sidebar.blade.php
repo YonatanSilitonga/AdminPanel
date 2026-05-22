@@ -12,14 +12,14 @@
     $menuItems = [
         [
             'type' => 'link',
-            'label' => 'Dashboard',
+            'label' => 'Beranda',
             'route' => route('admin.dashboard'),
             'active' => request()->routeIs('admin.dashboard'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>'
         ],
         [
             'type' => 'section',
-            'label' => 'Content Management'
+            'label' => 'Konten',
         ],
         [
             'type' => 'link',
@@ -30,14 +30,14 @@
         ],
         [
             'type' => 'link',
-            'label' => 'Kelola Event',
+            'label' => 'Acara',
             'route' => route('admin.events.index'),
             'active' => request()->routeIs('admin.events.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>'
         ],
         [
             'type' => 'link',
-            'label' => 'Carousel dan Banner',
+            'label' => 'Carousel & Banner',
             'route' => route('admin.carousel_banners.index'),
             'active' => request()->routeIs('admin.carousel_banners.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>'
@@ -51,36 +51,36 @@
         ],
         [
             'type' => 'link',
-            'label' => 'Berita & Promosi',
+            'label' => 'Berita & Promo',
             'route' => route('admin.berita_promosi.index'),
             'active' => request()->routeIs('admin.berita_promosi.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a2 2 0 002 2h4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h3m-3 4h5m-5 4h5"></path>'
         ],
         [
             'type' => 'link',
-            'label' => 'Budaya dan Warisan',
+            'label' => 'Budaya & Warisan',
             'route' => route('admin.budaya.index'),
             'active' => request()->routeIs('admin.budaya.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>'
         ],
         [
             'type' => 'section',
-            'label' => 'Administration'
+            'label' => 'Administrasi',
         ],
         [
             'type' => 'link',
-            'label' => 'Monitoring User',
+            'label' => 'Pengguna',
             'route' => route('admin.users.index'),
             'active' => request()->routeIs('admin.users.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>'
         ],
         [
             'type' => 'section',
-            'label' => 'Monitoring'
+            'label' => 'Monitoring',
         ],
         [
             'type' => 'dropdown',
-            'label' => 'Fitur AI dan Cerdas',
+            'label' => 'AI & Cerdas',
             'openKey' => 'smartFeatures',
             'active' => request()->routeIs('admin.chatbot-logs.*') || request()->routeIs('admin.recommendations.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>',
@@ -96,13 +96,13 @@
             'active' => request()->routeIs('admin.reviews.*') || request()->routeIs('admin.reports.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>',
             'subItems' => [
-                ['label' => 'Memantau Review User', 'route' => route('admin.reviews.index'), 'active' => request()->routeIs('admin.reviews.index')],
-                ['label' => 'Menangani Laporan & Isu', 'route' => route('admin.reports.index'), 'active' => request()->routeIs('admin.reports.index')]
+                ['label' => 'Ulasan Pengguna', 'route' => route('admin.reviews.index'), 'active' => request()->routeIs('admin.reviews.index')],
+                ['label' => 'Menangani Laporan dan Isu', 'route' => route('admin.reports.index'), 'active' => request()->routeIs('admin.reports.index')]
             ]
         ],
         [
             'type' => 'section',
-            'label' => 'Settings'
+            'label' => 'Pengaturan'
         ],
         [
             'type' => 'link',

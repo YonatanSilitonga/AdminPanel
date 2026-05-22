@@ -1,8 +1,8 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Dashboard Overview')
-@section('navbar_title', 'Dashboard')
-@section('page_title', 'Dashboard Overview')
+@section('title', 'Beranda')
+@section('navbar_title', 'Beranda')
+@section('page_title', 'Beranda')
 
 @section('content')
 <!-- Header Stats -->

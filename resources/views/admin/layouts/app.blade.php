@@ -385,7 +385,54 @@
             return new Intl.NumberFormat('id-ID').format(value);
         }
 
-        // Page navigation transition disabled.
+        // Skeleton Loading Injector for Instant Perceived Navigation
+        document.addEventListener('DOMContentLoaded', () => {
+            const internalLinks = document.querySelectorAll('a[href^="{{ url('/admin') }}"]:not([target="_blank"]):not([href="#"])');
+            
+            internalLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.defaultPrevented) return;
+                    
+                    const href = this.getAttribute('href');
+                    if (href === window.location.href) return;
+                    
+                    const pageContent = document.getElementById('page-content');
+                    if (pageContent) {
+                        // Prevent page jump by fixing the height during transition
+                        pageContent.style.minHeight = pageContent.offsetHeight + 'px';
+                        
+                        // Replace content with Skeleton Shimmer Layout
+                        pageContent.innerHTML = `
+                            <div class="animate-pulse flex flex-col w-full opacity-60">
+                                <!-- Title Skeleton -->
+                                <div class="mb-8 flex justify-between items-center">
+                                    <div>
+                                        <div class="h-8 bg-gray-200 rounded-lg w-64 mb-3"></div>
+                                        <div class="h-4 bg-gray-100 rounded w-96"></div>
+                                    </div>
+                                    <div class="h-10 bg-gray-200 rounded-xl w-32 hidden md:block"></div>
+                                </div>
+                                
+                                <!-- Table/Card Skeleton -->
+                                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 md:p-8 flex-1">
+                                    <div class="flex justify-between items-center mb-8">
+                                        <div class="h-6 bg-gray-100 rounded w-48"></div>
+                                        <div class="h-10 bg-gray-100 rounded-xl w-64"></div>
+                                    </div>
+                                    <div class="space-y-5">
+                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
+                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
+                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
+                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
+                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+        });
     </script>
 
     @stack('scripts')

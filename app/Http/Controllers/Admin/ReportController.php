@@ -191,7 +191,7 @@ class ReportController extends BaseAdminController
     }
 
     /**
-     * Export reports to CSV.
+     * Export reports to CSV/Excel.
      */
     public function export(Request $request)
     {
@@ -206,12 +206,35 @@ class ReportController extends BaseAdminController
                 $query->where('reason', $request->reason);
             }
 
+            if ($request->filled('start_date')) {
+                $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+                $query->where(function($q) use ($startDate) {
+                    $q->where('created_at', '>=', $startDate)
+                      ->orWhere('created_at', '>=', $startDate->timestamp * 1000);
+                });
+            }
+
+            if ($request->filled('end_date')) {
+                $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+                $query->where(function($q) use ($endDate) {
+                    $q->where('created_at', '<=', $endDate)
+                      ->orWhere('created_at', '<=', $endDate->timestamp * 1000);
+                });
+            }
+
             $reports = $query->orderBy('created_at', 'desc')->get();
 
-            $filename = 'reports_data_' . date('Y-m-d_H-i-s') . '.csv';
+            $format = $request->input('format', 'csv');
+            if ($format === 'excel') {
+                $filename = 'reports_data_' . date('Y-m-d_H-i-s') . '.xls';
+                $contentType = 'application/vnd.ms-excel';
+            } else {
+                $filename = 'reports_data_' . date('Y-m-d_H-i-s') . '.csv';
+                $contentType = 'text/csv; charset=utf-8';
+            }
             
             $headers = [
-                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Type' => $contentType,
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ];
 
@@ -221,6 +244,18 @@ class ReportController extends BaseAdminController
                 fputcsv($file, ['ID', 'Pelapor', 'Target/Destinasi', 'Alasan', 'Deskripsi', 'Status', 'Tanggal'], ';');
 
                 foreach ($reports as $report) {
+                    // Extract Date
+                    $rawTs = $report->created_at;
+                    if ($rawTs instanceof \MongoDB\BSON\UTCDateTime) {
+                        $ts = \Carbon\Carbon::createFromTimestampMs((int)$rawTs->toDateTime()->format('Uv'));
+                    } elseif (is_numeric($rawTs)) {
+                        $ts = \Carbon\Carbon::createFromTimestampMs((int)$rawTs);
+                    } elseif ($rawTs instanceof \Carbon\Carbon) {
+                        $ts = $rawTs;
+                    } else {
+                        $ts = null;
+                    }
+
                     fputcsv($file, [
                         $report->_id,
                         $report->user_id ?? 'Anonim',
@@ -228,7 +263,7 @@ class ReportController extends BaseAdminController
                         $report->reason ?? '-',
                         $report->description ?? '-',
                         $report->status ?? 'pending',
-                        $report->created_at?->format('d-m-Y H:i') ?? '-',
+                        $ts ? $ts->format('d-m-Y H:i') : '-',
                     ], ';');
                 }
 
@@ -240,6 +275,84 @@ class ReportController extends BaseAdminController
         } catch (\Exception $e) {
             Log::error('Report export error: ' . $e->getMessage());
             return redirect()->route('admin.reports.index')->with('error', 'Gagal mengekspor data laporan.');
+        }
+    }
+
+    /**
+     * Render the report in an official government print format.
+     */
+    public function printReport(Request $request)
+    {
+        try {
+            $query = MongoReport::query()->with('destination');
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('reason')) {
+                $query->where('reason', $request->reason);
+            }
+
+            if ($request->filled('start_date')) {
+                $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+                $query->where(function($q) use ($startDate) {
+                    $q->where('created_at', '>=', $startDate)
+                      ->orWhere('created_at', '>=', $startDate->timestamp * 1000);
+                });
+            }
+
+            if ($request->filled('end_date')) {
+                $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+                $query->where(function($q) use ($endDate) {
+                    $q->where('created_at', '<=', $endDate)
+                      ->orWhere('created_at', '<=', $endDate->timestamp * 1000);
+                });
+            }
+
+            $reports = $query->orderBy('created_at', 'desc')->get();
+
+            // Extract government layout parameters
+            $instansi = $request->input('instansi', 'PEMERINTAH KABUPATEN TOBA/DINAS KEBUDAYAAN DAN PARIWISATA');
+            $alamat = $request->input('alamat', 'Jl. Bukit Pagar Batu No. 1, Balige, Kabupaten Toba, Sumatera Utara');
+            $email = $request->input('email', 'disbudpar@tobakab.go.id');
+            $telp = $request->input('telp', '(0632) 123456');
+            $website = $request->input('website', 'https://disbudpar.tobakab.go.id');
+            $nomorSurat = $request->input('nomor_surat', '050/321/Disbudpar/' . date('Y'));
+            $hal = $request->input('hal', 'Laporan Pengaduan dan Penanganan Keluhan Wisatawan');
+            $namaPenandatangan = $request->input('nama_penandatangan', 'Sandro M. S. Simanjuntak, S.T., M.Si.');
+            $nipPenandatangan = $request->input('nip_penandatangan', '19780512 200501 1 003');
+            $jabatan = $request->input('jabatan', 'Kepala Dinas Kebudayaan dan Pariwisata');
+
+            // Get Logo from settings or custom upload
+            $logoUrl = null;
+            if ($request->hasFile('custom_logo')) {
+                $file = $request->file('custom_logo');
+                $extension = $file->getClientOriginalExtension();
+                $logoUrl = 'data:image/' . ($extension == 'svg' ? 'svg+xml' : $extension) . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            } else {
+                $logoPath = \App\Models\AppSetting::get('logo');
+                $logoUrl = $logoPath ? (str_starts_with($logoPath, 'http') ? $logoPath : \Illuminate\Support\Facades\Storage::url($logoPath)) : null;
+            }
+
+            return view('admin.reports.print', compact(
+                'reports',
+                'instansi',
+                'alamat',
+                'email',
+                'telp',
+                'website',
+                'nomorSurat',
+                'hal',
+                'namaPenandatangan',
+                'nipPenandatangan',
+                'jabatan',
+                'logoUrl'
+            ));
+
+        } catch (\Exception $e) {
+            Log::error('Report print error: ' . $e->getMessage());
+            return redirect()->route('admin.reports.index')->with('error', 'Gagal memuat cetakan laporan: ' . $e->getMessage());
         }
     }
 }

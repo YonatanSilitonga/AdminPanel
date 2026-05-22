@@ -50,14 +50,32 @@ class SettingsController extends BaseAdminController
             
             // Handle logo upload
             if ($request->hasFile('logo')) {
-                $logoPath = $request->file('logo')->store('settings', 'public');
-                AppSetting::set('logo', $logoPath);
+                $oldLogo = AppSetting::get('logo');
+                $logoPath = $this->uploadFile($request->file('logo'), 'settings', [
+                    'mimes' => ['image/png', 'image/jpeg', 'image/svg+xml', 'image/svg', 'image/webp'],
+                    'max_size' => 2
+                ]);
+                if ($logoPath) {
+                    if ($oldLogo) {
+                        $this->deleteFile($oldLogo);
+                    }
+                    AppSetting::set('logo', $logoPath);
+                }
             }
 
             // Handle favicon upload
             if ($request->hasFile('favicon')) {
-                $faviconPath = $request->file('favicon')->store('settings', 'public');
-                AppSetting::set('favicon', $faviconPath);
+                $oldFavicon = AppSetting::get('favicon');
+                $faviconPath = $this->uploadFile($request->file('favicon'), 'settings', [
+                    'mimes' => ['image/png', 'image/jpeg', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/webp', 'image/ico'],
+                    'max_size' => 0.5
+                ]);
+                if ($faviconPath) {
+                    if ($oldFavicon) {
+                        $this->deleteFile($oldFavicon);
+                    }
+                    AppSetting::set('favicon', $faviconPath);
+                }
             }
 
             AppSetting::set('primary_color', $validated['primary_color']);
