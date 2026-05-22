@@ -440,12 +440,12 @@
                         <!-- Gambar Background -->
                         <div class="space-y-1.5">
                             <label class="block text-sm font-medium text-gray-700">Gambar Background</label>
-                            <div class="relative group">
+                            <div class="relative group w-full h-32">
                                 <input type="file" name="image_url" id="image_create" accept="image/*" required
-                                    class="hidden"
+                                    class="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
                                     @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
                                 <label for="image_create"
-                                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#6349A5]/30 rounded-xl cursor-pointer hover:bg-gray-50 transition-all bg-[#F8F7FA]">
+                                    class="absolute inset-0 flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-[#6349A5]/30 rounded-xl hover:bg-gray-50 transition-all bg-[#F8F7FA]">
                                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                         <svg class="w-6 h-6 text-[#6349A5] mb-2" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">

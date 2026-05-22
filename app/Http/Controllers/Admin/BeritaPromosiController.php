@@ -76,6 +76,7 @@ class BeritaPromosiController extends BaseAdminController
             $bp = MongoBeritaPromosi::create($data);
             
             $this->logActivity('create', 'berita_promosi', (string)$bp->_id, null, $bp->toArray());
+            $this->clearDashboardCache();
 
             return redirect()->back()->with('success', 'Berhasil Ditambahkan');
         } catch (\Exception $e) {
@@ -129,6 +130,7 @@ class BeritaPromosiController extends BaseAdminController
             $bp->update($data);
             
             $this->logActivity('update', 'berita_promosi', (string)$bp->_id, $oldValues, $bp->toArray());
+            $this->clearDashboardCache();
 
             return redirect()->back()->with('success', 'Berhasil Diperbarui');
         } catch (\Exception $e) {
@@ -146,6 +148,7 @@ class BeritaPromosiController extends BaseAdminController
         
         $this->logActivity('delete', 'berita_promosi', (string)$bp->_id, $bp->toArray());
         $bp->delete();
+        $this->clearDashboardCache();
         
         return redirect()->back()->with('success', 'Berhasil Dihapus');
     }

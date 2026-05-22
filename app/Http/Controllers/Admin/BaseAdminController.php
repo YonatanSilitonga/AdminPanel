@@ -236,7 +236,7 @@ class BaseAdminController extends Controller
     {
         $cacheKey = 'admin.dashboard.stats_summary';
         
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () {
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(2), function () {
             try {
                 return [
                     'total_destinations' => \App\Models\MongoDB\MongoDestination::count(),
@@ -263,6 +263,17 @@ class BaseAdminController extends Controller
                 ];
             }
         });
+    }
+
+    /**
+     * Clear dashboard statistics cache.
+     * Call this after any store/update/destroy operation so the dashboard
+     * immediately reflects the latest data.
+     */
+    protected function clearDashboardCache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('admin.dashboard.stats_summary');
+        \Illuminate\Support\Facades\Cache::forget('admin.dashboard.monthly_chart');
     }
 
     /**

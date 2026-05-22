@@ -15,7 +15,7 @@
 @endsection
 
 @section('page_actions')
-<button type="button" onclick="window.dispatchEvent(new CustomEvent('open-create-modal'))" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+<button type="button" onclick="document.querySelector('[data-open-create-modal]')?.click()" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Berita/Promosi
 </button>
@@ -88,6 +88,7 @@
         }
     }
 }">
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true; createPreviewUrl = ''; createFileName = '';"></button>
     <div class="mb-6"></div>
 
     <!-- Filters -->
@@ -376,7 +377,7 @@
                                 <template x-if="createPreviewUrl">
                                     <img :src="createPreviewUrl" class="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none">
                                 </template>
-                                <input type="file" name="thumbnail" required accept="image/png, image/jpeg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                <input type="file" name="thumbnail" required accept="image/png, image/jpeg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     @change="
                                         createFileName = $event.target.files[0].name;
                                         const reader = new FileReader();
@@ -619,21 +620,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-    // Global helper for opening the create modal from page_actions
-    window.addEventListener('DOMContentLoaded', () => {
-        // Find the button in the page_actions section
-        const createBtn = document.querySelector('button[class*=\"bg-sidebar\"][class*=\"text-white\"]:not([type=\"submit\"])');
-        if (createBtn) {
-            createBtn.removeAttribute('onclick');
-            createBtn.addEventListener('click', () => {
-                const alpineEl = document.querySelector('[x-data]');
-                if (alpineEl && alpineEl.__x) {
-                    alpineEl.__x.$data.showCreateModal = true;
-                }
-            });
-        }
-    });
-</script>
-@endpush

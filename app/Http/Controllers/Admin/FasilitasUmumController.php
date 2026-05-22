@@ -113,6 +113,7 @@ class FasilitasUmumController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.fasilitas_umum.index')
                 ->with('success', 'Fasilitas berhasil ditambahkan');
         } catch (\Exception $e) {
@@ -200,6 +201,7 @@ class FasilitasUmumController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.fasilitas_umum.index')
                 ->with('success', 'Fasilitas berhasil diperbarui');
         } catch (\Exception $e) {
@@ -255,6 +257,7 @@ class FasilitasUmumController extends BaseAdminController
             
             $facility->delete();
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.fasilitas_umum.index')
                 ->with('success', 'Fasilitas berhasil dihapus');
         } catch (\Exception $e) {

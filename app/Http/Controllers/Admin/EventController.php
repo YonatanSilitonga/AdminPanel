@@ -138,6 +138,7 @@ class EventController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil ditambahkan');
         } catch (\Exception $e) {
@@ -264,6 +265,7 @@ class EventController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil diperbarui');
         } catch (\Exception $e) {
@@ -293,6 +295,7 @@ class EventController extends BaseAdminController
             
             $this->eventService->deleteEvent($event);
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil dihapus');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

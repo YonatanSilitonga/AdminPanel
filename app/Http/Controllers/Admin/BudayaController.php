@@ -105,6 +105,7 @@ class BudayaController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.budaya.index')
                 ->with('success', 'Berhasil Ditambahkan');
         } catch (\Exception $e) {
@@ -184,6 +185,7 @@ class BudayaController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.budaya.index')
                 ->with('success', 'Berhasil Diperbarui');
         } catch (\Exception $e) {
@@ -216,6 +218,7 @@ class BudayaController extends BaseAdminController
             
             $budaya->delete();
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.budaya.index')
                 ->with('success', 'Berhasil Dihapus');
         } catch (\Exception $e) {

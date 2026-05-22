@@ -181,6 +181,7 @@ class DestinationController extends BaseAdminController
             }
 
             $this->logActivity('create_mongo', 'destination', (string)$destination->_id, null, $destination->toArray());
+            $this->clearDashboardCache();
 
             return redirect()
                 ->route('admin.destinations.index')
@@ -330,6 +331,7 @@ class DestinationController extends BaseAdminController
 
             // Log action
             $this->logActivity('delete_mongo', 'destination', $id);
+            $this->clearDashboardCache();
 
             return redirect()
                 ->route('admin.destinations.index')
