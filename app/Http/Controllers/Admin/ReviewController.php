@@ -52,10 +52,10 @@ class ReviewController extends BaseAdminController
             // Cache the aggregation queries for 5 minutes to avoid 10 sequential DB hits
             $statsCacheKey = 'review_stats_summary';
             $statsData = \Illuminate\Support\Facades\Cache::remember($statsCacheKey, now()->addMinutes(5), function () {
-                $total = \App\Models\MongoReview::count();
+                $total = MongoReview::count();
                 $dist = [];
                 foreach ([5, 4, 3, 2, 1] as $rating) {
-                    $count = \App\Models\MongoReview::where('rating', $rating)->count();
+                    $count = MongoReview::where('rating', $rating)->count();
                     $dist[$rating] = [
                         'count' => $count,
                         'percentage' => $total > 0 ? round(($count / $total) * 100) : 0,
@@ -64,10 +64,10 @@ class ReviewController extends BaseAdminController
                 
                 $sentiments = [
                     'total' => $total,
-                    'positive' => \App\Models\MongoReview::where('sentiment_label', 'positive')->count(),
-                    'neutral' => \App\Models\MongoReview::where('sentiment_label', 'neutral')->count(),
-                    'negative' => \App\Models\MongoReview::where('sentiment_label', 'negative')->count(),
-                    'pending' => \App\Models\MongoReview::whereNull('sentiment_label')->count(),
+                    'positive' => MongoReview::where('sentiment_label', 'positive')->count(),
+                    'neutral' => MongoReview::where('sentiment_label', 'neutral')->count(),
+                    'negative' => MongoReview::where('sentiment_label', 'negative')->count(),
+                    'pending' => MongoReview::whereNull('sentiment_label')->count(),
                 ];
                 
                 return ['total' => $total, 'distribution' => $dist, 'sentiments' => $sentiments];
@@ -99,7 +99,7 @@ class ReviewController extends BaseAdminController
 
             $cacheKey = 'review_keyword_summary_' . date('Y-m-d_H'); // Cache per jam
             $cachedSummary = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(2), function () {
-                $reviewsForKeywords = \App\Models\MongoReview::whereNotNull('sentiment_label')
+                $reviewsForKeywords = MongoReview::whereNotNull('sentiment_label')
                     ->orderBy('created_at', 'desc')
                     ->limit(500)
                     ->get(['_id', 'destination_id', 'review']);
@@ -456,7 +456,7 @@ class ReviewController extends BaseAdminController
 
             $cacheKey = 'review_keyword_summary_' . date('Y-m-d_H'); // Cache per jam
             $cachedSummary = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(2), function () {
-                $reviewsForKeywords = \App\Models\MongoReview::whereNotNull('sentiment_label')
+                $reviewsForKeywords = MongoReview::whereNotNull('sentiment_label')
                     ->orderBy('created_at', 'desc')
                     ->limit(500)
                     ->get(['_id', 'destination_id', 'review']);

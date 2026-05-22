@@ -385,52 +385,48 @@
             return new Intl.NumberFormat('id-ID').format(value);
         }
 
-        // Skeleton Loading Injector for Instant Perceived Navigation
+        // Skeleton Loading Injector for Instant Perceived Navigation & Refresh
         document.addEventListener('DOMContentLoaded', () => {
-            const internalLinks = document.querySelectorAll('a[href^="{{ url('/admin') }}"]:not([target="_blank"]):not([href="#"])');
             
+            // Generic Loading State for ALL layouts (Dashboard, Settings, Lists)
+            const showSkeletonLoader = () => {
+                const pageContent = document.getElementById('page-content');
+                if (pageContent && !pageContent.dataset.skeletonActive) {
+                    pageContent.dataset.skeletonActive = "true";
+                    
+                    // Instead of a fake skeleton that mismatches the layout, 
+                    // we dim the CURRENT layout and make it pulse smoothly.
+                    pageContent.style.transition = 'opacity 0.2s ease-out';
+                    pageContent.classList.add('opacity-40', 'animate-pulse', 'pointer-events-none', 'select-none');
+                    
+                    // Optional: Add a small loading indicator at the top right of the page content
+                    const loaderBadge = document.createElement('div');
+                    loaderBadge.className = 'fixed top-24 right-10 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 z-50 animate-bounce';
+                    loaderBadge.innerHTML = `
+                        <svg class="animate-spin h-5 w-5 text-sidebar" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm font-semibold text-gray-700">Memuat...</span>
+                    `;
+                    document.body.appendChild(loaderBadge);
+                }
+            };
+
+            // 1. Intercept sidebar & internal link clicks
+            const internalLinks = document.querySelectorAll('a[href^="{{ url('/admin') }}"]:not([target="_blank"]):not([href="#"])');
             internalLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.defaultPrevented) return;
-                    
                     const href = this.getAttribute('href');
                     if (href === window.location.href) return;
-                    
-                    const pageContent = document.getElementById('page-content');
-                    if (pageContent) {
-                        // Prevent page jump by fixing the height during transition
-                        pageContent.style.minHeight = pageContent.offsetHeight + 'px';
-                        
-                        // Replace content with Skeleton Shimmer Layout
-                        pageContent.innerHTML = `
-                            <div class="animate-pulse flex flex-col w-full opacity-60">
-                                <!-- Title Skeleton -->
-                                <div class="mb-8 flex justify-between items-center">
-                                    <div>
-                                        <div class="h-8 bg-gray-200 rounded-lg w-64 mb-3"></div>
-                                        <div class="h-4 bg-gray-100 rounded w-96"></div>
-                                    </div>
-                                    <div class="h-10 bg-gray-200 rounded-xl w-32 hidden md:block"></div>
-                                </div>
-                                
-                                <!-- Table/Card Skeleton -->
-                                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 md:p-8 flex-1">
-                                    <div class="flex justify-between items-center mb-8">
-                                        <div class="h-6 bg-gray-100 rounded w-48"></div>
-                                        <div class="h-10 bg-gray-100 rounded-xl w-64"></div>
-                                    </div>
-                                    <div class="space-y-5">
-                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
-                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
-                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
-                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
-                                        <div class="h-14 bg-gray-50/80 rounded-xl w-full"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
+                    showSkeletonLoader();
                 });
+            });
+
+            // 2. Intercept Page Refresh (F5), Form Submissions, and Browser Navigation
+            window.addEventListener('beforeunload', function () {
+                showSkeletonLoader();
             });
         });
     </script>
