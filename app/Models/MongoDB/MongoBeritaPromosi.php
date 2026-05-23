@@ -13,6 +13,7 @@ class MongoBeritaPromosi extends Model
         'judul',
         'tipe',
         'thumbnail',
+        'images',
         'konten',
         'tanggal_tayang',
         'tampilkan_di_carousel',
@@ -24,6 +25,7 @@ class MongoBeritaPromosi extends Model
         'tanggal_tayang' => 'datetime',
         'tampilkan_di_carousel' => 'boolean',
         'is_active' => 'boolean',
+        'images' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

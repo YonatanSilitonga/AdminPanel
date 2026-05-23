@@ -199,6 +199,17 @@ class DestinationController extends BaseAdminController
         $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
         if ($request->ajax() || $request->wantsJson()) {
+            if ($destination->images && is_array($destination->images)) {
+                $destination->images_url = array_map(function($img) {
+                    return image_url($img);
+                }, $destination->images);
+                $destination->images_data = array_map(function($img) {
+                    return [
+                        'path' => $img,
+                        'url' => image_url($img)
+                    ];
+                }, $destination->images);
+            }
             return response()->json($destination);
         }
 
@@ -253,6 +264,17 @@ class DestinationController extends BaseAdminController
             $destination->best_time = $validated['best_time'] ?? $destination->best_time;
 
             $currentImages = $destination->images ?? [];
+
+            $deleteImages = $request->input('delete_images', []);
+            if (!empty($deleteImages) && is_array($deleteImages)) {
+                foreach ($deleteImages as $delImg) {
+                    $this->deleteFile($delImg);
+                    $currentImages = array_filter($currentImages, function($img) use ($delImg) {
+                        return !$this->pathsMatch($img, $delImg);
+                    });
+                }
+                $currentImages = array_values($currentImages);
+            }
 
             // --- Logika Update Thumbnail (Index 0) ---
             if ($request->hasFile('thumbnail')) {

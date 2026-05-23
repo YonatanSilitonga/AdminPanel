@@ -77,6 +77,9 @@ class FasilitasUmumController extends BaseAdminController
             'tags' => 'nullable|string',
             'operational_hours' => 'required|string|max:255',
             'is_active' => 'boolean',
+            'is_active' => 'boolean',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
             'image' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
         ]);
 
@@ -95,8 +98,22 @@ class FasilitasUmumController extends BaseAdminController
                 $validated['tags'] = [];
             }
             
+            $uploadedImages = [];
             if ($request->hasFile('image')) {
-                $validated['image_url'] = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                $uploadedImages[] = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $uploadedImages[] = $this->uploadFile($file, 'fasilitas_umum');
+                }
+            }
+            if (count($uploadedImages) > 0) {
+                $validated['image_url'] = $uploadedImages[0];
+                $validated['images'] = $uploadedImages;
+            }
+            
+            if (isset($validated['image'])) {
+                unset($validated['image']);
             }
 
             $validated['admin_id'] = $this->admin->id;
@@ -138,6 +155,20 @@ class FasilitasUmumController extends BaseAdminController
         $facility = MongoFasilitasUmum::findOrFail($id);
 
         if ($request->ajax() || $request->wantsJson()) {
+            if ($facility->image_url) {
+                $facility->image_url_full = image_url($facility->image_url);
+            }
+            if ($facility->images && is_array($facility->images)) {
+                $facility->images_url = array_map(function($img) {
+                    return image_url($img);
+                }, $facility->images);
+                $facility->images_data = array_map(function($img) {
+                    return [
+                        'path' => $img,
+                        'url' => image_url($img)
+                    ];
+                }, $facility->images);
+            }
             return response()->json($facility);
         }
 
@@ -163,6 +194,9 @@ class FasilitasUmumController extends BaseAdminController
             'tags' => 'nullable|string',
             'operational_hours' => 'required|string|max:255',
             'is_active' => 'boolean',
+            'is_active' => 'boolean',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
             'image' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
         ]);
 
@@ -181,11 +215,56 @@ class FasilitasUmumController extends BaseAdminController
                 $validated['tags'] = [];
             }
             
-            if ($request->hasFile('image')) {
-                if ($facility->image_url) {
-                    $this->deleteFile($facility->image_url);
+            $deleteImages = $request->input('delete_images', []);
+            $existingImages = $facility->images ?? [];
+            if ($facility->image_url && empty($existingImages)) {
+                $existingImages = [$facility->image_url];
+            }
+
+            if (!empty($deleteImages) && is_array($deleteImages)) {
+                foreach ($deleteImages as $delImg) {
+                    $this->deleteFile($delImg);
+                    $existingImages = array_filter($existingImages, function($img) use ($delImg) {
+                        return !$this->pathsMatch($img, $delImg);
+                    });
                 }
-                $validated['image_url'] = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                $existingImages = array_values($existingImages);
+            }
+
+            $uploadedImages = [];
+            if ($request->hasFile('image')) {
+                $path = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                if ($path) {
+                    if (count($existingImages) > 0) {
+                        $this->deleteFile($existingImages[0]);
+                        $existingImages[0] = $path;
+                    } else {
+                        array_unshift($existingImages, $path);
+                    }
+                }
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->uploadFile($file, 'fasilitas_umum');
+                    if ($path) $uploadedImages[] = $path;
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+
+            if (count($existingImages) > 0) {
+                $validated['image_url'] = $existingImages[0];
+                $validated['images'] = $existingImages;
+            } else {
+                $validated['image_url'] = null;
+                $validated['images'] = [];
+            }
+            
+            // Just ensure File objects are not passed
+            if (isset($validated['image']) && $validated['image'] instanceof \Illuminate\Http\UploadedFile) {
+                unset($validated['image']);
+            }
+            if (isset($validated['images']) && is_array($validated['images']) && count($validated['images']) > 0 && $validated['images'][0] instanceof \Illuminate\Http\UploadedFile) {
+                unset($validated['images']);
             }
             
             $oldValues = $facility->toArray();
@@ -251,7 +330,11 @@ class FasilitasUmumController extends BaseAdminController
         try {
             $this->logActivity('delete', 'facility', (string)$facility->_id, $facility->toArray());
             
-            if ($facility->image_url) {
+            if ($facility->images) {
+                foreach($facility->images as $img) {
+                    $this->deleteFile($img);
+                }
+            } elseif ($facility->image_url) {
                 $this->deleteFile($facility->image_url);
             }
             

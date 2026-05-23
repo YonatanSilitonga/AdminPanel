@@ -117,7 +117,11 @@ class EventService
     public function deleteEvent(MongoEvent $event): bool
     {
         try {
-            if ($event->banner_url) {
+            if ($event->images) {
+                foreach($event->images as $img) {
+                    $this->deleteBanner($img);
+                }
+            } elseif ($event->banner_url) {
                 $this->deleteBanner($event->banner_url);
             }
         } catch (\Exception $e) {

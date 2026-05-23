@@ -74,14 +74,30 @@ class BudayaController extends BaseAdminController
             'longitude' => 'nullable|numeric',
             'description' => 'required|string',
             'is_active' => 'boolean',
+            'is_active' => 'boolean',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
         ]);
 
         try {
             $validated['is_active'] = $request->has('is_active');
             
+            $uploadedImages = [];
             if ($request->hasFile('thumbnail')) {
-                $validated['image_url'] = $this->uploadFile($request->file('thumbnail'), 'budaya');
+                $uploadedImages[] = $this->uploadFile($request->file('thumbnail'), 'budaya');
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $uploadedImages[] = $this->uploadFile($file, 'budaya');
+                }
+            }
+            if (count($uploadedImages) > 0) {
+                $validated['image_url'] = $uploadedImages[0];
+                $validated['images'] = $uploadedImages;
+            }
+            
+            if (isset($validated['thumbnail'])) {
                 unset($validated['thumbnail']);
             }
             
@@ -131,6 +147,20 @@ class BudayaController extends BaseAdminController
         $budaya->load('admin');
 
         if ($request->ajax() || $request->wantsJson()) {
+            if ($budaya->image_url) {
+                $budaya->image_url_full = image_url($budaya->image_url);
+            }
+            if ($budaya->images && is_array($budaya->images)) {
+                $budaya->images_url = array_map(function($img) {
+                    return image_url($img);
+                }, $budaya->images);
+                $budaya->images_data = array_map(function($img) {
+                    return [
+                        'path' => $img,
+                        'url' => image_url($img)
+                    ];
+                }, $budaya->images);
+            }
             return response()->json($budaya);
         }
 
@@ -153,18 +183,57 @@ class BudayaController extends BaseAdminController
             'longitude' => 'nullable|numeric',
             'description' => 'required|string',
             'is_active' => 'boolean',
+            'is_active' => 'boolean',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
         ]);
 
         try {
             $validated['is_active'] = $request->has('is_active');
             
-            if ($request->hasFile('thumbnail')) {
-                if ($budaya->image_url) {
-                    $this->deleteFile($budaya->image_url);
+            $deleteImages = $request->input('delete_images', []);
+            $existingImages = $budaya->images ?? [];
+            if ($budaya->image_url && empty($existingImages)) {
+                $existingImages = [$budaya->image_url];
+            }
+
+            if (!empty($deleteImages) && is_array($deleteImages)) {
+                foreach ($deleteImages as $delImg) {
+                    $this->deleteFile($delImg);
+                    $existingImages = array_filter($existingImages, function($img) use ($delImg) {
+                        return !$this->pathsMatch($img, $delImg);
+                    });
                 }
-                $validated['image_url'] = $this->uploadFile($request->file('thumbnail'), 'budaya');
-                unset($validated['thumbnail']);
+                $existingImages = array_values($existingImages);
+            }
+
+            $uploadedImages = [];
+            if ($request->hasFile('thumbnail')) {
+                $path = $this->uploadFile($request->file('thumbnail'), 'budaya');
+                if ($path) {
+                    if (count($existingImages) > 0) {
+                        $this->deleteFile($existingImages[0]);
+                        $existingImages[0] = $path;
+                    } else {
+                        array_unshift($existingImages, $path);
+                    }
+                }
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->uploadFile($file, 'budaya');
+                    if ($path) $uploadedImages[] = $path;
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+
+            if (count($existingImages) > 0) {
+                $validated['image_url'] = $existingImages[0];
+                $validated['images'] = $existingImages;
+            } else {
+                $validated['image_url'] = null;
+                $validated['images'] = [];
             }
             
             if (empty($validated['category_mobile'])) {
@@ -212,7 +281,11 @@ class BudayaController extends BaseAdminController
         try {
             $this->logActivity('delete', 'budaya', (string)$budaya->_id, $budaya->toArray());
             
-            if ($budaya->image_url) {
+            if ($budaya->images) {
+                foreach($budaya->images as $img) {
+                    $this->deleteFile($img);
+                }
+            } elseif ($budaya->image_url) {
                 $this->deleteFile($budaya->image_url);
             }
             

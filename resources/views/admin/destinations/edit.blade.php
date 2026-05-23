@@ -135,16 +135,32 @@
             <input type="file" name="thumbnail" class="mt-1 w-full border rounded-lg px-4 py-2">
             @error('thumbnail')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
-        <div>
+        <div x-data="{
+            deletedImages: [],
+            existingImages: {{ json_encode(array_slice($destination->images ?? [], 1)) }},
+            removeImage(img) {
+                this.deletedImages.push(img);
+                this.existingImages = this.existingImages.filter(i => i !== img);
+            }
+        }">
             <label class="block text-sm font-medium text-gray-700">Gallery Images</label>
-            @if(isset($destination->images) && count($destination->images) > 1)
-                <div class="mt-2 mb-3 flex flex-wrap gap-2">
-                    @foreach(array_slice($destination->images, 1) as $img)
-                        <img src="{{ image_url($img) }}" alt="Gallery Image" class="w-20 h-16 object-cover rounded-lg border">
-                    @endforeach
-                </div>
-            @endif
+            <div class="mt-2 mb-3 flex flex-wrap gap-2" x-show="existingImages.length > 0">
+                <template x-for="img in existingImages" :key="img">
+                    <div class="relative group cursor-pointer border rounded-lg overflow-hidden">
+                        <img :src="img.startsWith('http') ? img : '/storage/' + img" alt="Gallery Image" class="w-20 h-16 object-cover">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button type="button" @click="removeImage(img)" class="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full transform hover:scale-110 transition-all shadow-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <template x-for="img in deletedImages" :key="img">
+                <input type="hidden" name="delete_images[]" :value="img">
+            </template>
             <input type="file" name="images[]" multiple class="mt-1 w-full border rounded-lg px-4 py-2">
+            <p class="text-[10px] text-gray-400 italic mt-1">* Mengunggah foto baru akan menambahkannya ke galeri saat ini</p>
             @error('images')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
     </div>

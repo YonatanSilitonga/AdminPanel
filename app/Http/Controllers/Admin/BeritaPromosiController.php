@@ -59,15 +59,29 @@ class BeritaPromosiController extends BaseAdminController
             'judul' => 'required|string|max:255',
             'tipe' => 'required|in:BERITA,PROMO',
             'thumbnail' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
             'konten' => 'required|string',
             'tanggal_tayang' => 'required|date',
         ]);
 
         try {
-            $data = $request->except(['thumbnail', '_token', 'is_active']);
+            $data = $request->except(['images', 'thumbnail', '_token', 'is_active']);
+            $uploadedImages = [];
             
             if ($request->hasFile('thumbnail')) {
-                $data['thumbnail'] = $this->uploadFile($request->file('thumbnail'), 'berita_promosi');
+                $uploadedImages[] = $this->uploadFile($request->file('thumbnail'), 'berita_promosi');
+            }
+            
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $uploadedImages[] = $this->uploadFile($file, 'berita_promosi');
+                }
+            }
+            
+            if (count($uploadedImages) > 0) {
+                $data['thumbnail'] = $uploadedImages[0];
+                $data['images'] = $uploadedImages;
             }
 
             $data['admin_id'] = auth('admin')->id() ?? null;
@@ -97,6 +111,19 @@ class BeritaPromosiController extends BaseAdminController
             $bp->thumbnail_url = image_url($bp->thumbnail);
         }
         
+        if ($bp->images && is_array($bp->images)) {
+            $bp->images_url = array_map(function($img) {
+                return image_url($img);
+            }, $bp->images);
+            
+            $bp->images_data = array_map(function($img) {
+                return [
+                    'path' => $img,
+                    'url' => image_url($img)
+                ];
+            }, $bp->images);
+        }
+        
         $bp->load('admin');
 
         return response()->json($bp);
@@ -110,18 +137,51 @@ class BeritaPromosiController extends BaseAdminController
             'judul' => 'required|string|max:255',
             'tipe' => 'required|in:BERITA,PROMO',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
             'konten' => 'required|string',
             'tanggal_tayang' => 'required|date',
         ]);
 
         try {
-            $data = $request->except(['thumbnail', '_token', '_method', 'is_active']);
-            
-            if ($request->hasFile('thumbnail')) {
-                if ($bp->thumbnail) {
-                    $this->deleteFile($bp->thumbnail);
+            $data = $request->except(['images', 'thumbnail', '_token', '_method', 'is_active']);
+            $deleteImages = $request->input('delete_images', []);
+            $existingImages = $bp->images ?? [];
+            if ($bp->thumbnail && empty($existingImages)) {
+                $existingImages = [$bp->thumbnail];
+            }
+
+            if (!empty($deleteImages) && is_array($deleteImages)) {
+                foreach ($deleteImages as $delImg) {
+                    $this->deleteFile($delImg);
+                    $existingImages = array_filter($existingImages, function($img) use ($delImg) {
+                        return !$this->pathsMatch($img, $delImg);
+                    });
                 }
-                $data['thumbnail'] = $this->uploadFile($request->file('thumbnail'), 'berita_promosi');
+                $existingImages = array_values($existingImages);
+            }
+
+            $uploadedImages = [];
+            if ($request->hasFile('thumbnail')) {
+                $uploadedImages[] = $this->uploadFile($request->file('thumbnail'), 'berita_promosi');
+            }
+
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $uploadedImages[] = $this->uploadFile($file, 'berita_promosi');
+                }
+            }
+
+            if (count($uploadedImages) > 0) {
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+
+            if (count($existingImages) > 0) {
+                $data['thumbnail'] = $existingImages[0];
+                $data['images'] = array_values($existingImages);
+            } else {
+                $data['thumbnail'] = null;
+                $data['images'] = [];
             }
 
             $data['is_active'] = $request->has('is_active');
@@ -142,7 +202,11 @@ class BeritaPromosiController extends BaseAdminController
     {
         $bp = MongoBeritaPromosi::findOrFail($id);
         
-        if ($bp->thumbnail) {
+        if ($bp->images) {
+            foreach($bp->images as $img) {
+                $this->deleteFile($img);
+            }
+        } elseif ($bp->thumbnail) {
             $this->deleteFile($bp->thumbnail);
         }
         

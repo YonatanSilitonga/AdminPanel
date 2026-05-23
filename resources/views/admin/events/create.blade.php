@@ -149,17 +149,17 @@
 
             <!-- Foto -->
             <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">Foto</label>
+                <label class="block text-sm font-semibold text-gray-700">Foto (Bisa pilih lebih dari 1)</label>
                 <div class="relative group">
-                    <input type="file" name="banner" id="banner" class="hidden" @change="fileName = $event.target.files[0].name">
-                    <label for="banner" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-primary/50 transition-all">
+                    <input type="file" name="images[]" id="images" multiple class="hidden" @change="fileName = $event.target.files.length > 1 ? $event.target.files.length + ' file dipilih' : $event.target.files[0].name">
+                    <label for="images" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-primary/50 transition-all">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
                             <svg class="w-8 h-8 text-gray-400 mb-2 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                             <p class="text-xs text-gray-500 group-hover:text-primary transition-colors" x-text="fileName || 'Upload foto event'"></p>
                         </div>
                     </label>
                 </div>
-                @error('banner')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                @error('images')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <div class="flex items-center gap-2 pt-2">

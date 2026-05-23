@@ -55,6 +55,7 @@
 
 @section('content')
 <div id="dest-manager" x-data="{
+    deletedImages: [],
     activeTab: '{{ $activeTab }}',
     showCreateModal: false,
     showEditModal: false,
@@ -68,6 +69,7 @@
     editCloseTime: '17:00',
     showViewModal: false,
     viewingDest: null,
+    activeViewImageIndex: 0,
     showLightbox: false,
     lightboxImage: '',
 
@@ -92,6 +94,7 @@
         try {
             const res = await fetch(`/admin/destinations/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             this.editingDest = await window.safeParseJSON(res);
+            this.deletedImages = [];
             this.editFileName = this.editingDest.images && this.editingDest.images.length ? 'Foto saat ini' : '';
             
             const form = document.getElementById('editDestForm');
@@ -117,6 +120,7 @@
         this.loading = true;
         this.showViewModal = true;
         this.viewingDest = null;
+        this.activeViewImageIndex = 0;
         try {
             const res = await fetch(`/admin/destinations/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             this.viewingDest = await window.safeParseJSON(res);
@@ -132,6 +136,11 @@
         this.loading = true;
         const form = document.getElementById('editDestForm');
         const formData = new FormData(form);
+        
+        this.deletedImages.forEach(img => {
+            formData.append('delete_images[]', img);
+        });
+
         const destId = this.editingDest._id || this.editingDest.id;
         try {
             const res = await fetch(`/admin/destinations/${destId}`, {
@@ -697,19 +706,32 @@
             </div>
         </div>
     </div>
-    @endif
-
-    {{-- CREATE MODAL --}}
+    @endif    {{-- CREATE MODAL --}}
     <div x-show="showCreateModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
 
+            <template x-if="showCreateModal">
               <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                   x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                   class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                 <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-bold text-gray-900">Tambah Destinasi</h3>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-gray-900">Tambah Destinasi</h3>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Aksi: Tambah Destinasi</span>
+                                        <p class="text-slate-200 font-normal">Formulir untuk mendaftarkan destinasi wisata baru ke dalam sistem aplikasi Danau Toba. Pastikan lokasi koordinat peta dan informasi lainnya sudah akurat sebelum disimpan.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                     <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -792,17 +814,93 @@
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
                             <textarea name="description" rows="3" required placeholder="Deskripsi singkat destinasi..." class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300"></textarea>
                         </div>
-                        <div class="col-span-2 space-y-2">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Utama (Thumbnail)</label>
-                            <div class="relative group">
-                                <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
-                                <label for="create_thumbnail" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
-                                    <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                                        <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        
+                        <!-- Panduan Manajemen Foto -->
+                        <div class="col-span-2 bg-emerald-50/50 border border-emerald-100/80 rounded-2xl p-4 text-xs text-gray-600 space-y-2">
+                            <div class="flex items-center gap-2 text-[#066466] font-bold">
+                                <svg class="w-4 h-4 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>Panduan Manajemen Foto Destinasi</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                                <div class="space-y-1">
+                                    <span class="font-bold text-gray-700 block">1. Foto Utama (Thumbnail / Cover)</span>
+                                    <p class="leading-relaxed">Akan digunakan sebagai <strong>sampul utama</strong> destinasi pada daftar pencarian, rekomendasi, dan penanda (marker) peta di aplikasi mobile wisatawan.</p>
+                                </div>
+                                <div class="space-y-1">
+                                    <span class="font-bold text-gray-700 block">2. Foto Tambahan (Galeri Pendukung)</span>
+                                    <p class="leading-relaxed">Akan ditampilkan sebagai <strong>carousel/slider gambar</strong> di halaman detail destinasi pada aplikasi mobile wisatawan guna memperkaya visual informasi.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="space-y-2" x-data="{ thumbPreview: '' }">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Utama (Thumbnail)</label>
+                                <div class="relative group">
+                                    <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" 
+                                           @change="
+                                               createFileName = $event.target.files[0] ? $event.target.files[0].name : '';
+                                               if ($event.target.files[0]) {
+                                                   const reader = new FileReader();
+                                                   reader.onload = (e) => { thumbPreview = e.target.result; };
+                                                   reader.readAsDataURL($event.target.files[0]);
+                                               } else {
+                                                   thumbPreview = '';
+                                               }
+                                           ">
+                                    <label for="create_thumbnail" class="relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30 overflow-hidden">
+                                        <template x-if="thumbPreview">
+                                            <div class="absolute inset-0 w-full h-full bg-gray-100">
+                                                <img :src="thumbPreview" class="w-full h-full object-cover">
+                                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                    <p class="text-white text-xs font-bold">Ganti Foto Utama</p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template x-if="!thumbPreview">
+                                            <div class="flex flex-col items-center justify-center text-center px-4">
+                                                <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                                    <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                                </div>
+                                                <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Pilih foto utama'"></p>
+                                                <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 5MB)</p>
+                                            </div>
+                                        </template>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="space-y-2" x-data="{ galleryPreviews: [] }">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Tambahan (Gallery)</label>
+                                <div class="relative group">
+                                    <input type="file" name="images[]" id="create_images" multiple class="hidden" 
+                                           @change="
+                                               galleryPreviews = [];
+                                               const files = $event.target.files;
+                                               for (let i = 0; i < files.length; i++) {
+                                                   const reader = new FileReader();
+                                                   reader.onload = (e) => { galleryPreviews.push(e.target.result); };
+                                                   reader.readAsDataURL(files[i]);
+                                               }
+                                           ">
+                                    <label for="create_images" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
+                                        <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                            <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        </div>
+                                        <p class="text-sm font-bold text-gray-700" x-text="galleryPreviews.length > 0 ? galleryPreviews.length + ' file dipilih' : 'Pilih foto tambahan'"></p>
+                                        <p class="text-[10px] text-gray-400 mt-1">Bisa pilih lebih dari 1</p>
+                                    </label>
+                                </div>
+                                
+                                <!-- Previews -->
+                                <template x-if="galleryPreviews.length > 0">
+                                    <div class="grid grid-cols-4 gap-2 mt-2">
+                                        <template x-for="(src, idx) in galleryPreviews" :key="idx">
+                                            <div class="relative rounded-xl overflow-hidden aspect-square border border-gray-200">
+                                                <img :src="src" class="w-full h-full object-cover">
+                                            </div>
+                                        </template>
                                     </div>
-                                    <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Klik untuk upload foto'"></p>
-                                    <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tight">PNG, JPG, WEBP (Maks. 5MB)</p>
-                                </label>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -812,7 +910,8 @@
                         <button type="submit" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all">Simpan Destinasi</button>
                     </div>
                 </form>
-            </div>
+              </div>
+            </template>
         </div>
     </div>
 
@@ -821,15 +920,29 @@
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showEditModal = false"></div>
+                 class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="showEditModal = false; editingDest = null"></div>
 
               <div x-show="showEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                   x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
                   class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                 <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-bold text-gray-900">Edit Destinasi</h3>
-                    <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-gray-900">Edit Destinasi</h3>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Aksi: Edit Destinasi</span>
+                                        <p class="text-slate-200 font-normal">Formulir untuk memperbarui informasi destinasi wisata yang sudah ada. Perubahan akan langsung disinkronkan ke aplikasi mobile wisatawan secara real-time.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="showEditModal = false; editingDest = null" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
@@ -917,30 +1030,134 @@
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
                                 <textarea name="description" rows="3" x-model="editingDest.description" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700"></textarea>
                             </div>
-                            <div class="col-span-2 space-y-2">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama</label>
-                                <div x-show="editingDest && editingDest.images && editingDest.images.length > 0" class="mb-3">
-                                    <div class="relative rounded-2xl overflow-hidden bg-gray-100 h-40 w-full border border-gray-100 group cursor-pointer" @click="lightboxImage = (editingDest.images[0].startsWith('http') ? editingDest.images[0] : '/storage/' + editingDest.images[0]); showLightbox = true" title="Klik untuk memperbesar">
-                                        <img :src="editingDest.images[0].startsWith('http') ? editingDest.images[0] : `/storage/${editingDest.images[0]}`" class="w-full h-full object-cover" alt="Foto Saat Ini">
-                                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Foto Saat Ini (Klik untuk memperbesar)</span>
-                                        </div>
+                            
+                            <!-- Panduan Manajemen Foto -->
+                            <div class="col-span-2 bg-emerald-50/50 border border-emerald-100/80 rounded-2xl p-4 text-xs text-gray-600 space-y-2">
+                                <div class="flex items-center gap-2 text-[#066466] font-bold">
+                                    <svg class="w-4 h-4 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span>Panduan Manajemen Foto Destinasi</span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                                    <div class="space-y-1">
+                                        <span class="font-bold text-gray-700 block">1. Foto Utama (Thumbnail / Cover)</span>
+                                        <p class="leading-relaxed">Akan digunakan sebagai <strong>sampul utama</strong> destinasi pada daftar pencarian, rekomendasi, dan penanda (marker) peta di aplikasi mobile wisatawan.</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="font-bold text-gray-700 block">2. Foto Tambahan (Galeri Pendukung)</span>
+                                        <p class="leading-relaxed">Akan ditampilkan sebagai <strong>carousel/slider gambar</strong> di halaman detail destinasi pada aplikasi mobile wisatawan guna memperkaya visual informasi.</p>
                                     </div>
                                 </div>
-                                <div class="relative group">
-                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" @change="editFileName = $event.target.files[0] ? $event.target.files[0].name : ''">
-                                    <label for="edit_thumbnail" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
-                                        <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                                            <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </div>
+
+                            <div class="col-span-2 space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Daftar Foto Saat Ini</label>
+                                
+                                <!-- Galeri saat ini -->
+                                <template x-if="editingDest?.images_data && editingDest.images_data.length > 0">
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+                                        <template x-for="(imgObj, index) in editingDest.images_data" :key="imgObj.path">
+                                            <div class="relative rounded-xl overflow-hidden bg-gray-100 aspect-square group border border-gray-200">
+                                                <img :src="imgObj.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Galeri Destinasi">
+                                                
+                                                <!-- Badge overlay untuk membedakan cover vs gallery -->
+                                                <div class="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 text-white text-[9px] font-bold tracking-wider uppercase" 
+                                                     :class="index === 0 ? 'bg-[#066466] border border-teal-400/30' : 'bg-gray-800/85 border border-gray-600/30'" 
+                                                     x-text="index === 0 ? 'Utama (Thumbnail)' : 'Tambahan (Galeri)'"></div>
+
+                                                <!-- Tombol Hapus overlay -->
+                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <button type="button" @click.stop="
+                                                        deletedImages.push(imgObj.path); 
+                                                        editingDest.images_data = editingDest.images_data.filter(i => i.path !== imgObj.path);
+                                                    " class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transform hover:scale-110 transition-all shadow-lg">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </div>
+                                                
+                                                <button type="button" @click.stop="lightboxImage = imgObj.url; showLightbox = true" class="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="space-y-2" x-data="{ editThumbPreview: '' }">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama (Thumbnail)</label>
+                                    <div class="relative group">
+                                        <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" 
+                                               @change="
+                                                   editFileName = $event.target.files[0] ? $event.target.files[0].name : '';
+                                                   if ($event.target.files[0]) {
+                                                       const reader = new FileReader();
+                                                       reader.onload = (e) => { editThumbPreview = e.target.result; };
+                                                       reader.readAsDataURL($event.target.files[0]);
+                                                   } else {
+                                                       editThumbPreview = '';
+                                                   }
+                                               ">
+                                        <label for="edit_thumbnail" class="relative flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30 overflow-hidden">
+                                            <template x-if="editThumbPreview">
+                                                <div class="absolute inset-0 w-full h-full bg-gray-100">
+                                                    <img :src="editThumbPreview" class="w-full h-full object-cover">
+                                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                        <p class="text-white text-xs font-bold">Ganti Foto Utama</p>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template x-if="!editThumbPreview">
+                                                <div class="flex flex-col items-center justify-center text-center px-4">
+                                                    <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                                        <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                                    </div>
+                                                    <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Pilih foto utama baru'"></p>
+                                                    <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 5MB)</p>
+                                                </div>
+                                            </template>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2" x-data="{ editGalleryPreviews: [] }">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tambah Foto Galeri Baru</label>
+                                    <div class="relative group">
+                                        <input type="file" name="images[]" id="edit_images" multiple class="hidden" 
+                                               @change="
+                                                   editGalleryPreviews = [];
+                                                   const files = $event.target.files;
+                                                   for (let i = 0; i < files.length; i++) {
+                                                       const reader = new FileReader();
+                                                       reader.onload = (e) => { editGalleryPreviews.push(e.target.result); };
+                                                       reader.readAsDataURL(files[i]);
+                                                   }
+                                               ">
+                                        <label for="edit_images" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
+                                            <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                                <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                            </div>
+                                            <p class="text-sm font-bold text-gray-700" x-text="editGalleryPreviews.length > 0 ? editGalleryPreviews.length + ' file baru dipilih' : 'Pilih foto tambahan baru'"></p>
+                                            <p class="text-[10px] text-gray-400 italic mt-1">* Foto baru akan ditambahkan ke daftar galeri pendukung</p>
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- Previews -->
+                                    <template x-if="editGalleryPreviews.length > 0">
+                                        <div class="grid grid-cols-4 gap-2 mt-2">
+                                            <template x-for="(src, idx) in editGalleryPreviews" :key="idx">
+                                                <div class="relative rounded-xl overflow-hidden aspect-square border border-gray-200">
+                                                    <img :src="src" class="w-full h-full object-cover">
+                                                    <div class="absolute top-1 right-1 bg-[#066466] text-white text-[8px] px-1 py-0.5 rounded font-bold uppercase">Baru</div>
+                                                </div>
+                                            </template>
                                         </div>
-                                        <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Klik untuk ganti foto'"></p>
-                                        <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 5MB)</p>
-                                    </label>
+                                    </template>
                                 </div>
                             </div>
                         </div>
                         <div class="flex items-center justify-end gap-3 pt-4">
-                            <button type="button" @click="showEditModal = false" class="px-8 py-3.5 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">Batal</button>
+                            <button type="button" @click="showEditModal = false; editingDest = null" class="px-8 py-3.5 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">Batal</button>
                             <button type="submit" :disabled="loading" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all flex items-center gap-2">
                                 <svg x-show="loading" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                                 <span>Simpan Perubahan</span>
@@ -962,13 +1179,27 @@
 
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
-
-                <!-- Header -->
+                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">                <!-- Header -->
                 <div class="flex items-center justify-between px-10 pt-8 pb-4 border-b border-gray-100">
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900">Detail Destinasi</h3>
-                        <p class="text-sm text-gray-400 mt-0.5">Informasi lengkap destinasi wisata</p>
+                    <div class="flex items-center gap-2">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-xl font-bold text-gray-900">Detail Destinasi</h3>
+                                <div class="relative group cursor-pointer inline-flex items-center">
+                                    <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Aksi: Detail Destinasi</span>
+                                                <p class="text-slate-200 font-normal">Halaman peninjauan detail lengkap untuk melihat bagaimana data destinasi wisata terdaftar dalam sistem dan disajikan kepada wisatawan.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute bottom-full left-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-400 mt-0.5">Informasi lengkap destinasi wisata</p>
+                        </div>
                     </div>
                     <button @click="showViewModal = false" class="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -983,20 +1214,45 @@
                     </div>
 
                     <div x-show="viewingDest" class="space-y-8">
-                        <!-- Image Gallery (Main Image) -->
-                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group cursor-pointer" @click="lightboxImage = (viewingDest.images[0].startsWith('http') ? viewingDest.images[0] : '/storage/' + viewingDest.images[0]); showLightbox = true" title="Klik untuk memperbesar">
-                            <template x-if="viewingDest?.images && viewingDest.images.length > 0">
-                                <img :src="viewingDest.images[0].startsWith('http') ? viewingDest.images[0] : '/storage/' + viewingDest.images[0]" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
-                            </template>
-                            <template x-if="!viewingDest?.images || viewingDest.images.length === 0">
-                                <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
-                                    <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    <p class="text-xs font-bold uppercase tracking-widest">Tidak ada foto</p>
+                        <!-- Image Gallery (Main Image & Thumbnail row) -->
+                        <div class="space-y-3">
+                            <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group cursor-pointer" 
+                                 @click="lightboxImage = (viewingDest.images[activeViewImageIndex].startsWith('http') ? viewingDest.images[activeViewImageIndex] : '/storage/' + viewingDest.images[activeViewImageIndex]); showLightbox = true" 
+                                 title="Klik untuk memperbesar">
+                                <template x-if="viewingDest?.images && viewingDest.images.length > 0">
+                                    <img :src="viewingDest.images[activeViewImageIndex].startsWith('http') ? viewingDest.images[activeViewImageIndex] : '/storage/' + viewingDest.images[activeViewImageIndex]" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                </template>
+                                <template x-if="!viewingDest?.images || viewingDest.images.length === 0">
+                                    <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                        <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <p class="text-xs font-bold uppercase tracking-widest">Tidak ada foto</p>
+                                    </div>
+                                </template>
+                                
+                                <!-- Badge overlay to indicate cover vs gallery -->
+                                <div class="absolute top-6 left-6" x-show="viewingDest?.images && viewingDest.images.length > 0">
+                                    <span class="px-4 py-2 bg-emerald-600/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-white uppercase tracking-widest shadow-sm" x-text="activeViewImageIndex === 0 ? 'Foto Utama (Thumbnail)' : 'Foto Tambahan (Galeri)'"></span>
+                                </div>
+                                
+                                <div class="absolute top-6 right-6">
+                                    <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingDest?.category || '-'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Row of clickable thumbnails -->
+                            <template x-if="viewingDest?.images && viewingDest.images.length > 1">
+                                <div class="flex items-center gap-2 mt-3 overflow-x-auto py-1.5 custom-scrollbar">
+                                    <template x-for="(img, idx) in viewingDest.images" :key="idx">
+                                        <button type="button" @click="activeViewImageIndex = idx" 
+                                                class="relative w-20 h-14 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0"
+                                                :class="activeViewImageIndex === idx ? 'border-emerald-600 shadow-md scale-105' : 'border-gray-200 hover:border-gray-300'">
+                                            <img :src="img.startsWith('http') ? img : '/storage/' + img" class="w-full h-full object-cover">
+                                            <!-- Tiny emerald triangle to flag cover -->
+                                            <div x-show="idx === 0" class="absolute top-0 right-0 bg-emerald-500 w-2 h-2 rounded-bl"></div>
+                                        </button>
+                                    </template>
                                 </div>
                             </template>
-                            <div class="absolute top-6 right-6">
-                                <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingDest?.category || '-'"></span>
-                            </div>
                         </div>
 
                         <!-- Info Grid -->

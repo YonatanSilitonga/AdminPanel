@@ -59,6 +59,8 @@ class EventController extends BaseAdminController
             'long_description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
             'banner' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
             'schedule' => 'nullable|array',
             'schedule.*.time' => 'nullable|string',
@@ -114,12 +116,20 @@ class EventController extends BaseAdminController
                 $event->schedule = [];
             }
 
-            // Image handling (Identical to Destination)
+            $uploadedImages = [];
             if ($request->hasFile('banner')) {
                 $path = $this->processImage($request->file('banner'), 'events');
-                if ($path) {
-                    $event->banner_url = $path;
+                if ($path) $uploadedImages[] = $path;
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->processImage($file, 'events');
+                    if ($path) $uploadedImages[] = $path;
                 }
+            }
+            if (count($uploadedImages) > 0) {
+                $event->banner_url = $uploadedImages[0];
+                $event->images = $uploadedImages;
             }
 
             $event->save();
@@ -160,7 +170,30 @@ class EventController extends BaseAdminController
         $event = MongoEvent::findOrFail($id);
 
         if ($request->ajax() || $request->wantsJson()) {
+            if ($event->banner_url) {
+                $event->banner_url_full = image_url($event->banner_url);
+            }
+            if ($event->images && is_array($event->images)) {
+                $event->images_url = array_map(function($img) {
+                    return image_url($img);
+                }, $event->images);
+                $event->images_data = array_map(function($img) {
+                    return [
+                        'path' => $img,
+                        'url' => image_url($img)
+                    ];
+                }, $event->images);
+            }
             return response()->json($event);
+        }
+
+        if ($event->images && is_array($event->images)) {
+            $event->images_data = array_map(function($img) {
+                return [
+                    'path' => $img,
+                    'url' => image_url($img)
+                ];
+            }, $event->images);
         }
 
         return view('admin.events.edit', compact('event'));
@@ -183,6 +216,8 @@ class EventController extends BaseAdminController
             'long_description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
             'banner' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
             'schedule' => 'nullable|array',
             'schedule.*.time' => 'nullable|string',
@@ -233,15 +268,49 @@ class EventController extends BaseAdminController
                 }));
             }
 
-            // Image handling (Identical to Destination)
-            if ($request->hasFile('banner')) {
-                if ($event->banner_url) {
-                    $this->deleteFile($event->banner_url);
+            // Image handling
+            $deleteImages = $request->input('delete_images', []);
+            $existingImages = $event->images ?? [];
+            if ($event->banner_url && empty($existingImages)) {
+                $existingImages = [$event->banner_url];
+            }
+
+            if (!empty($deleteImages) && is_array($deleteImages)) {
+                foreach ($deleteImages as $delImg) {
+                    $this->deleteFile($delImg);
+                    $existingImages = array_filter($existingImages, function($img) use ($delImg) {
+                        return !$this->pathsMatch($img, $delImg);
+                    });
                 }
+                $existingImages = array_values($existingImages);
+            }
+
+            $uploadedImages = [];
+            if ($request->hasFile('banner')) {
                 $path = $this->processImage($request->file('banner'), 'events');
                 if ($path) {
-                    $event->banner_url = $path;
+                    if (count($existingImages) > 0) {
+                        $this->deleteFile($existingImages[0]);
+                        $existingImages[0] = $path;
+                    } else {
+                        array_unshift($existingImages, $path);
+                    }
                 }
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->processImage($file, 'events');
+                    if ($path) $uploadedImages[] = $path;
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+
+            if (count($existingImages) > 0) {
+                $event->banner_url = $existingImages[0];
+                $event->images = $existingImages;
+            } else {
+                $event->banner_url = null;
+                $event->images = [];
             }
 
             // Slug update

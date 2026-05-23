@@ -27,6 +27,7 @@ class MongoBudaya extends Model
         'longitude',
         'description',
         'image_url',
+        'images',
         'is_active',
         'admin_id',
     ];
@@ -45,6 +46,7 @@ class MongoBudaya extends Model
         'is_active' => 'boolean',
         'latitude' => 'float',
         'longitude' => 'float',
+        'images' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

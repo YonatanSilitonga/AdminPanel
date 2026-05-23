@@ -38,12 +38,15 @@
     editPreviewUrl: '',
     showLightbox: false,
     lightboxImage: '',
+    deletedImages: [],
+    activeViewImageIndex: 0,
 
     async openEditModal(id) {
         if (!id) return;
         this.loading = true;
         this.showEditModal = true;
         this.editingBudaya = null;
+        this.deletedImages = [];
         try {
             const res = await fetch(`/admin/budaya/${id}/edit`, { 
                 headers: { 'X-Requested-With': 'XMLHttpRequest' } 
@@ -72,6 +75,7 @@
         this.loading = true;
         this.showViewModal = true;
         this.viewingBudaya = null;
+        this.activeViewImageIndex = 0;
         try {
             const res = await fetch(`/admin/budaya/${id}/edit`, { 
                 headers: { 'X-Requested-With': 'XMLHttpRequest' } 
@@ -101,6 +105,9 @@
         this.loading = true;
         const form = document.getElementById('editBudayaForm');
         const formData = new FormData(form);
+        this.deletedImages.forEach(img => {
+            formData.append('delete_images[]', img);
+        });
         try {
             const res = await fetch(`/admin/budaya/${budayaId}`, {
                 method: 'POST',
@@ -497,80 +504,166 @@
                   x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                   class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showCreateModal = false"></div>
 
-              <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                  class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <template x-if="showCreateModal">
+                <div x-show="showCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                    class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-bold text-gray-900">Tambah Konten Budaya</h3>
-                    <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
+                  <div class="flex items-center justify-between mb-8">
+                      <div class="flex items-center gap-2">
+                          <h3 class="text-xl font-bold text-gray-900">Tambah Konten Budaya</h3>
+                          <div class="relative group cursor-pointer inline-flex items-center">
+                              <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                              <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                  <div class="space-y-2">
+                                      <div>
+                                          <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Aksi: Tambah Budaya</span>
+                                          <p class="text-slate-200 font-normal">Formulir untuk mempublikasikan topik budaya, tradisi, atau warisan baru. Data dan galeri gambar akan langsung disinkronkan ke aplikasi wisatawan.</p>
+                                      </div>
+                                  </div>
+                                  <div class="absolute bottom-full left-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+                              </div>
+                          </div>
+                      </div>
+                      <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      </button>
+                  </div>
 
-                <form action="{{ route('admin.budaya.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
-                    @csrf
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2 space-y-2">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama / Judul Budaya</label>
-                            <input type="text" name="name" value="{{ old('name') }}" required placeholder="Cth: Makam Raja Sidabutar" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('name') border-red-500 @enderror">
-                            @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="col-span-2  space-y-2">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori Utama</label>
-                            <select name="category" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700 @error('category') border-red-500 @enderror">
-                                @foreach($categories ?? ['Sejarah', 'Tradisi', 'Rumah Adat', 'Cerita Rakyat', 'Kuliner'] as $cat)
-                                    <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                @endforeach
-                            </select>
-                            @error('category') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="col-span-2 space-y-2">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi Singkat</label>
-                            <input type="text" name="location" value="{{ old('location') }}" required placeholder="Cth: Pulau Samosir" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('location') border-red-500 @enderror">
-                            @error('location') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="col-span-2 space-y-2">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
-                            <textarea name="description" rows="3" required placeholder="Penjelasan mengenai budaya ini..." class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300 @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
-                            @error('description') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="col-span-2 space-y-2">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Utama (Thumbnail)</label>
-                            <div class="relative group" x-data="{ previewUrl: '' }">
-                                 <template x-if="createPreviewUrl">
-                                    <img :src="createPreviewUrl" class="absolute inset-0 w-full h-full object-cover rounded-[2rem] opacity-20 pointer-events-none">
-                                </template>
-                                <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" 
-                                    @change="
-                                        createFileName = $event.target.files[0].name;
-                                        const reader = new FileReader();
-                                        reader.onload = (e) => { createPreviewUrl = e.target.result };
-                                        reader.readAsDataURL($event.target.files[0]);
-                                    ">
-                                <label for="create_thumbnail" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
-                                    <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                                        <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                    </div>
-                                    <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Klik untuk upload foto'"></p>
-                                    <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tight">PNG, JPG, WEBP (Maks. 5MB)</p>
-                                </label>
+                  <form action="{{ route('admin.budaya.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+                      @csrf
+                      <div class="grid grid-cols-2 gap-4">
+                          <div class="col-span-2 space-y-2">
+                              <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama / Judul Budaya</label>
+                              <input type="text" name="name" value="{{ old('name') }}" required placeholder="Cth: Makam Raja Sidabutar" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('name') border-red-500 @enderror">
+                              @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                          </div>
+                          <div class="col-span-2  space-y-2">
+                              <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori Utama</label>
+                              <select name="category" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700 @error('category') border-red-500 @enderror">
+                                  @foreach($categories ?? ['Sejarah', 'Tradisi', 'Rumah Adat', 'Cerita Rakyat', 'Kuliner'] as $cat)
+                                      <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                  @endforeach
+                              </select>
+                              @error('category') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                          </div>
+                          <div class="col-span-2 space-y-2">
+                              <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi Singkat</label>
+                              <input type="text" name="location" value="{{ old('location') }}" required placeholder="Cth: Pulau Samosir" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('location') border-red-500 @enderror">
+                              @error('location') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                          </div>
+                          <div class="col-span-2 space-y-2">
+                              <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
+                              <textarea name="description" rows="3" required placeholder="Penjelasan mengenai budaya ini..." class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300 @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
+                              @error('description') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                          </div>
+
+                          <!-- Panduan Manajemen Foto -->
+                          <div class="col-span-2 bg-emerald-50/50 border border-emerald-100/80 rounded-2xl p-4 text-xs text-gray-600 space-y-2">
+                              <div class="flex items-center gap-2 text-[#066466] font-bold">
+                                  <svg class="w-4 h-4 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                  <span>Panduan Foto Budaya</span>
+                              </div>
+                              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                                  <div class="space-y-1">
+                                    <span class="font-bold text-gray-700 block">1. Foto Utama (Thumbnail / Cover)</span>
+                                    <p class="leading-relaxed">Akan digunakan sebagai <strong>sampul utama</strong> pada daftar budaya di aplikasi mobile.</p>
+                                </div>
+                                <div class="space-y-1">
+                                    <span class="font-bold text-gray-700 block">2. Foto Tambahan (Galeri)</span>
+                                    <p class="leading-relaxed">Akan ditampilkan sebagai <strong>galeri gambar tambahan</strong> di halaman detail budaya.</p>
+                                </div>
                             </div>
-                            @error('thumbnail') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="col-span-2 mt-2">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="is_active" value="1" checked class="w-5 h-5 rounded-md border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                <span class="text-sm font-semibold text-gray-700">Tampilkan ke Publik (Aktif)</span>
-                            </label>
-                        </div>
-                    </div>
+                          </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4">
-                        <button type="button" @click="showCreateModal = false" class="px-8 py-3.5 text-sm font-bold text-gray-400 bg-gray-50 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">Batal</button>
-                        <button type="submit" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all">Simpan Budaya</button>
-                    </div>
-                </form>
-            </div>
+                           <div class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                               <!-- Foto Utama (Cover) -->
+                               <div class="space-y-2" x-data="{ coverPreview: '' }">
+                                   <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Foto Utama (Cover)</label>
+                                   <div class="relative group">
+                                       <input type="file" name="thumbnail" id="create_image" required class="hidden" 
+                                           @change="
+                                               createFileName = $event.target.files[0] ? $event.target.files[0].name : '';
+                                               if ($event.target.files[0]) {
+                                                   const reader = new FileReader();
+                                                   reader.onload = (e) => { coverPreview = e.target.result; };
+                                                   reader.readAsDataURL($event.target.files[0]);
+                                               } else {
+                                                   coverPreview = '';
+                                               }
+                                           ">
+                                       <label for="create_image" class="relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10 overflow-hidden">
+                                           <template x-if="coverPreview">
+                                               <div class="absolute inset-0 w-full h-full bg-gray-100">
+                                                   <img :src="coverPreview" class="w-full h-full object-cover">
+                                                   <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                       <p class="text-white text-xs font-bold">Ganti Foto Utama</p>
+                                                   </div>
+                                               </div>
+                                           </template>
+                                           <template x-if="!coverPreview">
+                                               <div class="flex flex-col items-center justify-center text-center px-4">
+                                                   <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                                       <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                                   </div>
+                                                   <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Pilih foto utama'"></p>
+                                                   <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 5MB)</p>
+                                               </div>
+                                           </template>
+                                       </label>
+                                   </div>
+                               </div>
+
+                               <!-- Foto Tambahan (Galeri) -->
+                               <div class="space-y-2" x-data="{ galleryPreviews: [] }">
+                                   <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Foto Tambahan (Galeri)</label>
+                                   <div class="relative group">
+                                       <input type="file" name="images[]" id="create_images" multiple class="hidden" 
+                                           @change="
+                                               galleryPreviews = [];
+                                               const files = $event.target.files;
+                                               for (let i = 0; i < files.length; i++) {
+                                                   const reader = new FileReader();
+                                                   reader.onload = (e) => { galleryPreviews.push(e.target.result); };
+                                                   reader.readAsDataURL(files[i]);
+                                               }
+                                           ">
+                                       <label for="create_images" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
+                                           <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                               <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                           </div>
+                                           <p class="text-sm font-bold text-gray-700" x-text="galleryPreviews.length > 0 ? galleryPreviews.length + ' file dipilih' : 'Pilih foto tambahan'"></p>
+                                           <p class="text-[10px] text-gray-400 mt-1">Bisa pilih lebih dari 1</p>
+                                       </label>
+                                   </div>
+                                   
+                                   <!-- Previews -->
+                                   <template x-if="galleryPreviews.length > 0">
+                                       <div class="grid grid-cols-4 gap-2 mt-2">
+                                           <template x-for="(src, idx) in galleryPreviews" :key="idx">
+                                               <div class="relative rounded-xl overflow-hidden aspect-square border border-gray-200">
+                                                   <img :src="src" class="w-full h-full object-cover">
+                                               </div>
+                                           </template>
+                                       </div>
+                                   </template>
+                               </div>
+                           </div>
+                          
+                          <div class="col-span-2 mt-2">
+                              <label class="flex items-center gap-3 cursor-pointer">
+                                  <input type="checkbox" name="is_active" value="1" checked class="w-5 h-5 rounded-md border-gray-300 text-sidebar focus:ring-sidebar/30">
+                                  <span class="text-sm font-semibold text-gray-700">Tampilkan ke Publik (Aktif)</span>
+                              </label>
+                          </div>
+                      </div>
+
+                      <div class="flex items-center justify-end gap-3 pt-4">
+                          <button type="button" @click="showCreateModal = false" class="px-8 py-3.5 text-sm font-bold text-gray-400 bg-gray-50 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">Batal</button>
+                          <button type="submit" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all">Simpan Budaya</button>
+                      </div>
+                  </form>
+                </div>
+              </template>
         </div>
     </div>
 
@@ -588,7 +681,21 @@
                   class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl px-8 py-8 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
 
                 <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-bold text-gray-900">Edit Konten Budaya</h3>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-gray-900">Edit Konten Budaya</h3>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Aksi: Edit Budaya</span>
+                                        <p class="text-slate-200 font-normal">Formulir untuk memperbarui informasi budaya. Semua perubahan teks, kategori, dan penambahan/penghapusan gambar akan disinkronkan langsung ke aplikasi wisatawan.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                     <button @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -614,10 +721,6 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <!-- <div class="space-y-2">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori Mobile</label>
-                                <input type="text" name="category_mobile" x-model="editingBudaya.category_mobile" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
-                            </div> -->
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi Singkat</label>
                                 <input type="text" name="location" x-model="editingBudaya.location" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
@@ -626,32 +729,136 @@
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
                                 <textarea name="description" rows="3" x-model="editingBudaya.description" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700"></textarea>
                             </div>
+                            <!-- Panduan Manajemen Foto -->
+                            <div class="col-span-2 bg-emerald-50/50 border border-emerald-100/80 rounded-2xl p-4 text-xs text-gray-600 space-y-2">
+                                <div class="flex items-center gap-2 text-[#066466] font-bold">
+                                    <svg class="w-4 h-4 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span>Panduan Foto Budaya</span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                                    <div class="space-y-1">
+                                        <span class="font-bold text-gray-700 block">1. Foto Pertama (Foto Utama / Cover)</span>
+                                        <p class="leading-relaxed">File pertama yang Anda pilih akan otomatis dijadikan <strong>foto utama (cover)</strong> warisan budaya.</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="font-bold text-gray-700 block">2. Foto Tambahan (Galeri)</span>
+                                        <p class="leading-relaxed">File kedua dan seterusnya akan dikelompokkan ke dalam <strong>galeri gambar tambahan</strong> di halaman rincian.</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="col-span-2 space-y-2">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama (Opsional)</label>
-                                <template x-if="editPreviewUrl">
-                                    <div class="mb-3">
-                                        <div class="relative rounded-2xl overflow-hidden bg-gray-100 h-40 w-full border border-gray-100 group cursor-pointer" @click="lightboxImage = editPreviewUrl; showLightbox = true" title="Klik untuk memperbesar">
-                                            <img :src="editPreviewUrl" class="w-full h-full object-cover" alt="Foto Preview">
-                                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Foto Preview (Klik untuk memperbesar)</span>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Daftar Foto Saat Ini</label>
+                                
+                                <!-- Galeri saat ini -->
+                                <template x-if="editingBudaya?.images_data && editingBudaya.images_data.length > 0">
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+                                        <template x-for="(imgObj, index) in editingBudaya.images_data" :key="imgObj.path">
+                                            <div class="relative rounded-xl overflow-hidden bg-gray-100 aspect-square group border border-gray-200">
+                                                <img :src="imgObj.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Galeri Budaya">
+                                                
+                                                <!-- Badge overlay Cover vs Galeri -->
+                                                <div class="absolute top-2 left-2 px-2 py-0.5 rounded text-[8px] font-bold text-white uppercase"
+                                                     :class="index === 0 ? 'bg-[#066466]' : 'bg-gray-800/80'"
+                                                     x-text="index === 0 ? 'Cover' : 'Galeri'"></div>
+
+                                                <!-- Tombol Hapus overlay -->
+                                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <button type="button" @click.stop="
+                                                        deletedImages.push(imgObj.path); 
+                                                        editingBudaya.images_data = editingBudaya.images_data.filter(i => i.path !== imgObj.path);
+                                                        if (editingBudaya.images_data.length > 0) {
+                                                            editingBudaya.image_url = editingBudaya.images_data[0].path;
+                                                            editPreviewUrl = editingBudaya.images_data[0].url;
+                                                        } else {
+                                                            editingBudaya.image_url = null;
+                                                            editPreviewUrl = '';
+                                                        }
+                                                    " class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transform hover:scale-110 transition-all shadow-lg">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </div>
+                                                
+                                                <button type="button" @click.stop="lightboxImage = imgObj.url; showLightbox = true" class="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                                </button>
                                             </div>
-                                        </div>
+                                        </template>
                                     </div>
                                 </template>
-                                <div class="relative group">
-                                    <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" 
-                                        @change="
-                                            editFileName = $event.target.files[0] ? $event.target.files[0].name : '';
-                                            const reader = new FileReader();
-                                            reader.onload = (e) => { editPreviewUrl = e.target.result };
-                                            if($event.target.files[0]) reader.readAsDataURL($event.target.files[0]);
-                                        ">
-                                    <label for="edit_thumbnail" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/10">
-                                        <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                                            <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </div>
+
+                            <div class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Ganti Foto Utama (Cover) -->
+                                <div class="space-y-2" x-data="{ editCoverPreview: '' }">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Ganti Foto Utama (Cover)</label>
+                                    <div class="relative group">
+                                        <input type="file" name="thumbnail" id="edit_image" class="hidden" 
+                                            @change="
+                                                editFileName = $event.target.files[0] ? $event.target.files[0].name : '';
+                                                if ($event.target.files[0]) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (e) => { editCoverPreview = e.target.result; };
+                                                    reader.readAsDataURL($event.target.files[0]);
+                                                } else {
+                                                    editCoverPreview = '';
+                                                }
+                                            ">
+                                        <label for="edit_image" class="relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30 overflow-hidden">
+                                            <template x-if="editCoverPreview">
+                                                <div class="absolute inset-0 w-full h-full bg-gray-100">
+                                                    <img :src="editCoverPreview" class="w-full h-full object-cover">
+                                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                        <p class="text-white text-xs font-bold">Ganti Foto Utama</p>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template x-if="!editCoverPreview">
+                                                <div class="flex flex-col items-center justify-center text-center px-4">
+                                                    <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                                        <svg class="w-5 h-5 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                                    </div>
+                                                    <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Pilih foto utama baru'"></p>
+                                                    <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 5MB)</p>
+                                                </div>
+                                            </template>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Ganti Foto Tambahan (Galeri) -->
+                                <div class="space-y-2" x-data="{ newGalleryPreviews: [] }">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Tambah Foto Galeri</label>
+                                    <div class="relative group">
+                                        <input type="file" name="images[]" id="edit_images" multiple class="hidden" 
+                                            @change="
+                                                newGalleryPreviews = [];
+                                                const files = $event.target.files;
+                                                for (let i = 0; i < files.length; i++) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (e) => { newGalleryPreviews.push(e.target.result); };
+                                                    reader.readAsDataURL(files[i]);
+                                                }
+                                            ">
+                                        <label for="edit_images" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
+                                            <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                                <svg class="w-5 h-5 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                            </div>
+                                            <p class="text-sm font-bold text-gray-700" x-text="newGalleryPreviews.length > 0 ? newGalleryPreviews.length + ' file dipilih' : 'Pilih foto tambahan'"></p>
+                                            <p class="text-[10px] text-gray-400 mt-1">Bisa pilih lebih dari 1</p>
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- Previews -->
+                                    <template x-if="newGalleryPreviews.length > 0">
+                                        <div class="grid grid-cols-4 gap-2 mt-2">
+                                            <template x-for="(src, idx) in newGalleryPreviews" :key="idx">
+                                                <div class="relative rounded-xl overflow-hidden aspect-square border border-gray-200">
+                                                    <img :src="src" class="w-full h-full object-cover">
+                                                </div>
+                                            </template>
                                         </div>
-                                        <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Klik untuk ganti foto'"></p>
-                                    </label>
+                                    </template>
                                 </div>
                             </div>
                             <div class="col-span-2 mt-2">
@@ -689,7 +896,21 @@
                 <!-- Header -->
                 <div class="flex items-center justify-between px-10 pt-8 pb-4 border-b border-gray-100">
                     <div>
-                        <h3 class="text-xl font-bold text-gray-900">Detail Budaya</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-xl font-bold text-gray-900">Detail Budaya</h3>
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Aksi: Detail Budaya</span>
+                                            <p class="text-slate-200 font-normal">Halaman peninjauan detail lengkap untuk melihat bagaimana data topik budaya/warisan terdaftar dalam sistem dan disajikan kepada wisatawan.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute bottom-full left-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </div>
                         <p class="text-sm text-gray-400 mt-0.5">Warisan tradisi dan sejarah lokal</p>
                     </div>
                     <button @click="showViewModal = false" class="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl">
@@ -705,16 +926,57 @@
                     </div>
 
                     <div x-show="viewingBudaya" class="space-y-8">
-                        <!-- Image -->
-                        <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group" :class="viewingBudaya?.image_url ? 'cursor-pointer' : ''" @click="if(viewingBudaya?.image_url) { lightboxImage = viewingBudaya.image_url.startsWith('http') ? viewingBudaya.image_url : '/storage/' + viewingBudaya.image_url; showLightbox = true; }" title="Klik untuk memperbesar">
-                            <template x-if="viewingBudaya?.image_url">
-                                <img :src="viewingBudaya.image_url.startsWith('http') ? viewingBudaya.image_url : '/storage/' + viewingBudaya.image_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
-                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span class="text-white text-xs font-bold bg-black/50 px-3 py-1.5 rounded-xl">Klik untuk memperbesar</span>
+                        <div class="space-y-4">
+                            <!-- Banner Image & Gallery Row -->
+                            <div class="space-y-3">
+                                <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group cursor-pointer" 
+                                     @click="
+                                        if(viewingBudaya?.images_url && viewingBudaya.images_url.length > 0) { 
+                                            lightboxImage = viewingBudaya.images_url[activeViewImageIndex]; 
+                                            showLightbox = true; 
+                                        } else if(viewingBudaya?.image_url) { 
+                                            lightboxImage = viewingBudaya.image_url.startsWith('http') ? viewingBudaya.image_url : '/storage/' + viewingBudaya.image_url; 
+                                            showLightbox = true; 
+                                        }
+                                     " 
+                                     title="Klik untuk memperbesar">
+                                    <template x-if="viewingBudaya?.images_url && viewingBudaya.images_url.length > 0">
+                                        <img :src="viewingBudaya.images_url[activeViewImageIndex]" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                    </template>
+                                    <template x-if="!(viewingBudaya?.images_url && viewingBudaya.images_url.length > 0) && viewingBudaya?.image_url">
+                                        <img :src="viewingBudaya.image_url.startsWith('http') ? viewingBudaya.image_url : '/storage/' + viewingBudaya.image_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                    </template>
+                                    <template x-if="!(viewingBudaya?.images_url && viewingBudaya.images_url.length > 0) && !viewingBudaya?.image_url">
+                                        <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
+                                            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            <p class="text-xs font-bold uppercase tracking-widest">Tidak ada foto</p>
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Badge overlay to indicate cover vs gallery -->
+                                    <div class="absolute top-6 left-6" x-show="viewingBudaya?.images_url && viewingBudaya.images_url.length > 0">
+                                        <span class="px-4 py-2 bg-emerald-600/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-white uppercase tracking-widest shadow-sm" x-text="activeViewImageIndex === 0 ? 'Foto Utama (Cover)' : 'Foto Tambahan (Galeri)'"></span>
+                                    </div>
+
+                                    <div class="absolute top-6 right-6">
+                                        <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingBudaya?.category || '-'"></span>
+                                    </div>
                                 </div>
-                            </template>
-                            <div class="absolute top-6 right-6">
-                                <span class="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-gray-900 uppercase tracking-widest shadow-sm" x-text="viewingBudaya?.category || '-'"></span>
+
+                                <!-- Row of clickable thumbnails -->
+                                <template x-if="viewingBudaya?.images_url && viewingBudaya.images_url.length > 1">
+                                    <div class="flex items-center gap-2 mt-3 overflow-x-auto py-1.5 custom-scrollbar">
+                                        <template x-for="(imgUrl, idx) in viewingBudaya.images_url" :key="idx">
+                                            <button type="button" @click="activeViewImageIndex = idx" 
+                                                    class="relative w-20 h-14 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0"
+                                                    :class="activeViewImageIndex === idx ? 'border-emerald-600 shadow-md scale-105' : 'border-gray-200 hover:border-gray-300'">
+                                                <img :src="imgUrl" class="w-full h-full object-cover">
+                                                <!-- Tiny emerald triangle to flag cover -->
+                                                <div x-show="idx === 0" class="absolute top-0 right-0 bg-[#066466] w-2.5 h-2.5 rounded-bl"></div>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                         </div>
 

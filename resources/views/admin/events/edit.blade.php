@@ -7,6 +7,8 @@
 @section('content')
 <div x-data="{ 
     schedule: {{ json_encode(old('schedule', $event->schedule ?? [['time' => '09:00', 'activity' => '']])) }},
+    imagesData: {{ json_encode($event->images_data ?? []) }},
+    deletedImages: [],
     fileName: '',
     addSchedule() {
         this.schedule.push({ time: '09:00', activity: '' });
@@ -156,23 +158,50 @@
 
             <!-- Foto -->
             <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">Foto</label>
-                @if($event->banner_url)
-                    <div class="mb-3">
-                    <img src="{{ image_url($event->banner_url) }}" alt="Banner saat ini" class="w-full h-48 object-cover rounded-xl shadow-sm border border-gray-100">
+                <label class="block text-sm font-semibold text-gray-700">Foto (Bisa pilih lebih dari 1)</label>
+                
+                <template x-if="imagesData.length > 0">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
+                        <template x-for="(imgObj, index) in imagesData" :key="imgObj.path">
+                            <div class="relative group aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+                                <img :src="imgObj.url" alt="Foto Event" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                
+                                <!-- Tombol Hapus overlay -->
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button type="button" @click="
+                                        deletedImages.push(imgObj.path);
+                                        imagesData.splice(index, 1);
+                                    " class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transform hover:scale-110 transition-all shadow-lg">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="imagesData.length === 0 && '{{ $event->banner_url ?? '' }}' !== ''">
+                    <div class="mb-3 relative rounded-xl overflow-hidden group">
+                        <img src="{{ image_url($event->banner_url ?? '') }}" alt="Banner saat ini" class="w-full h-48 object-cover shadow-sm border border-gray-100">
                         <p class="text-[10px] text-gray-500 mt-2">Banner saat ini</p>
                     </div>
-                @endif
+                </template>
+                
+                <template x-for="delImg in deletedImages">
+                    <input type="hidden" name="delete_images[]" :value="delImg">
+                </template>
+                
                 <div class="relative group">
-                    <input type="file" name="banner" id="banner" class="hidden" @change="fileName = $event.target.files[0].name">
-                    <label for="banner" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-primary/50 transition-all">
+                    <input type="file" name="images[]" id="images" multiple class="hidden" @change="fileName = $event.target.files.length > 1 ? $event.target.files.length + ' file dipilih' : $event.target.files[0].name">
+                    <label for="images" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-primary/50 transition-all">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
                             <svg class="w-8 h-8 text-gray-400 mb-2 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            <p class="text-xs text-gray-500 group-hover:text-primary transition-colors" x-text="fileName || 'Ganti foto event'"></p>
+                            <p class="text-xs text-gray-500 group-hover:text-primary transition-colors" x-text="fileName || 'Tambah foto event'"></p>
                         </div>
                     </label>
                 </div>
-                @error('banner')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                <p class="text-[10px] text-gray-400 mt-1">* Mengunggah foto baru akan menambahkannya ke galeri saat ini.</p>
+                @error('images')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <div class="flex items-center gap-2 pt-2">

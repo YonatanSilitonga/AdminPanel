@@ -31,6 +31,7 @@ class MongoFasilitasUmum extends Model
         'operational_hours',
         'is_active',
         'image_url',
+        'images',
         'admin_id',
     ];
 
@@ -48,6 +49,7 @@ class MongoFasilitasUmum extends Model
         'is_active' => 'boolean',
         'available_services' => 'array',
         'tags' => 'array',
+        'images' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

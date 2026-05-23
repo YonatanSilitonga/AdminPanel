@@ -3,6 +3,7 @@
 @section('title', 'Beranda')
 @section('navbar_title', 'Beranda')
 @section('page_title', 'Beranda')
+@section('page_description', 'Ringkasan data, statistik, dan aktivitas terbaru dari seluruh modul Aplikasi Wisata Toba.')
 
 @section('content')
 <!-- Header Stats -->

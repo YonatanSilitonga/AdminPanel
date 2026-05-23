@@ -157,6 +157,46 @@ class BaseAdminController extends Controller
     }
 
     /**
+     * Normalize file path or URL to compare or delete locally.
+     */
+    protected function normalizeFilePath($path): string
+    {
+        if (!$path) {
+            return '';
+        }
+
+        $normalized = $path;
+
+        // If it's a full HTTP URL but not Cloudinary, extract the path segment
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            if (!str_starts_with($path, 'https://res.cloudinary.com/')) {
+                $parsed = parse_url($path, PHP_URL_PATH);
+                $normalized = $parsed ?: $path;
+            }
+        }
+
+        // Remove leading /storage/ or storage/ prefix if present
+        $normalized = preg_replace('/^\/?storage\//i', '', $normalized);
+
+        // Normalize slashes
+        $normalized = str_replace('\\', '/', $normalized);
+
+        // Trim leading and trailing slashes
+        return trim($normalized, '/');
+    }
+
+    /**
+     * Compare two file paths or URLs robustly.
+     */
+    protected function pathsMatch($path1, $path2): bool
+    {
+        if (str_starts_with($path1, 'https://res.cloudinary.com/') || str_starts_with($path2, 'https://res.cloudinary.com/')) {
+            return $path1 === $path2;
+        }
+        return $this->normalizeFilePath($path1) === $this->normalizeFilePath($path2);
+    }
+
+    /**
      * Delete file from storage.
      * Handles both Cloudinary URLs (https://res.cloudinary.com/…) and local paths.
      */
@@ -190,8 +230,9 @@ class BaseAdminController extends Controller
         }
 
         // ── Local fallback ───────────────────────────────────────────────────
-        if (Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
+        $normalizedPath = $this->normalizeFilePath($filePath);
+        if (Storage::disk('public')->exists($normalizedPath)) {
+            Storage::disk('public')->delete($normalizedPath);
         }
     }
 
