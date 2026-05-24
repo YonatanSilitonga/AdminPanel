@@ -6,15 +6,46 @@
 @section('page_description', 'Moderasi dan analisis ulasan pengguna')
 
 @section('page_actions')
-<div class="flex items-center gap-3">
-    <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-export-modal'))" class="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-indigo-600/20">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Cetak Analitik (PDF)
-    </button>
-    <a href="{{ route('admin.reviews.export', request()->query()) }}" class="flex items-center gap-2 px-8 py-3 bg-emerald-700 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-emerald-700/20">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-        Ekspor Daftar Ulasan (CSV)
-    </a>
+<div class="flex items-center gap-4">
+    <!-- Cetak Analitik (PDF) -->
+    <div class="flex items-center gap-2">
+        <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-export-modal'))" class="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-indigo-600/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Cetak Analitik (PDF)
+        </button>
+        <div class="relative group cursor-pointer inline-flex items-center">
+            <svg class="w-4 h-4 text-gray-400 hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                <div class="space-y-2">
+                    <div>
+                        <span class="block font-bold text-indigo-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Aksi: Cetak Analitik</span>
+                        <p class="text-slate-200 font-sans leading-relaxed">Mencetak dokumen resmi PDF analitik sentimen ulasan (IndoBERT model) lengkap dengan kop surat dinas, statistik distribusi rating, dan tanda tangan kepala dinas.</p>
+                    </div>
+                </div>
+                <div class="absolute bottom-full right-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ekspor Daftar Ulasan (CSV) -->
+    <div class="flex items-center gap-2">
+        <a href="{{ route('admin.reviews.export', request()->query()) }}" class="flex items-center gap-2 px-8 py-3 bg-emerald-700 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-emerald-700/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Ekspor Daftar Ulasan (CSV)
+        </a>
+        <div class="relative group cursor-pointer inline-flex items-center">
+            <svg class="w-4 h-4 text-gray-400 hover:text-emerald-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+                <div class="space-y-2">
+                    <div>
+                        <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Aksi: Ekspor Daftar Ulasan</span>
+                        <p class="text-slate-200 font-sans leading-relaxed">Mengekspor data mentah seluruh ulasan yang disaring saat ini ke dalam berkas CSV untuk pengolahan data spreadsheet eksternal.</p>
+                    </div>
+                </div>
+                <div class="absolute bottom-full right-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 

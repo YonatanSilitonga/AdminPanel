@@ -17,7 +17,8 @@ class CarouselBannerController extends BaseAdminController
     public function index(Request $request)
     {
         $banners = CarouselBanner::orderBy('order', 'asc')->get();
-        return view('admin.carousel_banners.index', compact('banners'));
+        $autoplayDuration = \App\Models\AppSetting::get('carousel_autoplay_duration', 5);
+        return view('admin.carousel_banners.index', compact('banners', 'autoplayDuration'));
     }
 
     public function store(Request $request)
@@ -26,11 +27,13 @@ class CarouselBannerController extends BaseAdminController
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
-            'image_url' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'image_url' => 'required|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
             'content_id' => 'nullable|string',
             'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
+            'media_type' => 'required|in:image,video',
+            'play_duration' => 'nullable|integer|min:1',
         ]);
 
         try {
@@ -38,8 +41,19 @@ class CarouselBannerController extends BaseAdminController
             
             if ($request->hasFile('image_url')) {
                 $file = $request->file('image_url');
-                $path = $this->uploadFile($file, 'carousel_banners');
+                $mime = $file->getMimeType();
+                $isVid = str_starts_with($mime, 'video/');
+                $resourceType = $isVid ? 'video' : 'image';
+                
+                $path = $this->uploadFile($file, 'carousel_banners', [
+                    'mimes' => ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg'],
+                    'max_size' => 50,
+                    'resource_type' => $resourceType
+                ]);
                 $data['image_url'] = $path;
+                $data['media_type'] = $isVid ? 'video' : 'image';
+            } else {
+                $data['media_type'] = $request->input('media_type', 'image');
             }
 
             $data['admin_id'] = auth('admin')->id() ?? null;
@@ -49,6 +63,12 @@ class CarouselBannerController extends BaseAdminController
             // Handle optional dates
             if (empty($data['start_date'])) $data['start_date'] = null;
             if (empty($data['end_date'])) $data['end_date'] = null;
+
+            // Handle display settings
+            $data['play_duration'] = $request->filled('play_duration') ? (int)$request->play_duration : ($data['media_type'] === 'video' ? 10 : 5);
+            $data['video_loop'] = $request->has('video_loop') && $request->video_loop === 'on';
+            $data['video_muted'] = $request->has('video_muted') && $request->video_muted === 'on';
+            $data['video_autoplay'] = $request->has('video_autoplay') && $request->video_autoplay === 'on';
 
             CarouselBanner::create($data);
 
@@ -89,11 +109,13 @@ class CarouselBannerController extends BaseAdminController
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
-            'image_url' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'image_url' => 'nullable|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
             'content_id' => 'nullable|string',
             'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
+            'media_type' => 'required|in:image,video',
+            'play_duration' => 'nullable|integer|min:1',
         ]);
 
         try {
@@ -106,8 +128,19 @@ class CarouselBannerController extends BaseAdminController
                 }
 
                 $file = $request->file('image_url');
-                $path = $this->uploadFile($file, 'carousel_banners');
+                $mime = $file->getMimeType();
+                $isVid = str_starts_with($mime, 'video/');
+                $resourceType = $isVid ? 'video' : 'image';
+                
+                $path = $this->uploadFile($file, 'carousel_banners', [
+                    'mimes' => ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg'],
+                    'max_size' => 50,
+                    'resource_type' => $resourceType
+                ]);
                 $data['image_url'] = $path;
+                $data['media_type'] = $isVid ? 'video' : 'image';
+            } else {
+                $data['media_type'] = $request->input('media_type', $banner->media_type ?? 'image');
             }
 
             $data['is_active'] = $request->has('is_active') && $request->is_active === 'on';
@@ -116,6 +149,12 @@ class CarouselBannerController extends BaseAdminController
             // Handle optional dates
             if (empty($data['start_date'])) $data['start_date'] = null;
             if (empty($data['end_date'])) $data['end_date'] = null;
+
+            // Handle display settings
+            $data['play_duration'] = $request->filled('play_duration') ? (int)$request->play_duration : ($data['media_type'] === 'video' ? 10 : 5);
+            $data['video_loop'] = $request->has('video_loop') && $request->video_loop === 'on';
+            $data['video_muted'] = $request->has('video_muted') && $request->video_muted === 'on';
+            $data['video_autoplay'] = $request->has('video_autoplay') && $request->video_autoplay === 'on';
 
             $banner->update($data);
 
@@ -247,6 +286,34 @@ class CarouselBannerController extends BaseAdminController
             return response()->json([
                 'success' => true,
                 'data' => $contents
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update global autoplay duration setting
+     */
+    public function updateSettings(Request $request)
+    {
+        $request->validate([
+            'carousel_autoplay_duration' => 'required|integer|min:1|max:60',
+        ]);
+
+        try {
+            \App\Models\AppSetting::set(
+                'carousel_autoplay_duration',
+                (int)$request->input('carousel_autoplay_duration'),
+                'integer'
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengaturan durasi autoplay berhasil diperbarui'
             ]);
         } catch (\Exception $e) {
             return response()->json([

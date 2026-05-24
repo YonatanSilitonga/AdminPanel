@@ -114,45 +114,154 @@ class UserController extends BaseAdminController
         $user = User::findOrFail($id);
 
         if (request()->ajax() || request()->wantsJson()) {
-            // Fetch real reviews
-            $activities = MongoReview::where('user_id', $id)
+            $activities = [];
+
+            // 1. Fetch real reviews
+            $reviews = MongoReview::where(function($q) use ($id) {
+                    $q->where('user_id', $id)
+                      ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                })
                 ->with('destination')
                 ->latest()
                 ->take(5)
-                ->get()
-                ->map(function($review) {
-                    return [
-                        'icon' => 'chat',
-                        'title' => 'Menulis ulasan untuk ' . ($review->destination->name ?? 'Destinasi'),
-                        'time' => $review->created_at->diffForHumans(),
+                ->get();
+
+            foreach ($reviews as $review) {
+                $activities[] = [
+                    'icon' => 'chat',
+                    'title' => 'Menulis ulasan untuk ' . ($review->destination->name ?? 'Destinasi'),
+                    'time' => $review->created_at ? $review->created_at->diffForHumans() : 'baru saja',
+                    'timestamp' => $review->created_at ? $review->created_at->timestamp : 0,
+                    'color' => 'teal'
+                ];
+            }
+
+            // 2. Fetch real wishlists (favorites)
+            $favorites = \Illuminate\Support\Facades\DB::connection('mongodb')
+                ->table('favorites')
+                ->where(function($q) use ($id) {
+                    $q->where('user_id', $id)
+                      ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+
+            if ($favorites->isNotEmpty()) {
+                $destIds = $favorites->pluck('destination_id')->map(function($d) {
+                    return (string)$d;
+                })->toArray();
+                
+                // Query destinations
+                $destinations = \App\Models\MongoDB\MongoDestination::whereIn('_id', $destIds)
+                    ->orWhereIn('_id', array_map(fn($id) => new \MongoDB\BSON\ObjectId($id), $destIds))
+                    ->get()
+                    ->keyBy(fn($d) => (string)$d->_id);
+
+                foreach ($favorites as $fav) {
+                    $destIdStr = (string)$fav->destination_id;
+                    $destName = isset($destinations[$destIdStr]) ? $destinations[$destIdStr]->name : 'Destinasi';
+                    
+                    $createdVal = $fav->created_at ?? null;
+                    $createdAt = null;
+                    if ($createdVal) {
+                        if ($createdVal instanceof \MongoDB\BSON\UTCDateTime) {
+                            $createdAt = \Illuminate\Support\Carbon::createFromTimestampMs($createdVal->toDateTime()->getTimestamp() * 1000);
+                        } else if ($createdVal instanceof \Illuminate\Support\Carbon) {
+                            $createdAt = $createdVal;
+                        } else {
+                            $createdAt = \Illuminate\Support\Carbon::parse($createdVal);
+                        }
+                    }
+
+                    $activities[] = [
+                        'icon' => 'heart',
+                        'title' => 'Menambahkan ' . $destName . ' ke wishlist',
+                        'time' => $createdAt ? $createdAt->diffForHumans() : 'baru saja',
+                        'timestamp' => $createdAt ? $createdAt->timestamp : 0,
                         'color' => 'teal'
                     ];
-                })
-                ->toArray();
-
-            // Mock activities to match Figma if real ones are sparse
-            $mockActivities = [
-                ['icon' => 'map', 'title' => 'Membuat trip ke Pantai Bulbul', 'time' => '2 jam lalu', 'color' => 'teal'],
-                ['icon' => 'heart', 'title' => 'Menambahkan Air Terjun Situmurun ke wishlist', 'time' => '2 hari lalu', 'color' => 'teal'],
-                ['icon' => 'search', 'title' => 'Mencari "hotel balige"', 'time' => '3 hari lalu', 'color' => 'teal'],
-                ['icon' => 'map', 'title' => 'Membuat trip ke Museum Batak', 'time' => '5 hari lalu', 'color' => 'teal'],
-            ];
-
-            foreach ($mockActivities as $mock) {
-                if (count($activities) < 5) {
-                    $activities[] = $mock;
                 }
+            }
+
+            // 3. Fetch real trip plans
+            $trips = \Illuminate\Support\Facades\DB::connection('mongodb')
+                ->table('trip_plans')
+                ->where(function($q) use ($id) {
+                    $q->where('user_id', $id)
+                      ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+
+            foreach ($trips as $trip) {
+                $summary = (array)($trip->summary ?? []);
+                $tripTitle = $summary['title'] ?? 'Trip Toba';
+                
+                $createdVal = $trip->created_at ?? null;
+                $createdAt = null;
+                if ($createdVal) {
+                    if ($createdVal instanceof \MongoDB\BSON\UTCDateTime) {
+                        $createdAt = \Illuminate\Support\Carbon::createFromTimestampMs($createdVal->toDateTime()->getTimestamp() * 1000);
+                    } else if ($createdVal instanceof \Illuminate\Support\Carbon) {
+                        $createdAt = $createdVal;
+                    } else {
+                        $createdAt = \Illuminate\Support\Carbon::parse($createdVal);
+                    }
+                }
+
+                $activities[] = [
+                    'icon' => 'map',
+                    'title' => 'Membuat trip "' . $tripTitle . '"',
+                    'time' => $createdAt ? $createdAt->diffForHumans() : 'baru saja',
+                    'timestamp' => $createdAt ? $createdAt->timestamp : 0,
+                    'color' => 'teal'
+                ];
+            }
+
+            // Sort all activities by timestamp desc
+            usort($activities, function($a, $b) {
+                return $b['timestamp'] <=> $a['timestamp'];
+            });
+
+            // Slice to 5 items max
+            $activities = array_slice($activities, 0, 5);
+
+            // Fallback to mock activities if absolutely empty
+            if (empty($activities)) {
+                $activities = [
+                    ['icon' => 'map', 'title' => 'Membuat trip ke Pantai Bulbul', 'time' => '2 jam lalu', 'color' => 'teal'],
+                    ['icon' => 'heart', 'title' => 'Menambahkan Air Terjun Situmurun ke wishlist', 'time' => '2 hari lalu', 'color' => 'teal'],
+                    ['icon' => 'search', 'title' => 'Mencari "hotel balige"', 'time' => '3 hari lalu', 'color' => 'teal'],
+                    ['icon' => 'map', 'title' => 'Membuat trip ke Museum Batak', 'time' => '5 hari lalu', 'color' => 'teal'],
+                ];
             }
 
             return response()->json([
                 'user' => $user,
                 'initials' => collect(explode(' ', $user->name))->map(fn($n) => strtoupper(substr($n, 0, 1)))->take(2)->implode(''),
                 'stats' => [
-                    'reviews' => MongoReview::where('user_id', $id)->count() ?: 15, // Using Figma values as fallback
-                    'trips' => 8, 
-                    'wishlists' => 35,
+                    'reviews' => MongoReview::where(function($q) use ($id) {
+                        $q->where('user_id', $id)
+                          ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                    })->count(),
+                    'trips' => \Illuminate\Support\Facades\DB::connection('mongodb')
+                        ->table('trip_plans')
+                        ->where(function($q) use ($id) {
+                            $q->where('user_id', $id)
+                              ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                        })
+                        ->count(),
+                    'wishlists' => \Illuminate\Support\Facades\DB::connection('mongodb')
+                        ->table('favorites')
+                        ->where(function($q) use ($id) {
+                            $q->where('user_id', $id)
+                              ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                        })
+                        ->count(),
                 ],
-                'activities' => array_slice($activities, 0, 5)
+                'activities' => $activities
             ]);
         }
 

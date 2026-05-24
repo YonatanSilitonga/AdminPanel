@@ -90,69 +90,77 @@ class BaseAdminController extends Controller
      */
     protected function uploadFile($file, $path = 'uploads', $options = [])
     {
-        set_time_limit(120); // Prevent timeout during slow uploads
+        set_time_limit(0); // Prevent timeout during slow uploads (especially large videos to Cloudinary)
 
         if (!$file || !$file->isValid()) {
             \Illuminate\Support\Facades\Log::warning('Invalid file upload attempt', [
                 'has_file' => (bool)$file,
                 'is_valid' => $file ? $file->isValid() : false,
-                'error' => $file ? $file->getError() : 'no file',
+                'error'    => $file ? $file->getError() : 'no file',
             ]);
-            return null;
+            throw new \Exception('File upload tidak valid atau gagal diterima oleh server.');
         }
 
         // Validate size
         $maxSize = $options['max_size'] ?? 10; // MB
         if ($file->getSize() > $maxSize * 1024 * 1024) {
-            throw new \Exception("File size exceeds {$maxSize}MB limit");
+            throw new \Exception("Ukuran file melebihi batas {$maxSize}MB");
         }
 
         // Validate mime
         $allowedMimes = $options['mimes'] ?? ['image/jpeg', 'image/png', 'image/webp'];
         if (!in_array($file->getMimeType(), $allowedMimes)) {
-            throw new \Exception('File type not allowed: ' . $file->getMimeType());
+            throw new \Exception('Tipe file tidak diizinkan: ' . $file->getMimeType());
         }
 
         // ── Cloudinary ──────────────────────────────────────────────────────
         // Use config() instead of env() for reliability
         $cloudName = config('cloudinary.cloud_url') ?: env('CLOUDINARY_CLOUD_NAME');
-        
-        if ($cloudName) {
-            try {
-                // Use the simpler upload() method which is more robust in this package
-                $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
-                    'folder'        => 'smarttourism/' . trim($path, '/'),
-                    'resource_type' => 'image',
-                    'transformation' => [
-                        'quality' => 'auto',
-                        'fetch_format' => 'auto',
-                    ],
-                ]);
 
+        if ($cloudName) {
+            // Cloudinary is configured — MUST use Cloudinary, no local fallback.
+            // This ensures URLs are always publicly accessible from any device.
+            $resourceType = $options['resource_type'] ?? 'image';
+            $uploadParams = [
+                'folder'        => 'smarttourism/' . trim($path, '/'),
+                'resource_type' => $resourceType,
+            ];
+
+            if ($resourceType === 'image') {
+                $uploadParams['transformation'] = [
+                    'quality'      => 'auto',
+                    'fetch_format' => 'auto',
+                ];
+            }
+
+            try {
+                $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), $uploadParams);
                 return $result['secure_url'];
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Cloudinary upload failed: ' . $e->getMessage(), [
                     'file' => $file->getClientOriginalName(),
-                    'path' => $path
+                    'path' => $path,
                 ]);
-                // Fall back to local if Cloudinary fails
+                // Re-throw so controller catches it and returns error to the user.
+                // DO NOT fall back to local storage — local paths are NOT publicly accessible.
+                throw new \Exception('Gagal mengunggah file ke Cloudinary: ' . $e->getMessage());
             }
         }
 
-        // ── Local fallback ───────────────────────────────────────────────────
+        // ── Local fallback (only when Cloudinary is NOT configured) ──────────
         try {
-            $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
+            $filename   = Str::random(20) . '.' . $file->getClientOriginalExtension();
             $storedPath = $file->storeAs($path, $filename, 'public');
-            
+
             if (!$storedPath) {
-                 \Illuminate\Support\Facades\Log::error('Local storage failed for file', ['path' => $path]);
-                 return null;
+                \Illuminate\Support\Facades\Log::error('Local storage failed for file', ['path' => $path]);
+                throw new \Exception('Penyimpanan file lokal gagal.');
             }
-            
+
             return $storedPath;
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Local storage exception: ' . $e->getMessage());
-            return null;
+            throw $e;
         }
     }
 

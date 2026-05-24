@@ -37,10 +37,24 @@
 @section('page_description', 'Kelola konten destinasi wisata Danau Toba')
 
 @section('page_actions')
-<button type="button" onclick="document.querySelector('[data-open-create-modal]')?.click()" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-    Tambah Destinasi
-</button>
+<div class="flex items-center gap-3">
+    <button type="button" onclick="document.querySelector('[data-open-create-modal]')?.click()" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+        Tambah Destinasi
+    </button>
+    <div class="relative group cursor-pointer inline-flex items-center">
+        <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+            <div class="space-y-2">
+                <div>
+                    <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Aksi: Tambah Destinasi</span>
+                    <p class="text-slate-200 font-sans leading-relaxed">Membuka formulir pembuatan destinasi wisata baru dengan isian nama, deskripsi, lokasi peta, dan pengunggahan cover serta galeri foto.</p>
+                </div>
+            </div>
+            <div class="absolute bottom-full right-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('breadcrumb')
@@ -630,7 +644,16 @@
                                 <h4 class="font-bold text-gray-800 text-sm" x-text="item.name"></h4>
                                 <p class="text-[10px] text-gray-400 capitalize" x-text="item.category"></p>
                             </div>
-                            <button x-show="mode === 'manual'" @click="removeItem(item.id_str)" class="p-2 text-red-400 hover:bg-red-50 rounded-lg">
+                            <button x-show="mode === 'manual'" 
+                                    type="button" 
+                                    @click="$dispatch('open-delete-modal', { 
+                                        action: '/admin/trending-destinations/remove/' + item.id_str, 
+                                        title: 'Hapus dari Trending', 
+                                        type: 'destinasi trending', 
+                                        name: item.name 
+                                    })" 
+                                    class="p-2 text-red-400 hover:bg-red-50 rounded-lg"
+                                    title="Hapus dari Trending">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>

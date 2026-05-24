@@ -313,7 +313,16 @@
                                     </div>
                                 </div>
                             </div>
-                            <button x-show="mode === 'manual'" @click="removeItem(item.id_str || (item._id && item._id.$oid) || item._id)" class="p-2 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100">
+                            <button x-show="mode === 'manual'" 
+                                    type="button"
+                                    @click="$dispatch('open-delete-modal', { 
+                                        action: '/admin/trending-destinations/remove/' + (item.id_str || (item._id && item._id.$oid) || item._id), 
+                                        title: 'Hapus dari Trending', 
+                                        type: 'destinasi trending', 
+                                        name: item.name 
+                                    })" 
+                                    class="p-2 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                    title="Hapus dari Trending">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </button>
                         </div>

@@ -330,8 +330,84 @@
         </div>
     </div>
 
+    <!-- Global Alert Modal -->
+    <div x-data="{ show: false, title: 'Perhatian', message: '', type: 'error' }"
+         @show-alert.window="show = true; message = $event.detail.message; title = $event.detail.title || 'Perhatian'; type = $event.detail.type || 'error'"
+         x-show="show" class="fixed inset-0 z-[150] overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+            <!-- Backdrop -->
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <!-- Modal Panel -->
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-sm bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                
+                <div class="px-8 py-6 text-center mt-4">
+                    <!-- Icon based on type -->
+                    <div class="mx-auto mb-6">
+                        <!-- Error Icon -->
+                        <div x-show="type === 'error'" class="w-[72px] h-[72px] bg-red-50 rounded-full flex items-center justify-center mx-auto">
+                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        
+                        <!-- Warning Icon -->
+                        <div x-show="type === 'warning'" class="w-[72px] h-[72px] bg-amber-50 rounded-full flex items-center justify-center mx-auto">
+                            <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+
+                        <!-- Success Icon -->
+                        <div x-show="type === 'success'" class="w-[72px] h-[72px] bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
+                            <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+
+                        <!-- Info Icon -->
+                        <div x-show="type === 'info'" class="w-[72px] h-[72px] bg-blue-50 rounded-full flex items-center justify-center mx-auto">
+                            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h3 class="text-[20px] font-bold text-gray-900 mb-3" x-text="title"></h3>
+                    <p class="text-[14px] text-gray-500 mb-2 leading-relaxed px-2" x-text="message"></p>
+                </div>
+
+                <div class="flex gap-3 px-8 pb-6 justify-center">
+                    <button type="button" @click="show = false" class="w-full py-3 text-[14px] font-bold text-white bg-sidebar rounded-xl transition-all shadow-[0_4px_12px_-4px_rgba(6,100,102,0.3)]">
+                        Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script>
+        // Global helper to show the custom alert modal
+        window.showAlert = function(message, title = 'Perhatian', type = 'error') {
+            window.dispatchEvent(new CustomEvent('show-alert', {
+                detail: { message, title, type }
+            }));
+        };
+
+        // Override default window.alert to route through the custom modal
+        window.alert = function(message) {
+            window.showAlert(message, 'Perhatian', 'error');
+        };
+
         // CSRF token for AJAX (Vanilla JS)
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         if (typeof jQuery !== 'undefined') {

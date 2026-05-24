@@ -419,13 +419,18 @@ class DestinationController extends BaseAdminController
         return response()->json(['success' => true, 'message' => 'Destinasi ditambahkan ke trending']);
     }
 
-    public function removeTrendingDestination($id)
+    public function removeTrendingDestination(Request $request, $id)
     {
         $currentList = \App\Models\AppSetting::get('trending_list', []);
         $id = (string)$id;
         $newList = array_values(array_filter($currentList, fn($item) => (string)$item !== $id));
         \App\Models\AppSetting::set('trending_list', $newList, 'json');
-        return response()->json(['success' => true, 'message' => 'Destinasi dihapus dari trending']);
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Destinasi dihapus dari trending']);
+        }
+        
+        return redirect()->back()->with('success', 'Destinasi berhasil dihapus dari trending');
     }
 
     public function resetTrendingToAutomatic()
