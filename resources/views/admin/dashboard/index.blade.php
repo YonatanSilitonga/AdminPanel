@@ -367,30 +367,40 @@
             <div>
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-sm text-gray-500">Hari ini</span>
-                    <span class="text-sm font-bold text-gray-900">18</span>
+                    <span class="text-sm font-bold text-gray-900">{{ $tripStats['today'] ?? 0 }}</span>
                 </div>
                 <div class="w-full bg-gray-100 rounded-full h-2.5">
-                    <div class="bg-purple-600 h-2.5 rounded-full" style="width: 15%"></div>
+                    @php
+                        $maxTrips = max($tripStats['today'] ?? 0, $tripStats['week'] ?? 0, $tripStats['month'] ?? 0, 1);
+                        $todayPercent = $maxTrips > 0 ? (($tripStats['today'] ?? 0) / $maxTrips) * 100 : 0;
+                    @endphp
+                    <div class="bg-purple-600 h-2.5 rounded-full" style="width: {{ $todayPercent }}%"></div>
                 </div>
             </div>
             <!-- Minggu ini -->
             <div>
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-sm text-gray-500">Minggu ini</span>
-                    <span class="text-sm font-bold text-gray-900">94</span>
+                    <span class="text-sm font-bold text-gray-900">{{ $tripStats['week'] ?? 0 }}</span>
                 </div>
                 <div class="w-full bg-gray-100 rounded-full h-2.5">
-                    <div class="bg-green-600 h-2.5 rounded-full" style="width: 45%"></div>
+                    @php
+                        $weekPercent = $maxTrips > 0 ? (($tripStats['week'] ?? 0) / $maxTrips) * 100 : 0;
+                    @endphp
+                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ $weekPercent }}%"></div>
                 </div>
             </div>
             <!-- Bulan ini -->
             <div>
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-sm text-gray-500">Bulan ini</span>
-                    <span class="text-sm font-bold text-gray-900">312</span>
+                    <span class="text-sm font-bold text-gray-900">{{ $tripStats['month'] ?? 0 }}</span>
                 </div>
                 <div class="w-full bg-gray-100 rounded-full h-2.5">
-                    <div class="bg-yellow-500 h-2.5 rounded-full" style="width: 85%"></div>
+                    @php
+                        $monthPercent = $maxTrips > 0 ? (($tripStats['month'] ?? 0) / $maxTrips) * 100 : 0;
+                    @endphp
+                    <div class="bg-yellow-500 h-2.5 rounded-full" style="width: {{ $monthPercent }}%"></div>
                 </div>
             </div>
         </div>

@@ -4,32 +4,29 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RecommendationLog extends Model
 {
-    protected $connection = 'mysql';
-    protected $table = 'recommendation_logs';
+    protected $connection = 'mongodb';
+    protected $collection = 'recommendation_logs';
+    protected $primaryKey = '_id';
+    
     protected $fillable = [
         'user_id',
-        'recommended_destination_id',
+        'destination_id',
         'behavior_data',
         'recommendation_score',
         'is_clicked',
     ];
 
     protected $casts = [
-        'behavior_data' => 'json',
+        'behavior_data' => 'array',
         'recommendation_score' => 'float',
         'is_clicked' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-    ];
-
-    protected $indexes = [
-        'user_id',
-        'recommended_destination_id',
     ];
 
     /**
@@ -37,7 +34,7 @@ class RecommendationLog extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
@@ -45,7 +42,7 @@ class RecommendationLog extends Model
      */
     public function destination(): BelongsTo
     {
-        return $this->belongsTo(Destination::class, 'recommended_destination_id');
+        return $this->belongsTo(Destination::class, 'destination_id', '_id');
     }
 
     /**

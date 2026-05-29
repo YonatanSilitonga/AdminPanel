@@ -8,12 +8,15 @@ class MongoBeritaPromosi extends Model
 {
     protected $connection = 'mongodb';
     protected $table = 'berita_promosi';
+    protected $collection = 'berita_promosi';
+    protected $primaryKey = '_id';
 
     protected $fillable = [
         'judul',
         'tipe',
         'thumbnail',
         'images',
+        'videos',
         'konten',
         'tanggal_tayang',
         'tampilkan_di_carousel',
@@ -26,6 +29,7 @@ class MongoBeritaPromosi extends Model
         'tampilkan_di_carousel' => 'boolean',
         'is_active' => 'boolean',
         'images' => 'array',
+        'videos' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

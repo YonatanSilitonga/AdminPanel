@@ -48,9 +48,14 @@
     editFileName: '',
     showLightbox: false,
     lightboxImage: '',
+    lightboxMediaType: 'image',
     editingItem: null,
     deletedImages: [],
     activeViewImageIndex: 0,
+    videoStartTime: 0,
+    videoEndTime: 0,
+    videoDuration: 0,
+    selectedVideoIndex: null,
 
     async openViewModal(id) {
         if (!id) return;
@@ -105,6 +110,175 @@
             this.showEditModal = false;
         } finally {
             this.loading = false;
+        }
+    },
+
+    async submitCreate() {
+        this.loading = true;
+        const form = document.getElementById('createForm');
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('{{ route('admin.berita_promosi.store') }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const result = await window.safeParseJSON(response);
+            if (result.success) {
+                window.location.reload();
+            } else {
+                window.showAlert(result.message || 'Gagal menyimpan berita/promosi', 'Gagal', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async submitUpdate() {
+        if (!this.editingItem) {
+            window.showAlert('Data yang sedang diedit tidak ditemukan', 'Perhatian', 'warning');
+            return;
+        }
+
+        this.loading = true;
+        const form = document.getElementById('editForm');
+        const formData = new FormData(form);
+        const itemId = this.editingItem._id || this.editingItem.id;
+
+        try {
+            const response = await fetch(`/admin/berita-promosi/${itemId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const result = await window.safeParseJSON(response);
+            if (result.success) {
+                window.location.reload();
+            } else {
+                window.showAlert(result.message || 'Gagal memperbarui berita/promosi', 'Gagal', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            window.showAlert(error.message || 'Terjadi kesalahan saat memperbarui data', 'Error', 'error');
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    mediaUrl(path) {
+        if (!path) return '';
+        return path.startsWith('http') ? path : '/storage/' + path;
+    },
+
+    isVideoMedia(path) {
+        if (!path) return false;
+        return /\.(mp4|mov|avi|webm|ogg)(?:$|\?)/i.test(path);
+    },
+
+    openMediaLightbox(path, mediaType = null) {
+        this.lightboxImage = this.mediaUrl(path);
+        this.lightboxMediaType = mediaType || (this.isVideoMedia(path) ? 'video' : 'image');
+        this.showLightbox = true;
+
+        this.$nextTick(() => {
+            const lightboxVideo = this.$refs.lightboxVideo;
+            if (this.lightboxMediaType === 'video' && lightboxVideo && typeof lightboxVideo.play === 'function') {
+                lightboxVideo.muted = true;
+                try { lightboxVideo.load(); } catch (e) {}
+                lightboxVideo.play().catch(() => {});
+            }
+        });
+    },
+
+    closeLightbox() {
+        const lightboxVideo = this.$refs.lightboxVideo;
+        if (lightboxVideo && typeof lightboxVideo.pause === 'function') {
+            lightboxVideo.pause();
+        }
+
+        this.showLightbox = false;
+        this.lightboxImage = '';
+        this.lightboxMediaType = 'image';
+    },
+
+    handleVideoSelect(index) {
+        const videoObj = this.editingItem?.images_data?.[index];
+        if (!videoObj || videoObj.type !== 'video') return;
+        
+        this.selectedVideoIndex = index;
+        this.videoStartTime = videoObj.start_time || 0;
+        this.videoEndTime = videoObj.end_time || 0;
+        
+        const videoElem = document.getElementById(`video_preview_${index}`);
+        if (videoElem) {
+            // Ensure we load the remote video and get metadata consistently
+            videoElem.onloadedmetadata = () => {
+                this.videoDuration = Math.floor(videoElem.duration) || 0;
+                const endTimeSlider = document.getElementById(`end_time_slider_${index}`);
+                if (endTimeSlider) {
+                    endTimeSlider.max = this.videoDuration;
+                    if (!this.videoEndTime) {
+                        this.videoEndTime = this.videoDuration;
+                        endTimeSlider.value = this.videoDuration;
+                    }
+                }
+            };
+
+            // Set src explicitly and reload to trigger metadata event (mirrors Destination module)
+            if (videoElem.src !== this.editingItem.images_data[index].url) {
+                videoElem.src = this.editingItem.images_data[index].url;
+            }
+            try { videoElem.load(); } catch (e) { /* ignore load errors */ }
+        }
+    },
+
+    playVideo(index) {
+        const videoElem = document.getElementById(`video_preview_${index}`);
+        if (videoElem) {
+            videoElem.currentTime = this.videoStartTime;
+            videoElem.play();
+        }
+    },
+
+    pauseVideo(index) {
+        const videoElem = document.getElementById(`video_preview_${index}`);
+        if (videoElem) {
+            videoElem.pause();
+        }
+    },
+
+    jumpToStartTime(index) {
+        const videoElem = document.getElementById(`video_preview_${index}`);
+        if (videoElem) {
+            videoElem.currentTime = this.videoStartTime;
+        }
+    },
+
+    formatTime(seconds) {
+        if (!seconds || seconds < 0) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    },
+
+    updateVideoTime() {
+        if (this.selectedVideoIndex !== null && this.editingItem?.images_data?.[this.selectedVideoIndex]) {
+            this.editingItem.images_data[this.selectedVideoIndex].start_time = this.videoStartTime;
+            this.editingItem.images_data[this.selectedVideoIndex].end_time = this.videoEndTime;
         }
     }
 }">
@@ -390,7 +564,7 @@
                     </button>
                 </div>
                 
-                <form action="{{ route('admin.berita_promosi.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+                <form id="createForm" action="{{ route('admin.berita_promosi.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5" @submit.prevent="submitCreate()">
                     @csrf
                     <div class="space-y-5">
                         <div>
@@ -556,7 +730,7 @@
                     <p class="text-sm font-bold text-emerald-600 animate-pulse">Memuat data...</p>
                 </div>
 
-                <form id="editForm" x-show="!loading" method="POST" enctype="multipart/form-data" class="space-y-5">
+                <form id="editForm" x-show="!loading" method="POST" enctype="multipart/form-data" class="space-y-5" @submit.prevent="submitUpdate()">
                     @csrf
                     @method('PUT')
                     <div class="space-y-5">
@@ -598,8 +772,23 @@
                             <template x-if="editingItem?.images_data && editingItem.images_data.length > 0">
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
                                     <template x-for="(imgObj, index) in editingItem.images_data" :key="imgObj.path">
-                                        <div class="relative rounded-xl overflow-hidden bg-gray-100 aspect-square group border border-gray-200">
-                                            <img :src="imgObj.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Galeri">
+                                        <div class="relative rounded-xl overflow-hidden bg-gray-100 aspect-square group border border-gray-200"
+                                             :class="selectedVideoIndex === index && imgObj.type === 'video' ? 'ring-2 ring-blue-500' : ''">
+                                            <!-- Image display -->
+                                            <template x-if="imgObj.type !== 'video'">
+                                                <img :src="imgObj.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Galeri">
+                                            </template>
+                                            
+                                            <!-- Video display -->
+                                            <template x-if="imgObj.type === 'video'">
+                                                <video :src="imgObj.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" muted playsinline preload="metadata"></video>
+                                                <!-- Video badge -->
+                                                <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button type="button" @click.stop="handleVideoSelect(index)" class="bg-white/90 hover:bg-white text-gray-900 p-2 rounded-full transition-all">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0 0 10 9.87v4.263a1 1 0 0 0 1.555.832l3.197-2.132a1 1 0 0 0 0-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+                                                    </button>
+                                                </div>
+                                            </template>
                                             
                                             <!-- Badge overlay Cover vs Galeri -->
                                             <div class="absolute top-2 left-2 px-2 py-0.5 rounded text-[8px] font-bold text-white uppercase"
@@ -618,6 +807,7 @@
                                                         editingItem.thumbnail = null;
                                                         editingItem.thumbnail_url = null;
                                                     }
+                                                    if (selectedVideoIndex === index) selectedVideoIndex = null;
                                                 " class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transform hover:scale-110 transition-all shadow-lg">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                 </button>
@@ -633,7 +823,16 @@
                             </template>
                             <template x-if="!(editingItem?.images_data && editingItem.images_data.length > 0) && editingItem?.thumbnail_url">
                                 <div class="mb-3 relative rounded-2xl overflow-hidden bg-gray-100 h-40 w-full border border-gray-100 group">
-                                    <img :src="editingItem.thumbnail_url" class="w-full h-full object-cover" alt="Foto Preview">
+                                    <!-- Image display -->
+                                    <template x-if="editingItem?.thumbnail && !editingItem.thumbnail.match(/\.(mp4|mov|avi|webm|ogg)(?:$|\?)/i)">
+                                        <img :src="editingItem.thumbnail_url" class="w-full h-full object-cover" alt="Foto Preview">
+                                    </template>
+                                    
+                                    <!-- Video display -->
+                                    <template x-if="editingItem?.thumbnail && editingItem.thumbnail.match(/\.(mp4|mov|avi|webm|ogg)(?:$|\?)/i)">
+                                        <video :src="editingItem.thumbnail_url" class="w-full h-full object-cover" muted playsinline preload="metadata" controls></video>
+                                    </template>
+                                    
                                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                                         <button type="button" @click.stop="lightboxImage = editingItem.thumbnail_url; showLightbox = true" class="bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-all">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -652,6 +851,11 @@
                             <template x-for="delImg in deletedImages" :key="delImg">
                                 <input type="hidden" name="delete_images[]" :value="delImg">
                             </template>
+                            
+                            <!-- Hidden inputs for video timing (optional) -->
+                            <input type="hidden" name="start_time" :value="videoStartTime || ''">
+                            <input type="hidden" name="end_time" :value="videoEndTime || ''">
+                            
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div class="space-y-2" x-data="{ editThumbPreview: '' }">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama (Thumbnail)</label>
@@ -724,6 +928,82 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Video Timing Editor (if video is selected) -->
+                        <template x-if="selectedVideoIndex !== null && editingItem?.images_data?.[selectedVideoIndex]?.type === 'video'">
+                            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-bold text-blue-900 text-sm">⏱ Atur Waktu Pemutaran Video</h4>
+                                    <button type="button" @click="selectedVideoIndex = null" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Tutup</button>
+                                </div>
+
+                                <!-- Video Preview Player -->
+                                <div class="bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center">
+                                    <template x-if="editingItem?.images_data?.[selectedVideoIndex]">
+                                        <video :id="'video_preview_' + selectedVideoIndex" 
+                                               :src="editingItem.images_data[selectedVideoIndex].url"
+                                               class="w-full h-full object-contain"
+                                               controls
+                                               @click="handleVideoSelect(selectedVideoIndex)"></video>
+                                    </template>
+                                </div>
+
+                                <!-- Duration Display -->
+                                <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                    <div class="bg-white border border-blue-200 rounded-lg px-2 py-2">
+                                        <span class="text-gray-500 block text-[10px] font-semibold uppercase">Durasi Total</span>
+                                        <span class="text-blue-900 font-bold" x-text="formatTime(videoDuration)"></span>
+                                    </div>
+                                    <div class="bg-white border border-blue-200 rounded-lg px-2 py-2">
+                                        <span class="text-gray-500 block text-[10px] font-semibold uppercase">Waktu Mulai</span>
+                                        <span class="text-blue-900 font-bold" x-text="formatTime(videoStartTime)"></span>
+                                    </div>
+                                    <div class="bg-white border border-blue-200 rounded-lg px-2 py-2">
+                                        <span class="text-gray-500 block text-[10px] font-semibold uppercase">Waktu Selesai</span>
+                                        <span class="text-blue-900 font-bold" x-text="formatTime(videoEndTime)"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Start Time Slider -->
+                                <div class="space-y-2">
+                                    <label class="text-xs font-semibold text-gray-700">Mulai dari (detik):</label>
+                                    <input :id="'start_time_slider_' + selectedVideoIndex" type="range" min="0" :max="videoDuration" 
+                                           x-model.number="videoStartTime" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                           @input="updateVideoTime()">
+                                    <input :id="'start_time_input_' + selectedVideoIndex" type="number" name="start_time" min="0" 
+                                           x-model.number="videoStartTime" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm" 
+                                           @input="updateVideoTime()">
+                                </div>
+
+                                <!-- End Time Slider -->
+                                <div class="space-y-2">
+                                    <label class="text-xs font-semibold text-gray-700">Selesai pada (detik):</label>
+                                    <input :id="'end_time_slider_' + selectedVideoIndex" type="range" min="0" :max="videoDuration" 
+                                           x-model.number="videoEndTime" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                           @input="updateVideoTime()">
+                                    <input :id="'end_time_input_' + selectedVideoIndex" type="number" name="end_time" min="0" 
+                                           x-model.number="videoEndTime" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm"
+                                           @input="updateVideoTime()">
+                                </div>
+
+                                <!-- Control Buttons -->
+                                <div class="flex gap-2">
+                                    <button type="button" @click="playVideo(selectedVideoIndex)" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        Putar
+                                    </button>
+                                    <button type="button" @click="pauseVideo(selectedVideoIndex)" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                                        Jeda
+                                    </button>
+                                    <button type="button" @click="jumpToStartTime(selectedVideoIndex)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        Ke Awal
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Konten</label>
                             <textarea id="edit_konten" name="konten" required rows="4" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('konten') border-red-500 @enderror"></textarea>
@@ -795,15 +1075,23 @@
                         <!-- Banner Image & Gallery -->
                         <div class="space-y-3">
                             <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group cursor-pointer" 
-                                 @click="if(viewingItem?.images_url && viewingItem.images_url.length > 0) { lightboxImage = viewingItem.images_url[activeViewImageIndex]; showLightbox = true; } else if(viewingItem?.thumbnail_url) { lightboxImage = viewingItem.thumbnail_url; showLightbox = true; }" 
+                                     @click="if(viewingItem?.images_data && viewingItem.images_data.length > 0) { openMediaLightbox(viewingItem.images_data[activeViewImageIndex].url, viewingItem.images_data[activeViewImageIndex].type || (isVideoMedia(viewingItem.images_data[activeViewImageIndex].url) ? 'video' : 'image')); } else if(viewingItem?.thumbnail_url) { openMediaLightbox(viewingItem.thumbnail_url, isVideoMedia(viewingItem.thumbnail_url) ? 'video' : 'image'); }" 
                                  title="Klik untuk memperbesar">
-                                <template x-if="viewingItem?.images_url && viewingItem.images_url.length > 0">
-                                    <img :src="viewingItem.images_url[activeViewImageIndex]" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                    <template x-if="viewingItem?.images_data && viewingItem.images_data.length > 0">
+                                        <template x-if="viewingItem.images_data[activeViewImageIndex].type === 'video'">
+                                            <video :src="viewingItem.images_data[activeViewImageIndex].url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" muted playsinline preload="metadata"></video>
+                                        </template>
+                                        <template x-if="viewingItem.images_data[activeViewImageIndex].type !== 'video'">
+                                            <img :src="viewingItem.images_data[activeViewImageIndex].url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                        </template>
                                 </template>
-                                <template x-if="!(viewingItem?.images_url && viewingItem.images_url.length > 0) && viewingItem?.thumbnail_url">
-                                    <img :src="viewingItem.thumbnail_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                    <template x-if="!(viewingItem?.images_data && viewingItem.images_data.length > 0) && viewingItem?.thumbnail_url && !isVideoMedia(viewingItem.thumbnail_url)">
+                                        <img :src="viewingItem.thumbnail_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                    </template>
+                                    <template x-if="!(viewingItem?.images_data && viewingItem.images_data.length > 0) && viewingItem?.thumbnail_url && isVideoMedia(viewingItem.thumbnail_url)">
+                                        <video :src="viewingItem.thumbnail_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" muted playsinline preload="metadata"></video>
                                 </template>
-                                <template x-if="!(viewingItem?.images_url && viewingItem.images_url.length > 0) && !viewingItem?.thumbnail_url">
+                                    <template x-if="!(viewingItem?.images_data && viewingItem.images_data.length > 0) && !viewingItem?.thumbnail_url">
                                     <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
                                         <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                         <p class="text-xs font-bold uppercase tracking-widest">Tidak ada foto</p>
@@ -811,7 +1099,7 @@
                                 </template>
                                 
                                 <!-- Badge overlay to indicate cover vs gallery -->
-                                <div class="absolute top-6 left-6" x-show="viewingItem?.images_url && viewingItem.images_url.length > 0">
+                                    <div class="absolute top-6 left-6" x-show="viewingItem?.images_data && viewingItem.images_data.length > 0">
                                     <span class="px-4 py-2 bg-emerald-600/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-white uppercase tracking-widest shadow-sm" x-text="activeViewImageIndex === 0 ? 'Foto Utama (Cover)' : 'Foto Tambahan (Galeri)'"></span>
                                 </div>
                                 
@@ -821,13 +1109,18 @@
                             </div>
 
                             <!-- Row of clickable thumbnails -->
-                            <template x-if="viewingItem?.images_url && viewingItem.images_url.length > 1">
+                            <template x-if="viewingItem?.images_data && viewingItem.images_data.length > 1">
                                 <div class="flex items-center gap-2 mt-3 overflow-x-auto py-1.5 custom-scrollbar">
-                                    <template x-for="(imgUrl, idx) in viewingItem.images_url" :key="idx">
+                                    <template x-for="(imgObj, idx) in viewingItem.images_data" :key="idx">
                                         <button type="button" @click="activeViewImageIndex = idx" 
                                                 class="relative w-20 h-14 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0"
                                                 :class="activeViewImageIndex === idx ? 'border-emerald-600 shadow-md scale-105' : 'border-gray-200 hover:border-gray-300'">
-                                            <img :src="imgUrl" class="w-full h-full object-cover">
+                                            <template x-if="imgObj.type === 'video'">
+                                                <video :src="imgObj.url" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                            </template>
+                                            <template x-if="imgObj.type !== 'video'">
+                                                <img :src="imgObj.url" class="w-full h-full object-cover">
+                                            </template>
                                             <!-- Tiny emerald triangle to flag cover -->
                                             <div x-show="idx === 0" class="absolute top-0 right-0 bg-[#066466] w-2.5 h-2.5 rounded-bl"></div>
                                         </button>
@@ -891,8 +1184,13 @@
     <!-- Image Lightbox Modal -->
     <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak @click="showLightbox = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         <div class="relative max-w-4xl max-h-[90vh] p-4 flex items-center justify-center" @click.stop>
-            <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-            <button @click="showLightbox = false" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
+            <template x-if="lightboxMediaType === 'image'">
+                <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            </template>
+            <template x-if="lightboxMediaType === 'video'">
+                <video x-ref="lightboxVideo" :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10 bg-black" controls autoplay muted playsinline x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"></video>
+            </template>
+            <button @click="closeLightbox()" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>

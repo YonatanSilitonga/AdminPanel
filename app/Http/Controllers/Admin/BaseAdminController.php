@@ -108,7 +108,18 @@ class BaseAdminController extends Controller
         }
 
         // Validate mime
-        $allowedMimes = $options['mimes'] ?? ['image/jpeg', 'image/png', 'image/webp'];
+        $resourceType = $options['resource_type'] ?? 'image';
+        
+        if (!isset($options['mimes'])) {
+            // Auto-detect allowed mimes based on resource_type
+            if ($resourceType === 'video') {
+                $options['mimes'] = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg'];
+            } else {
+                $options['mimes'] = ['image/jpeg', 'image/png', 'image/webp'];
+            }
+        }
+        
+        $allowedMimes = $options['mimes'];
         if (!in_array($file->getMimeType(), $allowedMimes)) {
             throw new \Exception('Tipe file tidak diizinkan: ' . $file->getMimeType());
         }
@@ -120,7 +131,6 @@ class BaseAdminController extends Controller
         if ($cloudName) {
             // Cloudinary is configured — MUST use Cloudinary, no local fallback.
             // This ensures URLs are always publicly accessible from any device.
-            $resourceType = $options['resource_type'] ?? 'image';
             $uploadParams = [
                 'folder'        => 'smarttourism/' . trim($path, '/'),
                 'resource_type' => $resourceType,
@@ -136,12 +146,15 @@ class BaseAdminController extends Controller
             try {
                 $defaultOptions = [
                     'folder'        => 'smarttourism/' . trim($path, '/'),
-                    'resource_type' => 'auto', // Changed from 'image' to 'auto'
-                    'transformation' => [
+                    'resource_type' => 'auto',
+                ];
+
+                if ($resourceType === 'image') {
+                    $defaultOptions['transformation'] = [
                         'quality' => 'auto',
                         'fetch_format' => 'auto',
-                    ],
-                ];
+                    ];
+                }
 
                 $uploadOptions = array_merge($defaultOptions, $options);
                 

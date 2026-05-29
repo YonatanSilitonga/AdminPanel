@@ -11,7 +11,9 @@ use App\Models\MongoDB\MongoReport;
 use App\Models\MongoDB\MongoBeritaPromosi;
 use App\Models\MongoDB\MongoBudaya;
 use App\Models\MongoDB\MongoFasilitasUmum;
+use App\Models\MongoDB\MongoRecommendation;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends BaseAdminController
 {
@@ -33,6 +35,19 @@ class DashboardController extends BaseAdminController
         // Top 5 Destinasi (Real Data dari MongoDB)
         $topDestinations = MongoDestination::orderBy('average_rating', 'desc')->limit(5)->get();
 
+        // Trip Statistics (Real Data dari RecommendationLog)
+        $today = Carbon::now()->startOfDay();
+        $weekStart = Carbon::now()->startOfWeek();
+        $weekEnd = Carbon::now()->endOfWeek();
+        $monthStart = Carbon::now()->startOfMonth();
+        $monthEnd = Carbon::now()->endOfMonth();
+
+        $tripStats = [
+            'today' => MongoRecommendation::where('created_at', '>=', $today)->count(),
+            'week' => MongoRecommendation::whereBetween('created_at', [$weekStart, $weekEnd])->count(),
+            'month' => MongoRecommendation::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+        ];
+
         // Chart data is now handled via AJAX to speed up page load
         $chartData = []; 
 
@@ -42,6 +57,7 @@ class DashboardController extends BaseAdminController
             'pendingReviews' => $pendingReviews,
             'pendingReports' => $pendingReports,
             'topDestinations' => $topDestinations,
+            'tripStats' => $tripStats,
             'chartData' => $chartData,
         ]);
     }

@@ -87,6 +87,15 @@
         $times = explode(' - ', $opening);
         $open = $times[0] ?? '08:00';
         $close = $times[1] ?? '17:00';
+
+        $mainMedia = count($destination->images ?? []) > 0 ? get_media_info($destination->images[0]) : null;
+        $mainMediaType = $mainMedia['type'] ?? 'image';
+        $mainMediaUrl = $mainMedia['url'] ?? '';
+
+        $galleryImages = [];
+        foreach (array_slice($destination->images ?? [], 1) as $img) {
+            $galleryImages[] = is_array($img) ? ($img['url'] ?? '') : $img;
+        }
     @endphp
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6" x-data="{ open_time: '{{ $open }}', close_time: '{{ $close }}' }">
         <div>
@@ -180,23 +189,87 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-            <label class="block text-sm font-medium text-gray-700">Main Media</label>
-            @if(isset($destination->images) && count($destination->images) > 0)
-                <div class="mt-2 mb-3">
-                    @if(media_is_video($destination->images[0]))
-                        <video src="{{ image_url($destination->images[0]) }}" class="w-32 h-24 object-cover rounded-lg border" controls muted playsinline preload="metadata"></video>
-                    @else
-                        <img src="{{ image_url($destination->images[0]) }}" alt="Current Thumbnail" class="w-32 h-24 object-cover rounded-lg border">
-                    @endif
-                    <p class="text-xs text-gray-500 mt-1">Current media</p>
+            <!-- Tipe Media Selection -->
+            <div class="space-y-3 mb-4">
+                <label class="block text-sm font-medium text-gray-700">Tipe Media Utama</label>
+                <div class="flex gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="media_type" value="image" x-model="selectedMediaType" class="text-primary focus:ring-primary">
+                        <span class="text-sm font-semibold text-gray-700">Gambar</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="media_type" value="video" x-model="selectedMediaType" class="text-primary focus:ring-primary">
+                        <span class="text-sm font-semibold text-gray-700">Video</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Current Media Preview -->
+            @if($mainMediaUrl)
+                <div class="space-y-2 mb-4">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest" x-text="selectedMediaType === 'video' ? 'Video Utama Saat Ini' : 'Gambar Utama Saat Ini'"></label>
+                    <div class="relative rounded-2xl overflow-hidden bg-gray-100 h-32 w-full border border-gray-200 group">
+                        <template x-if="selectedMediaType === 'video'">
+                            <div class="w-full h-full relative">
+                                <video src="{{ $mainMediaUrl }}" class="w-full h-full object-cover" controls muted playsinline preload="metadata"></video>
+                            </div>
+                        </template>
+                        <template x-if="selectedMediaType !== 'video'">
+                            <img src="{{ $mainMediaUrl }}" class="w-full h-full object-cover" alt="Media Utama Saat Ini">
+                        </template>
+                    </div>
                 </div>
             @endif
-            <input type="file" name="thumbnail" accept="image/*,video/*" class="mt-1 w-full border rounded-lg px-4 py-2">
+
+            <!-- Replace File Input -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700" x-text="selectedMediaType === 'video' ? 'Ganti File Video Utama' : 'Ganti Gambar Utama'"></label>
+                <div class="relative group w-full h-36">
+                    <input type="file" name="thumbnail" id="thumbnail_edit" :accept="selectedMediaType === 'video' ? 'video/*' : 'image/*'"
+                        class="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+                        @change="fileName = $event.target.files[0] ? $event.target.files[0].name : '';
+                                 const file = $event.target.files[0];
+                                 if (file) {
+                                     const reader = new FileReader();
+                                     reader.onload = (e) => { editMediaPreview = e.target.result; };
+                                     reader.readAsDataURL(file);
+                                 } else {
+                                     editMediaPreview = '';
+                                 }">
+                    <label for="thumbnail_edit"
+                        class="relative flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-primary/50 transition-all bg-gray-50/30 overflow-hidden">
+                        <template x-if="editMediaPreview">
+                            <div class="absolute inset-0 w-full h-full bg-gray-100">
+                                <template x-if="selectedMediaType === 'video'">
+                                    <video :src="editMediaPreview" class="w-full h-full object-cover" muted autoplay loop></video>
+                                </template>
+                                <template x-if="selectedMediaType !== 'video'">
+                                    <img :src="editMediaPreview" class="w-full h-full object-cover">
+                                </template>
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                    <p class="text-white text-xs font-bold" x-text="selectedMediaType === 'video' ? 'Ganti Video' : 'Ganti Gambar'"></p>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="!editMediaPreview">
+                            <div class="flex flex-col items-center justify-center text-center px-4">
+                                <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-sm font-bold text-gray-700" x-text="fileName || 'Klik atau seret file baru ke sini'"></p>
+                                <p class="text-[10px] text-gray-400 mt-1" x-text="selectedMediaType === 'video' ? 'MP4, MOV, WEBM (Maks. 50MB) - Biarkan kosong jika tidak diubah' : 'PNG, JPG, WEBP (Maks. 10MB) - Biarkan kosong jika tidak diubah'"></p>
+                            </div>
+                        </template>
+                    </label>
+                </div>
+            </div>
             @error('thumbnail')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
         <div x-data="{
             deletedImages: [],
-            existingImages: {{ json_encode(array_slice($destination->images ?? [], 1)) }},
+            existingImages: {{ json_encode($galleryImages) }},
             removeImage(img) {
                 this.deletedImages.push(img);
                 this.existingImages = this.existingImages.filter(i => i !== img);
@@ -300,6 +373,9 @@
 // Video Player Interaktif dengan Rentang Waktu
 document.addEventListener('alpine:init', () => {
     Alpine.data('destinationForm', () => ({
+        selectedMediaType: '{{ $mainMediaType }}',
+        fileName: '',
+        editMediaPreview: '',
         selectedVideo: false,
         videoDuration: 0,
         startTime: 0,

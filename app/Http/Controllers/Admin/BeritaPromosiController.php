@@ -6,8 +6,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\MongoBeritaPromosi;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class BeritaPromosiController extends BaseAdminController
 {
@@ -55,33 +53,89 @@ class BeritaPromosiController extends BaseAdminController
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'judul' => 'required|string|max:255',
             'tipe' => 'required|in:BERITA,PROMO',
-            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'thumbnail' => 'required|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
+            'images.*' => 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'start_time' => 'nullable|integer|min:0',
+            'end_time' => 'nullable|integer|min:0',
             'konten' => 'required|string',
             'tanggal_tayang' => 'required|date',
         ]);
 
         try {
-            $data = $request->except(['images', 'thumbnail', '_token', 'is_active']);
-            $uploadedImages = [];
-            
+            $data = $request->except(['images', 'thumbnail', 'start_time', 'end_time', '_token', 'is_active']);
+            $currentMedia = [];
+
+            // Upload thumbnail
             if ($request->hasFile('thumbnail')) {
-                $uploadedImages[] = $this->uploadFile($request->file('thumbnail'), 'berita_promosi');
-            }
-            
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $file) {
-                    $uploadedImages[] = $this->uploadFile($file, 'berita_promosi');
+                $file = $request->file('thumbnail');
+                $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
+                
+                if ($mediaType === 'video') {
+                    $path = $this->uploadFile($file, 'berita_promosi/videos', ['resource_type' => 'video', 'max_size' => 50]);
+                } else {
+                    $path = $this->processImage($file, 'berita_promosi');
+                }
+                
+                if ($path) {
+                    $mediaEntry = [
+                        'url' => $path,
+                        'type' => $mediaType,
+                    ];
+                    
+                    // Add timing if it's a video and timing is provided
+                    if ($mediaType === 'video') {
+                        if ($request->filled('start_time')) {
+                            $mediaEntry['start_time'] = (int)$request->input('start_time');
+                        }
+                        if ($request->filled('end_time')) {
+                            $mediaEntry['end_time'] = (int)$request->input('end_time');
+                        }
+                    }
+                    
+                    $currentMedia[] = $mediaEntry;
                 }
             }
-            
-            if (count($uploadedImages) > 0) {
-                $data['thumbnail'] = $uploadedImages[0];
-                $data['images'] = $uploadedImages;
+
+            // Upload additional images
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
+                    
+                    if ($mediaType === 'video') {
+                        $path = $this->uploadFile($file, 'berita_promosi/videos', ['resource_type' => 'video', 'max_size' => 50]);
+                    } else {
+                        $path = $this->processImage($file, 'berita_promosi');
+                    }
+
+                    if ($path) {
+                        $mediaEntry = [
+                            'url' => $path,
+                            'type' => $mediaType,
+                        ];
+                        
+                        // Add timing if it's a video and timing is provided
+                        if ($mediaType === 'video') {
+                            if ($request->filled('start_time')) {
+                                $mediaEntry['start_time'] = (int)$request->input('start_time');
+                            }
+                            if ($request->filled('end_time')) {
+                                $mediaEntry['end_time'] = (int)$request->input('end_time');
+                            }
+                        }
+                        
+                        $currentMedia[] = $mediaEntry;
+                    }
+                }
+            }
+
+            // Separate thumbnail and images
+            if (count($currentMedia) > 0) {
+                $data['thumbnail'] = $currentMedia[0]['url'];
+                $data['images'] = $currentMedia;
             }
 
             $data['admin_id'] = auth('admin')->id() ?? null;
@@ -92,8 +146,22 @@ class BeritaPromosiController extends BaseAdminController
             $this->logActivity('create', 'berita_promosi', (string)$bp->_id, null, $bp->toArray());
             $this->clearDashboardCache();
 
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Berhasil Ditambahkan'
+                ]);
+            }
+
             return redirect()->back()->with('success', 'Berhasil Ditambahkan');
         } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
+            }
+
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
         }
     }
@@ -106,20 +174,28 @@ class BeritaPromosiController extends BaseAdminController
             $bp->tanggal_tayang_formatted = $bp->tanggal_tayang->format('Y-m-d');
         }
 
-        // Add full URL for thumbnail — handles both Cloudinary URLs and local paths
+        // Add full URL for thumbnail
         if ($bp->thumbnail) {
             $bp->thumbnail_url = image_url($bp->thumbnail);
         }
         
+        // Process images array with proper formatting (supports both images and videos)
         if ($bp->images && is_array($bp->images)) {
-            $bp->images_url = array_map(function($img) {
-                return image_url($img);
-            }, $bp->images);
-            
             $bp->images_data = array_map(function($img) {
+                if (is_array($img)) {
+                    $mediaUrl = $img['url'] ?? $img;
+                    return [
+                        'path' => $mediaUrl,
+                        'url' => image_url($mediaUrl),
+                        'type' => media_is_video($mediaUrl) ? 'video' : 'image',
+                        'start_time' => $img['start_time'] ?? null,
+                        'end_time' => $img['end_time'] ?? null,
+                    ];
+                }
                 return [
                     'path' => $img,
-                    'url' => image_url($img)
+                    'url' => image_url($img),
+                    'type' => media_is_video($img) ? 'video' : 'image',
                 ];
             }, $bp->images);
         }
@@ -133,52 +209,102 @@ class BeritaPromosiController extends BaseAdminController
     {
         $bp = MongoBeritaPromosi::findOrFail($id);
 
-        $request->validate([
+        $validated = $request->validate([
             'judul' => 'required|string|max:255',
             'tipe' => 'required|in:BERITA,PROMO',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048',
+            'images.*' => 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'start_time' => 'nullable|integer|min:0',
+            'end_time' => 'nullable|integer|min:0',
             'konten' => 'required|string',
             'tanggal_tayang' => 'required|date',
         ]);
 
         try {
-            $data = $request->except(['images', 'thumbnail', '_token', '_method', 'is_active']);
+            $data = $request->except(['images', 'thumbnail', 'start_time', 'end_time', '_token', '_method', 'is_active', 'delete_images']);
             $deleteImages = $request->input('delete_images', []);
-            $existingImages = $bp->images ?? [];
-            if ($bp->thumbnail && empty($existingImages)) {
-                $existingImages = [$bp->thumbnail];
-            }
+            $existingMedia = $bp->images ?? [];
 
+            // Delete specified media
             if (!empty($deleteImages) && is_array($deleteImages)) {
                 foreach ($deleteImages as $delImg) {
                     $this->deleteFile($delImg);
-                    $existingImages = array_filter($existingImages, function($img) use ($delImg) {
-                        return !$this->pathsMatch($img, $delImg);
+                    $existingMedia = array_filter($existingMedia, function($media) use ($delImg) {
+                        $mediaUrl = is_array($media) ? ($media['url'] ?? $media) : $media;
+                        return !$this->pathsMatch($mediaUrl, $delImg);
                     });
                 }
-                $existingImages = array_values($existingImages);
+                $existingMedia = array_values($existingMedia);
             }
 
-            $uploadedImages = [];
+            // Upload new thumbnail
             if ($request->hasFile('thumbnail')) {
-                $uploadedImages[] = $this->uploadFile($request->file('thumbnail'), 'berita_promosi');
-            }
-
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $file) {
-                    $uploadedImages[] = $this->uploadFile($file, 'berita_promosi');
+                $file = $request->file('thumbnail');
+                $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
+                
+                if ($mediaType === 'video') {
+                    $path = $this->uploadFile($file, 'berita_promosi/videos', ['resource_type' => 'video', 'max_size' => 50]);
+                } else {
+                    $path = $this->processImage($file, 'berita_promosi');
+                }
+                
+                if ($path) {
+                    $mediaEntry = [
+                        'url' => $path,
+                        'type' => $mediaType,
+                    ];
+                    
+                    // Add timing if it's a video
+                    if ($mediaType === 'video') {
+                        if ($request->filled('start_time')) {
+                            $mediaEntry['start_time'] = (int)$request->input('start_time');
+                        }
+                        if ($request->filled('end_time')) {
+                            $mediaEntry['end_time'] = (int)$request->input('end_time');
+                        }
+                    }
+                    
+                    array_unshift($existingMedia, $mediaEntry);
                 }
             }
 
-            if (count($uploadedImages) > 0) {
-                $existingImages = array_merge($existingImages, $uploadedImages);
+            // Upload additional images
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
+                    
+                    if ($mediaType === 'video') {
+                        $path = $this->uploadFile($file, 'berita_promosi/videos', ['resource_type' => 'video', 'max_size' => 50]);
+                    } else {
+                        $path = $this->processImage($file, 'berita_promosi');
+                    }
+
+                    if ($path) {
+                        $mediaEntry = [
+                            'url' => $path,
+                            'type' => $mediaType,
+                        ];
+                        
+                        // Add timing if it's a video
+                        if ($mediaType === 'video') {
+                            if ($request->filled('start_time')) {
+                                $mediaEntry['start_time'] = (int)$request->input('start_time');
+                            }
+                            if ($request->filled('end_time')) {
+                                $mediaEntry['end_time'] = (int)$request->input('end_time');
+                            }
+                        }
+                        
+                        $existingMedia[] = $mediaEntry;
+                    }
+                }
             }
 
-            if (count($existingImages) > 0) {
-                $data['thumbnail'] = $existingImages[0];
-                $data['images'] = array_values($existingImages);
+            // Update thumbnail and images
+            if (count($existingMedia) > 0) {
+                $data['thumbnail'] = $existingMedia[0]['url'] ?? $existingMedia[0];
+                $data['images'] = array_values($existingMedia);
             } else {
                 $data['thumbnail'] = null;
                 $data['images'] = [];
@@ -192,8 +318,22 @@ class BeritaPromosiController extends BaseAdminController
             $this->logActivity('update', 'berita_promosi', (string)$bp->_id, $oldValues, $bp->toArray());
             $this->clearDashboardCache();
 
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Berhasil Diperbarui'
+                ]);
+            }
+
             return redirect()->back()->with('success', 'Berhasil Diperbarui');
         } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
+            }
+
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
         }
     }
@@ -202,12 +342,12 @@ class BeritaPromosiController extends BaseAdminController
     {
         $bp = MongoBeritaPromosi::findOrFail($id);
         
+        // Delete media from array
         if ($bp->images) {
-            foreach($bp->images as $img) {
-                $this->deleteFile($img);
+            foreach($bp->images as $media) {
+                $mediaUrl = is_array($media) ? ($media['url'] ?? $media) : $media;
+                $this->deleteFile($mediaUrl);
             }
-        } elseif ($bp->thumbnail) {
-            $this->deleteFile($bp->thumbnail);
         }
         
         $this->logActivity('delete', 'berita_promosi', (string)$bp->_id, $bp->toArray());

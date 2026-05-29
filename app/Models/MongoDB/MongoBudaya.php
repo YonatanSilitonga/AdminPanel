@@ -50,7 +50,6 @@ class MongoBudaya extends Model
         'is_active' => 'boolean',
         'latitude' => 'float',
         'longitude' => 'float',
-        'images' => 'array',
         'video_duration' => 'integer',
         'video_autoplay' => 'boolean',
         'video_loop' => 'boolean',

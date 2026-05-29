@@ -45,7 +45,7 @@ class RecommendationLogController extends BaseAdminController
                 ->limit(100)
                 ->get()
                 ->groupBy('destination_id')
-                ->map(fn($group) => [
+                ->map(fn($group) => (object)[
                     'destination_id' => $group->first()->destination_id,
                     'count' => $group->count(),
                     'destination' => $group->first()->destination

@@ -113,7 +113,8 @@
         this.$nextTick(() => {
             const lightboxVideo = this.$refs.lightboxVideo;
             if (this.lightboxMediaType === 'video' && lightboxVideo && typeof lightboxVideo.play === 'function') {
-                lightboxVideo.currentTime = 0;
+                    lightboxVideo.muted = true;
+                    lightboxVideo.currentTime = 0;
                 lightboxVideo.play().catch(() => {});
             }
         });
@@ -162,6 +163,7 @@
 
         const tryPlay = () => {
             if (video.readyState >= 2) {
+                video.muted = true;
                 video.play().catch(() => {});
             }
         };
@@ -225,7 +227,11 @@
             this.editingDest.video_loop = this.editingDest.video_loop ?? true;
             this.editingDest.video_wait_until_ready = this.editingDest.video_wait_until_ready ?? true;
             this.deletedImages = [];
-            this.editFileName = this.editingDest.images && this.editingDest.images.length ? 'Foto saat ini' : '';
+            if (this.editingDest.images_data && this.editingDest.images_data.length > 0) {
+                this.editFileName = this.editingDest.images_data[0].type === 'video' ? 'Video saat ini' : 'Foto saat ini';
+            } else {
+                this.editFileName = '';
+            }
             
             const form = document.getElementById('editDestForm');
             if (form) form.action = `/admin/destinations/${id}`;
@@ -1050,7 +1056,7 @@
                             <div class="space-y-2" x-data="{ thumbPreview: '', thumbPreviewType: 'image' }">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Media Utama (Thumbnail)</label>
                                 <div class="relative group">
-                                    <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" 
+                                    <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" accept="image/*,video/*"
                                            @change="
                                                createFileName = $event.target.files[0] ? $event.target.files[0].name : '';
                                                if ($event.target.files[0]) {
@@ -1064,7 +1070,7 @@
                                         <template x-if="thumbPreview">
                                             <div class="absolute inset-0 w-full h-full bg-gray-100">
                                                 <template x-if="thumbPreviewType === 'video'">
-                                                    <video :src="thumbPreview" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                                    <video :src="thumbPreview" class="w-full h-full object-cover" muted playsinline autoplay loop preload="metadata"></video>
                                                 </template>
                                                 <template x-if="thumbPreviewType !== 'video'">
                                                     <img :src="thumbPreview" class="w-full h-full object-cover">
@@ -1112,7 +1118,7 @@
                                         <template x-for="(media, idx) in galleryPreviews" :key="idx">
                                             <div class="relative rounded-xl overflow-hidden aspect-square border border-gray-200">
                                                 <template x-if="media.type === 'video'">
-                                                    <video :src="media.src" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                                    <video :src="media.src" class="w-full h-full object-cover" muted playsinline autoplay loop preload="metadata"></video>
                                                 </template>
                                                 <template x-if="media.type !== 'video'">
                                                     <img :src="media.src" class="w-full h-full object-cover">
@@ -1359,7 +1365,7 @@
                                 <div class="space-y-2" x-data="{ editThumbPreview: '', editThumbPreviewType: 'image' }">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Media Utama (Thumbnail)</label>
                                     <div class="relative group">
-                                        <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" 
+                                        <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" accept="image/*,video/*"
                                                @change="
                                                    editFileName = $event.target.files[0] ? $event.target.files[0].name : '';
                                                    if ($event.target.files[0]) {
@@ -1373,7 +1379,7 @@
                                             <template x-if="editThumbPreview">
                                                 <div class="absolute inset-0 w-full h-full bg-gray-100">
                                                     <template x-if="editThumbPreviewType === 'video'">
-                                                        <video :src="editThumbPreview" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                                        <video :src="editThumbPreview" class="w-full h-full object-cover" muted playsinline autoplay loop preload="metadata"></video>
                                                     </template>
                                                     <template x-if="editThumbPreviewType !== 'video'">
                                                         <img :src="editThumbPreview" class="w-full h-full object-cover">
@@ -1389,7 +1395,7 @@
                                                         <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                                     </div>
                                                     <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Pilih media utama baru'"></p>
-                                                    <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 5MB)</p>
+                                                    <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP, MP4, MOV, WEBM (Maks. 50MB)</p>
                                                 </div>
                                             </template>
                                         </label>
@@ -1422,7 +1428,7 @@
                                             <template x-for="(media, idx) in editGalleryPreviews" :key="idx">
                                                 <div class="relative rounded-xl overflow-hidden aspect-square border border-gray-200">
                                                     <template x-if="media.type === 'video'">
-                                                        <video :src="media.src" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                                        <video :src="media.src" class="w-full h-full object-cover" muted playsinline autoplay loop preload="metadata"></video>
                                                     </template>
                                                     <template x-if="media.type !== 'video'">
                                                         <img :src="media.src" class="w-full h-full object-cover">
@@ -1503,7 +1509,7 @@
                                         <img :src="mediaUrl(viewingDest.images[activeViewImageIndex])" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
                                     </template>
                                     <template x-if="isVideoMedia(viewingDest.images[activeViewImageIndex])">
-                                        <video x-ref="viewActiveVideo" :src="mediaUrl(viewingDest.images[activeViewImageIndex])" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" :controls="!viewingDest?.video_autoplay" :autoplay="viewingDest?.video_autoplay" :loop="viewingDest?.video_loop" playsinline preload="metadata"></video>
+                                        <video x-ref="viewActiveVideo" :src="mediaUrl(viewingDest.images[activeViewImageIndex])" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" :controls="!viewingDest?.video_autoplay" :autoplay="viewingDest?.video_autoplay" :loop="viewingDest?.video_loop" muted playsinline preload="metadata"></video>
                                     </template>
                                 </template>
                                 <template x-if="!viewingDest?.images || viewingDest.images.length === 0">
@@ -1633,7 +1639,7 @@
             </template>
 
             <template x-if="lightboxMediaType === 'video'">
-                <video x-ref="lightboxVideo" :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10 bg-black" controls autoplay playsinline x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"></video>
+                <video x-ref="lightboxVideo" :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10 bg-black" controls autoplay muted playsinline x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"></video>
             </template>
 
             <button @click="closeMediaLightbox()" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
