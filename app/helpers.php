@@ -39,6 +39,128 @@ if (!function_exists('image_url')) {
     }
 }
 
+if (!function_exists('media_is_video')) {
+    /**
+     * Detect whether a media path or URL points to a video file.
+     */
+    function media_is_video(?string $path): bool
+    {
+        if (!$path) {
+            return false;
+        }
+
+        $normalizedPath = strtolower((string) (parse_url($path, PHP_URL_PATH) ?: $path));
+
+        return (bool) preg_match('/\.(mp4|mov|avi|webm|ogg)(?:$|\?)/i', $normalizedPath);
+    }
+}
+
+if (!function_exists('video_url_with_time_range')) {
+    /**
+     * Generate a video URL dengan start_time dan end_time fragment untuk HTML5 video playback.
+     * Format: url#t=start,end atau url#t=start (jika hanya start)
+     * 
+     * @param  string|null  $videoPath
+     * @param  int|null     $startTime (dalam detik)
+     * @param  int|null     $endTime (dalam detik)
+     * @return string
+     */
+    function video_url_with_time_range(?string $videoPath, ?int $startTime = 0, ?int $endTime = null): string
+    {
+        $url = image_url($videoPath);
+        
+        if ($startTime && $startTime > 0) {
+            if ($endTime && $endTime > $startTime) {
+                $url .= '#t=' . (int)$startTime . ',' . (int)$endTime;
+            } else {
+                $url .= '#t=' . (int)$startTime;
+            }
+        } elseif ($endTime && $endTime > 0) {
+            $url .= '#t=0,' . (int)$endTime;
+        }
+        
+        return $url;
+    }
+}
+
+if (!function_exists('video_url_with_start_time')) {
+    /**
+     * Generate a video URL with start_time fragment for HTML5 video playback.
+     * Uses the #t=seconds format for HTML5 videos
+     * 
+     * @param  string|null  $videoPath
+     * @param  int|null     $startTime (in seconds)
+     * @return string
+     */
+    function video_url_with_start_time(?string $videoPath, ?int $startTime = 0): string
+    {
+        $url = image_url($videoPath);
+        
+        if ($startTime && $startTime > 0) {
+            $url .= '#t=' . (int)$startTime;
+        }
+        
+        return $url;
+    }
+}
+
+if (!function_exists('format_time')) {
+    /**
+     * Convert seconds to MM:SS format
+     * 
+     * @param  int|float  $seconds
+     * @return string
+     */
+    function format_time($seconds): string
+    {
+        if (!$seconds || $seconds < 0) {
+            return '00:00';
+        }
+        
+        $mins = floor($seconds / 60);
+        $secs = floor($seconds % 60);
+        
+        return sprintf('%02d:%02d', $mins, $secs);
+    }
+}
+
+if (!function_exists('get_media_info')) {
+    /**
+     * Extract media information from image/video entry
+     * 
+     * @param  array|string  $imageData
+     * @return array
+     */
+    function get_media_info($imageData): array
+    {
+        // Handle both string and array formats
+        if (is_string($imageData)) {
+            return [
+                'url' => image_url($imageData),
+                'type' => media_is_video($imageData) ? 'video' : 'image',
+                'start_time' => 0,
+                'end_time' => null,
+            ];
+        }
+        
+        if (is_array($imageData)) {
+            return [
+                'url' => image_url($imageData['url'] ?? ''),
+                'type' => $imageData['type'] ?? 'image',
+                'start_time' => $imageData['start_time'] ?? 0,
+                'end_time' => $imageData['end_time'] ?? null,
+            ];
+        }
+        
+        return [
+            'url' => '',
+            'type' => 'image',
+            'start_time' => 0,
+            'end_time' => null,
+        ];
+    }
+}
+
 if (!function_exists('app_setting')) {
     /**
      * Get a setting value from AppSetting model.

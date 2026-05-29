@@ -61,6 +61,30 @@ class BudayaController extends BaseAdminController
     }
 
     /**
+     * Normalize budaya media response for the admin UI.
+     */
+    protected function appendMediaMetadata(MongoBudaya $budaya): MongoBudaya
+    {
+        if ($budaya->image_url) {
+            $budaya->image_url_full = image_url($budaya->image_url);
+            $budaya->image_url_type = media_is_video($budaya->image_url) ? 'video' : 'image';
+        }
+
+        if ($budaya->images && is_array($budaya->images)) {
+            $budaya->images_url = array_map(fn ($img) => image_url($img), $budaya->images);
+            $budaya->images_data = array_map(function ($img) {
+                return [
+                    'path' => $img,
+                    'url' => image_url($img),
+                    'type' => media_is_video($img) ? 'video' : 'image',
+                ];
+            }, $budaya->images);
+        }
+
+        return $budaya;
+    }
+
+    /**
      * Store a newly created budaya in storage.
      */
     public function store(Request $request)
@@ -75,21 +99,29 @@ class BudayaController extends BaseAdminController
             'description' => 'required|string',
             'is_active' => 'boolean',
             'is_active' => 'boolean',
+            'video_duration' => 'nullable|integer|min:1|max:600',
+            'video_autoplay' => 'nullable|boolean',
+            'video_loop' => 'nullable|boolean',
+            'video_wait_until_ready' => 'nullable|boolean',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'images.*' => 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200',
+            'thumbnail' => 'nullable|file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200',
         ]);
 
         try {
             $validated['is_active'] = $request->has('is_active');
+            $validated['video_autoplay'] = $request->has('video_autoplay');
+            $validated['video_loop'] = $request->has('video_loop');
+            $validated['video_wait_until_ready'] = $request->has('video_wait_until_ready');
+            $validated['video_duration'] = $validated['video_duration'] ?? null;
             
             $uploadedImages = [];
             if ($request->hasFile('thumbnail')) {
-                $uploadedImages[] = $this->uploadFile($request->file('thumbnail'), 'budaya');
+                $uploadedImages[] = $this->processImage($request->file('thumbnail'), 'budaya');
             }
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
-                    $uploadedImages[] = $this->uploadFile($file, 'budaya');
+                    $uploadedImages[] = $this->processImage($file, 'budaya');
                 }
             }
             if (count($uploadedImages) > 0) {
@@ -117,7 +149,7 @@ class BudayaController extends BaseAdminController
                 return response()->json([
                     'success' => true,
                     'message' => 'Berhasil Ditambahkan',
-                    'budaya' => $budaya
+                    'budaya' => $this->appendMediaMetadata($budaya)
                 ]);
             }
 
@@ -145,22 +177,9 @@ class BudayaController extends BaseAdminController
     {
         $budaya = MongoBudaya::findOrFail($id);
         $budaya->load('admin');
+        $this->appendMediaMetadata($budaya);
 
         if ($request->ajax() || $request->wantsJson()) {
-            if ($budaya->image_url) {
-                $budaya->image_url_full = image_url($budaya->image_url);
-            }
-            if ($budaya->images && is_array($budaya->images)) {
-                $budaya->images_url = array_map(function($img) {
-                    return image_url($img);
-                }, $budaya->images);
-                $budaya->images_data = array_map(function($img) {
-                    return [
-                        'path' => $img,
-                        'url' => image_url($img)
-                    ];
-                }, $budaya->images);
-            }
             return response()->json($budaya);
         }
 
@@ -184,13 +203,21 @@ class BudayaController extends BaseAdminController
             'description' => 'required|string',
             'is_active' => 'boolean',
             'is_active' => 'boolean',
+            'video_duration' => 'nullable|integer|min:1|max:600',
+            'video_autoplay' => 'nullable|boolean',
+            'video_loop' => 'nullable|boolean',
+            'video_wait_until_ready' => 'nullable|boolean',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'images.*' => 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200',
+            'thumbnail' => 'nullable|file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200',
         ]);
 
         try {
             $validated['is_active'] = $request->has('is_active');
+            $validated['video_autoplay'] = $request->has('video_autoplay');
+            $validated['video_loop'] = $request->has('video_loop');
+            $validated['video_wait_until_ready'] = $request->has('video_wait_until_ready');
+            $validated['video_duration'] = $validated['video_duration'] ?? null;
             
             $deleteImages = $request->input('delete_images', []);
             $existingImages = $budaya->images ?? [];
@@ -210,7 +237,7 @@ class BudayaController extends BaseAdminController
 
             $uploadedImages = [];
             if ($request->hasFile('thumbnail')) {
-                $path = $this->uploadFile($request->file('thumbnail'), 'budaya');
+                $path = $this->processImage($request->file('thumbnail'), 'budaya');
                 if ($path) {
                     if (count($existingImages) > 0) {
                         $this->deleteFile($existingImages[0]);
@@ -222,7 +249,7 @@ class BudayaController extends BaseAdminController
             }
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
-                    $path = $this->uploadFile($file, 'budaya');
+                    $path = $this->processImage($file, 'budaya');
                     if ($path) $uploadedImages[] = $path;
                 }
                 $existingImages = array_merge($existingImages, $uploadedImages);
@@ -250,7 +277,7 @@ class BudayaController extends BaseAdminController
                 return response()->json([
                     'success' => true,
                     'message' => 'Berhasil Diperbarui',
-                    'budaya' => $budaya
+                    'budaya' => $this->appendMediaMetadata($budaya)
                 ]);
             }
 

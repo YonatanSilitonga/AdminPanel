@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Admin;
 use App\Models\MongoDB\MongoDestination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class DestinationController extends BaseAdminController
 {
@@ -125,11 +124,12 @@ class DestinationController extends BaseAdminController
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'facilities' => 'nullable|string',
-            'thumbnail' => 'required|image|mimes:jpeg,png,webp|max:10240',
-            'images.*' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'thumbnail' => 'required|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'images.*' => 'nullable|file|mimes:jpeg,png,webp,mp4,mov,avi|max:51200', // Max 50MB
             'opening_hours' => 'nullable|string|max:255',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
+            'start_time' => 'nullable|integer|min:0',
         ]);
 
         try {
@@ -150,28 +150,69 @@ class DestinationController extends BaseAdminController
             $destination->opening_hours = $validated['opening_hours'] ?? '08:00 - 17:00';
             $destination->ticket_price = $validated['ticket_price'] ?? 'Gratis';
             $destination->best_time = $validated['best_time'] ?? 'Kapan saja';
+            $destination->video_duration = (int) ($validated['video_duration'] ?? 10);
+            $destination->video_autoplay = $request->boolean('video_autoplay', true);
+            $destination->video_loop = $request->boolean('video_loop', true);
+            $destination->video_wait_until_ready = $request->boolean('video_wait_until_ready', true);
 
             $destination->is_active = true;
             $destination->is_featured = false;
             $destination->admin_id = $this->admin->id;
 
-            $images = [];
+            $currentImages = [];
 
             // Upload thumbnail
             if ($request->hasFile('thumbnail')) {
-                $path = $this->processImage($request->file('thumbnail'), 'destinations');
-                if ($path) $images[] = $path; // Simpan relative path
+                $file = $request->file('thumbnail');
+                $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
+                
+                if ($mediaType === 'video') {
+                    $path = $this->uploadFile($file, 'destinations/videos', ['resource_type' => 'video']);
+                } else {
+                    $path = $this->processImage($file, 'destinations');
+                }
+                
+                if ($path) {
+                    $galleryEntry = [
+                        'url' => $path,
+                        'type' => $mediaType,
+                    ];
+                    
+                    if ($mediaType === 'video' && isset($validated['start_time'])) {
+                        $galleryEntry['start_time'] = (int)$validated['start_time'];
+                    }
+                    
+                    $currentImages[] = $galleryEntry;
+                }
             }
 
             // Upload additional images
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
-                    $path = $this->processImage($file, 'destinations');
-                    if ($path) $images[] = $path; // Simpan relative path
+                    $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
+                    
+                    if ($mediaType === 'video') {
+                        $path = $this->uploadFile($file, 'destinations/videos', ['resource_type' => 'video']);
+                    } else {
+                        $path = $this->processImage($file, 'destinations');
+                    }
+
+                    if ($path) {
+                        $galleryEntry = [
+                            'url' => $path,
+                            'type' => $mediaType,
+                        ];
+
+                        if ($mediaType === 'video' && isset($validated['start_time'])) {
+                            $galleryEntry['start_time'] = (int)$validated['start_time'];
+                        }
+                        
+                        $currentImages[] = $galleryEntry;
+                    }
                 }
             }
 
-            $destination->images = $images;
+            $destination->images = $currentImages;
             $saved = $destination->save();
 
             if ($saved) {
@@ -206,7 +247,8 @@ class DestinationController extends BaseAdminController
                 $destination->images_data = array_map(function($img) {
                     return [
                         'path' => $img,
-                        'url' => image_url($img)
+                        'url' => image_url($img),
+                        'type' => media_is_video($img) ? 'video' : 'image',
                     ];
                 }, $destination->images);
             }
@@ -234,11 +276,13 @@ class DestinationController extends BaseAdminController
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'facilities' => 'nullable|string',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
-            'images.*' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'images.*' => 'nullable|file|mimes:jpeg,png,webp,mp4,mov,avi|max:51200', // Max 50MB
             'opening_hours' => 'nullable|string|max:255',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
+            'start_time' => 'nullable|integer|min:0',
+            'end_time' => 'nullable|integer|min:0',
         ]);
 
         try {
@@ -262,6 +306,10 @@ class DestinationController extends BaseAdminController
             $destination->opening_hours = $validated['opening_hours'] ?? $destination->opening_hours;
             $destination->ticket_price = $validated['ticket_price'] ?? $destination->ticket_price;
             $destination->best_time = $validated['best_time'] ?? $destination->best_time;
+            $destination->video_duration = (int) ($validated['video_duration'] ?? ($destination->video_duration ?? 10));
+            $destination->video_autoplay = $request->boolean('video_autoplay', $destination->video_autoplay ?? true);
+            $destination->video_loop = $request->boolean('video_loop', $destination->video_loop ?? true);
+            $destination->video_wait_until_ready = $request->boolean('video_wait_until_ready', $destination->video_wait_until_ready ?? true);
 
             $currentImages = $destination->images ?? [];
 
@@ -270,7 +318,8 @@ class DestinationController extends BaseAdminController
                 foreach ($deleteImages as $delImg) {
                     $this->deleteFile($delImg);
                     $currentImages = array_filter($currentImages, function($img) use ($delImg) {
-                        return !$this->pathsMatch($img, $delImg);
+                        $imgUrl = is_array($img) ? $img['url'] : $img;
+                        return !$this->pathsMatch($imgUrl, $delImg);
                     });
                 }
                 $currentImages = array_values($currentImages);
@@ -278,24 +327,63 @@ class DestinationController extends BaseAdminController
 
             // --- Logika Update Thumbnail (Index 0) ---
             if ($request->hasFile('thumbnail')) {
-                $newThumb = $this->processImage($request->file('thumbnail'), 'destinations');
+                $file = $request->file('thumbnail');
+                $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
+                
+                if ($mediaType === 'video') {
+                    $newThumb = $this->uploadFile($file, 'destinations/videos', ['resource_type' => 'video']);
+                } else {
+                    $newThumb = $this->processImage($file, 'destinations');
+                }
+                
                 if ($newThumb) {
+                    $newEntry = [
+                        'url' => $newThumb,
+                        'type' => $mediaType,
+                    ];
+                    
+                    if ($mediaType === 'video') {
+                        if (isset($validated['start_time'])) {
+                            $newEntry['start_time'] = (int)$validated['start_time'];
+                        }
+                        if (isset($validated['end_time'])) {
+                            $newEntry['end_time'] = (int)$validated['end_time'];
+                        }
+                    }
+                    
                     if (count($currentImages) > 0) {
                         // Hapus thumbnail lama dari storage
-                        $this->deleteFile($currentImages[0]);
-                        $currentImages[0] = $newThumb;
+                        $oldThumb = is_array($currentImages[0]) ? $currentImages[0]['url'] : $currentImages[0];
+                        $this->deleteFile($oldThumb);
+                        $currentImages[0] = $newEntry;
                     } else {
-                        array_unshift($currentImages, $newThumb);
+                        array_unshift($currentImages, $newEntry);
                     }
                 }
             }
 
-            // --- Logika Tambah Gambar ke Gallery ---
+            // --- Logika Tambah Gambar/Video ke Gallery ---
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
-                    $path = $this->processImage($file, 'destinations');
+                    $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
+                    
+                    if ($mediaType === 'video') {
+                        $path = $this->uploadFile($file, 'destinations/videos', ['resource_type' => 'video']);
+                    } else {
+                        $path = $this->processImage($file, 'destinations');
+                    }
+
                     if ($path) {
-                        $currentImages[] = $path; // Tambahkan ke akhir array
+                        $galleryEntry = [
+                            'url' => $path,
+                            'type' => $mediaType,
+                        ];
+
+                        if ($mediaType === 'video' && isset($validated['start_time'])) {
+                            $galleryEntry['start_time'] = (int)$validated['start_time'];
+                        }
+                        
+                        $currentImages[] = $galleryEntry;
                     }
                 }
             }

@@ -29,6 +29,10 @@ class MongoDestination extends Model
         'opening_hours',
         'ticket_price',
         'best_time',
+        'video_duration',
+        'video_autoplay',
+        'video_loop',
+        'video_wait_until_ready',
         'admin_id',
     ];
 
@@ -49,6 +53,10 @@ class MongoDestination extends Model
         'longitude'  => 'float',
         'is_active' => 'boolean',
         'facilities' => 'array',
+        'video_duration' => 'integer',
+        'video_autoplay' => 'boolean',
+        'video_loop' => 'boolean',
+        'video_wait_until_ready' => 'boolean',
     ];
 
     /**

@@ -86,6 +86,118 @@
     activeViewImageIndex: 0,
     showLightbox: false,
     lightboxImage: '',
+    lightboxMediaType: 'image',
+    viewRotateTimer: null,
+
+    mediaUrl(path) {
+        if (!path) {
+            return '';
+        }
+
+        return path.startsWith('http') ? path : '/storage/' + path;
+    },
+
+    isVideoMedia(path) {
+        if (!path) {
+            return false;
+        }
+
+        return /\.(mp4|mov|avi|webm|ogg)(?:$|\?)/i.test(path);
+    },
+
+    openMediaLightbox(path, mediaType = null) {
+        this.lightboxImage = this.mediaUrl(path);
+        this.lightboxMediaType = mediaType || (this.isVideoMedia(path) ? 'video' : 'image');
+        this.showLightbox = true;
+
+        this.$nextTick(() => {
+            const lightboxVideo = this.$refs.lightboxVideo;
+            if (this.lightboxMediaType === 'video' && lightboxVideo && typeof lightboxVideo.play === 'function') {
+                lightboxVideo.currentTime = 0;
+                lightboxVideo.play().catch(() => {});
+            }
+        });
+    },
+
+    closeMediaLightbox() {
+        const lightboxVideo = this.$refs.lightboxVideo;
+        if (lightboxVideo && typeof lightboxVideo.pause === 'function') {
+            lightboxVideo.pause();
+        }
+
+        this.showLightbox = false;
+        this.lightboxImage = '';
+        this.lightboxMediaType = 'image';
+    },
+
+    clearViewRotation() {
+        if (this.viewRotateTimer) {
+            clearTimeout(this.viewRotateTimer);
+            this.viewRotateTimer = null;
+        }
+    },
+
+    currentViewMedia() {
+        return this.viewingDest?.images?.length ? this.viewingDest.images[this.activeViewImageIndex] : null;
+    },
+
+    currentViewDelay() {
+        const media = this.currentViewMedia();
+        if (!media) {
+            return 5000;
+        }
+
+        if (this.isVideoMedia(media)) {
+            return Math.max(Number(this.viewingDest?.video_duration ?? 10), 1) * 1000;
+        }
+
+        return 5000;
+    },
+
+    playCurrentViewVideoWhenReady() {
+        const video = this.$refs.viewActiveVideo;
+        if (!video || typeof video.play !== 'function') {
+            return;
+        }
+
+        const tryPlay = () => {
+            if (video.readyState >= 2) {
+                video.play().catch(() => {});
+            }
+        };
+
+        if (video.readyState >= 2) {
+            tryPlay();
+        } else {
+            video.addEventListener('canplay', tryPlay, { once: true });
+            video.addEventListener('loadeddata', tryPlay, { once: true });
+        }
+    },
+
+    scheduleViewRotation() {
+        this.clearViewRotation();
+
+        if (!this.showViewModal || !this.viewingDest?.images || this.viewingDest.images.length <= 1) {
+            this.playCurrentViewVideoWhenReady();
+            return;
+        }
+
+        this.playCurrentViewVideoWhenReady();
+        this.viewRotateTimer = setTimeout(() => {
+            this.activeViewImageIndex = (this.activeViewImageIndex + 1) % this.viewingDest.images.length;
+            this.scheduleViewRotation();
+        }, this.currentViewDelay());
+    },
+
+    jumpToViewMedia(index) {
+        this.activeViewImageIndex = index;
+        this.scheduleViewRotation();
+    },
+
+    closeViewModal() {
+        this.showViewModal = false;
+        this.clearViewRotation();
+    },
 
     // Tab switcher
     switchTab(tab) {
@@ -108,6 +220,10 @@
         try {
             const res = await fetch(`/admin/destinations/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             this.editingDest = await window.safeParseJSON(res);
+            this.editingDest.video_duration = this.editingDest.video_duration ?? 10;
+            this.editingDest.video_autoplay = this.editingDest.video_autoplay ?? true;
+            this.editingDest.video_loop = this.editingDest.video_loop ?? true;
+            this.editingDest.video_wait_until_ready = this.editingDest.video_wait_until_ready ?? true;
             this.deletedImages = [];
             this.editFileName = this.editingDest.images && this.editingDest.images.length ? 'Foto saat ini' : '';
             
@@ -135,9 +251,16 @@
         this.showViewModal = true;
         this.viewingDest = null;
         this.activeViewImageIndex = 0;
+        this.lightboxMediaType = 'image';
+        this.clearViewRotation();
         try {
             const res = await fetch(`/admin/destinations/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             this.viewingDest = await window.safeParseJSON(res);
+            this.viewingDest.video_duration = this.viewingDest.video_duration ?? 10;
+            this.viewingDest.video_autoplay = this.viewingDest.video_autoplay ?? true;
+            this.viewingDest.video_loop = this.viewingDest.video_loop ?? true;
+            this.viewingDest.video_wait_until_ready = this.viewingDest.video_wait_until_ready ?? true;
+            this.scheduleViewRotation();
         } catch(e) {
             alert('Gagal mengambil data destinasi');
             this.showViewModal = false;
@@ -386,7 +509,12 @@
                             <td class="px-10 py-6">
                                 <div class="flex items-center gap-4">
                                     @if(isset($destination->images) && count($destination->images) > 0)
-                                        <img src="{{ image_url($destination->images[0]) }}" alt="{{ $destination->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" @click="lightboxImage = '{{ image_url($destination->images[0]) }}'; showLightbox = true" title="Klik untuk memperbesar">
+                                        @php $destinationCover = $destination->images[0]; @endphp
+                                        @if(media_is_video($destinationCover))
+                                            <video src="{{ image_url($destinationCover) }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" x-on:click.stop.prevent="openMediaLightbox('{{ image_url($destinationCover) }}', 'video')" muted playsinline preload="metadata"></video>
+                                        @else
+                                            <img src="{{ image_url($destinationCover) }}" alt="{{ $destination->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" x-on:click.stop.prevent="openMediaLightbox('{{ image_url($destinationCover) }}', 'image')" title="Klik untuk memperbesar">
+                                        @endif
                                     @else
                                         <div class="w-24 h-16 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
                                             <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -638,7 +766,12 @@
                             </div>
                             <div class="w-8 h-8 rounded-full bg-sidebar flex items-center justify-center text-white text-[10px] font-bold" x-text="index + 1"></div>
                             <div class="w-12 h-12 rounded-xl overflow-hidden bg-gray-100">
-                                <img :src="item.images && item.images[0] ? (item.images[0].startsWith('http') ? item.images[0] : '/storage/' + item.images[0]) : ''" class="w-full h-full object-cover">
+                                <template x-if="item.images && item.images[0] && !isVideoMedia(item.images[0])">
+                                    <img :src="mediaUrl(item.images[0])" class="w-full h-full object-cover">
+                                </template>
+                                <template x-if="item.images && item.images[0] && isVideoMedia(item.images[0])">
+                                    <video :src="mediaUrl(item.images[0])" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                </template>
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-gray-800 text-sm" x-text="item.name"></h4>
@@ -669,7 +802,12 @@
                             <template x-for="res in searchResults" :key="res.id_str">
                                 <div @click="addItem(res)" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0">
                                     <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
-                                        <img :src="res.images && res.images[0] ? (res.images[0].startsWith('http') ? res.images[0] : '/storage/' + res.images[0]) : ''" class="w-full h-full object-cover">
+                                        <template x-if="res.images && res.images[0] && !isVideoMedia(res.images[0])">
+                                            <img :src="mediaUrl(res.images[0])" class="w-full h-full object-cover">
+                                        </template>
+                                        <template x-if="res.images && res.images[0] && isVideoMedia(res.images[0])">
+                                            <video :src="mediaUrl(res.images[0])" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                        </template>
                                     </div>
                                     <div class="flex-1">
                                         <p class="font-bold text-gray-800 text-sm" x-text="res.name"></p>
@@ -700,7 +838,12 @@
                         <div class="space-y-3">
                             <template x-for="(item, i) in trendingList.slice(0, 4)" :key="item.id_str">
                                 <div class="relative w-full h-24 rounded-xl overflow-hidden shadow-sm bg-gray-200">
-                                    <img :src="item.images && item.images[0] ? (item.images[0].startsWith('http') ? item.images[0] : '/storage/' + item.images[0]) : ''" class="w-full h-full object-cover">
+                                    <template x-if="item.images && item.images[0] && !isVideoMedia(item.images[0])">
+                                        <img :src="mediaUrl(item.images[0])" class="w-full h-full object-cover">
+                                    </template>
+                                    <template x-if="item.images && item.images[0] && isVideoMedia(item.images[0])">
+                                        <video :src="mediaUrl(item.images[0])" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                    </template>
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                                     <div class="absolute bottom-2 left-2 pr-2">
                                         <h5 class="text-white font-bold text-[9px] leading-tight truncate" x-text="item.name"></h5>
@@ -842,31 +985,77 @@
                         <div class="col-span-2 bg-emerald-50/50 border border-emerald-100/80 rounded-2xl p-4 text-xs text-gray-600 space-y-2">
                             <div class="flex items-center gap-2 text-[#066466] font-bold">
                                 <svg class="w-4 h-4 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span>Panduan Manajemen Foto Destinasi</span>
+                                <span>Panduan Manajemen Media Destinasi</span>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                                 <div class="space-y-1">
-                                    <span class="font-bold text-gray-700 block">1. Foto Utama (Thumbnail / Cover)</span>
-                                    <p class="leading-relaxed">Akan digunakan sebagai <strong>sampul utama</strong> destinasi pada daftar pencarian, rekomendasi, dan penanda (marker) peta di aplikasi mobile wisatawan.</p>
+                                    <span class="font-bold text-gray-700 block">1. Media Utama (Thumbnail / Cover)</span>
+                                    <p class="leading-relaxed">Akan digunakan sebagai <strong>sampul utama</strong> destinasi pada daftar pencarian, rekomendasi, dan penanda (marker) peta di aplikasi mobile wisatawan. Bisa berupa gambar atau video.</p>
                                 </div>
                                 <div class="space-y-1">
-                                    <span class="font-bold text-gray-700 block">2. Foto Tambahan (Galeri Pendukung)</span>
-                                    <p class="leading-relaxed">Akan ditampilkan sebagai <strong>carousel/slider gambar</strong> di halaman detail destinasi pada aplikasi mobile wisatawan guna memperkaya visual informasi.</p>
+                                    <span class="font-bold text-gray-700 block">2. Media Tambahan (Galeri Pendukung)</span>
+                                    <p class="leading-relaxed">Akan ditampilkan sebagai <strong>carousel/slider media</strong> di halaman detail destinasi pada aplikasi mobile wisatawan guna memperkaya visual informasi.</p>
+                                </div>
+                            </div>
+                            <div class="pt-2 space-y-3">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <!-- Durasi Video -->
+                                    <div class="p-4 bg-white/85 rounded-2xl border border-gray-200">
+                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 pl-0.5">Durasi Video Tampil (Detik)</label>
+                                        <input type="number" name="video_duration" min="1" max="120" value="10" class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all">
+                                    </div>
+                                    <!-- Autoplay saat siap -->
+                                    <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                        <div>
+                                            <p class="font-bold text-gray-800 text-xs">Autoplay saat siap</p>
+                                            <p class="text-[9px] text-gray-400 mt-0.5">Putar otomatis saat siap</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="hidden" name="video_autoplay" value="0">
+                                            <input type="checkbox" name="video_autoplay" value="1" checked class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <!-- Loop video -->
+                                    <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                        <div>
+                                            <p class="font-bold text-gray-800 text-xs">Loop video</p>
+                                            <p class="text-[9px] text-gray-400 mt-0.5">Ulangi video terus menerus</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="hidden" name="video_loop" value="0">
+                                            <input type="checkbox" name="video_loop" value="1" checked class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                        </label>
+                                    </div>
+                                    <!-- Tunggu video siap diputar sebelum autoplay -->
+                                    <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                        <div>
+                                            <p class="font-bold text-gray-800 text-xs">Tunggu video siap</p>
+                                            <p class="text-[9px] text-gray-400 mt-0.5">Tunggu buffer sebelum diputar</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="hidden" name="video_wait_until_ready" value="0">
+                                            <input type="checkbox" name="video_wait_until_ready" value="1" checked class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="space-y-2" x-data="{ thumbPreview: '' }">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Utama (Thumbnail)</label>
+                            <div class="space-y-2" x-data="{ thumbPreview: '', thumbPreviewType: 'image' }">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Media Utama (Thumbnail)</label>
                                 <div class="relative group">
                                     <input type="file" name="thumbnail" id="create_thumbnail" required class="hidden" 
                                            @change="
                                                createFileName = $event.target.files[0] ? $event.target.files[0].name : '';
                                                if ($event.target.files[0]) {
-                                                   const reader = new FileReader();
-                                                   reader.onload = (e) => { thumbPreview = e.target.result; };
-                                                   reader.readAsDataURL($event.target.files[0]);
+                                                   thumbPreviewType = $event.target.files[0].type.startsWith('video/') ? 'video' : 'image';
+                                                   thumbPreview = URL.createObjectURL($event.target.files[0]);
                                                } else {
                                                    thumbPreview = '';
                                                }
@@ -874,9 +1063,14 @@
                                     <label for="create_thumbnail" class="relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30 overflow-hidden">
                                         <template x-if="thumbPreview">
                                             <div class="absolute inset-0 w-full h-full bg-gray-100">
-                                                <img :src="thumbPreview" class="w-full h-full object-cover">
+                                                <template x-if="thumbPreviewType === 'video'">
+                                                    <video :src="thumbPreview" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                                </template>
+                                                <template x-if="thumbPreviewType !== 'video'">
+                                                    <img :src="thumbPreview" class="w-full h-full object-cover">
+                                                </template>
                                                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                                    <p class="text-white text-xs font-bold">Ganti Foto Utama</p>
+                                                    <p class="text-white text-xs font-bold">Ganti Media Utama</p>
                                                 </div>
                                             </div>
                                         </template>
@@ -885,41 +1079,44 @@
                                                 <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                                     <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                                 </div>
-                                                <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Pilih foto utama'"></p>
-                                                <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 5MB)</p>
+                                                <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Pilih media utama'"></p>
+                                                <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP, MP4, MOV, WEBM (Maks. 50MB)</p>
                                             </div>
                                         </template>
                                     </label>
                                 </div>
                             </div>
                             <div class="space-y-2" x-data="{ galleryPreviews: [] }">
-                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Foto Tambahan (Gallery)</label>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Media Tambahan (Gallery)</label>
                                 <div class="relative group">
                                     <input type="file" name="images[]" id="create_images" multiple class="hidden" 
                                            @change="
                                                galleryPreviews = [];
                                                const files = $event.target.files;
                                                for (let i = 0; i < files.length; i++) {
-                                                   const reader = new FileReader();
-                                                   reader.onload = (e) => { galleryPreviews.push(e.target.result); };
-                                                   reader.readAsDataURL(files[i]);
+                                                   galleryPreviews.push({ src: URL.createObjectURL(files[i]), type: files[i].type.startsWith('video/') ? 'video' : 'image' });
                                                }
                                            ">
                                     <label for="create_images" class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
                                         <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                             <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                         </div>
-                                        <p class="text-sm font-bold text-gray-700" x-text="galleryPreviews.length > 0 ? galleryPreviews.length + ' file dipilih' : 'Pilih foto tambahan'"></p>
-                                        <p class="text-[10px] text-gray-400 mt-1">Bisa pilih lebih dari 1</p>
+                                        <p class="text-sm font-bold text-gray-700" x-text="galleryPreviews.length > 0 ? galleryPreviews.length + ' file dipilih' : 'Pilih media tambahan'"></p>
+                                        <p class="text-[10px] text-gray-400 mt-1">Bisa pilih lebih dari 1, termasuk video</p>
                                     </label>
                                 </div>
                                 
                                 <!-- Previews -->
                                 <template x-if="galleryPreviews.length > 0">
                                     <div class="grid grid-cols-4 gap-2 mt-2">
-                                        <template x-for="(src, idx) in galleryPreviews" :key="idx">
+                                        <template x-for="(media, idx) in galleryPreviews" :key="idx">
                                             <div class="relative rounded-xl overflow-hidden aspect-square border border-gray-200">
-                                                <img :src="src" class="w-full h-full object-cover">
+                                                <template x-if="media.type === 'video'">
+                                                    <video :src="media.src" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                                </template>
+                                                <template x-if="media.type !== 'video'">
+                                                    <img :src="media.src" class="w-full h-full object-cover">
+                                                </template>
                                             </div>
                                         </template>
                                     </div>
@@ -1058,16 +1255,63 @@
                             <div class="col-span-2 bg-emerald-50/50 border border-emerald-100/80 rounded-2xl p-4 text-xs text-gray-600 space-y-2">
                                 <div class="flex items-center gap-2 text-[#066466] font-bold">
                                     <svg class="w-4 h-4 text-[#066466]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <span>Panduan Manajemen Foto Destinasi</span>
+                                    <span>Panduan Manajemen Media Destinasi</span>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                                     <div class="space-y-1">
-                                        <span class="font-bold text-gray-700 block">1. Foto Utama (Thumbnail / Cover)</span>
-                                        <p class="leading-relaxed">Akan digunakan sebagai <strong>sampul utama</strong> destinasi pada daftar pencarian, rekomendasi, dan penanda (marker) peta di aplikasi mobile wisatawan.</p>
+                                        <span class="font-bold text-gray-700 block">1. Media Utama (Thumbnail / Cover)</span>
+                                        <p class="leading-relaxed">Akan digunakan sebagai <strong>sampul utama</strong> destinasi pada daftar pencarian, rekomendasi, dan penanda (marker) peta di aplikasi mobile wisatawan. Bisa berupa gambar atau video.</p>
                                     </div>
                                     <div class="space-y-1">
-                                        <span class="font-bold text-gray-700 block">2. Foto Tambahan (Galeri Pendukung)</span>
-                                        <p class="leading-relaxed">Akan ditampilkan sebagai <strong>carousel/slider gambar</strong> di halaman detail destinasi pada aplikasi mobile wisatawan guna memperkaya visual informasi.</p>
+                                        <span class="font-bold text-gray-700 block">2. Media Tambahan (Galeri Pendukung)</span>
+                                        <p class="leading-relaxed">Akan ditampilkan sebagai <strong>carousel/slider media</strong> di halaman detail destinasi pada aplikasi mobile wisatawan guna memperkaya visual informasi.</p>
+                                    </div>
+                                </div>
+                                <div class="pt-2 space-y-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <!-- Durasi Video -->
+                                        <div class="p-4 bg-white/85 rounded-2xl border border-gray-200">
+                                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 pl-0.5">Durasi Video Tampil (Detik)</label>
+                                            <input type="number" name="video_duration" min="1" max="120" x-model="editingDest.video_duration" class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all">
+                                        </div>
+                                        <!-- Autoplay saat siap -->
+                                        <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                            <div>
+                                                <p class="font-bold text-gray-800 text-xs">Autoplay saat siap</p>
+                                                <p class="text-[9px] text-gray-400 mt-0.5">Putar otomatis saat siap</p>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="hidden" name="video_autoplay" value="0">
+                                                <input type="checkbox" name="video_autoplay" value="1" x-model="editingDest.video_autoplay" class="sr-only peer">
+                                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <!-- Loop video -->
+                                        <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                            <div>
+                                                <p class="font-bold text-gray-800 text-xs">Loop video</p>
+                                                <p class="text-[9px] text-gray-400 mt-0.5">Ulangi video terus menerus</p>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="hidden" name="video_loop" value="0">
+                                                <input type="checkbox" name="video_loop" value="1" x-model="editingDest.video_loop" class="sr-only peer">
+                                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                            </label>
+                                        </div>
+                                        <!-- Tunggu video siap diputar sebelum autoplay -->
+                                        <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                            <div>
+                                                <p class="font-bold text-gray-800 text-xs">Tunggu video siap</p>
+                                                <p class="text-[9px] text-gray-400 mt-0.5">Tunggu buffer sebelum diputar</p>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="hidden" name="video_wait_until_ready" value="0">
+                                                <input type="checkbox" name="video_wait_until_ready" value="1" x-model="editingDest.video_wait_until_ready" class="sr-only peer">
+                                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1080,12 +1324,17 @@
                                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
                                         <template x-for="(imgObj, index) in editingDest.images_data" :key="imgObj.path">
                                             <div class="relative rounded-xl overflow-hidden bg-gray-100 aspect-square group border border-gray-200">
-                                                <img :src="imgObj.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Galeri Destinasi">
+                                                <template x-if="imgObj.type === 'video'">
+                                                    <video :src="imgObj.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" muted playsinline preload="metadata"></video>
+                                                </template>
+                                                <template x-if="imgObj.type !== 'video'">
+                                                    <img :src="imgObj.url" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Galeri Destinasi">
+                                                </template>
                                                 
                                                 <!-- Badge overlay untuk membedakan cover vs gallery -->
                                                 <div class="absolute top-2 left-2 px-2 py-1 rounded bg-black/60 text-white text-[9px] font-bold tracking-wider uppercase" 
                                                      :class="index === 0 ? 'bg-[#066466] border border-teal-400/30' : 'bg-gray-800/85 border border-gray-600/30'" 
-                                                     x-text="index === 0 ? 'Utama (Thumbnail)' : 'Tambahan (Galeri)'"></div>
+                                                     x-text="index === 0 ? 'Media Utama' : 'Media Tambahan'"></div>
 
                                                 <!-- Tombol Hapus overlay -->
                                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -1097,7 +1346,7 @@
                                                     </button>
                                                 </div>
                                                 
-                                                <button type="button" @click.stop="lightboxImage = imgObj.url; showLightbox = true" class="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70">
+                                                <button type="button" @click.stop="openMediaLightbox(imgObj.url, imgObj.type || (isVideoMedia(imgObj.path) ? 'video' : 'image'))" class="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                                 </button>
                                             </div>
@@ -1107,16 +1356,15 @@
                             </div>
 
                             <div class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-2" x-data="{ editThumbPreview: '' }">
-                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Foto Utama (Thumbnail)</label>
+                                <div class="space-y-2" x-data="{ editThumbPreview: '', editThumbPreviewType: 'image' }">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Ganti Media Utama (Thumbnail)</label>
                                     <div class="relative group">
                                         <input type="file" name="thumbnail" id="edit_thumbnail" class="hidden" 
                                                @change="
                                                    editFileName = $event.target.files[0] ? $event.target.files[0].name : '';
                                                    if ($event.target.files[0]) {
-                                                       const reader = new FileReader();
-                                                       reader.onload = (e) => { editThumbPreview = e.target.result; };
-                                                       reader.readAsDataURL($event.target.files[0]);
+                                                       editThumbPreviewType = $event.target.files[0].type.startsWith('video/') ? 'video' : 'image';
+                                                       editThumbPreview = URL.createObjectURL($event.target.files[0]);
                                                    } else {
                                                        editThumbPreview = '';
                                                    }
@@ -1124,9 +1372,14 @@
                                         <label for="edit_thumbnail" class="relative flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30 overflow-hidden">
                                             <template x-if="editThumbPreview">
                                                 <div class="absolute inset-0 w-full h-full bg-gray-100">
-                                                    <img :src="editThumbPreview" class="w-full h-full object-cover">
+                                                    <template x-if="editThumbPreviewType === 'video'">
+                                                        <video :src="editThumbPreview" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                                    </template>
+                                                    <template x-if="editThumbPreviewType !== 'video'">
+                                                        <img :src="editThumbPreview" class="w-full h-full object-cover">
+                                                    </template>
                                                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                                        <p class="text-white text-xs font-bold">Ganti Foto Utama</p>
+                                                        <p class="text-white text-xs font-bold">Ganti Media Utama</p>
                                                     </div>
                                                 </div>
                                             </template>
@@ -1135,7 +1388,7 @@
                                                     <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                                         <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                                     </div>
-                                                    <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Pilih foto utama baru'"></p>
+                                                    <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Pilih media utama baru'"></p>
                                                     <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 5MB)</p>
                                                 </div>
                                             </template>
@@ -1144,33 +1397,36 @@
                                 </div>
 
                                 <div class="space-y-2" x-data="{ editGalleryPreviews: [] }">
-                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tambah Foto Galeri Baru</label>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tambah Media Galeri Baru</label>
                                     <div class="relative group">
                                         <input type="file" name="images[]" id="edit_images" multiple class="hidden" 
                                                @change="
                                                    editGalleryPreviews = [];
                                                    const files = $event.target.files;
                                                    for (let i = 0; i < files.length; i++) {
-                                                       const reader = new FileReader();
-                                                       reader.onload = (e) => { editGalleryPreviews.push(e.target.result); };
-                                                       reader.readAsDataURL(files[i]);
+                                                       editGalleryPreviews.push({ src: URL.createObjectURL(files[i]), type: files[i].type.startsWith('video/') ? 'video' : 'image' });
                                                    }
                                                ">
                                         <label for="edit_images" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30">
                                             <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                                 <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                             </div>
-                                            <p class="text-sm font-bold text-gray-700" x-text="editGalleryPreviews.length > 0 ? editGalleryPreviews.length + ' file baru dipilih' : 'Pilih foto tambahan baru'"></p>
-                                            <p class="text-[10px] text-gray-400 italic mt-1">* Foto baru akan ditambahkan ke daftar galeri pendukung</p>
+                                            <p class="text-sm font-bold text-gray-700" x-text="editGalleryPreviews.length > 0 ? editGalleryPreviews.length + ' file baru dipilih' : 'Pilih media tambahan baru'"></p>
+                                            <p class="text-[10px] text-gray-400 italic mt-1">* Media baru akan ditambahkan ke daftar galeri pendukung</p>
                                         </label>
                                     </div>
                                     
                                     <!-- Previews -->
                                     <template x-if="editGalleryPreviews.length > 0">
                                         <div class="grid grid-cols-4 gap-2 mt-2">
-                                            <template x-for="(src, idx) in editGalleryPreviews" :key="idx">
+                                            <template x-for="(media, idx) in editGalleryPreviews" :key="idx">
                                                 <div class="relative rounded-xl overflow-hidden aspect-square border border-gray-200">
-                                                    <img :src="src" class="w-full h-full object-cover">
+                                                    <template x-if="media.type === 'video'">
+                                                        <video :src="media.src" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                                    </template>
+                                                    <template x-if="media.type !== 'video'">
+                                                        <img :src="media.src" class="w-full h-full object-cover">
+                                                    </template>
                                                     <div class="absolute top-1 right-1 bg-[#066466] text-white text-[8px] px-1 py-0.5 rounded font-bold uppercase">Baru</div>
                                                 </div>
                                             </template>
@@ -1198,7 +1454,7 @@
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showViewModal = false"></div>
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="closeViewModal()"></div>
 
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
@@ -1224,7 +1480,7 @@
                             <p class="text-sm text-gray-400 mt-0.5">Informasi lengkap destinasi wisata</p>
                         </div>
                     </div>
-                    <button @click="showViewModal = false" class="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl">
+                    <button @click="closeViewModal()" class="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
@@ -1240,10 +1496,15 @@
                         <!-- Image Gallery (Main Image & Thumbnail row) -->
                         <div class="space-y-3">
                             <div class="relative rounded-[2rem] overflow-hidden bg-gray-100 aspect-video group cursor-pointer" 
-                                 @click="lightboxImage = (viewingDest.images[activeViewImageIndex].startsWith('http') ? viewingDest.images[activeViewImageIndex] : '/storage/' + viewingDest.images[activeViewImageIndex]); showLightbox = true" 
+                                 @click="openMediaLightbox(viewingDest.images[activeViewImageIndex], isVideoMedia(viewingDest.images[activeViewImageIndex]) ? 'video' : 'image')" 
                                  title="Klik untuk memperbesar">
                                 <template x-if="viewingDest?.images && viewingDest.images.length > 0">
-                                    <img :src="viewingDest.images[activeViewImageIndex].startsWith('http') ? viewingDest.images[activeViewImageIndex] : '/storage/' + viewingDest.images[activeViewImageIndex]" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                    <template x-if="!isVideoMedia(viewingDest.images[activeViewImageIndex])">
+                                        <img :src="mediaUrl(viewingDest.images[activeViewImageIndex])" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="">
+                                    </template>
+                                    <template x-if="isVideoMedia(viewingDest.images[activeViewImageIndex])">
+                                        <video x-ref="viewActiveVideo" :src="mediaUrl(viewingDest.images[activeViewImageIndex])" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" :controls="!viewingDest?.video_autoplay" :autoplay="viewingDest?.video_autoplay" :loop="viewingDest?.video_loop" playsinline preload="metadata"></video>
+                                    </template>
                                 </template>
                                 <template x-if="!viewingDest?.images || viewingDest.images.length === 0">
                                     <div class="w-full h-full flex flex-col items-center justify-center text-gray-300">
@@ -1254,7 +1515,7 @@
                                 
                                 <!-- Badge overlay to indicate cover vs gallery -->
                                 <div class="absolute top-6 left-6" x-show="viewingDest?.images && viewingDest.images.length > 0">
-                                    <span class="px-4 py-2 bg-emerald-600/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-white uppercase tracking-widest shadow-sm" x-text="activeViewImageIndex === 0 ? 'Foto Utama (Thumbnail)' : 'Foto Tambahan (Galeri)'"></span>
+                                    <span class="px-4 py-2 bg-emerald-600/90 backdrop-blur-md rounded-xl text-[11px] font-bold text-white uppercase tracking-widest shadow-sm" x-text="activeViewImageIndex === 0 ? 'Media Utama (Thumbnail)' : 'Media Tambahan (Galeri)'"></span>
                                 </div>
                                 
                                 <div class="absolute top-6 right-6">
@@ -1266,10 +1527,15 @@
                             <template x-if="viewingDest?.images && viewingDest.images.length > 1">
                                 <div class="flex items-center gap-2 mt-3 overflow-x-auto py-1.5 custom-scrollbar">
                                     <template x-for="(img, idx) in viewingDest.images" :key="idx">
-                                        <button type="button" @click="activeViewImageIndex = idx" 
+                                        <button type="button" @click="jumpToViewMedia(idx)" 
                                                 class="relative w-20 h-14 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0"
                                                 :class="activeViewImageIndex === idx ? 'border-emerald-600 shadow-md scale-105' : 'border-gray-200 hover:border-gray-300'">
-                                            <img :src="img.startsWith('http') ? img : '/storage/' + img" class="w-full h-full object-cover">
+                                            <template x-if="!isVideoMedia(img)">
+                                                <img :src="mediaUrl(img)" class="w-full h-full object-cover">
+                                            </template>
+                                            <template x-if="isVideoMedia(img)">
+                                                <video :src="mediaUrl(img)" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                            </template>
                                             <!-- Tiny emerald triangle to flag cover -->
                                             <div x-show="idx === 0" class="absolute top-0 right-0 bg-emerald-500 w-2 h-2 rounded-bl"></div>
                                         </button>
@@ -1308,6 +1574,24 @@
                                     <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Deskripsi</h4>
                                     <div class="text-sm text-gray-500 leading-relaxed line-clamp-6 custom-scrollbar pr-2" x-text="viewingDest?.description || 'Tidak ada deskripsi.'"></div>
                                 </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Durasi Video</p>
+                                            <p class="text-sm font-bold text-gray-800 mt-1" x-text="(viewingDest?.video_duration || 10) + ' detik'"></p>
+                                        </div>
+                                        <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Autoplay</p>
+                                            <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_autoplay ? 'Aktif' : 'Nonaktif'"></p>
+                                        </div>
+                                        <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loop</p>
+                                            <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_loop ? 'Aktif' : 'Nonaktif'"></p>
+                                        </div>
+                                        <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Siap Diputar</p>
+                                            <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_wait_until_ready ? 'Ya' : 'Tidak'"></p>
+                                        </div>
+                                    </div>
                             </div>
                         </div>
 
@@ -1334,17 +1618,25 @@
                 <!-- Footer -->
                 <div class="px-10 py-6 bg-gray-50 flex items-center justify-between">
                     <p class="text-xs text-gray-400 font-medium italic">Terakhir diperbarui: <span x-text="viewingDest?.updated_at ? new Date(viewingDest.updated_at).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-'"></span></p>
-                    <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all">Tutup Detail</button>
+                    <button @click="closeViewModal()" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all">Tutup Detail</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Image Lightbox Modal -->
-    <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak @click="showLightbox = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <!-- Media Lightbox Modal (supports image and video) -->
+    <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak @click="closeMediaLightbox()" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         <div class="relative max-w-4xl max-h-[90vh] p-4 flex items-center justify-center" @click.stop>
-            <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-            <button @click="showLightbox = false" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
+
+            <template x-if="lightboxMediaType === 'image'">
+                <img :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            </template>
+
+            <template x-if="lightboxMediaType === 'video'">
+                <video x-ref="lightboxVideo" :src="lightboxImage" class="max-w-[95vw] max-h-[85vh] rounded-3xl object-contain shadow-2xl border border-white/10 bg-black" controls autoplay playsinline x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"></video>
+            </template>
+
+            <button @click="closeMediaLightbox()" class="absolute -top-12 right-0 p-3 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors border border-white/10">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>

@@ -90,7 +90,7 @@ class BaseAdminController extends Controller
      */
     protected function uploadFile($file, $path = 'uploads', $options = [])
     {
-        set_time_limit(0); // Prevent timeout during slow uploads (especially large videos to Cloudinary)
+        set_time_limit(120); // Prevent timeout during slow uploads
 
         if (!$file || !$file->isValid()) {
             \Illuminate\Support\Facades\Log::warning('Invalid file upload attempt', [
@@ -134,7 +134,19 @@ class BaseAdminController extends Controller
             }
 
             try {
-                $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), $uploadParams);
+                $defaultOptions = [
+                    'folder'        => 'smarttourism/' . trim($path, '/'),
+                    'resource_type' => 'auto', // Changed from 'image' to 'auto'
+                    'transformation' => [
+                        'quality' => 'auto',
+                        'fetch_format' => 'auto',
+                    ],
+                ];
+
+                $uploadOptions = array_merge($defaultOptions, $options);
+                
+                $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), $uploadOptions);
+
                 return $result['secure_url'];
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Cloudinary upload failed: ' . $e->getMessage(), [
@@ -220,8 +232,9 @@ class BaseAdminController extends Controller
         if (str_starts_with($filePath, 'https://res.cloudinary.com/')) {
             try {
                 // Extract public_id from URL
-                // URL pattern: https://res.cloudinary.com/{cloud}/image/upload/{version}/{public_id}.{ext}
+                // URL pattern: https://res.cloudinary.com/{cloud}/{resource_type}/upload/{version}/{public_id}.{ext}
                 $parsed   = parse_url($filePath, PHP_URL_PATH);
+                $resourceType = str_contains($parsed, '/video/upload/') ? 'video' : 'image';
                 $segments = explode('/upload/', $parsed);
                 if (isset($segments[1])) {
                     $withVersion = $segments[1];
@@ -229,7 +242,9 @@ class BaseAdminController extends Controller
                     $publicIdWithExt = preg_replace('/^v\d+\//', '', $withVersion);
                     // Remove extension
                     $publicId = preg_replace('/\.[^.]+$/', '', $publicIdWithExt);
-                    \cloudinary()->uploadApi()->destroy($publicId);
+                    \cloudinary()->uploadApi()->destroy($publicId, [
+                        'resource_type' => $resourceType,
+                    ]);
                 }
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning('Cloudinary delete failed: ' . $e->getMessage());
@@ -250,8 +265,18 @@ class BaseAdminController extends Controller
             return null;
         }
 
+        $mime = $file->getMimeType() ?: '';
+        $isVideo = str_starts_with($mime, 'video/');
+
         // Delegate to uploadFile() so Cloudinary is used when configured
-        return $this->uploadFile($file, $path);
+        // and keep image/video handling aligned with the uploaded file type.
+        return $this->uploadFile($file, $path, [
+            'mimes' => $isVideo
+                ? ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg']
+                : ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'],
+            'resource_type' => $isVideo ? 'video' : 'image',
+            'max_size' => $isVideo ? 50 : 10,
+        ]);
     }
 
     /**
