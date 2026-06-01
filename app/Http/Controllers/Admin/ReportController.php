@@ -38,6 +38,19 @@ class ReportController extends BaseAdminController
                 }
             }
 
+            // Search in description, user ID, reason, or destination name
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('description', 'like', "%{$search}%")
+                      ->orWhere('user_id', 'like', "%{$search}%")
+                      ->orWhere('reason', 'like', "%{$search}%")
+                      ->orWhereHas('destination', function ($destQuery) use ($search) {
+                          $destQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
             // Pagination & Sorting
             $perPage = (int) $request->input('per_page', 15);
             $allowedSorts = ['reason', 'status', 'created_at', 'user_id'];
@@ -204,6 +217,19 @@ class ReportController extends BaseAdminController
 
             if ($request->filled('reason')) {
                 $query->where('reason', $request->reason);
+            }
+
+            // Search in description, user ID, reason, or destination name
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('description', 'like', "%{$search}%")
+                      ->orWhere('user_id', 'like', "%{$search}%")
+                      ->orWhere('reason', 'like', "%{$search}%")
+                      ->orWhereHas('destination', function ($destQuery) use ($search) {
+                          $destQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
             }
 
             $reports = $query->orderBy('created_at', 'desc')->get();

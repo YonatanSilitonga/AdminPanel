@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>button_Selesai</name>
+   <tag></tag>
+   <elementGuidId>9e7a053d-5568-4842-bb2b-46731142a936</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' rounded-xl ') and contains(concat(' ', normalize-space(@class), ' '), ' text-sm ') and contains(concat(' ', normalize-space(@class), ' '), ' font-bold ') and contains(concat(' ', normalize-space(@class), ' '), ' border ') and contains(concat(' ', normalize-space(@class), ' '), ' transition-all ') and (name() = 'button') and (position() = 3)]</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value>button.rounded-xl.text-sm.font-bold.border.transition-all:nth-child(3)</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=button[name=&quot;Selesai&quot;i]</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>b1dd4332-b3cb-416d-8025-b664f873c5fd</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>@click</name>
+      <type>Main</type>
+      <value>updateStatus('resolved')</value>
+      <webElementGuid>6bfec308-f2ee-4f0d-a0af-1c6dfa45ef01</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>:disabled</name>
+      <type>Main</type>
+      <value>savingStatus || viewingReport?.status === 'resolved'</value>
+      <webElementGuid>4646a14c-2f98-4fa8-b820-f1a893641050</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>flex-1 py-3 rounded-xl text-sm font-bold transition-all border border-[#066466]/30 text-[#066466] hover:bg-[#E6F6F2] disabled:opacity-40 disabled:cursor-not-allowed</value>
+      <webElementGuid>5276aabd-9854-4e6f-b79c-b17f91c055ea</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>
+                                Selesai
+                            </value>
+      <webElementGuid>cc35d9c9-891c-4b13-bc81-0f6fb33e0ea5</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>parent</name>
+      <type>Main</type>
+      <value>md5.v1-1dcd1cb5929dbd7bedba1c1c3aa7ce1f</value>
+      <webElementGuid>d94bc441-d1a4-4747-a5d3-e9f1c1b6f9f9</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' rounded-xl ') and contains(concat(' ', normalize-space(@class), ' '), ' text-sm ') and contains(concat(' ', normalize-space(@class), ' '), ' font-bold ') and contains(concat(' ', normalize-space(@class), ' '), ' border ') and contains(concat(' ', normalize-space(@class), ' '), ' transition-all ') and (name() = 'button') and (position() = 3)]</value>
+      <webElementGuid>122dd965-9d97-4463-ad9b-628bdf9ca5d1</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' rounded-xl ') and contains(concat(' ', normalize-space(@class), ' '), ' text-sm ') and contains(concat(' ', normalize-space(@class), ' '), ' font-bold ') and contains(concat(' ', normalize-space(@class), ' '), ' border ') and contains(concat(' ', normalize-space(@class), ' '), ' transition-all ') and (name() = 'button') and (position() = 3)]</value>
+      <webElementGuid>4d8202f9-86bb-49c7-982e-300cf76db373</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//button[(text() = '
+                                Selesai
+                            ' or . = '
+                                Selesai
+                            ')]</value>
+      <webElementGuid>02a19eb9-5984-47de-9a3c-e2de98e3083a</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

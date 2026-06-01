@@ -1,28 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <WebElementEntity>
    <description></description>
-   <name>input_admintobatourism.id</name>
+   <name>input_Cari deskripsi laporan</name>
    <tag></tag>
-   <elementGuidId>79353836-7fd3-4c3b-a97c-4204b831e818</elementGuidId>
+   <elementGuidId>da83d133-b03c-4039-95bf-b5312ecfa643</elementGuidId>
    <selectorCollection>
       <entry>
-         <key>CSS</key>
-         <value>#email</value>
-      </entry>
-      <entry>
          <key>XPATH</key>
-         <value>//*[@id = 'email']</value>
+         <value>//*[@name = 'search']</value>
       </entry>
       <entry>
-         <key>BASIC</key>
-         <value>//*[@type = 'email' and @id = 'email' and @name = 'email' and @placeholder = 'admin@tobatourism.id']</value>
+         <key>CSS</key>
+         <value>[name=&quot;search&quot;]</value>
       </entry>
    </selectorCollection>
    <selectorMethod>XPATH</selectorMethod>
    <smartLocatorCollection>
       <entry>
          <key>SMART_LOCATOR</key>
-         <value>internal:attr=[placeholder=&quot;admin@tobatourism.id&quot;i]</value>
+         <value>internal:attr=[placeholder=&quot;Cari deskripsi laporan...&quot;i]</value>
       </entry>
    </smartLocatorCollection>
    <smartLocatorEnabled>false</smartLocatorEnabled>
@@ -33,78 +29,70 @@
       <name>tag</name>
       <type>Main</type>
       <value>input</value>
-      <webElementGuid>44429bfe-9e90-4264-bab2-3a12dcfaa213</webElementGuid>
+      <webElementGuid>0e6577f3-2c18-4d37-ab04-81514dcf2b9b</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
       <matchCondition>equals</matchCondition>
       <name>type</name>
       <type>Main</type>
-      <value>email</value>
-      <webElementGuid>688472a0-5724-4250-8445-2681f06ee780</webElementGuid>
-   </webElementProperties>
-   <webElementProperties>
-      <isSelected>true</isSelected>
-      <matchCondition>equals</matchCondition>
-      <name>id</name>
-      <type>Main</type>
-      <value>email</value>
-      <webElementGuid>b79201d0-c412-436b-a3b6-485dfcd6bd45</webElementGuid>
+      <value>text</value>
+      <webElementGuid>ebb09dd4-b155-4d69-939c-12876604bba4</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
       <matchCondition>equals</matchCondition>
       <name>name</name>
       <type>Main</type>
-      <value>email</value>
-      <webElementGuid>2730c6ed-d202-4ec4-a401-38ba5d885c9b</webElementGuid>
-   </webElementProperties>
-   <webElementProperties>
-      <isSelected>false</isSelected>
-      <matchCondition>equals</matchCondition>
-      <name>class</name>
-      <type>Main</type>
-      <value>form-input </value>
-      <webElementGuid>afd71723-1e2d-49cc-b43b-819a8b33efcf</webElementGuid>
+      <value>search</value>
+      <webElementGuid>13c6746f-70d5-4b70-b938-b38fe785d15b</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
       <matchCondition>equals</matchCondition>
       <name>placeholder</name>
       <type>Main</type>
-      <value>admin@tobatourism.id</value>
-      <webElementGuid>fa5db6b1-c4c9-43c9-8932-ed97f0517024</webElementGuid>
+      <value>Cari deskripsi laporan...</value>
+      <webElementGuid>477b0b29-2844-4caa-bdeb-ca49d3c54021</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300</value>
+      <webElementGuid>06256151-bea6-463d-a450-31923c931206</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>parent</name>
       <type>Main</type>
-      <value>md5.v1-5b9ce64e1b01ab27ccfccd2252edf06f</value>
-      <webElementGuid>fb2712df-34e5-43d9-9f90-a3cd4459dc1e</webElementGuid>
+      <value>md5.v1-93d424ca200b7876eb0e2ff42ec65ddb</value>
+      <webElementGuid>5eb52a0d-e6b7-409a-aaa0-c62def89f960</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath</name>
       <type>Main</type>
-      <value>//*[@id = 'email']</value>
-      <webElementGuid>22b23b3c-0c75-4c6f-9e57-ecacd5671642</webElementGuid>
+      <value>//*[@name = 'search']</value>
+      <webElementGuid>b09387fa-3007-4ef6-9b19-ee47e9a87fbd</webElementGuid>
    </webElementProperties>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:attributes</name>
       <type>Main</type>
-      <value>//*[@id = 'email']</value>
-      <webElementGuid>00d24206-8cb0-42bb-942d-0f70935b55ef</webElementGuid>
+      <value>//*[@name = 'search']</value>
+      <webElementGuid>0b6f58b3-a780-4c84-86fc-357b3a2b9f35</webElementGuid>
    </webElementXpaths>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:customAttributes</name>
       <type>Main</type>
-      <value>//input[@type = 'email' and @id = 'email' and @name = 'email' and @placeholder = 'admin@tobatourism.id']</value>
-      <webElementGuid>37da910a-09e1-4115-a5f7-50c4fb8de240</webElementGuid>
+      <value>//input[@type = 'text' and @name = 'search' and @placeholder = 'Cari deskripsi laporan...']</value>
+      <webElementGuid>f8c45fc4-8b22-4fb3-a4a2-635e5dfcc7b3</webElementGuid>
    </webElementXpaths>
 </WebElementEntity>

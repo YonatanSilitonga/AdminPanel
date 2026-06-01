@@ -1,28 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <WebElementEntity>
    <description></description>
-   <name>button_Masuk</name>
+   <name>div_Menampilkan 1 - 2 dari 2 data</name>
    <tag></tag>
-   <elementGuidId>5fccb6be-442e-4f0a-ac4d-840f87063736</elementGuidId>
+   <elementGuidId>b922f3da-f70f-43c6-8aa7-f57fa8964aee</elementGuidId>
    <selectorCollection>
       <entry>
-         <key>CSS</key>
-         <value>.btn-submit</value>
-      </entry>
-      <entry>
          <key>XPATH</key>
-         <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
+         <value>//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' text-sm ') and contains(concat(' ', normalize-space(@class), ' '), ' font-medium ')]</value>
       </entry>
       <entry>
-         <key>BASIC</key>
-         <value>//*[@type = 'submit' and (text() = 'Masuk' or . = 'Masuk')]</value>
+         <key>CSS</key>
+         <value>div.text-sm.font-medium</value>
       </entry>
    </selectorCollection>
    <selectorMethod>XPATH</selectorMethod>
    <smartLocatorCollection>
       <entry>
          <key>SMART_LOCATOR</key>
-         <value>internal:role=button[name=&quot;Masuk&quot;i]</value>
+         <value>internal:text=&quot;Menampilkan 1 - 2 dari 2 data&quot;i</value>
       </entry>
    </smartLocatorCollection>
    <smartLocatorEnabled>false</smartLocatorEnabled>
@@ -32,63 +28,55 @@
       <matchCondition>equals</matchCondition>
       <name>tag</name>
       <type>Main</type>
-      <value>button</value>
-      <webElementGuid>2bf615fe-f2e3-44a6-8d0d-7eb5b61efd26</webElementGuid>
-   </webElementProperties>
-   <webElementProperties>
-      <isSelected>true</isSelected>
-      <matchCondition>equals</matchCondition>
-      <name>type</name>
-      <type>Main</type>
-      <value>submit</value>
-      <webElementGuid>5aee5b0a-1eea-4426-9788-eded1d37dc3a</webElementGuid>
+      <value>div</value>
+      <webElementGuid>e920fe54-e51e-4800-9144-1d6f00386aeb</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>class</name>
       <type>Main</type>
-      <value>btn-submit</value>
-      <webElementGuid>3bd3ab40-e8ae-4717-b62e-61091d36947d</webElementGuid>
+      <value>text-gray-400 text-sm font-medium</value>
+      <webElementGuid>47a38fba-53b2-43a4-840e-46862075cf45</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
       <matchCondition>equals</matchCondition>
       <name>text</name>
       <type>Main</type>
-      <value>Masuk</value>
-      <webElementGuid>e9480f75-8ec5-414f-b08e-0ed18ccbbae2</webElementGuid>
+      <value>Menampilkan 1 - 2 dari 2 data</value>
+      <webElementGuid>5c8b7c0f-5b76-4bcc-b8f2-ad227ffb61fe</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>parent</name>
       <type>Main</type>
-      <value>md5.v1-2e1b7bb3e5996da50367ea48e1ca975b</value>
-      <webElementGuid>0cf3c43e-f4b4-4f77-bd42-2846e18cb342</webElementGuid>
+      <value>md5.v1-c513d51661517c02e1cfcdb23ef1043b</value>
+      <webElementGuid>fa714009-4122-4a13-904e-ee5324268fc3</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath</name>
       <type>Main</type>
-      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
-      <webElementGuid>9905853d-de9a-4a44-b2ab-1077104c3b23</webElementGuid>
+      <value>//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' text-sm ') and contains(concat(' ', normalize-space(@class), ' '), ' font-medium ')]</value>
+      <webElementGuid>7a5fe0cf-646c-474f-99ca-43392d3220a7</webElementGuid>
    </webElementProperties>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:attributes</name>
       <type>Main</type>
-      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
-      <webElementGuid>2686d556-023a-46ce-931f-36aa3deefbb1</webElementGuid>
+      <value>//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' text-sm ') and contains(concat(' ', normalize-space(@class), ' '), ' font-medium ')]</value>
+      <webElementGuid>2e9d9ca9-68bf-484d-9968-6d8761665ce1</webElementGuid>
    </webElementXpaths>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:customAttributes</name>
       <type>Main</type>
-      <value>//button[@type = 'submit' and (text() = 'Masuk' or . = 'Masuk')]</value>
-      <webElementGuid>ac4ff52f-1875-44f2-a910-cc668e73a31b</webElementGuid>
+      <value>//div[(text() = 'Menampilkan 1 - 2 dari 2 data' or . = 'Menampilkan 1 - 2 dari 2 data')]</value>
+      <webElementGuid>bf943734-c246-4081-a9c4-d6a28936f71b</webElementGuid>
    </webElementXpaths>
 </WebElementEntity>

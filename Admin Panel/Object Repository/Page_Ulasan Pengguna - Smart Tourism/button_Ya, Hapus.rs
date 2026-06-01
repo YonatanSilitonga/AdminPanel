@@ -1,28 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <WebElementEntity>
    <description></description>
-   <name>button_Masuk</name>
+   <name>button_Ya, Hapus</name>
    <tag></tag>
-   <elementGuidId>5fccb6be-442e-4f0a-ac4d-840f87063736</elementGuidId>
+   <elementGuidId>81bc2a60-50e2-498c-a97b-431131ea8b78</elementGuidId>
    <selectorCollection>
       <entry>
-         <key>CSS</key>
-         <value>.btn-submit</value>
-      </entry>
-      <entry>
          <key>XPATH</key>
-         <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
+         <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' whitespace-nowrap ') and (@type = 'submit')]</value>
       </entry>
       <entry>
-         <key>BASIC</key>
-         <value>//*[@type = 'submit' and (text() = 'Masuk' or . = 'Masuk')]</value>
+         <key>CSS</key>
+         <value>.whitespace-nowrap[type=&quot;submit&quot;]</value>
       </entry>
    </selectorCollection>
    <selectorMethod>XPATH</selectorMethod>
    <smartLocatorCollection>
       <entry>
          <key>SMART_LOCATOR</key>
-         <value>internal:role=button[name=&quot;Masuk&quot;i]</value>
+         <value>internal:role=button[name=&quot;Ya, Hapus&quot;i]</value>
       </entry>
    </smartLocatorCollection>
    <smartLocatorEnabled>false</smartLocatorEnabled>
@@ -33,7 +29,7 @@
       <name>tag</name>
       <type>Main</type>
       <value>button</value>
-      <webElementGuid>2bf615fe-f2e3-44a6-8d0d-7eb5b61efd26</webElementGuid>
+      <webElementGuid>c9d56ba7-ecc0-49aa-95d4-e8e0c1c6e179</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
@@ -41,54 +37,60 @@
       <name>type</name>
       <type>Main</type>
       <value>submit</value>
-      <webElementGuid>5aee5b0a-1eea-4426-9788-eded1d37dc3a</webElementGuid>
+      <webElementGuid>3bafb2cc-7d8e-46c4-97d3-6e0f223ef88f</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>class</name>
       <type>Main</type>
-      <value>btn-submit</value>
-      <webElementGuid>3bd3ab40-e8ae-4717-b62e-61091d36947d</webElementGuid>
+      <value>w-full px-6 py-3.5 text-[15px] font-bold text-white bg-[#EF4444] rounded-2xl hover:bg-red-600 transition-all shadow-[0_8px_20px_-6px_rgba(239,68,68,0.5)] whitespace-nowrap</value>
+      <webElementGuid>f2588fc4-b802-4375-8b61-383110802311</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
       <matchCondition>equals</matchCondition>
       <name>text</name>
       <type>Main</type>
-      <value>Masuk</value>
-      <webElementGuid>e9480f75-8ec5-414f-b08e-0ed18ccbbae2</webElementGuid>
+      <value>
+                            Ya, Hapus
+                        </value>
+      <webElementGuid>0a55337c-2201-4376-8422-e64f27c57854</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>parent</name>
       <type>Main</type>
-      <value>md5.v1-2e1b7bb3e5996da50367ea48e1ca975b</value>
-      <webElementGuid>0cf3c43e-f4b4-4f77-bd42-2846e18cb342</webElementGuid>
+      <value>md5.v1-aff9597fbc0a4344674608be511f0602</value>
+      <webElementGuid>494c66e8-bfd1-4598-8af6-7e899fb0eaf0</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath</name>
       <type>Main</type>
-      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
-      <webElementGuid>9905853d-de9a-4a44-b2ab-1077104c3b23</webElementGuid>
+      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' whitespace-nowrap ') and (@type = 'submit')]</value>
+      <webElementGuid>dddf31c4-cc71-407f-bd89-69cc07ae6169</webElementGuid>
    </webElementProperties>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:attributes</name>
       <type>Main</type>
-      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
-      <webElementGuid>2686d556-023a-46ce-931f-36aa3deefbb1</webElementGuid>
+      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' whitespace-nowrap ') and (@type = 'submit')]</value>
+      <webElementGuid>6c66c130-db8f-426b-ac4c-61d58e79013a</webElementGuid>
    </webElementXpaths>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:customAttributes</name>
       <type>Main</type>
-      <value>//button[@type = 'submit' and (text() = 'Masuk' or . = 'Masuk')]</value>
-      <webElementGuid>ac4ff52f-1875-44f2-a910-cc668e73a31b</webElementGuid>
+      <value>//button[@type = 'submit' and (text() = '
+                            Ya, Hapus
+                        ' or . = '
+                            Ya, Hapus
+                        ')]</value>
+      <webElementGuid>04aefdf0-4c52-4f7c-9e42-4674a6e4d1f8</webElementGuid>
    </webElementXpaths>
 </WebElementEntity>

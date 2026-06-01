@@ -1,46 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <WebElementEntity>
    <description></description>
-   <name>div_Welcome back, Super Admin</name>
+   <name>div_Review deleted from MongoDB successfully</name>
    <tag></tag>
-   <elementGuidId>7c636bdc-8ac6-44b5-ae7f-62174e35b443</elementGuidId>
+   <elementGuidId>18832996-eb27-4351-856a-98ed27f59904</elementGuidId>
    <selectorCollection>
-      <entry>
-         <key>CSS</key>
-         <value>div.rounded-lg.border div.flex</value>
-      </entry>
       <entry>
          <key>XPATH</key>
          <value>//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' rounded-lg ') and contains(concat(' ', normalize-space(@class), ' '), ' border ')]//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' flex ')]</value>
       </entry>
       <entry>
-         <key>BASIC</key>
-         <value>//*[(text() = '
-                                    
-                                        
-                                            
-                                        
-                                    
-                                    
-                                        Welcome back, Super Admin
-                                    
-                                ' or . = '
-                                    
-                                        
-                                            
-                                        
-                                    
-                                    
-                                        Welcome back, Super Admin
-                                    
-                                ')]</value>
+         <key>CSS</key>
+         <value>div.rounded-lg.border div.flex</value>
       </entry>
    </selectorCollection>
    <selectorMethod>XPATH</selectorMethod>
    <smartLocatorCollection>
       <entry>
          <key>SMART_LOCATOR</key>
-         <value>#page-content div >> internal:has-text=&quot;Welcome back, Super Admin&quot;i >> nth=1</value>
+         <value>#page-content div >> internal:has-text=&quot;Review deleted from MongoDB successfully&quot;i >> nth=1</value>
       </entry>
    </smartLocatorCollection>
    <smartLocatorEnabled>false</smartLocatorEnabled>
@@ -51,7 +29,7 @@
       <name>tag</name>
       <type>Main</type>
       <value>div</value>
-      <webElementGuid>cdae8c15-a0f1-4ae4-9583-a8d4ac66858e</webElementGuid>
+      <webElementGuid>dc6fbe3f-bbae-4728-904f-12edaf402b82</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
@@ -59,7 +37,7 @@
       <name>class</name>
       <type>Main</type>
       <value>flex</value>
-      <webElementGuid>ad8c01ac-42f4-422a-9e3e-c078f6d42d8a</webElementGuid>
+      <webElementGuid>66f83392-7cab-416a-841b-7764457a2911</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
@@ -73,10 +51,10 @@
                                         
                                     
                                     
-                                        Welcome back, Super Admin
+                                        Review deleted from MongoDB successfully
                                     
                                 </value>
-      <webElementGuid>11883140-615d-4f08-9921-b6b0a5a00685</webElementGuid>
+      <webElementGuid>cad2b7b0-b4d2-4da9-a69a-03b9439f26fb</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
@@ -84,7 +62,7 @@
       <name>parent</name>
       <type>Main</type>
       <value>md5.v1-b7cdec01dca882fe6c7b85ac827f1265</value>
-      <webElementGuid>2d373917-8ba6-4d36-80a7-fcd0b5c77b04</webElementGuid>
+      <webElementGuid>ec6ad465-e2b0-4ea9-a19b-6fd117248630</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
@@ -92,7 +70,7 @@
       <name>xpath</name>
       <type>Main</type>
       <value>//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' rounded-lg ') and contains(concat(' ', normalize-space(@class), ' '), ' border ')]//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' flex ')]</value>
-      <webElementGuid>4702a14d-43b5-47a2-bf9b-fc73ac69525e</webElementGuid>
+      <webElementGuid>014dfa98-e67b-4291-a1f0-f469de62f6fa</webElementGuid>
    </webElementProperties>
    <webElementXpaths>
       <isSelected>false</isSelected>
@@ -100,7 +78,7 @@
       <name>xpath:attributes</name>
       <type>Main</type>
       <value>//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' rounded-lg ') and contains(concat(' ', normalize-space(@class), ' '), ' border ')]//div[@class and contains(concat(' ', normalize-space(@class), ' '), ' flex ')]</value>
-      <webElementGuid>db433ae8-193f-475a-938b-45c6b03a8476</webElementGuid>
+      <webElementGuid>97541316-85d4-4374-ba83-870d962ad57f</webElementGuid>
    </webElementXpaths>
    <webElementXpaths>
       <isSelected>false</isSelected>
@@ -114,7 +92,7 @@
                                         
                                     
                                     
-                                        Welcome back, Super Admin
+                                        Review deleted from MongoDB successfully
                                     
                                 ' or . = '
                                     
@@ -123,9 +101,9 @@
                                         
                                     
                                     
-                                        Welcome back, Super Admin
+                                        Review deleted from MongoDB successfully
                                     
                                 ')]</value>
-      <webElementGuid>b3cd5b42-8f37-444b-8f09-ba2a5a7b6aea</webElementGuid>
+      <webElementGuid>6bb62e4e-89b2-474a-81e1-138f4f3c370e</webElementGuid>
    </webElementXpaths>
 </WebElementEntity>

@@ -1,28 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <WebElementEntity>
    <description></description>
-   <name>button_Masuk</name>
+   <name>div_Email</name>
    <tag></tag>
-   <elementGuidId>5fccb6be-442e-4f0a-ac4d-840f87063736</elementGuidId>
+   <elementGuidId>614abef9-6f4d-4821-9f7b-f0ff86a33956</elementGuidId>
    <selectorCollection>
       <entry>
-         <key>CSS</key>
-         <value>.btn-submit</value>
-      </entry>
-      <entry>
          <key>XPATH</key>
-         <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
+         <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' form-group ') and (position() = 2)]</value>
       </entry>
       <entry>
-         <key>BASIC</key>
-         <value>//*[@type = 'submit' and (text() = 'Masuk' or . = 'Masuk')]</value>
+         <key>CSS</key>
+         <value>.form-group:nth-child(2)</value>
       </entry>
    </selectorCollection>
    <selectorMethod>XPATH</selectorMethod>
    <smartLocatorCollection>
       <entry>
          <key>SMART_LOCATOR</key>
-         <value>internal:role=button[name=&quot;Masuk&quot;i]</value>
+         <value>form div >> internal:has-text=&quot;Email&quot;i</value>
       </entry>
    </smartLocatorCollection>
    <smartLocatorEnabled>false</smartLocatorEnabled>
@@ -32,63 +28,64 @@
       <matchCondition>equals</matchCondition>
       <name>tag</name>
       <type>Main</type>
-      <value>button</value>
-      <webElementGuid>2bf615fe-f2e3-44a6-8d0d-7eb5b61efd26</webElementGuid>
-   </webElementProperties>
-   <webElementProperties>
-      <isSelected>true</isSelected>
-      <matchCondition>equals</matchCondition>
-      <name>type</name>
-      <type>Main</type>
-      <value>submit</value>
-      <webElementGuid>5aee5b0a-1eea-4426-9788-eded1d37dc3a</webElementGuid>
+      <value>div</value>
+      <webElementGuid>42da43c8-979c-4731-a922-1ee1babf6a04</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>class</name>
       <type>Main</type>
-      <value>btn-submit</value>
-      <webElementGuid>3bd3ab40-e8ae-4717-b62e-61091d36947d</webElementGuid>
+      <value>form-group</value>
+      <webElementGuid>8d1070de-5456-44d7-a1ff-024ba7e1ae24</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
       <matchCondition>equals</matchCondition>
       <name>text</name>
       <type>Main</type>
-      <value>Masuk</value>
-      <webElementGuid>e9480f75-8ec5-414f-b08e-0ed18ccbbae2</webElementGuid>
+      <value>
+                            Email
+                            
+                                                    </value>
+      <webElementGuid>fbf78acb-a576-4e29-b6cb-0ec46d22b85a</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>parent</name>
       <type>Main</type>
-      <value>md5.v1-2e1b7bb3e5996da50367ea48e1ca975b</value>
-      <webElementGuid>0cf3c43e-f4b4-4f77-bd42-2846e18cb342</webElementGuid>
+      <value>md5.v1-bc32af0f1ba09b391d9b5b5c011b96d0</value>
+      <webElementGuid>f74b8bc6-92a9-4f57-a55c-b24b785ee839</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath</name>
       <type>Main</type>
-      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
-      <webElementGuid>9905853d-de9a-4a44-b2ab-1077104c3b23</webElementGuid>
+      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' form-group ') and (position() = 2)]</value>
+      <webElementGuid>945a2ad5-2443-4dfc-8797-99bc92c524cd</webElementGuid>
    </webElementProperties>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:attributes</name>
       <type>Main</type>
-      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' btn-submit ')]</value>
-      <webElementGuid>2686d556-023a-46ce-931f-36aa3deefbb1</webElementGuid>
+      <value>//*[@class and contains(concat(' ', normalize-space(@class), ' '), ' form-group ') and (position() = 2)]</value>
+      <webElementGuid>35b0652d-3172-40f8-b0a8-6eed6fe672f2</webElementGuid>
    </webElementXpaths>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:customAttributes</name>
       <type>Main</type>
-      <value>//button[@type = 'submit' and (text() = 'Masuk' or . = 'Masuk')]</value>
-      <webElementGuid>ac4ff52f-1875-44f2-a910-cc668e73a31b</webElementGuid>
+      <value>//div[(text() = '
+                            Email
+                            
+                                                    ' or . = '
+                            Email
+                            
+                                                    ')]</value>
+      <webElementGuid>5a8ac597-13b6-4967-8225-9a911f30e5fc</webElementGuid>
    </webElementXpaths>
 </WebElementEntity>

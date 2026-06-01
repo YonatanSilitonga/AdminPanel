@@ -119,11 +119,7 @@ class BaseAdminController extends Controller
         
         if ($cloudName) {
             try {
-<<<<<<< HEAD
                 // Use the uploadApi() method for the modern Cloudinary SDK
-=======
-                // Use the simpler upload() method which is more robust in this package
->>>>>>> c877ab79b93880db5dabcb4655b2ab956c1d3c35
                 $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
                     'folder'        => 'smarttourism/' . trim($path, '/'),
                     'resource_type' => 'image',
@@ -249,7 +245,7 @@ class BaseAdminController extends Controller
                     'pending_reviews'    => \App\Models\MongoDB\MongoReview::where('status', 'pending')->count(),
                     'pending_reports'    => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
                     'total_reviews'      => \App\Models\MongoDB\MongoReview::count(),
-                    'total_facilities'   => DB::table('fasilitas_umum')->count(),
+                    'total_facilities'   => \App\Models\MongoDB\MongoFasilitasUmum::count(),
                 ];
             } catch (\Exception $e) {
                 return [

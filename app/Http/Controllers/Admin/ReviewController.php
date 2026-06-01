@@ -31,10 +31,16 @@ class ReviewController extends BaseAdminController
                 $query->where('rating', (int)$request->rating);
             }
 
-            // Search in review text
+            // Search in review text, user ID, or destination name
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where('review', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('review', 'like', "%{$search}%")
+                      ->orWhere('user_id', 'like', "%{$search}%")
+                      ->orWhereHas('destination', function ($destQuery) use ($search) {
+                          $destQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
             }
 
             // Pagination
@@ -366,7 +372,13 @@ class ReviewController extends BaseAdminController
 
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where('review', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('review', 'like', "%{$search}%")
+                      ->orWhere('user_id', 'like', "%{$search}%")
+                      ->orWhereHas('destination', function ($destQuery) use ($search) {
+                          $destQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
             }
 
             $reviews = $query->orderBy('created_at', 'desc')->get();

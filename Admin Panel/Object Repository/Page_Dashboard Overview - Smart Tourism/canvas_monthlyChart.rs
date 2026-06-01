@@ -1,28 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <WebElementEntity>
    <description></description>
-   <name>input_admintobatourism.id</name>
+   <name>canvas_monthlyChart</name>
    <tag></tag>
-   <elementGuidId>79353836-7fd3-4c3b-a97c-4204b831e818</elementGuidId>
+   <elementGuidId>4a6d3c3a-39cb-4f62-95cf-9ec2acba80c4</elementGuidId>
    <selectorCollection>
       <entry>
          <key>CSS</key>
-         <value>#email</value>
+         <value>#monthlyChart</value>
       </entry>
       <entry>
          <key>XPATH</key>
-         <value>//*[@id = 'email']</value>
-      </entry>
-      <entry>
-         <key>BASIC</key>
-         <value>//*[@type = 'email' and @id = 'email' and @name = 'email' and @placeholder = 'admin@tobatourism.id']</value>
+         <value>//*[@id = 'monthlyChart']</value>
       </entry>
    </selectorCollection>
    <selectorMethod>XPATH</selectorMethod>
    <smartLocatorCollection>
       <entry>
          <key>SMART_LOCATOR</key>
-         <value>internal:attr=[placeholder=&quot;admin@tobatourism.id&quot;i]</value>
+         <value>internal:text=&quot;JunJulAugSepOctNovDecJanFebMarAprMay&quot;i</value>
       </entry>
    </smartLocatorCollection>
    <smartLocatorEnabled>false</smartLocatorEnabled>
@@ -32,79 +28,71 @@
       <matchCondition>equals</matchCondition>
       <name>tag</name>
       <type>Main</type>
-      <value>input</value>
-      <webElementGuid>44429bfe-9e90-4264-bab2-3a12dcfaa213</webElementGuid>
-   </webElementProperties>
-   <webElementProperties>
-      <isSelected>true</isSelected>
-      <matchCondition>equals</matchCondition>
-      <name>type</name>
-      <type>Main</type>
-      <value>email</value>
-      <webElementGuid>688472a0-5724-4250-8445-2681f06ee780</webElementGuid>
+      <value>canvas</value>
+      <webElementGuid>c099e53c-8c92-42cc-abae-b7b4814eaa05</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
       <matchCondition>equals</matchCondition>
       <name>id</name>
       <type>Main</type>
-      <value>email</value>
-      <webElementGuid>b79201d0-c412-436b-a3b6-485dfcd6bd45</webElementGuid>
-   </webElementProperties>
-   <webElementProperties>
-      <isSelected>true</isSelected>
-      <matchCondition>equals</matchCondition>
-      <name>name</name>
-      <type>Main</type>
-      <value>email</value>
-      <webElementGuid>2730c6ed-d202-4ec4-a401-38ba5d885c9b</webElementGuid>
+      <value>monthlyChart</value>
+      <webElementGuid>38286d19-6dd7-4211-9aa8-f2fedec15f96</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
-      <name>class</name>
+      <name>width</name>
       <type>Main</type>
-      <value>form-input </value>
-      <webElementGuid>afd71723-1e2d-49cc-b43b-819a8b33efcf</webElementGuid>
+      <value>927</value>
+      <webElementGuid>d0fae484-dd08-4394-9144-7664c6c5a818</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>height</name>
+      <type>Main</type>
+      <value>315</value>
+      <webElementGuid>7da715f4-8779-4c93-9a1a-cd56637114d9</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>true</isSelected>
       <matchCondition>equals</matchCondition>
-      <name>placeholder</name>
+      <name>text</name>
       <type>Main</type>
-      <value>admin@tobatourism.id</value>
-      <webElementGuid>fa5db6b1-c4c9-43c9-8932-ed97f0517024</webElementGuid>
+      <value>JunJulAugSepOctNovDecJanFebMarAprMay</value>
+      <webElementGuid>c3e9e6bf-712e-400b-a532-9662d8a35fd6</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>parent</name>
       <type>Main</type>
-      <value>md5.v1-5b9ce64e1b01ab27ccfccd2252edf06f</value>
-      <webElementGuid>fb2712df-34e5-43d9-9f90-a3cd4459dc1e</webElementGuid>
+      <value>md5.v1-18f9ae7337ab5c68a92936fd40752b42</value>
+      <webElementGuid>766ffa78-42f0-4699-843d-a1d7688851c3</webElementGuid>
    </webElementProperties>
    <webElementProperties>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath</name>
       <type>Main</type>
-      <value>//*[@id = 'email']</value>
-      <webElementGuid>22b23b3c-0c75-4c6f-9e57-ecacd5671642</webElementGuid>
+      <value>//*[@id = 'monthlyChart']</value>
+      <webElementGuid>28d37b08-aacd-45d6-bcfa-47f8417e5cbb</webElementGuid>
    </webElementProperties>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:attributes</name>
       <type>Main</type>
-      <value>//*[@id = 'email']</value>
-      <webElementGuid>00d24206-8cb0-42bb-942d-0f70935b55ef</webElementGuid>
+      <value>//*[@id = 'monthlyChart']</value>
+      <webElementGuid>dc58d683-d135-4973-a988-068014c648f9</webElementGuid>
    </webElementXpaths>
    <webElementXpaths>
       <isSelected>false</isSelected>
       <matchCondition>equals</matchCondition>
       <name>xpath:customAttributes</name>
       <type>Main</type>
-      <value>//input[@type = 'email' and @id = 'email' and @name = 'email' and @placeholder = 'admin@tobatourism.id']</value>
-      <webElementGuid>37da910a-09e1-4115-a5f7-50c4fb8de240</webElementGuid>
+      <value>//canvas[@id = 'monthlyChart' and (text() = 'JunJulAugSepOctNovDecJanFebMarAprMay' or . = 'JunJulAugSepOctNovDecJanFebMarAprMay')]</value>
+      <webElementGuid>cefc9df5-cfbc-4225-9817-1d26fee938fe</webElementGuid>
    </webElementXpaths>
 </WebElementEntity>

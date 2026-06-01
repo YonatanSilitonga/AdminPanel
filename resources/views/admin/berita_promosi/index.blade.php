@@ -15,11 +15,7 @@
 @endsection
 
 @section('page_actions')
-<<<<<<< HEAD
 <button @click="$dispatch('open-create-modal')" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
-=======
-<button type="button" onclick="window.dispatchEvent(new CustomEvent('open-create-modal'))" class="flex items-center gap-2 px-8 py-3 bg-sidebar text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-sidebar/20">
->>>>>>> c877ab79b93880db5dabcb4655b2ab956c1d3c35
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
     Tambah Berita/Promosi
 </button>
@@ -224,30 +220,17 @@
             </table>
         </div>
 
-<<<<<<< HEAD
-<!-- Tambah Modal -->
-<div x-data="{ show: {{ $errors->any() && !old('_method') ? 'true' : 'false' }} }" @open-create-modal.window="show = true" x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
-
-        <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div class="flex justify-between items-center mb-8 px-8 pt-6 pb-4 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900">Tambah Berita/Promosi</h3>
-                <button @click="show = false" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-=======
         @if($beritaPromosi->hasPages())
         <div class="px-10 py-6 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
             <div class="text-sm text-gray-500 font-medium">
                 Menampilkan {{ $beritaPromosi->firstItem() }} - {{ $beritaPromosi->lastItem() }} dari {{ $beritaPromosi->total() }} data
->>>>>>> c877ab79b93880db5dabcb4655b2ab956c1d3c35
             </div>
             <div>
                 {{ $beritaPromosi->links('vendor.pagination.tailwind') }}
             </div>
         </div>
         @endif
+
     </div>
 
     <!-- Tambah Modal -->
