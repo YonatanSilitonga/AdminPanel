@@ -392,11 +392,13 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach(array_slice($keywordSummary['overall']['top_keywords'], 0, 10) as $keyword => $count)
-                    <tr>
-                        <td>{{ ucwords($keyword) }}</td>
-                        <td class="center">{{ $count }} kali</td>
-                    </tr>
+                @foreach(array_slice($keywordSummary['overall']['top_keywords'], 0, 10) as $item)
+                    @if(is_array($item) && !empty($item['keyword']))
+                        <tr>
+                            <td>{{ ucwords($item['keyword']) }}</td>
+                            <td class="center">{{ $item['count'] ?? 0 }} kali</td>
+                        </tr>
+                    @endif
                 @endforeach
             </tbody>
         </table>

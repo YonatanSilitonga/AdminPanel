@@ -46,6 +46,26 @@ class MongoReview extends Model
     }
 
     /**
+     * Get the user associated with this review
+     */
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id', '_id');
+    }
+
+    /**
+     * Get reviewer name attribute
+     */
+    public function getReviewerNameAttribute(): string
+    {
+        if ($this->relationLoaded('user') && $this->user) {
+            return $this->user->name ?? ($this->user->firstName ? $this->user->firstName . ' ' . $this->user->lastName : 'Anonim');
+        }
+        $user = $this->user;
+        return $user ? ($user->name ?? ($user->firstName ? $user->firstName . ' ' . $user->lastName : 'Anonim')) : ($this->user_id ?? 'Anonim');
+    }
+
+    /**
      * Override toArray to always include sentiment fields even if null
      */
     public function toArray()
@@ -59,6 +79,7 @@ class MongoReview extends Model
         $array['sentiment_scores'] = $this->sentiment_scores ?? null;
         $array['sentiment_analyzed_at'] = $this->sentiment_analyzed_at ?? null;
         $array['sentiment_model_version'] = $this->sentiment_model_version ?? null;
+        $array['reviewer_name'] = $this->reviewer_name;
 
         // Include destination relationship
         if ($this->relationLoaded('destination') && $this->destination) {

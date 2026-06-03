@@ -17,7 +17,7 @@ class ReportController extends BaseAdminController
     {
         Log::info('Report index accessed', ['request' => $request->all()]);
         try {
-            $query = MongoReport::query();
+            $query = MongoReport::with(['destination', 'user']);
 
             // Filter by status
             if ($request->filled('status')) {
@@ -65,10 +65,13 @@ class ReportController extends BaseAdminController
     public function show(string $id, Request $request)
     {
         try {
-            $report = MongoReport::findOrFail($id);
+            $report = MongoReport::with(['destination', 'user'])->findOrFail($id);
 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json($report->append('all_image_urls'));
+                $report->append('all_image_urls');
+                $reportData = $report->toArray();
+                $reportData['user_is_registered'] = $report->user && !empty($report->user->password) && (!empty($report->user->email) || !empty($report->user->name));
+                return response()->json($reportData);
             }
 
             return view('admin.reports.show', ['report' => $report]);
@@ -241,7 +244,7 @@ class ReportController extends BaseAdminController
             $callback = function() use ($reports) {
                 $file = fopen('php://output', 'w');
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
-                fputcsv($file, ['ID', 'Pelapor', 'Target/Destinasi', 'Alasan', 'Deskripsi', 'Status', 'Tanggal'], ';');
+                fputcsv($file, ['ID', 'Pelapor', 'Tipe Pelapor', 'Target/Destinasi', 'Alasan', 'Deskripsi', 'Status', 'Tanggal'], ';');
 
                 foreach ($reports as $report) {
                     // Extract Date
@@ -256,9 +259,12 @@ class ReportController extends BaseAdminController
                         $ts = null;
                     }
 
+                    $isRegistered = $report->user && !empty($report->user->password) && (!empty($report->user->email) || !empty($report->user->name));
+                    $userType = $isRegistered ? 'User' : 'Guest';
                     fputcsv($file, [
                         $report->_id,
-                        $report->user_id ?? 'Anonim',
+                        $report->reporter_name,
+                        $userType,
                         $report->destination?->name ?? 'Umum',
                         $report->reason ?? '-',
                         $report->description ?? '-',
@@ -284,7 +290,7 @@ class ReportController extends BaseAdminController
     public function printReport(Request $request)
     {
         try {
-            $query = MongoReport::query()->with('destination');
+            $query = MongoReport::with(['destination', 'user']);
 
             if ($request->filled('status')) {
                 $query->where('status', $request->status);

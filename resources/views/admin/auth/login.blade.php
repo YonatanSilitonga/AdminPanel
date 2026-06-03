@@ -474,7 +474,7 @@
                                 style="width: 16px; height: 16px; cursor: pointer; accent-color: #059669;"
                             >
                             <label for="remember" style="cursor: pointer; font-size: 0.82rem; color: rgba(255, 255, 255, 0.7); margin: 0;">
-                                Ingat saya (session berlaku 7 hari)
+                                Ingat saya (berlaku 7 hari)
                             </label>
                         </div>
 

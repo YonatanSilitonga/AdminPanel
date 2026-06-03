@@ -40,11 +40,9 @@ class MongoReport extends Model
         'destination_id' => 'string',
 
         'user_id' => 'string',
-        'image_paths' => 'array',
-        'image_urls' => 'array',
     ];
 
-    protected $appends = ['all_image_urls', 'image_url'];
+    protected $appends = ['all_image_urls', 'image_url', 'reporter_name'];
 
     /**
      * Get the destination associated with this report
@@ -52,6 +50,26 @@ class MongoReport extends Model
     public function destination()
     {
         return $this->belongsTo(MongoDestination::class, 'destination_id', '_id');
+    }
+
+    /**
+     * Get the user associated with this report
+     */
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id', '_id');
+    }
+
+    /**
+     * Get reporter name attribute
+     */
+    public function getReporterNameAttribute(): string
+    {
+        if ($this->relationLoaded('user') && $this->user) {
+            return $this->user->name ?? ($this->user->firstName ? $this->user->firstName . ' ' . $this->user->lastName : 'Anonim');
+        }
+        $user = $this->user;
+        return $user ? ($user->name ?? ($user->firstName ? $user->firstName . ' ' . $user->lastName : 'Anonim')) : ($this->user_id ?? 'Anonim');
     }
 
     /**

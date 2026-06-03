@@ -613,6 +613,7 @@ function trendingManager() {
                     });
                     const data = await res.json();
                     if (data.success) {
+                        localStorage.setItem('pending_success_toast', data.message || 'Urutan trending berhasil direset');
                         window.location.reload();
                     }
                 } catch (e) {

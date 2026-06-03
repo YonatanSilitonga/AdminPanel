@@ -142,6 +142,7 @@
             
             const result = await window.safeParseJSON(response);
             if (result && result.success) {
+                localStorage.setItem('pending_success_toast', result.message || 'Event berhasil diperbarui');
                 window.location.reload();
             } else {
                 alert(result?.message || 'Gagal memperbarui event');
@@ -205,6 +206,7 @@
             
             const result = await window.safeParseJSON(response);
             if (result && result.success) {
+                localStorage.setItem('pending_success_toast', result.message || 'Event baru berhasil dibuat');
                 window.location.reload();
             } else {
                 alert(result?.message || 'Gagal membuat event');

@@ -348,7 +348,7 @@
                     <tr>
                         <td class="center">{{ $index + 1 }}</td>
                         <td class="center">{{ $ts ? $ts->translatedFormat('d-m-Y H:i') : '-' }}</td>
-                        <td>{{ $report->user_id ?? 'Anonim' }}</td>
+                        <td>{{ $report->reporter_name }}</td>
                         <td>{{ $report->destination?->name ?? 'Umum / Lainnya' }}</td>
                         <td>{{ ucfirst(str_replace('_', ' ', $report->reason ?? '-')) }}</td>
                         <td>{{ $report->description ?? '-' }}</td>

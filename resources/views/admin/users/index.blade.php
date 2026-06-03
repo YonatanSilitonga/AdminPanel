@@ -88,10 +88,8 @@
             const result = await window.safeParseJSON(response);
             
             if (result.success) {
-                this.successMessage = result.message;
-                this.showDetailModal = false;
-                this.showSuccessModal = true;
-                setTimeout(() => window.location.reload(), 2000);
+                localStorage.setItem('pending_success_toast', result.message || 'Status akun pengguna berhasil diubah.');
+                window.location.reload();
             } else {
                 alert(result.message || 'Gagal mengubah status akun.');
             }
@@ -216,9 +214,9 @@
             <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
             <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
                 <!-- Cari Pengguna -->
-                <div class="space-y-2">
+                <div class="space-y-2 sm:col-span-6 lg:col-span-3">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                         Cari Pengguna
                         <div class="relative group cursor-pointer inline-flex items-center">
@@ -248,7 +246,7 @@
                 </div>
 
                 <!-- Status -->
-                <div class="space-y-2">
+                <div class="space-y-2 sm:col-span-6 lg:col-span-2">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                         Status Akun
                         <div class="relative group cursor-pointer inline-flex items-center">
@@ -277,7 +275,7 @@
                 </div>
 
                 <!-- Rentang Tanggal Bergabung -->
-                <div class="space-y-2">
+                <div class="space-y-2 sm:col-span-12 md:col-span-8 lg:col-span-4">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                         Tanggal Bergabung
                         <div class="relative group cursor-pointer inline-flex items-center">
@@ -299,15 +297,15 @@
                     </label>
                     <div class="flex items-center gap-2">
                         <input type="date" name="start_date" value="{{ request('start_date') }}" onchange="this.form.submit()" 
-                            class="w-1/2 px-2 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[13px] font-medium text-gray-500 shadow-sm focus:border-[#066466] transition-all">
-                        <span class="text-xs text-gray-400 font-bold">s/d</span>
+                            class="flex-1 min-w-0 px-3 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[13px] font-medium text-gray-500 shadow-sm focus:border-[#066466] transition-all">
+                        <span class="text-xs text-gray-400 font-bold flex-shrink-0">s/d</span>
                         <input type="date" name="end_date" value="{{ request('end_date') }}" onchange="this.form.submit()" 
-                            class="w-1/2 px-2 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[13px] font-medium text-gray-500 shadow-sm focus:border-[#066466] transition-all">
+                            class="flex-1 min-w-0 px-3 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[13px] font-medium text-gray-500 shadow-sm focus:border-[#066466] transition-all">
                     </div>
                 </div>
 
                 <!-- Tampilkan & Reset -->
-                <div class="space-y-2">
+                <div class="space-y-2 sm:col-span-12 md:col-span-4 lg:col-span-3">
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                         Tampilkan
                         <div class="relative group cursor-pointer inline-flex items-center">
@@ -329,7 +327,7 @@
                     </label>
                     <div class="flex items-center gap-2">
                         <select name="per_page" onchange="this.form.submit()" 
-                            class="flex-1 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                            class="flex-1 min-w-0 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
                             @foreach([10, 20, 50, 100] as $val)
                                 <option value="{{ $val }}" @selected(request('per_page', 10) == $val)>{{ $val }}</option>
                             @endforeach

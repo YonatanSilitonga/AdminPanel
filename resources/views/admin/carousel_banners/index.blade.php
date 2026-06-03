@@ -135,6 +135,7 @@
                             });
                             const result = await window.safeParseJSON(response);
                             if (result.success) {
+                                localStorage.setItem('pending_success_toast', result.message || 'Pengaturan berhasil disimpan');
                                 window.location.reload();
                             } else {
                                 window.showAlert(result.message || 'Gagal menyimpan pengaturan', 'Gagal', 'error');
@@ -1079,6 +1080,7 @@ function carouselManager() {
                 
                 const result = await window.safeParseJSON(response);
                 if (result.success) {
+                    localStorage.setItem('pending_success_toast', result.message || 'Urutan carousel berhasil disimpan');
                     window.location.reload();
                 } else {
                     window.showAlert('Gagal menyimpan urutan: ' + result.message, 'Gagal', 'error');
@@ -1222,6 +1224,7 @@ function carouselManager() {
                 const result = await window.safeParseJSON(response);
 
                 if (result.success) {
+                    localStorage.setItem('pending_success_toast', result.message || 'Slide carousel berhasil diperbarui');
                     window.location.reload();
                 } else {
                     window.showAlert(result.message || 'Gagal memperbarui banner', 'Gagal', 'error');
@@ -1252,6 +1255,7 @@ function carouselManager() {
                 const result = await window.safeParseJSON(response);
 
                 if (result.success) {
+                    localStorage.setItem('pending_success_toast', result.message || 'Slide carousel berhasil ditambahkan');
                     window.location.reload();
                 } else {
                     window.showAlert(result.message || 'Gagal membuat banner', 'Gagal', 'error');

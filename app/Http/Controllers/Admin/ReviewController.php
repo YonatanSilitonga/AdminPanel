@@ -24,7 +24,7 @@ class ReviewController extends BaseAdminController
     public function index(Request $request)
     {
         try {
-            $query = MongoReview::with('destination');
+            $query = MongoReview::with(['destination', 'user']);
 
             // Filter by rating
             if ($request->filled('rating')) {
@@ -118,10 +118,39 @@ class ReviewController extends BaseAdminController
 
             if ($cachedSummary && ($cachedSummary['success'] ?? false)) {
                 $summaryData = $cachedSummary['data'] ?? [];
-                $keywordSummary = $summaryData['keyword_summary'] ?? $keywordSummary;
+                $keywordSummary = $this->enrichKeywordSummaryWithDestinationNames($summaryData['keyword_summary'] ?? $keywordSummary);
                 $predictionSummary = $summaryData['prediction_summary'] ?? [];
                 $keywordModelVersion = $summaryData['model_version'] ?? null;
             }
+
+            // Calculate trends for the last 6 months
+            $trendsCacheKey = 'review_trends_6_months';
+            $sentimentTrends = \Illuminate\Support\Facades\Cache::remember($trendsCacheKey, now()->addMinutes(5), function () {
+                $trends = [];
+                for ($i = 5; $i >= 0; $i--) {
+                    $month = now()->subMonths($i);
+                    $startDate = $month->copy()->startOfMonth();
+                    $endDate = $month->copy()->endOfMonth();
+                    
+                    $positive = MongoReview::whereBetween('created_at', [$startDate, $endDate])
+                        ->where('sentiment_label', 'positive')
+                        ->count();
+                    $neutral = MongoReview::whereBetween('created_at', [$startDate, $endDate])
+                        ->where('sentiment_label', 'neutral')
+                        ->count();
+                    $negative = MongoReview::whereBetween('created_at', [$startDate, $endDate])
+                        ->where('sentiment_label', 'negative')
+                        ->count();
+                        
+                    $trends[] = [
+                        'month' => $month->translatedFormat('M Y'),
+                        'positive' => $positive,
+                        'neutral' => $neutral,
+                        'negative' => $negative,
+                    ];
+                }
+                return $trends;
+            });
 
             return view('admin.reviews.index', [
                 'reviews' => $reviews,
@@ -131,6 +160,7 @@ class ReviewController extends BaseAdminController
                 'keywordSummary' => $keywordSummary,
                 'predictionSummary' => $predictionSummary,
                 'keywordModelVersion' => $keywordModelVersion,
+                'sentimentTrends' => $sentimentTrends,
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading reviews from Mongo: ' . $e->getMessage());
@@ -142,11 +172,13 @@ class ReviewController extends BaseAdminController
     {
         try {
             // Load review with relationship
-            $review = MongoReview::with('destination')->findOrFail($id);
+            $review = MongoReview::with(['destination', 'user'])->findOrFail($id);
 
             // Handle AJAX/JSON requests
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json($review);
+                $reviewData = $review->toArray();
+                $reviewData['user_is_registered'] = $review->user && !empty($review->user->password) && (!empty($review->user->email) || !empty($review->user->name));
+                return response()->json($reviewData);
             }
 
             // Handle regular requests
@@ -212,6 +244,8 @@ class ReviewController extends BaseAdminController
                 'sentiment_model_version' => $normalized['model_version'],
                 'sentiment_analyzed_at' => now(),
             ]);
+
+            $this->clearReviewCaches();
 
             $this->logActivity('analyze_review_sentiment', 'review', $id, null, [
                 'sentiment_label' => $result['label'] ?? 'neutral',
@@ -319,6 +353,10 @@ class ReviewController extends BaseAdminController
                 }
             }
 
+            if ($analyzed > 0) {
+                $this->clearReviewCaches();
+            }
+
             $this->logActivity('batch_analyze_review_sentiment', 'review', null, null, [
                 'requested_limit' => $limit,
                 'analyzed' => $analyzed,
@@ -354,6 +392,8 @@ class ReviewController extends BaseAdminController
             $review = MongoReview::findOrFail($id);
             $review->delete();
 
+            $this->clearReviewCaches();
+
             $this->logActivity('delete_review_mongo', 'review', $id);
 
             return redirect()
@@ -371,7 +411,7 @@ class ReviewController extends BaseAdminController
     public function export(Request $request)
     {
         try {
-            $query = MongoReview::with('destination');
+            $query = MongoReview::with(['destination', 'user']);
 
             if ($request->filled('rating')) {
                 $query->where('rating', (int)$request->rating);
@@ -394,12 +434,15 @@ class ReviewController extends BaseAdminController
             $callback = function() use ($reviews) {
                 $file = fopen('php://output', 'w');
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
-                fputcsv($file, ['ID', 'User', 'Destinasi', 'Rating', 'Ulasan', 'Sentimen', 'Confidence', 'Tanggal'], ';');
+                fputcsv($file, ['ID', 'User', 'Tipe User', 'Destinasi', 'Rating', 'Ulasan', 'Sentimen', 'Confidence', 'Tanggal'], ';');
 
                 foreach ($reviews as $review) {
+                    $isRegistered = $review->user && !empty($review->user->password) && (!empty($review->user->email) || !empty($review->user->name));
+                    $userType = $isRegistered ? 'User' : 'Guest';
                     fputcsv($file, [
                         $review->_id,
-                        $review->user_id ?? 'Anonim',
+                        $review->reviewer_name,
+                        $userType,
                         $review->destination?->name ?? 'Umum',
                         $review->rating ?? 0,
                         $review->review ?? '-',
@@ -475,7 +518,7 @@ class ReviewController extends BaseAdminController
 
             if ($cachedSummary && ($cachedSummary['success'] ?? false)) {
                 $summaryData = $cachedSummary['data'] ?? [];
-                $keywordSummary = $summaryData['keyword_summary'] ?? $keywordSummary;
+                $keywordSummary = $this->enrichKeywordSummaryWithDestinationNames($summaryData['keyword_summary'] ?? $keywordSummary);
             }
 
             $instansi = $request->input('instansi', 'PEMERINTAH KABUPATEN TOBA/DINAS KEBUDAYAAN DAN PARIWISATA');
@@ -566,5 +609,47 @@ class ReviewController extends BaseAdminController
 
         $labelScore = (float) $scores[$label];
         return abs($confidence - $labelScore) <= 0.0001;
+    }
+
+    /**
+     * Enrich keyword summary with destination names from MongoDB
+     */
+    private function enrichKeywordSummaryWithDestinationNames(array $keywordSummary): array
+    {
+        if (!empty($keywordSummary['destinations']) && is_array($keywordSummary['destinations'])) {
+            $destIds = array_filter(array_map(fn($d) => $d['destination_id'] ?? null, $keywordSummary['destinations']));
+            if (!empty($destIds)) {
+                try {
+                    $destNames = \App\Models\MongoDB\MongoDestination::whereIn('_id', $destIds)
+                        ->get(['_id', 'name'])
+                        ->pluck('name', '_id')
+                        ->toArray();
+
+                    foreach ($keywordSummary['destinations'] as $key => $dest) {
+                        $id = $dest['destination_id'] ?? '';
+                        $name = $destNames[$id] ?? 'Destinasi Tidak Dikenal';
+                        $keywordSummary['destinations'][$key]['destination_name'] = $name;
+                        $keywordSummary['destinations'][$key]['name'] = $name;
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error enriching keyword summary destinations: ' . $e->getMessage());
+                }
+            }
+        }
+        return $keywordSummary;
+    }
+
+    /**
+     * Clear review statistics and keyword summary caches
+     */
+    private function clearReviewCaches(): void
+    {
+        try {
+            \Illuminate\Support\Facades\Cache::forget('review_stats_summary');
+            \Illuminate\Support\Facades\Cache::forget('review_keyword_summary_' . date('Y-m-d_H'));
+            \Illuminate\Support\Facades\Cache::forget('review_keyword_summary_' . date('Y-m-d_H', strtotime('-1 hour')));
+        } catch (\Exception $e) {
+            Log::error('Failed to clear review caches: ' . $e->getMessage());
+        }
     }
 }

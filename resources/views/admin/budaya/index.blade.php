@@ -175,6 +175,7 @@
             if (res.ok && result && result.success) {
                 this.saveStatus = 'success';
                 this.saveMessage = result.message || 'Perubahan berhasil disimpan.';
+                localStorage.setItem('pending_success_toast', this.saveMessage);
                 setTimeout(() => window.location.reload(), 650);
             } else { 
                 this.saveStatus = 'error';

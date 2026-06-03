@@ -220,6 +220,7 @@
             <thead>
                 <tr class="bg-white border-b border-gray-50">
                     <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Trip ID</th>
+                    <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Pengguna</th>
                     <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Durasi</th>
                     <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Preferensi Utama</th>
                     <th class="px-10 py-6 text-left text-[13px] font-bold text-gray-500 uppercase tracking-wider">Tgl Dibuat</th>
@@ -231,6 +232,21 @@
                     <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
                         <td class="px-10 py-6">
                             <span class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">#TRP-2024-{{ str_pad($logs->firstItem() + $index, 3, '0', STR_PAD_LEFT) }}</span>
+                        </td>
+                        <td class="px-10 py-6">
+                            @php
+                                $isRegistered = $log->user && !empty($log->user->password) && (!empty($log->user->email) || !empty($log->user->name));
+                            @endphp
+                            <div class="flex flex-col gap-1">
+                                <span class="text-sm font-bold text-gray-800">
+                                    {{ optional($log->behavior_data)['user_name'] ?? ($isRegistered ? ($log->user->name ?? 'User Terdaftar') : 'Tamu') }}
+                                </span>
+                                @if($isRegistered)
+                                    <span class="inline-flex items-center w-max px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">👤 User</span>
+                                @else
+                                    <span class="inline-flex items-center w-max px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">👥 Guest</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-10 py-6">
                             <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">

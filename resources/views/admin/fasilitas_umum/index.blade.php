@@ -1136,6 +1136,7 @@ function facilityManager() {
                 });
                 const result = await window.safeParseJSON(response);
                 if (result.success) {
+                    localStorage.setItem('pending_success_toast', result.message || 'Fasilitas umum berhasil ditambahkan');
                     window.location.reload();
                 } else {
                     alert(result.message || 'Gagal menambahkan fasilitas');
@@ -1178,6 +1179,7 @@ function facilityManager() {
                 });
                 const result = await window.safeParseJSON(response);
                 if (result.success) {
+                    localStorage.setItem('pending_success_toast', result.message || 'Fasilitas umum berhasil diperbarui');
                     window.location.reload();
                 } else {
                     alert(result.message || 'Gagal memperbarui fasilitas');

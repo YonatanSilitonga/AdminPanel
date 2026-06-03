@@ -151,9 +151,20 @@
             <h4 class="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-6">Konteks Pengguna</h4>
             
             <div class="space-y-6">
+                @php
+                    $isRegistered = $log->user && !empty($log->user->password) && (!empty($log->user->email) || !empty($log->user->name));
+                @endphp
+                <div>
+                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Tipe Pengguna</p>
+                    @if($isRegistered)
+                        <span class="inline-flex items-center px-3 py-1 bg-[#E6F6F2] text-[#00A884] text-[11px] font-bold rounded-lg uppercase tracking-wider border border-[#00A884]/10">👤 User Terdaftar</span>
+                    @else
+                        <span class="inline-flex items-center px-3 py-1 bg-gray-50 text-gray-500 text-[11px] font-bold rounded-lg uppercase tracking-wider border border-gray-100">👥 Guest / Tamu</span>
+                    @endif
+                </div>
                 <div>
                     <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Nama Pengguna</p>
-                    <p class="text-[15px] font-bold text-gray-800">{{ optional($log->behavior_data)['user_name'] ?? 'Guest User / Tamu' }}</p>
+                    <p class="text-[15px] font-bold text-gray-800">{{ optional($log->behavior_data)['user_name'] ?? ($isRegistered ? ($log->user->name ?? 'User Terdaftar') : 'Guest User / Tamu') }}</p>
                 </div>
                 <div>
                     <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">User ID</p>

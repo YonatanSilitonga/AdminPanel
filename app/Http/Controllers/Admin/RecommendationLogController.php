@@ -62,7 +62,7 @@ class RecommendationLogController extends BaseAdminController
                 : 0;
 
             // Trip planner logs (paginated)
-            $logs = MongoRecommendation::with('destination')
+            $logs = MongoRecommendation::with(['destination', 'user'])
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
 
@@ -122,7 +122,7 @@ class RecommendationLogController extends BaseAdminController
                     ->with('error', 'Rekomendasi tidak ditemukan');
             }
 
-            $log->load('destination');
+            $log->load(['destination', 'user']);
             return view('admin.recommendations.show', compact('log'));
 
         } catch (\Exception $e) {
@@ -138,7 +138,7 @@ class RecommendationLogController extends BaseAdminController
     public function export(Request $request)
     {
         try {
-            $logs = MongoRecommendation::with('destination')
+            $logs = MongoRecommendation::with(['destination', 'user'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -152,11 +152,16 @@ class RecommendationLogController extends BaseAdminController
             $callback = function() use ($logs) {
                 $file = fopen('php://output', 'w');
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
-                fputcsv($file, ['Trip ID', 'Destinasi', 'Skor Rekomendasi', 'Diklik', 'Tanggal'], ';');
+                fputcsv($file, ['Trip ID', 'Pengguna', 'Tipe Pengguna', 'Destinasi', 'Skor Rekomendasi', 'Diklik', 'Tanggal'], ';');
 
                 foreach ($logs as $index => $log) {
+                    $isRegistered = $log->user && !empty($log->user->password) && (!empty($log->user->email) || !empty($log->user->name));
+                    $userName = optional($log->behavior_data)['user_name'] ?? ($isRegistered ? ($log->user->name ?? 'User Terdaftar') : 'Tamu');
+                    $userType = $isRegistered ? 'User' : 'Guest';
                     fputcsv($file, [
                         '#TRP-2024-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
+                        $userName,
+                        $userType,
                         $log->destination?->name ?? 'N/A',
                         round($log->recommendation_score, 1),
                         $log->is_clicked ? 'Ya' : 'Tidak',

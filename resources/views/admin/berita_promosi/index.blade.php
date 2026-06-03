@@ -131,6 +131,7 @@
 
             const result = await window.safeParseJSON(response);
             if (result.success) {
+                localStorage.setItem('pending_success_toast', result.message || 'Berita/promosi berhasil ditambahkan');
                 window.location.reload();
             } else {
                 window.showAlert(result.message || 'Gagal menyimpan berita/promosi', 'Gagal', 'error');
@@ -167,6 +168,7 @@
 
             const result = await window.safeParseJSON(response);
             if (result.success) {
+                localStorage.setItem('pending_success_toast', result.message || 'Berita/promosi berhasil diperbarui');
                 window.location.reload();
             } else {
                 window.showAlert(result.message || 'Gagal memperbarui berita/promosi', 'Gagal', 'error');
@@ -467,7 +469,11 @@
                         <td class="px-10 py-6">
                             <div class="flex items-center gap-4">
                                 @if($item->thumbnail)
-                                    <img src="{{ image_url($item->thumbnail) }}" @click.stop="lightboxImage = '{{ image_url($item->thumbnail) }}'; showLightbox = true" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-100 cursor-pointer group-hover:scale-105 transition-transform" alt="" title="Klik untuk memperbesar">
+                                    @if(media_is_video($item->thumbnail))
+                                        <video src="{{ image_url($item->thumbnail) }}" @click.stop="openMediaLightbox('{{ image_url($item->thumbnail) }}', 'video')" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-100 cursor-pointer group-hover:scale-105 transition-transform" muted playsinline preload="metadata"></video>
+                                    @else
+                                        <img src="{{ image_url($item->thumbnail) }}" @click.stop="lightboxImage = '{{ image_url($item->thumbnail) }}'; showLightbox = true" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-100 cursor-pointer group-hover:scale-105 transition-transform" alt="" title="Klik untuk memperbesar">
+                                    @endif
                                 @else
                                     <div class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-300">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -617,9 +623,14 @@
                                     <label for="create_thumbnail" class="relative flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30 overflow-hidden">
                                         <template x-if="thumbPreview">
                                             <div class="absolute inset-0 w-full h-full bg-gray-100">
-                                                <img :src="thumbPreview" class="w-full h-full object-cover">
+                                                <template x-if="isVideoMedia(createFileName)">
+                                                    <video :src="thumbPreview" class="w-full h-full object-cover" muted playsinline></video>
+                                                </template>
+                                                <template x-if="!isVideoMedia(createFileName)">
+                                                    <img :src="thumbPreview" class="w-full h-full object-cover">
+                                                </template>
                                                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                                    <p class="text-white text-xs font-bold">Ganti Foto Utama</p>
+                                                    <p class="text-white text-xs font-bold">Ganti Foto/Video Utama</p>
                                                 </div>
                                             </div>
                                         </template>
@@ -628,8 +639,8 @@
                                                 <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                                     <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                                 </div>
-                                                <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Pilih foto utama'"></p>
-                                                <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 2MB)</p>
+                                                <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Pilih foto/video utama'"></p>
+                                                <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP, MP4, WebM (Maks. 50MB)</p>
                                             </div>
                                         </template>
                                     </label>
@@ -874,9 +885,14 @@
                                         <label for="edit_thumbnail" class="relative flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-[2rem] cursor-pointer hover:bg-gray-50 hover:border-sidebar/30 transition-all bg-gray-50/30 overflow-hidden">
                                             <template x-if="editThumbPreview">
                                                 <div class="absolute inset-0 w-full h-full bg-gray-100">
-                                                    <img :src="editThumbPreview" class="w-full h-full object-cover">
+                                                    <template x-if="isVideoMedia(editFileName)">
+                                                        <video :src="editThumbPreview" class="w-full h-full object-cover" muted playsinline></video>
+                                                    </template>
+                                                    <template x-if="!isVideoMedia(editFileName)">
+                                                        <img :src="editThumbPreview" class="w-full h-full object-cover">
+                                                    </template>
                                                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                                        <p class="text-white text-xs font-bold">Ganti Foto Utama</p>
+                                                        <p class="text-white text-xs font-bold">Ganti Foto/Video Utama</p>
                                                     </div>
                                                 </div>
                                             </template>
@@ -885,8 +901,8 @@
                                                     <div class="p-3 bg-white rounded-2xl shadow-sm mb-2 group-hover:scale-110 transition-transform">
                                                         <svg class="w-6 h-6 text-sidebar" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                                     </div>
-                                                    <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Pilih foto utama baru'"></p>
-                                                    <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Maks. 2MB)</p>
+                                                    <p class="text-sm font-bold text-gray-700" x-text="editFileName || 'Pilih foto/video utama baru'"></p>
+                                                    <p class="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP, MP4, WebM (Maks. 50MB)</p>
                                                 </div>
                                             </template>
                                         </label>

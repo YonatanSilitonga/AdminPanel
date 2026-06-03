@@ -292,7 +292,10 @@
                 body: formData
             });
             const result = await window.safeParseJSON(res);
-            if (result.success) { window.location.reload(); }
+            if (result.success) {
+                localStorage.setItem('pending_success_toast', result.message || 'Destinasi berhasil diperbarui');
+                window.location.reload();
+            }
             else { alert(result.message || 'Gagal menyimpan'); }
         } catch(e) {
             alert('Terjadi kesalahan');
@@ -1874,9 +1877,13 @@
                     const data = await res.json();
                     if (data.success) {
                         this.mode = newMode;
-                        this.showSuccess('Berhasil!', `Mode trending diubah ke ${newMode}`);
-                        if (newMode === 'manual') setTimeout(() => this.initSortable(), 500);
-                        else window.location.reload();
+                        if (newMode === 'manual') {
+                            this.showSuccess('Berhasil!', `Mode trending diubah ke ${newMode}`);
+                            setTimeout(() => this.initSortable(), 500);
+                        } else {
+                            localStorage.setItem('pending_success_toast', data.message || `Mode trending diubah ke ${newMode}`);
+                            window.location.reload();
+                        }
                     }
                 } catch(e) { alert('Gagal mengubah mode'); }
             },

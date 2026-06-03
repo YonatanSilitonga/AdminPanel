@@ -19,7 +19,7 @@
                 <div class="space-y-2">
                     <div>
                         <span class="block font-bold text-indigo-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Aksi: Cetak Analitik</span>
-                        <p class="text-slate-200 font-sans leading-relaxed">Mencetak dokumen resmi PDF analitik sentimen ulasan (IndoBERT model) lengkap dengan kop surat dinas, statistik distribusi rating, dan tanda tangan kepala dinas.</p>
+                        <p class="text-slate-200 font-sans leading-relaxed">Mencetak dokumen resmi PDF analitik sentimen ulasan lengkap dengan kop surat dinas, statistik distribusi rating, dan tanda tangan kepala dinas.</p>
                     </div>
                 </div>
                 <div class="absolute bottom-full right-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
@@ -63,7 +63,7 @@
 
 @section('content')
 <div x-on:open-export-modal.window="showExportModal = true" x-data="{
-    activeTab: 'summary',
+    activeTab: (new URLSearchParams(window.location.search)).get('tab') || localStorage.getItem('active_review_tab') || 'summary',
     showViewModal: false,
     showExportModal: false,
     instansi: 'PEMERINTAH KABUPATEN TOBA/DINAS KEBUDAYAAN DAN PARIWISATA',
@@ -76,6 +76,33 @@
     nama_penandatangan: 'Sandro M. S. Simanjuntak, S.T., M.Si.',
     nip_penandatangan: '19780512 200501 1 003',
     jabatan: 'Kepala Dinas Kebudayaan dan Pariwisata',
+
+    init() {
+        this.$watch('activeTab', value => {
+            localStorage.setItem('active_review_tab', value);
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', value);
+            window.history.replaceState({}, '', url.toString());
+
+            if (value === 'summary') {
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        if (typeof window.initReviewCharts === 'function') window.initReviewCharts();
+                        if (typeof window.initReviewsWordCloud === 'function') window.initReviewsWordCloud();
+                    }, 100);
+                });
+            }
+        });
+
+        if (this.activeTab === 'summary') {
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    if (typeof window.initReviewCharts === 'function') window.initReviewCharts();
+                    if (typeof window.initReviewsWordCloud === 'function') window.initReviewsWordCloud();
+                }, 200);
+            });
+        }
+    },
 
     submitExport() {
         const form = this.$refs.exportForm;
@@ -117,7 +144,7 @@
             this.viewingReview = data;
         } catch(e) {
             console.error('Error loading review:', e);
-            alert('❌ Gagal mengambil data ulasan:\n' + e.message);
+            window.showAlert('Gagal mengambil data ulasan: ' + e.message, 'Error', 'error');
             this.showViewModal = false;
         } finally {
             this.loading = false;
@@ -142,6 +169,16 @@
         ];
         $predictionSummary = $predictionSummary ?? [];
         $keywordModelVersion = $keywordModelVersion ?? null;
+
+        // Calculate average rating
+        $totalRatingsCount = 0;
+        $sumRatings = 0;
+        foreach ([5, 4, 3, 2, 1] as $r) {
+            $c = $ratingDistribution[$r]['count'] ?? 0;
+            $totalRatingsCount += $c;
+            $sumRatings += $r * $c;
+        }
+        $averageRating = $totalRatingsCount > 0 ? number_format($sumRatings / $totalRatingsCount, 1) : '0.0';
 
         // Build weighted cloud style from Python keyword payload.
         $buildKeywordCloud = function (array $items): array {
@@ -249,7 +286,7 @@
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh AI model IndoBERT dan dikategorikan bersentimen positif.</p>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh model machine learning dan dikategorikan bersentimen positif.</p>
                                 </div>
                                 <div class="pt-1.5 border-t border-slate-800">
                                     <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
@@ -271,7 +308,7 @@
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-amber-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh AI model IndoBERT dan dikategorikan bersentimen netral.</p>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh model machine learning dan dikategorikan bersentimen netral.</p>
                                 </div>
                                 <div class="pt-1.5 border-t border-slate-800">
                                     <span class="block font-bold text-amber-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
@@ -293,7 +330,7 @@
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh AI model IndoBERT dan dikategorikan bersentimen negatif.</p>
+                                    <p class="text-slate-200 font-normal">Menampilkan jumlah ulasan yang dianalisis oleh model machine learning dan dikategorikan bersentimen negatif.</p>
                                 </div>
                                 <div class="pt-1.5 border-t border-slate-800">
                                     <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
@@ -309,48 +346,44 @@
         </div>
 
         <div class="grid gap-6 lg:grid-cols-2">
-            <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-5">Distribusi Rating</h3>
-                <div class="space-y-4">
-                    @foreach([5,4,3,2,1] as $rating)
-                        @php
-                            $count = $ratingDistribution[$rating]['count'] ?? 0;
-                            $percentage = $ratingDistribution[$rating]['percentage'] ?? 0;
-                        @endphp
-                        <div class="flex items-center gap-4">
-                            <span class="w-4 text-sm font-semibold text-gray-600">{{ $rating }}</span>
-                            <div class="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-sidebar rounded-full" style="width: {{ $percentage }}%"></div>
-                            </div>
-                            <span class="w-12 text-right text-sm text-gray-500">{{ $percentage }}%</span>
-                        </div>
-                    @endforeach
+            <!-- Card 1: Tren Sentimen Ulasan (Line Chart) -->
+            <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-lg font-bold text-gray-900">Tren Sentimen Ulasan</h3>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                        6 Bulan Terakhir
+                    </span>
+                </div>
+                <div class="relative h-44 w-full">
+                    <canvas id="sentimentTrendChart"></canvas>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+                    <div class="flex items-center gap-4 font-semibold">
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span> Positif</div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span> Netral</div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></span> Negatif</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-5">Ringkasan Cepat</h3>
-                <div class="space-y-4 text-sm text-gray-600">
-                    <div class="flex items-center justify-between">
-                        <span>Pending sentiment</span>
-                        <span class="font-bold text-gray-900">{{ number_format($sentimentSummary['pending']) }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Persentase positif</span>
-                        <span class="font-bold text-emerald-700">
-                            {{ $sentimentSummary['total'] > 0 ? round(($sentimentSummary['positive'] / $sentimentSummary['total']) * 100) : 0 }}%
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Persentase negatif</span>
-                        <span class="font-bold text-red-600">
-                            {{ $sentimentSummary['total'] > 0 ? round(($sentimentSummary['negative'] / $sentimentSummary['total']) * 100) : 0 }}%
-                        </span>
+            <!-- Card 2: Distribusi Rating (Horizontal Bar Chart) -->
+            <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-lg font-bold text-gray-900">Distribusi Rating</h3>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center text-yellow-400">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                        </div>
+                        <span class="text-base font-black text-gray-900">{{ $averageRating }} / 5.0</span>
                     </div>
                 </div>
-                <p class="mt-6 text-xs text-gray-400 leading-relaxed">
-                    Ringkasan ini hanya menampilkan statistik umum. Analisis sentimen detail tetap tersedia pada tab daftar ulasan saat proses analisis dijalankan.
-                </p>
+                <div class="relative h-44 w-full">
+                    <canvas id="ratingBarChart"></canvas>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+                    <span>Total Ulasan Masuk</span>
+                    <span class="font-bold text-gray-700">{{ number_format($totalRatingsCount) }} Ulasan</span>
+                </div>
             </div>
         </div>
 
@@ -453,6 +486,17 @@
             </div>
         </div>
 
+        <!-- Card: Analisis Sentimen Per Destinasi -->
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-900">Analisis Sentimen Per Destinasi</h3>
+                <span class="text-xs text-gray-400 font-medium">Berdasarkan 6 destinasi dengan ulasan terbanyak</span>
+            </div>
+            <div class="relative h-72 w-full">
+                <canvas id="destinationSentimentChart"></canvas>
+            </div>
+        </div>
+
         <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-6">Keyword Per Destinasi</h3>
             @if(!empty($keywordSummary['destinations']))
@@ -518,7 +562,7 @@
                     <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
                     <input type="hidden" name="tab" value="list">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <!-- Cari Ulasan -->
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -615,14 +659,6 @@
                                 @endif
                             </div>
                         </div>
-
-                        <!-- Action Submit -->
-                        <div class="space-y-2 flex items-end">
-                            <button type="submit" class="w-full py-3 bg-sidebar hover:bg-[#055355] text-white rounded-xl transition-all text-sm font-bold shadow-sm flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                Cari & Saring
-                            </button>
-                        </div>
                     </div>
                 </form>
 
@@ -674,7 +710,7 @@
                                             <div class="space-y-2">
                                                 <div>
                                                     <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                                    <p class="text-slate-200 font-normal font-sans">Label klasifikasi sentimen ulasan (Positif, Netral, atau Negatif) yang diprediksi oleh model IndoBERT.</p>
+                                                    <p class="text-slate-200 font-normal font-sans">Label klasifikasi sentimen ulasan (Positif, Netral, atau Negatif) yang diprediksi oleh model machine learning.</p>
                                                 </div>
                                                 <div class="pt-1.5 border-t border-slate-800">
                                                     <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
@@ -700,7 +736,7 @@
                                             <div class="space-y-2">
                                                 <div>
                                                     <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                                    <p class="text-slate-200 font-normal font-sans">Tingkat akurasi kepercayaan/probabilitas model IndoBERT dalam menentukan label sentimen (rentang 0 s/d 1).</p>
+                                                    <p class="text-slate-200 font-normal font-sans">Tingkat akurasi kepercayaan/probabilitas model machine learning dalam menentukan label sentimen (rentang 0 s/d 1).</p>
                                                 </div>
                                                 <div class="pt-1.5 border-t border-slate-800">
                                                     <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
@@ -729,11 +765,21 @@
                                 <td class="px-10 py-6">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-sidebar/5 rounded-full flex items-center justify-center text-sidebar text-xs font-bold border border-sidebar/10 shadow-sm overflow-hidden">
-                                            <span class="opacity-70">{{ strtoupper(substr($review->user_id ?? 'A', 0, 1)) }}</span>
+                                            <span class="opacity-70">{{ strtoupper(substr($review->reviewer_name ?? 'A', 0, 1)) }}</span>
                                         </div>
-                                        <div>
-                                            <div class="text-sm font-bold text-gray-700">{{ $review->user_id ?? 'Anonim' }}</div>
-                                            <div class="text-[10px] text-gray-400 font-medium uppercase tracking-tight">User ID: {{ substr((string)$review->user_id, -6) }}</div>
+                                        <div class="flex flex-col gap-0.5">
+                                            <div class="text-sm font-bold text-gray-700">{{ $review->reviewer_name }}</div>
+                                            @php
+                                                $isRegistered = $review->user && !empty($review->user->password) && (!empty($review->user->email) || !empty($review->user->name));
+                                            @endphp
+                                            <div class="flex items-center gap-1.5 mt-0.5">
+                                                @if($isRegistered)
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">👤 User</span>
+                                                @else
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">👥 Guest</span>
+                                                @endif
+                                                <span class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">ID: {{ substr((string)$review->user_id, -6) }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -798,7 +844,7 @@
                                         <button @click="openViewModal('{{ $review->_id }}')" class="p-2.5 bg-sidebar-active/5 text-sidebar-active rounded-full hover:bg-sidebar-active/10 transition-all">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                         </button>
-                                        <button type="button" @click="$dispatch('open-delete-modal', { action: '{{ route('admin.reviews.destroy', $review->_id) }}', title: 'Hapus Ulasan', type: 'ulasan', name: {{ json_encode('dari ' . ($review->user_id ?? 'Anonim')) }} })" class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all">
+                                        <button type="button" @click="$dispatch('open-delete-modal', { action: '{{ route('admin.reviews.destroy', $review->_id) }}', title: 'Hapus Ulasan', type: 'ulasan', name: {{ json_encode('dari ' . ($review->reviewer_name ?? 'Anonim')) }} })" class="p-2.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </div>
@@ -836,184 +882,200 @@
 
             <div x-show="showViewModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                  x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                 class="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                 class="relative w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col">
 
-                <div class="flex items-center justify-between mb-6 px-8 pt-6 pb-4 border-b border-gray-100">
-                    <h3 class="text-xl font-bold text-gray-900">Detail Ulasan</h3>
+                <div class="flex items-center justify-between px-10 pt-8 pb-6 border-b border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-gray-900">Detail Ulasan</h3>
+                        <div class="relative group cursor-pointer inline-flex items-center">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Detail Ulasan</span>
+                                        <p class="text-slate-200 font-normal leading-relaxed text-[11px]">Menampilkan rincian ulasan wisatawan, nilai rating (bintang), destinasi target, serta hasil analisis sentimen (Positif/Netral/Negatif) dari model machine learning.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
                     <button @click="showViewModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <div x-show="loading && !viewingReview" class="py-12 flex justify-center px-8">
+                <div x-show="loading && !viewingReview" class="py-16 flex justify-center px-10">
                     <svg class="animate-spin h-8 w-8 text-sidebar" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                 </div>
 
-                <div x-show="viewingReview" class="space-y-5 px-8 py-6">
+                <div x-show="viewingReview" class="space-y-6 px-10 py-8 flex-1">
                     <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
                         <div class="w-12 h-12 bg-sidebar/10 rounded-full flex items-center justify-center text-sidebar font-bold text-lg">
-                            <span x-text="viewingReview ? viewingReview.user_id?.charAt(0)?.toUpperCase() || 'A' : 'A'"></span>
+                            <span x-text="viewingReview ? viewingReview.reviewer_name?.charAt(0)?.toUpperCase() || 'A' : 'A'"></span>
                         </div>
-                        <div>
-                            <p class="font-bold text-gray-800" x-text="viewingReview?.user_id || 'Anonim'"></p>
-                            <p class="text-xs text-gray-400" x-text="viewingReview?.created_at ? new Date(viewingReview.created_at).toLocaleDateString('id-ID', {year:'numeric', month:'long', day:'numeric'}) : ''"></p>
+                        <div class="flex flex-col">
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-gray-800 text-sm" x-text="viewingReview?.reviewer_name || 'Anonim'"></p>
+                                <template x-if="viewingReview?.user_is_registered">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">👤 User</span>
+                                </template>
+                                <template x-if="!viewingReview?.user_is_registered">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">👥 Guest</span>
+                                </template>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-0.5" x-text="viewingReview?.created_at ? new Date(viewingReview.created_at).toLocaleDateString('id-ID', {year:'numeric', month:'long', day:'numeric'}) : ''"></p>
                         </div>
                         <div class="ml-auto text-2xl text-yellow-400" x-text="stars(viewingReview?.rating || 0)"></div>
                     </div>
 
-                    <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                        <label class="text-xs font-bold text-blue-500 uppercase tracking-widest">Destinasi</label>
-                        <p class="mt-2 text-sm font-bold text-blue-900" x-text="viewingReview?.destination?.name || 'Tidak diketahui'"></p>
+                    <div class="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+                        <label class="text-[10px] font-bold text-blue-500 uppercase tracking-widest block mb-1">Destinasi</label>
+                        <p class="text-sm font-bold text-blue-900" x-text="viewingReview?.destination?.name || 'Tidak diketahui'"></p>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div class="p-4 bg-gray-50 rounded-2xl">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Sentimen</label>
-                            <p class="mt-2 text-sm font-bold text-gray-800" x-text="viewingReview?.sentiment_label ? viewingReview.sentiment_label.charAt(0).toUpperCase() + viewingReview.sentiment_label.slice(1) : 'Pending'"></p>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Sentimen</label>
+                            <p class="text-sm font-bold text-gray-800" x-text="viewingReview?.sentiment_label ? viewingReview.sentiment_label.charAt(0).toUpperCase() + viewingReview.sentiment_label.slice(1) : 'Pending'"></p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-2xl">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Confidence</label>
-                            <p class="mt-2 text-sm font-bold text-gray-800" x-text="viewingReview?.sentiment_confidence ? Number(viewingReview.sentiment_confidence).toFixed(2) : '-' "></p>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Confidence</label>
+                            <p class="text-sm font-bold text-gray-800" x-text="viewingReview?.sentiment_confidence ? Number(viewingReview.sentiment_confidence).toFixed(2) : '-' "></p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-2xl">
-                            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Reason</label>
-                            <p class="mt-2 text-sm font-bold text-gray-800 truncate" x-text="viewingReview?.sentiment_reason || '-' "></p>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Reason</label>
+                            <p class="text-sm font-bold text-gray-800 truncate" x-text="viewingReview?.sentiment_reason || '-' "></p>
                         </div>
                     </div>
 
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Ulasan</label>
-                        <p class="text-sm text-gray-700 font-medium leading-relaxed p-4 bg-gray-50 rounded-2xl" x-text="viewingReview?.review || '-'"></p>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Ulasan</label>
+                        <p class="text-sm text-gray-700 font-medium leading-relaxed p-4 bg-gray-50 rounded-2xl whitespace-pre-line" x-text="viewingReview?.review || '-'"></p>
                     </div>
+                </div>
 
-                    <div class="flex items-center justify-end pt-2">
-                        <button @click="showViewModal = false" class="px-8 py-3 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">Tutup</button>
-                    </div>
+                <div x-show="viewingReview" class="px-10 py-6 bg-gray-50 flex items-center justify-end border-t border-gray-100">
+                    <button @click="showViewModal = false" class="px-8 py-3 bg-white border border-gray-200 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all shadow-sm">Tutup</button>
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Export Modal -->
-    <div x-show="showExportModal" 
-        class="fixed inset-0 z-50 overflow-y-auto" 
-        aria-labelledby="modal-title" 
-        role="dialog" 
-        aria-modal="true"
-        style="display: none;">
-        
-        <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="showExportModal"
-                x-transition:enter="ease-out duration-300"
-                x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100"
-                x-transition:leave="ease-in duration-200"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="fixed inset-0 transition-opacity bg-gray-900/50 backdrop-blur-sm" 
-                @click="showExportModal = false"
-                aria-hidden="true"></div>
+    <div x-show="showExportModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+            <div x-show="showExportModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="showExportModal = false"></div>
 
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div x-show="showExportModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                 class="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col">
 
-            <div x-show="showExportModal"
-                x-transition:enter="ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave="ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                class="inline-block w-full max-w-2xl text-left align-bottom transition-all transform bg-white shadow-2xl rounded-3xl sm:my-8 sm:align-middle overflow-hidden border border-gray-100 relative">
-                
-                <div class="absolute top-0 right-0 pt-6 pr-6">
-                    <button @click="showExportModal = false" class="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors">
-                        <span class="sr-only">Close</span>
+                <div class="flex items-center justify-between px-10 pt-8 pb-6 border-b border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <div class="flex flex-col">
+                            <h3 class="text-xl font-bold text-gray-900">Konfigurasi Cetak (Kop Surat)</h3>
+                            <p class="text-xs text-gray-400 font-medium mt-0.5">Sesuaikan informasi untuk kop surat dan penandatangan dokumen PDF analitik ulasan.</p>
+                        </div>
+                        <div class="relative group cursor-pointer inline-flex items-center mt-1">
+                            <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                <div class="space-y-2">
+                                    <div>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Cetak Analitik</span>
+                                        <p class="text-slate-200 font-normal leading-relaxed text-[11px]">Mengonfigurasi kop surat resmi dinas pariwisata dan penandatangan untuk berkas laporan PDF analitik sentimen ulasan.</p>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-full left-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" @click="showExportModal = false" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
-                <form action="{{ route('admin.reviews.print-analytics') }}" method="POST" target="_blank" enctype="multipart/form-data" @submit="setTimeout(() => showExportModal = false, 100)" class="p-8">
+                <form x-ref="exportForm" action="{{ route('admin.reviews.print-analytics') }}" method="POST" target="_blank" enctype="multipart/form-data" @submit="setTimeout(() => showExportModal = false, 100)" class="px-10 pb-8 space-y-6 flex-1">
                     @csrf
                     <!-- Format Export section (hidden for PDF-only analytics export) -->
                     <input type="hidden" name="exportFormat" value="pdf">
                     
-                    <h3 class="text-xl font-black text-gray-900 mb-2">Konfigurasi Cetak (Kop Surat)</h3>
-                    <p class="text-sm text-gray-500 mb-6 font-medium">Sesuaikan informasi untuk kop surat dan penandatangan dokumen PDF analitik ulasan.</p>
-                    
-                    <div class="space-y-5 mb-8">
+                    <div class="space-y-5">
                         <!-- Custom Logo -->
                         <div class="space-y-1.5 p-4 bg-gray-50 border border-gray-100 rounded-xl">
-                            <label class="text-xs font-bold text-gray-700">Logo Instansi Kustom (Opsional)</label>
-                            <p class="text-xs text-gray-500 mb-2">Upload logo baru jika Anda ingin mengganti logo dari Pengaturan hanya untuk dokumen ini.</p>
+                            <label class="text-xs font-bold text-gray-700 block">Logo Instansi Kustom (Opsional)</label>
+                            <p class="text-xs text-gray-400 mb-2">Upload logo baru jika Anda ingin mengganti logo dari Pengaturan hanya untuk dokumen ini.</p>
                             <input type="file" name="custom_logo" accept="image/png, image/jpeg, image/jpg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all cursor-pointer">
                         </div>
 
                         <!-- Instansi -->
                         <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-gray-500">Nama Instansi (Pisahkan baris dengan /)</label>
+                            <label class="text-xs font-bold text-gray-500 block">Nama Instansi (Pisahkan baris dengan /)</label>
                             <input type="text" name="instansi" x-model="instansi" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <!-- Nomor Surat -->
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-gray-500">Nomor Surat Dinas</label>
+                                <label class="text-xs font-bold text-gray-500 block">Nomor Surat Dinas</label>
                                 <input type="text" name="nomor_surat" x-model="nomor_surat" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                             </div>
                             <!-- Perihal / Hal -->
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-gray-500">Perihal / Judul Surat</label>
+                                <label class="text-xs font-bold text-gray-500 block">Perihal / Judul Surat</label>
                                 <input type="text" name="hal" x-model="hal" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <!-- Nama Penandatangan -->
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-gray-500">Nama Pejabat</label>
+                                <label class="text-xs font-bold text-gray-500 block">Nama Pejabat</label>
                                 <input type="text" name="nama_penandatangan" x-model="nama_penandatangan" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                             </div>
                             <!-- NIP -->
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-gray-500">NIP Pejabat</label>
+                                <label class="text-xs font-bold text-gray-500 block">NIP Pejabat</label>
                                 <input type="text" name="nip_penandatangan" x-model="nip_penandatangan" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                             </div>
                             <!-- Jabatan -->
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-gray-500">Jabatan Pejabat</label>
+                                <label class="text-xs font-bold text-gray-500 block">Jabatan Pejabat</label>
                                 <input type="text" name="jabatan" x-model="jabatan" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                             </div>
                         </div>
 
                         <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-gray-500">Alamat Lengkap Dinas</label>
+                            <label class="text-xs font-bold text-gray-500 block">Alamat Lengkap Dinas</label>
                             <input type="text" name="alamat" x-model="alamat" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                         </div>
 
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <!-- Email -->
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-gray-500">Email Dinas</label>
+                                <label class="text-xs font-bold text-gray-500 block">Email Dinas</label>
                                 <input type="text" name="email" x-model="email" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                             </div>
                             <!-- Telp -->
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-gray-500">No. Telpon Dinas</label>
+                                <label class="text-xs font-bold text-gray-500 block">No. Telpon Dinas</label>
                                 <input type="text" name="telp" x-model="telp" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                             </div>
                             <!-- Website -->
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-gray-500">Website Dinas</label>
+                                <label class="text-xs font-bold text-gray-500 block">Website Dinas</label>
                                 <input type="text" name="website" x-model="website" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/20 transition-all">
                             </div>
                         </div>
                     </div>
 
-                    {{-- Action buttons --}}
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-50">
-                        <button type="button" @click="showExportModal = false" class="px-6 py-2.5 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">
+                    <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 bg-gray-50 px-10 py-6 -mx-10 -mb-8">
+                        <button type="button" @click="showExportModal = false" class="px-8 py-3 text-sm font-bold text-gray-600 border border-gray-200 rounded-2xl hover:bg-gray-100 transition-colors">
                             Batal
                         </button>
-                        <button type="submit" class="px-8 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:opacity-90 shadow-md shadow-indigo-600/10 transition-all">
+                        <button type="submit" class="px-8 py-3 text-sm font-bold text-white bg-indigo-600 rounded-2xl hover:opacity-90 shadow-md shadow-indigo-600/10 transition-all">
                             Buat PDF
                         </button>
                     </div>
@@ -1024,87 +1086,272 @@
 </div>
 @endsection
 
+@push('charts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endpush
+
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    let sentimentChart = null;
+    let ratingChart = null;
+    let destinationChart = null;
+
+    window.initReviewCharts = function() {
+        console.log('initReviewCharts: Rendering Chart.js charts');
+        
+        // Sentiment Trend Line Chart
+        const trendCtx = document.getElementById('sentimentTrendChart');
+        if (trendCtx) {
+            if (sentimentChart) {
+                sentimentChart.destroy();
+            }
+            const ctx = trendCtx.getContext('2d');
+            const trendData = @json($sentimentTrends ?? []);
+            const labels = trendData.map(d => d.month);
+            const positiveData = trendData.map(d => d.positive);
+            const neutralData = trendData.map(d => d.neutral);
+            const negativeData = trendData.map(d => d.negative);
+
+            sentimentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Positif',
+                            data: positiveData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            fill: true
+                        },
+                        {
+                            label: 'Netral',
+                            data: neutralData,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            fill: true
+                        },
+                        {
+                            label: 'Negatif',
+                            data: negativeData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            grid: { color: '#f3f4f6', drawBorder: false },
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Rating Bar Chart
+        const rateCtx = document.getElementById('ratingBarChart');
+        if (rateCtx) {
+            if (ratingChart) {
+                ratingChart.destroy();
+            }
+            const ctx = rateCtx.getContext('2d');
+            ratingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['5 ★', '4 ★', '3 ★', '2 ★', '1 ★'],
+                    datasets: [{
+                        data: [
+                            {{ $ratingDistribution[5]['count'] ?? 0 }},
+                            {{ $ratingDistribution[4]['count'] ?? 0 }},
+                            {{ $ratingDistribution[3]['count'] ?? 0 }},
+                            {{ $ratingDistribution[2]['count'] ?? 0 }},
+                            {{ $ratingDistribution[1]['count'] ?? 0 }}
+                        ],
+                        backgroundColor: '#066466',
+                        borderRadius: 8,
+                        barThickness: 14
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#f3f4f6', drawBorder: false },
+                            ticks: { precision: 0 }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Destination Sentiment Chart
+        const destCtx = document.getElementById('destinationSentimentChart');
+        if (destCtx) {
+            if (destinationChart) {
+                destinationChart.destroy();
+            }
+            const ctx = destCtx.getContext('2d');
+            const destData = @json(array_slice($keywordSummary['destinations'], 0, 6));
+            const labels = destData.map(d => d.destination_name || d.name || 'Destinasi');
+            const positiveData = destData.map(d => d.sentiment_counts?.positive ?? 0);
+            const neutralData = destData.map(d => d.sentiment_counts?.neutral ?? 0);
+            const negativeData = destData.map(d => d.sentiment_counts?.negative ?? 0);
+
+            destinationChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Positif',
+                            data: positiveData,
+                            backgroundColor: '#10b981',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Netral',
+                            data: neutralData,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Negatif',
+                            data: negativeData,
+                            backgroundColor: '#ef4444',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { color: '#f3f4f6', drawBorder: false },
+                            ticks: { precision: 0 }
+                        },
+                        y: {
+                            stacked: true,
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    };
+
+    window.initReviewsWordCloud = function() {
         const keywords = @json($keywordSummary['overall']['top_keywords'] ?? []);
         const sentimentMap = @json($sentimentMap ?? []);
         
         console.log('WordCloud: Initializing with', keywords.length, 'keywords');
         
-        if (keywords.length > 0) {
-            const canvas = document.getElementById('word-cloud-canvas');
-            if (canvas) {
-                const renderCloud = () => {
-                    if (typeof WordCloud === 'undefined') {
-                        console.error('WordCloud: Library wordcloud2.js not loaded!');
-                        return;
-                    }
+        const canvas = document.getElementById('word-cloud-canvas');
+        if (canvas) {
+            const renderCloud = () => {
+                if (typeof WordCloud === 'undefined') {
+                    console.error('WordCloud: Library wordcloud2.js not loaded!');
+                    return;
+                }
 
-                    const container = canvas.parentElement;
-                    const width = container.offsetWidth;
-                    const height = container.offsetHeight;
-                    
-                    if (width === 0 || height === 0) {
-                        console.warn('WordCloud: Container has 0 dimensions, retrying...');
-                        setTimeout(renderCloud, 500);
-                        return;
-                    }
+                const container = canvas.parentElement;
+                const width = container.offsetWidth;
+                const height = container.offsetHeight;
+                
+                if (width === 0 || height === 0) {
+                    console.warn('WordCloud: Container has 0 dimensions, retrying...');
+                    setTimeout(renderCloud, 500);
+                    return;
+                }
 
-                    canvas.width = width;
-                    canvas.height = height;
+                canvas.width = width;
+                canvas.height = height;
 
-                    const list = keywords.map(item => {
-                        let size = 22 + (item.count * 5);
-                        if (size > 90) size = 90; 
-                        return [item.keyword, size];
-                    });
-
-                    try {
-                        WordCloud(canvas, { 
-                            list: list,
-                            gridSize: 6,
-                            weightFactor: 1.2,
-                            fontFamily: "'Instrument Sans', sans-serif",
-                            color: function(word) {
-                                const sentiment = sentimentMap[word] || 'neutral';
-                                const colors = {
-                                    'positive': '#10b981',
-                                    'neutral': '#94a3b8',
-                                    'negative': '#f43f5e'
-                                };
-                                return colors[sentiment] || '#94a3b8';
-                            },
-                            rotateRatio: 0,
-                            backgroundColor: 'transparent',
-                            ellipticity: 0.65,
-                            shuffle: true,
-                            clearCanvas: true,
-                            drawOutOfBound: false,
-                            shrinkToFit: true
-                        });
-                        console.log('WordCloud: Rendered successfully');
-                    } catch (e) {
-                        console.error('WordCloud: Render failed', e);
-                    }
-                };
-
-                // Initial render with a slight delay for layout
-                setTimeout(renderCloud, 800);
-
-                // Re-render on window resize
-                let resizeTimeout;
-                window.addEventListener('resize', () => {
-                    clearTimeout(resizeTimeout);
-                    resizeTimeout = setTimeout(renderCloud, 500);
+                const list = keywords.map(item => {
+                    let size = 22 + (item.count * 5);
+                    if (size > 90) size = 90; 
+                    return [item.keyword, size];
                 });
-            } else {
-                console.error('WordCloud: Canvas element not found!');
-            }
-        } else {
-            console.warn('WordCloud: No keywords available for rendering');
+
+                try {
+                    WordCloud(canvas, { 
+                        list: list,
+                        gridSize: 6,
+                        weightFactor: 1.2,
+                        fontFamily: "'Instrument Sans', sans-serif",
+                        color: function(word) {
+                            const sentiment = sentimentMap[word] || 'neutral';
+                            const colors = {
+                                'positive': '#10b981',
+                                'neutral': '#94a3b8',
+                                'negative': '#f43f5e'
+                            };
+                            return colors[sentiment] || '#94a3b8';
+                        },
+                        rotateRatio: 0,
+                        backgroundColor: 'transparent',
+                        ellipticity: 0.65,
+                        shuffle: true,
+                        clearCanvas: true,
+                        drawOutOfBound: false,
+                        shrinkToFit: true
+                    });
+                    console.log('WordCloud: Rendered successfully');
+                } catch (e) {
+                    console.error('WordCloud: Render failed', e);
+                }
+            };
+
+            renderCloud();
         }
+    };
+
+    // Re-render WordCloud and resize charts on window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (typeof window.initReviewsWordCloud === 'function') {
+                window.initReviewsWordCloud();
+            }
+        }, 500);
     });
 </script>
 @endpush
