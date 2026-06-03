@@ -41,14 +41,12 @@
 
     @stack('styles')
     <style>
-        html {
-            font-size: 13px;
+        [x-cloak] {
+            display: none !important;
         }
-        @media (min-width: 1536px) {
-            html {
-                font-size: 14px;
-            }
-        }
+         html {
+             font-size: 13px;
+         }
         
         /* Custom scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
