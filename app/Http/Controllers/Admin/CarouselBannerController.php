@@ -21,13 +21,73 @@ class CarouselBannerController extends BaseAdminController
         return view('admin.carousel_banners.index', compact('banners', 'autoplayDuration'));
     }
 
+    public function signUpload(Request $request)
+    {
+        $cloudUrl = config('cloudinary.cloud_url') ?: env('CLOUDINARY_URL');
+        
+        if (!$cloudUrl && !env('CLOUDINARY_CLOUD_NAME')) {
+            return response()->json([
+                'success' => true,
+                'mode' => 'local'
+            ]);
+        }
+
+        $apiKey = env('CLOUDINARY_API_KEY');
+        $apiSecret = env('CLOUDINARY_API_SECRET');
+        $cloudName = env('CLOUDINARY_CLOUD_NAME');
+
+        if ($cloudUrl) {
+            $parsed = parse_url($cloudUrl);
+            if ($parsed && isset($parsed['user']) && isset($parsed['pass']) && isset($parsed['host'])) {
+                $apiKey = $parsed['user'];
+                $apiSecret = $parsed['pass'];
+                $cloudName = $parsed['host'];
+            }
+        }
+
+        if (!$apiKey || !$apiSecret || !$cloudName) {
+            return response()->json([
+                'success' => true,
+                'mode' => 'local'
+            ]);
+        }
+
+        $timestamp = time();
+        $module = $request->input('module', 'carousel_banners');
+        $folder = 'smarttourism/' . trim($module, '/');
+
+        $params = [
+            'folder' => $folder,
+            'timestamp' => $timestamp,
+        ];
+
+        ksort($params);
+
+        $signParts = [];
+        foreach ($params as $key => $val) {
+            $signParts[] = "$key=$val";
+        }
+        $stringToSign = implode('&', $signParts) . $apiSecret;
+        $signature = sha1($stringToSign);
+
+        return response()->json([
+            'success' => true,
+            'mode' => 'cloudinary',
+            'cloud_name' => $cloudName,
+            'api_key' => $apiKey,
+            'timestamp' => $timestamp,
+            'signature' => $signature,
+            'folder' => $folder,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
-            'image_url' => 'required|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'image_url' => 'required|' . ($request->hasFile('image_url') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:204800' : 'string'),
             'content_id' => 'nullable|string',
             'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
             'start_date' => 'nullable|date',
@@ -47,10 +107,15 @@ class CarouselBannerController extends BaseAdminController
                 
                 $path = $this->uploadFile($file, 'carousel_banners', [
                     'mimes' => ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg'],
-                    'max_size' => 50,
+                    'max_size' => 200,
                     'resource_type' => $resourceType
                 ]);
                 $data['image_url'] = $path;
+                $data['media_type'] = $isVid ? 'video' : 'image';
+            } elseif ($request->filled('image_url') && (str_starts_with($request->input('image_url'), 'http://') || str_starts_with($request->input('image_url'), 'https://'))) {
+                $data['image_url'] = $request->input('image_url');
+                $url = $request->input('image_url');
+                $isVid = preg_match('/\.(mp4|mov|avi|webm|ogg)/i', $url) || str_contains($url, '/video/upload/');
                 $data['media_type'] = $isVid ? 'video' : 'image';
             } else {
                 $data['media_type'] = $request->input('media_type', 'image');
@@ -109,7 +174,7 @@ class CarouselBannerController extends BaseAdminController
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'category_badge' => 'required|string|max:50',
-            'image_url' => 'nullable|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'image_url' => 'nullable|' . ($request->hasFile('image_url') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:204800' : 'string'),
             'content_id' => 'nullable|string',
             'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
             'start_date' => 'nullable|date',
@@ -134,10 +199,20 @@ class CarouselBannerController extends BaseAdminController
                 
                 $path = $this->uploadFile($file, 'carousel_banners', [
                     'mimes' => ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg'],
-                    'max_size' => 50,
+                    'max_size' => 200,
                     'resource_type' => $resourceType
                 ]);
                 $data['image_url'] = $path;
+                $data['media_type'] = $isVid ? 'video' : 'image';
+            } elseif ($request->filled('image_url') && (str_starts_with($request->input('image_url'), 'http://') || str_starts_with($request->input('image_url'), 'https://'))) {
+                // Delete old image if exists
+                if ($banner->image_url) {
+                    $this->deleteFile($banner->image_url);
+                }
+
+                $data['image_url'] = $request->input('image_url');
+                $url = $request->input('image_url');
+                $isVid = preg_match('/\.(mp4|mov|avi|webm|ogg)/i', $url) || str_contains($url, '/video/upload/');
                 $data['media_type'] = $isVid ? 'video' : 'image';
             } else {
                 $data['media_type'] = $request->input('media_type', $banner->media_type ?? 'image');

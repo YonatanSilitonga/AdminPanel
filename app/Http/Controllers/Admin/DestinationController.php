@@ -124,8 +124,8 @@ class DestinationController extends BaseAdminController
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'facilities' => 'nullable|string',
-            'thumbnail' => 'required|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
-            'images.*' => 'nullable|file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200', // Max 50MB
+            'thumbnail' => 'required|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
+            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string', // Max 50MB
             'opening_hours' => 'nullable|string|max:255',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
@@ -162,7 +162,9 @@ class DestinationController extends BaseAdminController
             $currentImages = [];
 
             // Upload thumbnail
-            if ($request->hasFile('thumbnail')) {
+            if ($request->filled('thumbnail') && is_string($request->input('thumbnail')) && (str_starts_with($request->input('thumbnail'), 'http://') || str_starts_with($request->input('thumbnail'), 'https://'))) {
+                $currentImages[] = $request->input('thumbnail');
+            } elseif ($request->hasFile('thumbnail')) {
                 $path = $this->processImage($request->file('thumbnail'), 'destinations');
                 if ($path) {
                     $currentImages[] = $path;
@@ -170,6 +172,13 @@ class DestinationController extends BaseAdminController
             }
 
             // Upload additional images
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $currentImages[] = $img;
+                    }
+                }
+            }
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     $path = $this->processImage($file, 'destinations');
@@ -245,8 +254,8 @@ class DestinationController extends BaseAdminController
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'facilities' => 'nullable|string',
-            'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
-            'images.*' => 'nullable|file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200', // Max 50MB
+            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
+            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string', // Max 50MB
             'opening_hours' => 'nullable|string|max:255',
             'ticket_price' => 'nullable|string|max:255',
             'best_time' => 'nullable|string|max:255',
@@ -295,7 +304,17 @@ class DestinationController extends BaseAdminController
             }
 
             // --- Logika Update Thumbnail (Index 0) ---
-            if ($request->hasFile('thumbnail')) {
+            if ($request->filled('thumbnail') && is_string($request->input('thumbnail')) && (str_starts_with($request->input('thumbnail'), 'http://') || str_starts_with($request->input('thumbnail'), 'https://'))) {
+                $newThumb = $request->input('thumbnail');
+                if (count($currentImages) > 0) {
+                    // Hapus thumbnail lama dari storage
+                    $oldThumb = is_array($currentImages[0]) ? ($currentImages[0]['url'] ?? $currentImages[0]) : $currentImages[0];
+                    $this->deleteFile($oldThumb);
+                    $currentImages[0] = $newThumb;
+                } else {
+                    array_unshift($currentImages, $newThumb);
+                }
+            } elseif ($request->hasFile('thumbnail')) {
                 $newThumb = $this->processImage($request->file('thumbnail'), 'destinations');
                 if ($newThumb) {
                     if (count($currentImages) > 0) {
@@ -310,6 +329,13 @@ class DestinationController extends BaseAdminController
             }
 
             // --- Logika Tambah Gambar/Video ke Gallery ---
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $currentImages[] = $img;
+                    }
+                }
+            }
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     $path = $this->processImage($file, 'destinations');

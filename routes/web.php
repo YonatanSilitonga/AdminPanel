@@ -113,6 +113,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
     // ============ CAROUSEL & BANNER ============
     Route::middleware('admin.role:admin,super_admin')->group(function () {
+        Route::get('carousel-banners/sign-upload', [CarouselBannerController::class, 'signUpload'])->name('admin.carousel_banners.sign-upload');
         Route::patch('carousel-banners/order', [CarouselBannerController::class, 'updateOrder'])->name('admin.carousel_banners.order');
         Route::patch('carousel-banners/settings', [CarouselBannerController::class, 'updateSettings'])->name('admin.carousel_banners.update-settings');
         Route::patch('carousel-banners/{id}/toggle-active', [CarouselBannerController::class, 'toggleActive'])->name('admin.carousel_banners.toggle-active');

@@ -158,7 +158,11 @@ class BaseAdminController extends Controller
 
                 $uploadOptions = array_merge($defaultOptions, $options);
                 
-                $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), $uploadOptions);
+                if ($resourceType === 'video' || $file->getSize() > 10 * 1024 * 1024) {
+                    $result = \cloudinary()->uploadApi()->uploadLarge($file->getRealPath(), $uploadOptions);
+                } else {
+                    $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), $uploadOptions);
+                }
 
                 return $result['secure_url'];
             } catch (\Exception $e) {

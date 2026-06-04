@@ -609,7 +609,7 @@
                                                     </svg>
                                                 </div>
                                                 <p class="text-sm font-bold text-gray-700" x-text="createFileName || 'Klik atau seret file ke sini'"></p>
-                                                <p class="text-[10px] text-gray-400 mt-1" x-text="selectedMediaType === 'video' ? 'MP4, MOV, WEBM (Maks. 50MB)' : 'PNG, JPG, WEBP (Maks. 10MB)'"></p>
+                                                <p class="text-[10px] text-gray-400 mt-1" x-text="selectedMediaType === 'video' ? 'MP4, MOV, WEBM (Maks. 200MB)' : 'PNG, JPG, WEBP (Maks. 10MB)'"></p>
                                             </div>
                                         </template>
                                     </label>
@@ -876,7 +876,7 @@
                                                     </svg>
                                                 </div>
                                                 <p class="text-sm font-bold text-gray-700" x-text="fileName || 'Klik atau seret file baru ke sini'"></p>
-                                                <p class="text-[10px] text-gray-400 mt-1" x-text="selectedMediaType === 'video' ? 'MP4, MOV, WEBM (Maks. 50MB) - Biarkan kosong jika tidak ingin diubah' : 'PNG, JPG, WEBP (Maks. 10MB) - Biarkan kosong jika tidak ingin diubah'"></p>
+                                                <p class="text-[10px] text-gray-400 mt-1" x-text="selectedMediaType === 'video' ? 'MP4, MOV, WEBM (Maks. 200MB) - Biarkan kosong jika tidak ingin diubah' : 'PNG, JPG, WEBP (Maks. 10MB) - Biarkan kosong jika tidak ingin diubah'"></p>
                                             </div>
                                         </template>
                                     </label>
@@ -972,6 +972,43 @@
                 </div>
             </div>
         </div>
+
+    <!-- Upload Progress Modal (desain premium) -->
+    <div x-show="showUploadProgress" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm" x-cloak
+         x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="bg-white rounded-[2.5rem] p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-50 text-center space-y-6"
+             x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <!-- Circular Progress Indicator -->
+            <div class="relative flex items-center justify-center mx-auto w-28 h-28">
+                <svg class="w-full h-full transform -rotate-90">
+                    <circle cx="56" cy="56" r="46" stroke="#f3f4f6" stroke-width="8" fill="transparent" />
+                    <circle cx="56" cy="56" r="46" stroke="#066466" stroke-width="8" fill="transparent"
+                            :stroke-dasharray="2 * Math.PI * 46"
+                            :stroke-dashoffset="2 * Math.PI * 46 * (1 - uploadProgressPercent / 100)"
+                            stroke-linecap="round" class="transition-all duration-300 ease-out" />
+                </svg>
+                <span class="absolute text-2xl font-extrabold text-[#066466]" x-text="uploadProgressPercent + '%'"></span>
+            </div>
+            
+            <div class="space-y-2">
+                <h4 class="font-extrabold text-gray-800 text-lg">Mengunggah Media...</h4>
+                <p class="text-xs text-gray-500 font-semibold leading-relaxed" x-text="uploadProgressText"></p>
+                <div x-show="uploadSpeedText" class="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold rounded-full">
+                    <svg class="w-3.5 h-3.5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span x-text="uploadSpeedText"></span>
+                </div>
+            </div>
+
+            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden relative">
+                <div class="bg-gradient-to-r from-teal-600 to-emerald-500 h-full rounded-full transition-all duration-300 ease-out" :style="'width: ' + uploadProgressPercent + '%'"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Media Lightbox Modal (supports both image & video) -->
     <div x-show="showLightbox" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm" x-cloak
         @click="showLightbox = false; lightboxMediaType = 'image';"
@@ -1140,6 +1177,10 @@ function carouselManager() {
         contentsList: [],
         selectedCategory: '',
         contentLoading: false,
+        showUploadProgress: false,
+        uploadProgressPercent: 0,
+        uploadProgressText: '',
+        uploadSpeedText: '',
 
         openMediaPreview(url, mediaType = 'image') {
             if (!url) return;
@@ -1200,6 +1241,196 @@ function carouselManager() {
             }
         },
         
+        uploadToCloudinaryDirectly(file, signData) {
+            return new Promise((resolve, reject) => {
+                let resourceType = 'image';
+                if (file.type) {
+                    if (file.type.startsWith('video/')) {
+                        resourceType = 'video';
+                    }
+                } else if (file.name) {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    if (['mp4', 'mov', 'avi', 'webm', 'ogg', 'mkv', '3gp', 'wmv', 'flv'].includes(ext)) {
+                        resourceType = 'video';
+                    }
+                }
+                const uploadUrl = `https://api.cloudinary.com/v1_1/${signData.cloud_name}/${resourceType}/upload`;
+                
+                const chunkSize = 10 * 1024 * 1024; // 10MB chunk size
+                const totalSize = file.size;
+                
+                if (totalSize <= chunkSize) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', uploadUrl);
+                    
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('api_key', signData.api_key);
+                    formData.append('timestamp', signData.timestamp);
+                    formData.append('signature', signData.signature);
+                    formData.append('folder', signData.folder);
+                    
+                    let startTime = Date.now();
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            this.uploadProgressPercent = percent;
+                            const loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
+                            const totalMB = (e.total / (1024 * 1024)).toFixed(1);
+                            this.uploadProgressText = `Mengunggah media ke Cloudinary: ${loadedMB} MB dari ${totalMB} MB`;
+                            
+                            const elapsed = (Date.now() - startTime) / 1000;
+                            if (elapsed > 0) {
+                                const speed = e.loaded / elapsed;
+                                this.uploadSpeedText = speed > 1024 * 1024 
+                                    ? `Kecepatan: ${(speed / (1024 * 1024)).toFixed(1)} MB/detik`
+                                    : `Kecepatan: ${(speed / 1024).toFixed(0)} KB/detik`;
+                            }
+                        }
+                    });
+                    
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            resolve(JSON.parse(xhr.responseText));
+                        } else {
+                            let errorMsg = 'Gagal mengunggah ke Cloudinary';
+                            try {
+                                const errObj = JSON.parse(xhr.responseText);
+                                if (errObj.error && errObj.error.message) {
+                                    errorMsg = errObj.error.message;
+                                }
+                            } catch(e) {}
+                            reject(new Error(errorMsg));
+                        }
+                    };
+                    xhr.onerror = () => reject(new Error('Koneksi internet bermasalah.'));
+                    xhr.send(formData);
+                } else {
+                    const uploadId = 'upload_' + Math.random().toString(36).substring(2, 15);
+                    let start = 0;
+                    let startTime = Date.now();
+                    
+                    const uploadNextChunk = async () => {
+                        if (start >= totalSize) return;
+                        
+                        const end = Math.min(start + chunkSize, totalSize);
+                        const chunk = file.slice(start, end);
+                        
+                        const formData = new FormData();
+                        formData.append('file', chunk, file.name);
+                        formData.append('api_key', signData.api_key);
+                        formData.append('timestamp', signData.timestamp);
+                        formData.append('signature', signData.signature);
+                        formData.append('folder', signData.folder);
+                        
+                        return new Promise((resChunk, rejChunk) => {
+                            const xhr = new XMLHttpRequest();
+                            xhr.open('POST', uploadUrl);
+                            
+                            xhr.setRequestHeader('X-Unique-Upload-Id', uploadId);
+                            xhr.setRequestHeader('Content-Range', `bytes ${start}-${end-1}/${totalSize}`);
+                            
+                            xhr.upload.addEventListener('progress', (e) => {
+                                if (e.lengthComputable) {
+                                    const chunkProgress = e.loaded / e.total;
+                                    const currentLoaded = start + chunkProgress * (end - start);
+                                    const percent = Math.round((currentLoaded / totalSize) * 100);
+                                    this.uploadProgressPercent = percent;
+                                    
+                                    const loadedMB = (currentLoaded / (1024 * 1024)).toFixed(1);
+                                    const totalMB = (totalSize / (1024 * 1024)).toFixed(1);
+                                    this.uploadProgressText = `Mengunggah video ke Cloudinary (Bagian ${(Math.floor(start / chunkSize) + 1)}): ${loadedMB} MB dari ${totalMB} MB`;
+                                    
+                                    const elapsed = (Date.now() - startTime) / 1000;
+                                    if (elapsed > 0) {
+                                        const speed = currentLoaded / elapsed;
+                                        this.uploadSpeedText = speed > 1024 * 1024 
+                                            ? `Kecepatan: ${(speed / (1024 * 1024)).toFixed(1)} MB/detik`
+                                            : `Kecepatan: ${(speed / 1024).toFixed(0)} KB/detik`;
+                                    }
+                                }
+                            });
+                            
+                            xhr.onload = () => {
+                                if (xhr.status >= 200 && xhr.status < 300) {
+                                    const result = JSON.parse(xhr.responseText);
+                                    start = end;
+                                    resChunk(result);
+                                } else {
+                                    let errorMsg = 'Gagal mengunggah bagian video';
+                                    try {
+                                        const errObj = JSON.parse(xhr.responseText);
+                                        if (errObj.error && errObj.error.message) {
+                                            errorMsg = errObj.error.message;
+                                        }
+                                    } catch(e) {}
+                                    rejChunk(new Error(errorMsg));
+                                }
+                            };
+                            xhr.onerror = () => rejChunk(new Error('Koneksi terputus saat mengunggah video.'));
+                            xhr.send(formData);
+                        });
+                    };
+                    
+                    let finalResult = null;
+                    (async () => {
+                        try {
+                            while (start < totalSize) {
+                                finalResult = await uploadNextChunk();
+                            }
+                            resolve(finalResult);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    })();
+                }
+            });
+        },
+
+        uploadToLocalWithProgress(formData, url) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                
+                let startTime = Date.now();
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        this.uploadProgressPercent = percent;
+                        
+                        const loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
+                        const totalMB = (e.total / (1024 * 1024)).toFixed(1);
+                        this.uploadProgressText = `Mengunggah media ke server lokal: ${loadedMB} MB dari ${totalMB} MB`;
+                        
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        if (elapsed > 0) {
+                            const speed = e.loaded / elapsed;
+                            this.uploadSpeedText = speed > 1024 * 1024 
+                                ? `Kecepatan: ${(speed / (1024 * 1024)).toFixed(1)} MB/detik`
+                                : `Kecepatan: ${(speed / 1024).toFixed(0)} KB/detik`;
+                        }
+                    }
+                });
+                
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(JSON.parse(xhr.responseText));
+                    } else {
+                        try {
+                            const errRes = JSON.parse(xhr.responseText);
+                            reject(new Error(errRes.message || 'Gagal menyimpan data ke server'));
+                        } catch(e) {
+                            reject(new Error('Gagal menyimpan data ke server (Status: ' + xhr.status + ')'));
+                        }
+                    }
+                };
+                xhr.onerror = () => reject(new Error('Koneksi terputus ke server lokal.'));
+                xhr.send(formData);
+            });
+        },
+
         async submitUpdate() {
             const bannerId = this.editingBanner._id || this.editingBanner.id;
             if (!bannerId) {
@@ -1209,19 +1440,64 @@ function carouselManager() {
 
             this.loading = true;
             const form = document.getElementById('editBannerForm');
-            const formData = new FormData(form);
+            const fileInput = document.getElementById('image_edit');
+            const file = fileInput.files[0];
             
             try {
-                const response = await fetch(`/admin/carousel-banners/${bannerId}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: formData
-                });
-                
-                const result = await window.safeParseJSON(response);
+                let directUrl = null;
+
+                if (file) {
+                    const signRes = await fetch('/admin/carousel-banners/sign-upload');
+                    if (!signRes.ok) {
+                        throw new Error('Gagal mendapatkan izin unggah dari server (Status: ' + signRes.status + ')');
+                    }
+                    const signData = await signRes.json();
+
+                    if (signData.success && signData.mode === 'cloudinary') {
+                        this.showUploadProgress = true;
+                        this.uploadProgressPercent = 0;
+                        this.uploadProgressText = 'Menghubungkan ke Cloudinary...';
+                        this.uploadSpeedText = '';
+
+                        const uploadResult = await this.uploadToCloudinaryDirectly(file, signData);
+                        directUrl = uploadResult.secure_url;
+                        
+                        this.uploadProgressPercent = 100;
+                        this.uploadProgressText = 'Unggah berhasil! Menyimpan data...';
+                        await new Promise(r => setTimeout(r, 500));
+                        this.showUploadProgress = false;
+                    }
+                }
+
+                const formData = new FormData(form);
+                if (directUrl) {
+                    formData.set('image_url', directUrl);
+                }
+
+                let result;
+                if (!directUrl && file) {
+                    this.showUploadProgress = true;
+                    this.uploadProgressPercent = 0;
+                    this.uploadProgressText = 'Menghubungkan ke server lokal...';
+                    this.uploadSpeedText = '';
+                    
+                    result = await this.uploadToLocalWithProgress(formData, `/admin/carousel-banners/${bannerId}`);
+                    
+                    this.uploadProgressPercent = 100;
+                    this.uploadProgressText = 'Berhasil disimpan!';
+                    await new Promise(r => setTimeout(r, 500));
+                    this.showUploadProgress = false;
+                } else {
+                    const response = await fetch(`/admin/carousel-banners/${bannerId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: formData
+                    });
+                    result = await window.safeParseJSON(response);
+                }
 
                 if (result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Slide carousel berhasil diperbarui');
@@ -1231,6 +1507,7 @@ function carouselManager() {
                 }
             } catch (error) {
                 console.error(error);
+                this.showUploadProgress = false;
                 window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
             } finally {
                 this.loading = false;
@@ -1240,19 +1517,64 @@ function carouselManager() {
         async submitCreate() {
             this.loading = true;
             const form = document.getElementById('createBannerForm');
-            const formData = new FormData(form);
+            const fileInput = document.getElementById('image_create');
+            const file = fileInput.files[0];
 
             try {
-                const response = await fetch('/admin/carousel-banners', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: formData
-                });
-                
-                const result = await window.safeParseJSON(response);
+                let directUrl = null;
+
+                if (file) {
+                    const signRes = await fetch('/admin/carousel-banners/sign-upload');
+                    if (!signRes.ok) {
+                        throw new Error('Gagal mendapatkan izin unggah dari server (Status: ' + signRes.status + ')');
+                    }
+                    const signData = await signRes.json();
+
+                    if (signData.success && signData.mode === 'cloudinary') {
+                        this.showUploadProgress = true;
+                        this.uploadProgressPercent = 0;
+                        this.uploadProgressText = 'Menghubungkan ke Cloudinary...';
+                        this.uploadSpeedText = '';
+
+                        const uploadResult = await this.uploadToCloudinaryDirectly(file, signData);
+                        directUrl = uploadResult.secure_url;
+                        
+                        this.uploadProgressPercent = 100;
+                        this.uploadProgressText = 'Unggah berhasil! Menyimpan data...';
+                        await new Promise(r => setTimeout(r, 500));
+                        this.showUploadProgress = false;
+                    }
+                }
+
+                const formData = new FormData(form);
+                if (directUrl) {
+                    formData.set('image_url', directUrl);
+                }
+
+                let result;
+                if (!directUrl && file) {
+                    this.showUploadProgress = true;
+                    this.uploadProgressPercent = 0;
+                    this.uploadProgressText = 'Menghubungkan ke server lokal...';
+                    this.uploadSpeedText = '';
+                    
+                    result = await this.uploadToLocalWithProgress(formData, '/admin/carousel-banners');
+                    
+                    this.uploadProgressPercent = 100;
+                    this.uploadProgressText = 'Berhasil disimpan!';
+                    await new Promise(r => setTimeout(r, 500));
+                    this.showUploadProgress = false;
+                } else {
+                    const response = await fetch('/admin/carousel-banners', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: formData
+                    });
+                    result = await window.safeParseJSON(response);
+                }
 
                 if (result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Slide carousel berhasil ditambahkan');
@@ -1262,6 +1584,7 @@ function carouselManager() {
                 }
             } catch (error) {
                 console.error(error);
+                this.showUploadProgress = false;
                 window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
             } finally {
                 this.loading = false;

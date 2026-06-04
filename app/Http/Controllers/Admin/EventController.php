@@ -60,8 +60,8 @@ class EventController extends BaseAdminController
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
-            'banner' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+            'banner' => 'nullable|' . ($request->hasFile('banner') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
             'schedule' => 'nullable|array',
             'schedule.*.time' => 'nullable|string',
             'schedule.*.activity' => 'nullable|string',
@@ -117,6 +117,19 @@ class EventController extends BaseAdminController
             }
 
             $uploadedImages = [];
+            
+            // Check direct strings
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+            }
+            if ($request->filled('banner') && is_string($request->input('banner')) && (str_starts_with($request->input('banner'), 'http://') || str_starts_with($request->input('banner'), 'https://'))) {
+                $uploadedImages[] = $request->input('banner');
+            }
+
             if ($request->hasFile('banner')) {
                 $path = $this->processImage($request->file('banner'), 'events');
                 if ($path) $uploadedImages[] = $path;
@@ -217,8 +230,8 @@ class EventController extends BaseAdminController
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
-            'banner' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+            'banner' => 'nullable|' . ($request->hasFile('banner') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
             'schedule' => 'nullable|array',
             'schedule.*.time' => 'nullable|string',
             'schedule.*.activity' => 'nullable|string',
@@ -286,6 +299,26 @@ class EventController extends BaseAdminController
             }
 
             $uploadedImages = [];
+            
+            // Check direct strings
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+            if ($request->filled('banner') && is_string($request->input('banner')) && (str_starts_with($request->input('banner'), 'http://') || str_starts_with($request->input('banner'), 'https://'))) {
+                $path = $request->input('banner');
+                if (count($existingImages) > 0) {
+                    $this->deleteFile($existingImages[0]);
+                    $existingImages[0] = $path;
+                } else {
+                    array_unshift($existingImages, $path);
+                }
+            }
+
             if ($request->hasFile('banner')) {
                 $path = $this->processImage($request->file('banner'), 'events');
                 if ($path) {

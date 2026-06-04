@@ -98,14 +98,13 @@ class BudayaController extends BaseAdminController
             'longitude' => 'nullable|numeric',
             'description' => 'required|string',
             'is_active' => 'boolean',
-            'is_active' => 'boolean',
             'video_duration' => 'nullable|integer|min:1|max:600',
             'video_autoplay' => 'nullable|boolean',
             'video_loop' => 'nullable|boolean',
             'video_wait_until_ready' => 'nullable|boolean',
             'images' => 'nullable|array',
-            'images.*' => 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200',
-            'thumbnail' => 'nullable|file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200',
+            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string',
+            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
         ]);
 
         try {
@@ -116,8 +115,18 @@ class BudayaController extends BaseAdminController
             $validated['video_duration'] = $validated['video_duration'] ?? null;
             
             $uploadedImages = [];
-            if ($request->hasFile('thumbnail')) {
+            if ($request->filled('thumbnail') && is_string($request->input('thumbnail')) && (str_starts_with($request->input('thumbnail'), 'http://') || str_starts_with($request->input('thumbnail'), 'https://'))) {
+                $uploadedImages[] = $request->input('thumbnail');
+            } elseif ($request->hasFile('thumbnail')) {
                 $uploadedImages[] = $this->processImage($request->file('thumbnail'), 'budaya');
+            }
+
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
             }
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
@@ -202,14 +211,13 @@ class BudayaController extends BaseAdminController
             'longitude' => 'nullable|numeric',
             'description' => 'required|string',
             'is_active' => 'boolean',
-            'is_active' => 'boolean',
             'video_duration' => 'nullable|integer|min:1|max:600',
             'video_autoplay' => 'nullable|boolean',
             'video_loop' => 'nullable|boolean',
             'video_wait_until_ready' => 'nullable|boolean',
             'images' => 'nullable|array',
-            'images.*' => 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200',
-            'thumbnail' => 'nullable|file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200',
+            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string',
+            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
         ]);
 
         try {
@@ -236,7 +244,15 @@ class BudayaController extends BaseAdminController
             }
 
             $uploadedImages = [];
-            if ($request->hasFile('thumbnail')) {
+            if ($request->filled('thumbnail') && is_string($request->input('thumbnail')) && (str_starts_with($request->input('thumbnail'), 'http://') || str_starts_with($request->input('thumbnail'), 'https://'))) {
+                $path = $request->input('thumbnail');
+                if (count($existingImages) > 0) {
+                    $this->deleteFile($existingImages[0]);
+                    $existingImages[0] = $path;
+                } else {
+                    array_unshift($existingImages, $path);
+                }
+            } elseif ($request->hasFile('thumbnail')) {
                 $path = $this->processImage($request->file('thumbnail'), 'budaya');
                 if ($path) {
                     if (count($existingImages) > 0) {
@@ -247,13 +263,21 @@ class BudayaController extends BaseAdminController
                     }
                 }
             }
+
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+            }
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     $path = $this->processImage($file, 'budaya');
                     if ($path) $uploadedImages[] = $path;
                 }
-                $existingImages = array_merge($existingImages, $uploadedImages);
             }
+            $existingImages = array_merge($existingImages, $uploadedImages);
 
             if (count($existingImages) > 0) {
                 $validated['image_url'] = $existingImages[0];

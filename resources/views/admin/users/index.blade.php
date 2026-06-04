@@ -45,6 +45,11 @@
     detailUser: null,
     successMessage: '',
     statusLoading: false,
+    showConfirmModal: false,
+    confirmTitle: '',
+    confirmText: '',
+    confirmCallback: null,
+    confirmType: 'suspend',
     
     getInitials(name) {
         if (!name) return 'U';
@@ -66,7 +71,7 @@
             this.detailUser = fullData;
         } catch (error) {
             console.error('Error:', error);
-            alert('Gagal memuat detail.');
+            window.showAlert('Gagal memuat detail.', 'Error', 'error');
         } finally {
             this.loadingDetail = false;
         }
@@ -74,30 +79,45 @@
 
     async toggleStatus(userId) {
         if (!userId) return;
-        this.statusLoading = true;
         
-        try {
-            const response = await fetch(`/admin/users/${userId}/status`, {
-                method: 'PATCH',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            });
-            const result = await window.safeParseJSON(response);
+        const isCurrentlyActive = this.detailUser && this.detailUser.user ? this.detailUser.user.is_active : true;
+        const userName = this.detailUser && this.detailUser.user ? this.detailUser.user.name : 'pengguna';
+        
+        this.confirmType = isCurrentlyActive ? 'suspend' : 'activate';
+        this.confirmTitle = isCurrentlyActive ? 'Suspend Pengguna' : 'Aktifkan Pengguna';
+        this.confirmText = isCurrentlyActive 
+            ? 'Apakah Anda yakin ingin menangguhkan (suspend) akun "' + userName + '"? Akses masuk pengguna tersebut akan dibatasi.' 
+            : 'Apakah Anda yakin ingin mengaktifkan kembali akun "' + userName + '"?';
             
-            if (result.success) {
-                localStorage.setItem('pending_success_toast', result.message || 'Status akun pengguna berhasil diubah.');
-                window.location.reload();
-            } else {
-                alert(result.message || 'Gagal mengubah status akun.');
+        this.confirmCallback = async () => {
+            this.statusLoading = true;
+            try {
+                const response = await fetch(`/admin/users/${userId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                const result = await window.safeParseJSON(response);
+                
+                if (result.success) {
+                    localStorage.setItem('pending_success_toast', result.message || 'Status akun pengguna berhasil diubah.');
+                    window.location.reload();
+                } else {
+                    window.showAlert(result.message || 'Gagal mengubah status akun.', 'Gagal', 'error');
+                }
+            } catch (error) {
+                window.showAlert('Terjadi kesalahan saat mengubah status.', 'Error', 'error');
+            } finally {
+                this.statusLoading = false;
+                this.showConfirmModal = false;
             }
-        } catch (error) {
-            alert('Terjadi kesalahan saat mengubah status.');
-        } finally {
-            this.statusLoading = false;
-        }
+        };
+        
+        this.showConfirmModal = true;
+    }
     }
 }">
 
@@ -577,7 +597,7 @@
 
                         <!-- Footer Action -->
                         <div class="flex justify-center pt-6 border-t border-gray-50">
-                            <button @click="toggleStatus(detailUser.user._id)" 
+                            <button @click="toggleStatus(detailUser.user.id || detailUser.user._id)" 
                                 :disabled="statusLoading"
                                 :class="detailUser.user.is_active ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'"
                                 class="flex items-center gap-3 px-12 py-4 text-white rounded-2xl font-bold text-sm transition-all shadow-lg disabled:opacity-50">
@@ -617,6 +637,60 @@
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-3">Berhasil!</h3>
                 <p class="text-sm text-gray-500 font-medium leading-relaxed" x-text="successMessage"></p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Custom Confirm Modal -->
+    <template x-if="showConfirmModal">
+        <div class="fixed inset-0 z-[250] overflow-y-auto" x-cloak>
+            <div class="flex items-center justify-center min-h-screen px-4 py-8">
+                <!-- Backdrop -->
+                <div @click="showConfirmModal = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"></div>
+
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <!-- Modal Content -->
+                <div class="relative w-full max-w-md bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                    <div class="px-8 py-6 text-center mt-4">
+                        <!-- Suspend Icon (Red/Orange Warning) -->
+                        <template x-if="confirmType === 'suspend'">
+                            <div class="w-20 h-20 bg-[#FEE2E2] rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg class="w-10 h-10 text-[#EF4444]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            </div>
+                        </template>
+
+                        <!-- Activate Icon (Green/Emerald Success) -->
+                        <template x-if="confirmType === 'activate'">
+                            <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                        </template>
+
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4" x-text="confirmTitle"></h3>
+                        <p class="text-[15px] text-gray-500 mb-2 leading-relaxed px-2" x-text="confirmText"></p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-center gap-4 px-8 py-6 border-t border-gray-100 bg-gray-50/50">
+                        <button type="button" @click="showConfirmModal = false" class="w-full px-6 py-3.5 text-[15px] font-bold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm">
+                            Batal
+                        </button>
+                        
+                        <button type="button" 
+                                @click="confirmCallback()" 
+                                :disabled="statusLoading"
+                                :class="confirmType === 'suspend' ? 'bg-[#EF4444] hover:bg-red-600 shadow-[0_8px_20px_-6px_rgba(239,68,68,0.5)]' : 'bg-emerald-600 hover:bg-emerald-700 shadow-[0_8px_20px_-6px_rgba(5,150,105,0.5)]'"
+                                class="w-full px-6 py-3.5 text-[15px] font-bold text-white rounded-2xl transition-all flex items-center justify-center gap-2">
+                            
+                            <template x-if="statusLoading">
+                                <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            </template>
+                            
+                            <span x-text="confirmType === 'suspend' ? 'Ya, Suspend' : 'Ya, Aktifkan'"></span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </template>

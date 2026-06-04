@@ -56,9 +56,9 @@ class BeritaPromosiController extends BaseAdminController
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
             'tipe' => 'required|in:BERITA,PROMO',
-            'thumbnail' => 'required|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
             'images' => 'nullable|array',
-            'images.*' => 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string',
             'start_time' => 'nullable|integer|min:0',
             'end_time' => 'nullable|integer|min:0',
             'konten' => 'required|string',
@@ -69,8 +69,25 @@ class BeritaPromosiController extends BaseAdminController
             $data = $request->except(['images', 'thumbnail', 'start_time', 'end_time', '_token', 'is_active']);
             $currentMedia = [];
 
-            // Upload thumbnail
-            if ($request->hasFile('thumbnail')) {
+            // Thumbnail check (string URL or file upload)
+            if ($request->filled('thumbnail') && is_string($request->input('thumbnail')) && (str_starts_with($request->input('thumbnail'), 'http://') || str_starts_with($request->input('thumbnail'), 'https://'))) {
+                $path = $request->input('thumbnail');
+                $isVid = preg_match('/\.(mp4|mov|avi|webm|ogg)/i', $path) || str_contains($path, '/video/upload/');
+                $mediaType = $isVid ? 'video' : 'image';
+                $mediaEntry = [
+                    'url' => $path,
+                    'type' => $mediaType,
+                ];
+                if ($mediaType === 'video') {
+                    if ($request->filled('start_time')) {
+                        $mediaEntry['start_time'] = (int)$request->input('start_time');
+                    }
+                    if ($request->filled('end_time')) {
+                        $mediaEntry['end_time'] = (int)$request->input('end_time');
+                    }
+                }
+                $currentMedia[] = $mediaEntry;
+            } elseif ($request->hasFile('thumbnail')) {
                 $file = $request->file('thumbnail');
                 $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
                 
@@ -100,7 +117,30 @@ class BeritaPromosiController extends BaseAdminController
                 }
             }
 
-            // Upload additional images
+            // Additional images (string URLs)
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $isVid = preg_match('/\.(mp4|mov|avi|webm|ogg)/i', $img) || str_contains($img, '/video/upload/');
+                        $mediaType = $isVid ? 'video' : 'image';
+                        $mediaEntry = [
+                            'url' => $img,
+                            'type' => $mediaType,
+                        ];
+                        if ($mediaType === 'video') {
+                            if ($request->filled('start_time')) {
+                                $mediaEntry['start_time'] = (int)$request->input('start_time');
+                            }
+                            if ($request->filled('end_time')) {
+                                $mediaEntry['end_time'] = (int)$request->input('end_time');
+                            }
+                        }
+                        $currentMedia[] = $mediaEntry;
+                    }
+                }
+            }
+
+            // Additional images (file uploads)
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
@@ -212,9 +252,9 @@ class BeritaPromosiController extends BaseAdminController
         $validated = $request->validate([
             'judul' => 'required|string|max:255',
             'tipe' => 'required|in:BERITA,PROMO',
-            'thumbnail' => 'nullable|file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
             'images' => 'nullable|array',
-            'images.*' => 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200',
+            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string',
             'start_time' => 'nullable|integer|min:0',
             'end_time' => 'nullable|integer|min:0',
             'konten' => 'required|string',
@@ -238,8 +278,21 @@ class BeritaPromosiController extends BaseAdminController
                 $existingMedia = array_values($existingMedia);
             }
 
-            // Upload new thumbnail
-            if ($request->hasFile('thumbnail')) {
+            // Thumbnail check (string URL or file upload)
+            if ($request->filled('thumbnail') && is_string($request->input('thumbnail')) && (str_starts_with($request->input('thumbnail'), 'http://') || str_starts_with($request->input('thumbnail'), 'https://'))) {
+                $path = $request->input('thumbnail');
+                $isVid = preg_match('/\.(mp4|mov|avi|webm|ogg)/i', $path) || str_contains($path, '/video/upload/');
+                $mediaType = $isVid ? 'video' : 'image';
+                $mediaEntry = [
+                    'url' => $path,
+                    'type' => $mediaType,
+                ];
+                if ($mediaType === 'video') {
+                    if ($request->filled('start_time')) $mediaEntry['start_time'] = (int)$request->input('start_time');
+                    if ($request->filled('end_time')) $mediaEntry['end_time'] = (int)$request->input('end_time');
+                }
+                array_unshift($existingMedia, $mediaEntry);
+            } elseif ($request->hasFile('thumbnail')) {
                 $file = $request->file('thumbnail');
                 $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';
                 
@@ -269,7 +322,26 @@ class BeritaPromosiController extends BaseAdminController
                 }
             }
 
-            // Upload additional images
+            // Additional images (string URLs)
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $isVid = preg_match('/\.(mp4|mov|avi|webm|ogg)/i', $img) || str_contains($img, '/video/upload/');
+                        $mediaType = $isVid ? 'video' : 'image';
+                        $mediaEntry = [
+                            'url' => $img,
+                            'type' => $mediaType,
+                        ];
+                        if ($mediaType === 'video') {
+                            if ($request->filled('start_time')) $mediaEntry['start_time'] = (int)$request->input('start_time');
+                            if ($request->filled('end_time')) $mediaEntry['end_time'] = (int)$request->input('end_time');
+                        }
+                        $existingMedia[] = $mediaEntry;
+                    }
+                }
+            }
+
+            // Upload additional images (files)
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     $mediaType = str_starts_with($file->getMimeType(), 'video') ? 'video' : 'image';

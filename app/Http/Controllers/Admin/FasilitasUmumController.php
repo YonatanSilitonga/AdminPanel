@@ -77,10 +77,9 @@ class FasilitasUmumController extends BaseAdminController
             'tags' => 'nullable|string',
             'operational_hours' => 'required|string|max:255',
             'is_active' => 'boolean',
-            'is_active' => 'boolean',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
-            'image' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+            'image' => 'nullable|' . ($request->hasFile('image') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
         ]);
 
         try {
@@ -99,12 +98,27 @@ class FasilitasUmumController extends BaseAdminController
             }
             
             $uploadedImages = [];
+            
+            // Check direct strings
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+            }
+            if ($request->filled('image') && is_string($request->input('image')) && (str_starts_with($request->input('image'), 'http://') || str_starts_with($request->input('image'), 'https://'))) {
+                $uploadedImages[] = $request->input('image');
+            }
+
             if ($request->hasFile('image')) {
-                $uploadedImages[] = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                $path = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                if ($path) $uploadedImages[] = $path;
             }
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
-                    $uploadedImages[] = $this->uploadFile($file, 'fasilitas_umum');
+                    $path = $this->uploadFile($file, 'fasilitas_umum');
+                    if ($path) $uploadedImages[] = $path;
                 }
             }
             if (count($uploadedImages) > 0) {
@@ -194,10 +208,9 @@ class FasilitasUmumController extends BaseAdminController
             'tags' => 'nullable|string',
             'operational_hours' => 'required|string|max:255',
             'is_active' => 'boolean',
-            'is_active' => 'boolean',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,webp|max:10240',
-            'image' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
+            'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+            'image' => 'nullable|' . ($request->hasFile('image') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
         ]);
 
         try {
@@ -232,6 +245,26 @@ class FasilitasUmumController extends BaseAdminController
             }
 
             $uploadedImages = [];
+            
+            // Check direct strings
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+            if ($request->filled('image') && is_string($request->input('image')) && (str_starts_with($request->input('image'), 'http://') || str_starts_with($request->input('image'), 'https://'))) {
+                $path = $request->input('image');
+                if (count($existingImages) > 0) {
+                    $this->deleteFile($existingImages[0]);
+                    $existingImages[0] = $path;
+                } else {
+                    array_unshift($existingImages, $path);
+                }
+            }
+
             if ($request->hasFile('image')) {
                 $path = $this->uploadFile($request->file('image'), 'fasilitas_umum');
                 if ($path) {

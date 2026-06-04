@@ -88,7 +88,6 @@ class UserController extends BaseAdminController
             $statusText = $newStatus ? 'diaktifkan' : 'ditangguhkan (suspend)';
             
             if ($request->ajax() || $request->wantsJson()) {
-                session()->flash('success', "Akun {$user->name} berhasil {$statusText}");
                 return response()->json([
                     'success' => true,
                     'message' => "Akun {$user->name} berhasil {$statusText}",
