@@ -646,6 +646,7 @@ class ReviewController extends BaseAdminController
     {
         try {
             \Illuminate\Support\Facades\Cache::forget('review_stats_summary');
+            \Illuminate\Support\Facades\Cache::forget('review_trends_6_months');
             \Illuminate\Support\Facades\Cache::forget('review_keyword_summary_' . date('Y-m-d_H'));
             \Illuminate\Support\Facades\Cache::forget('review_keyword_summary_' . date('Y-m-d_H', strtotime('-1 hour')));
         } catch (\Exception $e) {
