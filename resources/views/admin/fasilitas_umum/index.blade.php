@@ -1044,7 +1044,7 @@
              x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
             <!-- Circular Progress Indicator -->
             <div class="relative flex items-center justify-center mx-auto w-28 h-28">
-                <svg class="w-full h-full transform -rotate-90">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
                     <circle cx="56" cy="56" r="46" stroke="#f3f4f6" stroke-width="8" fill="transparent" />
                     <circle cx="56" cy="56" r="46" stroke="#066466" stroke-width="8" fill="transparent"
                             :stroke-dasharray="2 * Math.PI * 46"
@@ -1114,7 +1114,6 @@ function facilityManager() {
             if (!id) return;
             this.showEditModal = false;
             this.loading = true;
-            this.showViewModal = true;
             this.viewingFacility = null;
             this.activeViewImageIndex = 0;
             try {
@@ -1124,12 +1123,17 @@ function facilityManager() {
                 const data = await window.safeParseJSON(response);
                 if (data) {
                     this.viewingFacility = data;
+                    this.showViewModal = true;
                 } else {
                     throw new Error('Data tidak valid');
                 }
             } catch (error) {
                 console.error(error);
-                alert('Gagal mengambil detail fasilitas');
+                if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                    window.showAlert(error.message, 'Error', 'error');
+                } else {
+                    window.showAlert('Gagal mengambil detail fasilitas', 'Error', 'error');
+                }
                 this.showViewModal = false;
             } finally {
                 this.loading = false;
@@ -1140,7 +1144,6 @@ function facilityManager() {
             if (!id) return;
             this.showViewModal = false;
             this.loading = true;
-            this.showEditModal = true;
             this.editingFacility = null;
             this.editFileName = '';
             this.deletedImages = [];
@@ -1151,9 +1154,14 @@ function facilityManager() {
                 const data = await window.safeParseJSON(response);
                 if (data && !data._id && data.id) data._id = data.id;
                 this.editingFacility = data;
+                this.showEditModal = true;
             } catch (error) {
                 console.error(error);
-                alert('Gagal mengambil data fasilitas');
+                if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                    window.showAlert(error.message, 'Error', 'error');
+                } else {
+                    window.showAlert('Gagal mengambil data fasilitas', 'Error', 'error');
+                }
                 this.showEditModal = false;
             } finally {
                 this.loading = false;
@@ -1405,7 +1413,7 @@ function facilityManager() {
                         body: formData
                     });
                     const result = await window.safeParseJSON(response);
-                    if (result && result.success) {
+                    if (response.ok && result && result.success) {
                         localStorage.setItem('pending_success_toast', result.message || 'Fasilitas umum berhasil ditambahkan');
                         window.location.reload();
                     } else {
@@ -1510,7 +1518,7 @@ function facilityManager() {
                         body: formData
                     });
                     const result = await window.safeParseJSON(response);
-                    if (result && result.success) {
+                    if (response.ok && result && result.success) {
                         localStorage.setItem('pending_success_toast', result.message || 'Fasilitas umum berhasil diperbarui');
                         window.location.reload();
                     } else {

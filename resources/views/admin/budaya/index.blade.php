@@ -101,7 +101,6 @@
     async openEditModal(id) {
         if (!id) return;
         this.loading = true;
-        this.showEditModal = true;
         this.editingBudaya = null;
         this.deletedImages = [];
         try {
@@ -115,10 +114,15 @@
                     this.editingBudaya._id = this.editingBudaya.id;
                 }
                 this.setEditPreviewFromMedia(this.editingBudaya.image_url, this.editingBudaya.image_url_type);
+                this.showEditModal = true;
             }
         } catch(e) {
             console.error('Edit error:', e);
-            alert('Gagal mengambil data budaya');
+            if (e.message && e.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(e.message, 'Error', 'error');
+            } else {
+                window.showAlert('Gagal mengambil data budaya', 'Error', 'error');
+            }
             this.showEditModal = false;
         } finally {
             this.loading = false;
@@ -128,7 +132,6 @@
     async openViewModal(id) {
         if (!id) return;
         this.loading = true;
-        this.showViewModal = true;
         this.viewingBudaya = null;
         this.activeViewMediaIndex = 0;
         try {
@@ -138,12 +141,17 @@
             const data = await window.safeParseJSON(res);
             if (data) {
                 this.viewingBudaya = data;
+                this.showViewModal = true;
             } else {
                 throw new Error('Data tidak valid');
             }
         } catch(e) {
             console.error('View error:', e);
-            alert('Gagal mengambil data budaya');
+            if (e.message && e.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(e.message, 'Error', 'error');
+            } else {
+                window.showAlert('Gagal mengambil data budaya', 'Error', 'error');
+            }
             this.showViewModal = false;
         } finally {
             this.loading = false;
@@ -398,11 +406,12 @@
                     body: formData
                 });
                 const result = await window.safeParseJSON(response);
-                if (result && result.success) {
+                if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Budaya baru berhasil dibuat');
                     window.location.reload();
                 } else {
-                    window.showAlert(result?.message || 'Gagal membuat budaya', 'Gagal', 'error');
+                    const errorMsg = result?.message || 'Gagal membuat budaya';
+                    window.showAlert(errorMsg, 'Gagal', 'error');
                 }
             } else {
                 // Fallback to local upload with progress
@@ -427,7 +436,12 @@
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+            // Only trigger alert if we haven't handled the response validation directly
+            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(error.message, 'Error', 'error');
+            } else {
+                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+            }
         } finally {
             this.loading = false;
         }
@@ -537,8 +551,12 @@
             console.error(error);
             this.showUploadProgress = false;
             this.saveStatus = 'error';
-            this.saveMessage = 'Terjadi kesalahan saat menyimpan.';
-            window.showAlert(error.message || this.saveMessage, 'Error', 'error');
+            this.saveMessage = error.message || 'Terjadi kesalahan saat menyimpan.';
+            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(error.message, 'Error', 'error');
+            } else {
+                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+            }
         } finally {
             this.loading = false;
         }
@@ -1582,7 +1600,7 @@
              x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
             <!-- Circular Progress Indicator -->
             <div class="relative flex items-center justify-center mx-auto w-28 h-28">
-                <svg class="w-full h-full transform -rotate-90">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
                     <circle cx="56" cy="56" r="46" stroke="#f3f4f6" stroke-width="8" fill="transparent" />
                     <circle cx="56" cy="56" r="46" stroke="#066466" stroke-width="8" fill="transparent"
                             :stroke-dasharray="2 * Math.PI * 46"

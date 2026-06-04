@@ -154,7 +154,6 @@ class BudayaController extends BaseAdminController
             $this->logActivity('create', 'budaya', (string)$budaya->_id, null, $budaya->toArray());
 
             if ($request->ajax() || $request->wantsJson()) {
-                session()->flash('success', 'Berhasil Ditambahkan');
                 return response()->json([
                     'success' => true,
                     'message' => 'Berhasil Ditambahkan',
@@ -297,7 +296,6 @@ class BudayaController extends BaseAdminController
             $this->logActivity('update', 'budaya', (string)$budaya->_id, $oldValues, $budaya->toArray());
 
             if ($request->ajax() || $request->wantsJson()) {
-                session()->flash('success', 'Berhasil Diperbarui');
                 return response()->json([
                     'success' => true,
                     'message' => 'Berhasil Diperbarui',

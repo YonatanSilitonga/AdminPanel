@@ -64,7 +64,6 @@
     async openViewModal(id) {
         if (!id) return;
         this.loading = true;
-        this.showViewModal = true;
         this.viewingItem = null;
         this.activeViewImageIndex = 0;
         try {
@@ -74,6 +73,7 @@
             const data = await window.safeParseJSON(response);
             if (data) {
                 this.viewingItem = data;
+                this.showViewModal = true;
             } else {
                 throw new Error('Data tidak valid');
             }
@@ -89,7 +89,6 @@
     async openEditModal(id) {
         if (!id) return;
         this.loading = true;
-        this.showEditModal = true;
         try {
             const response = await fetch(`/admin/berita-promosi/${id}/edit`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -108,6 +107,7 @@
             document.getElementById('edit_status').checked = data.is_active;
             this.editPreviewUrl = data.thumbnail_url || '';
             this.editFileName = data.thumbnail ? 'Thumbnail saat ini' : '';
+            this.showEditModal = true;
         } catch (error) {
             console.error('Edit error:', error);
             alert('Gagal mengambil data untuk edit');
@@ -365,7 +365,7 @@
                     body: formData
                 });
                 const result = await window.safeParseJSON(response);
-                if (result && result.success) {
+                if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Berita/promosi berhasil ditambahkan');
                     window.location.reload();
                 } else {
@@ -394,7 +394,11 @@
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(error.message, 'Error', 'error');
+            } else {
+                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+            }
         } finally {
             this.loading = false;
         }
@@ -463,7 +467,7 @@
                     body: formData
                 });
                 const result = await window.safeParseJSON(response);
-                if (result && result.success) {
+                if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Berita/promosi berhasil diperbarui');
                     window.location.reload();
                 } else {
@@ -492,7 +496,11 @@
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            window.showAlert(error.message || 'Terjadi kesalahan saat memperbarui data', 'Error', 'error');
+            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(error.message, 'Error', 'error');
+            } else {
+                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+            }
         } finally {
             this.loading = false;
         }
@@ -1541,7 +1549,7 @@
              x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
             <!-- Circular Progress Indicator -->
             <div class="relative flex items-center justify-center mx-auto w-28 h-28">
-                <svg class="w-full h-full transform -rotate-90">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
                     <circle cx="56" cy="56" r="46" stroke="#f3f4f6" stroke-width="8" fill="transparent" />
                     <circle cx="56" cy="56" r="46" stroke="#066466" stroke-width="8" fill="transparent"
                             :stroke-dasharray="2 * Math.PI * 46"

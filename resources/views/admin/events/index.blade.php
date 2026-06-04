@@ -254,8 +254,8 @@
     },
     
     async openEditModal(id) {
+        if (!id) return;
         this.loading = true;
-        this.showEditModal = true;
         this.editingEvent = null;
         this.deletedImages = [];
         try {
@@ -275,6 +275,7 @@
                 this.editCloseTime = '17:00';
             }
             this.edit_is_active = Boolean(this.editingEvent.is_active);
+            this.showEditModal = true;
         } catch (error) {
             alert('Gagal mengambil data event');
             this.showEditModal = false;
@@ -371,11 +372,12 @@
                     body: formData
                 });
                 const result = await window.safeParseJSON(response);
-                if (result && result.success) {
+                if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Event berhasil diperbarui');
                     window.location.reload();
                 } else {
-                    window.showAlert(result?.message || 'Gagal memperbarui event', 'Gagal', 'error');
+                    const errMsg = result?.message || 'Gagal memperbarui event';
+                    window.showAlert(errMsg, 'Gagal', 'error');
                 }
             } else {
                 // Fallback to local upload with progress
@@ -400,7 +402,11 @@
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            window.showAlert(error.message || 'Terjadi kesalahan saat memperbarui data', 'Error', 'error');
+            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(error.message, 'Error', 'error');
+            } else {
+                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+            }
         } finally {
             this.loading = false;
         }
@@ -409,7 +415,6 @@
     async openViewModal(id) {
         if (!id) return;
         this.loading = true;
-        this.showViewModal = true;
         this.viewingEvent = null;
         this.activeViewImageIndex = 0;
         try {
@@ -419,6 +424,7 @@
             const data = await window.safeParseJSON(response);
             if (data) {
                 this.viewingEvent = data;
+                this.showViewModal = true;
             } else {
                 throw new Error('Data tidak valid');
             }
@@ -496,11 +502,12 @@
                     body: formData
                 });
                 const result = await window.safeParseJSON(response);
-                if (result && result.success) {
+                if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Event baru berhasil dibuat');
                     window.location.reload();
                 } else {
-                    window.showAlert(result?.message || 'Gagal membuat event', 'Gagal', 'error');
+                    const errMsg = result?.message || 'Gagal membuat event';
+                    window.showAlert(errMsg, 'Gagal', 'error');
                 }
             } else {
                 // Fallback to local upload with progress
@@ -525,7 +532,11 @@
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(error.message, 'Error', 'error');
+            } else {
+                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+            }
         } finally {
             this.loading = false;
         }
@@ -1659,7 +1670,7 @@
              x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
             <!-- Circular Progress Indicator -->
             <div class="relative flex items-center justify-center mx-auto w-28 h-28">
-                <svg class="w-full h-full transform -rotate-90">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
                     <circle cx="56" cy="56" r="46" stroke="#f3f4f6" stroke-width="8" fill="transparent" />
                     <circle cx="56" cy="56" r="46" stroke="#066466" stroke-width="8" fill="transparent"
                             :stroke-dasharray="2 * Math.PI * 46"
