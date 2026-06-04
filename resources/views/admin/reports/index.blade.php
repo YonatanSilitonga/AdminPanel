@@ -34,7 +34,15 @@
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-400">Ulasan & Laporan</span>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-900 font-bold">Laporan Masuk</span>
+    @php
+        $statusLabels = [
+            'pending' => 'Laporan Menunggu',
+            'reviewed' => 'Laporan Ditinjau',
+            'resolved' => 'Laporan Diselesaikan'
+        ];
+        $currentLabel = $statusLabels[request('status')] ?? 'Laporan Masuk';
+    @endphp
+    <span class="text-gray-900 font-bold" id="breadcrumb-active-state">{{ $currentLabel }}</span>
 </nav>
 @endsection
 
@@ -161,137 +169,169 @@
 
     {{-- Filter Search --}}
     <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
-        <form method="GET" action="{{ route('admin.reports.index') }}">
-            {{-- Hidden inputs for sorting persistence --}}
-            <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
-            <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <form method="GET" action="{{ route('admin.reports.index') }}" class="flex-1">
+                {{-- Hidden inputs for sorting persistence --}}
+                <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
+                <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Cari Deskripsi -->
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                        Cari Laporan
-                        <div class="relative group cursor-pointer inline-flex items-center">
-                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
-                                <div class="space-y-2">
-                                    <div>
-                                        <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                        <p class="text-slate-200 font-sans">Mencari laporan masuk berdasarkan kata kunci deskripsi keluhan.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <!-- Cari Deskripsi -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Cari Laporan
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-sans">Mencari laporan masuk berdasarkan kata kunci deskripsi keluhan.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                            <p class="text-slate-200 font-sans">Proses pencarian dan penyaringan data tabel laporan pengguna.</p>
+                                        </div>
                                     </div>
-                                    <div class="pt-1.5 border-t border-slate-800">
-                                        <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
-                                        <p class="text-slate-200 font-sans">Proses pencarian dan penyaringan data tabel laporan pengguna.</p>
-                                    </div>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                 </div>
-                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                             </div>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
+                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </span>
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari deskripsi laporan..."
+                                class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-[#066466] outline-none text-[14px] font-medium placeholder-gray-400 transition-all shadow-sm">
                         </div>
-                    </label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
-                            <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </span>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari deskripsi laporan..."
-                            class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-[#066466] outline-none text-[14px] font-medium placeholder-gray-400 transition-all shadow-sm">
                     </div>
-                </div>
 
-                <!-- Status Laporan -->
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                        Status Laporan
-                        <div class="relative group cursor-pointer inline-flex items-center">
-                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
-                                <div class="space-y-2">
-                                    <div>
-                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                        <p class="text-slate-200 font-sans">Menyaring laporan berdasarkan tahapan tindak lanjut yang telah dilakukan.</p>
+                    <!-- Status Laporan -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Status Laporan
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-sans">Menyaring laporan berdasarkan tahapan tindak lanjut yang telah dilakukan.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                            <p class="text-slate-200 font-sans">Pengawasan proses penyelesaian keluhan pengguna oleh tim moderator.</p>
+                                        </div>
                                     </div>
-                                    <div class="pt-1.5 border-t border-slate-800">
-                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
-                                        <p class="text-slate-200 font-sans">Pengawasan proses penyelesaian keluhan pengguna oleh tim moderator.</p>
-                                    </div>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                 </div>
-                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                             </div>
-                        </div>
-                    </label>
-                    <select name="status" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
-                        <option value="">Semua Status</option>
-                        <option value="pending" @selected(request('status') === 'pending')>Menunggu</option>
-                        <option value="reviewed" @selected(request('status') === 'reviewed')>Ditinjau</option>
-                        <option value="resolved" @selected(request('status') === 'resolved')>Diselesaikan</option>
-                    </select>
-                </div>
+                        </label>
+                        <select name="status" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                            <option value="">Semua Status</option>
+                            <option value="pending" @selected(request('status') === 'pending')>Menunggu</option>
+                            <option value="reviewed" @selected(request('status') === 'reviewed')>Ditinjau</option>
+                            <option value="resolved" @selected(request('status') === 'resolved')>Diselesaikan</option>
+                        </select>
+                    </div>
 
-                <!-- Alasan Pelanggaran -->
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                        Alasan Laporan
-                        <div class="relative group cursor-pointer inline-flex items-center">
-                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
-                                <div class="space-y-2">
-                                    <div>
-                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                        <p class="text-slate-200 font-sans">Menyaring laporan berdasarkan kategori pelanggaran atau masalah yang dilaporkan.</p>
+                    <!-- Alasan Pelanggaran -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Alasan Laporan
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-sans">Menyaring laporan berdasarkan kategori pelanggaran atau masalah yang dilaporkan.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                            <p class="text-slate-200 font-sans">Klasifikasi masalah untuk analisis jenis keluhan terbanyak.</p>
+                                        </div>
                                     </div>
-                                    <div class="pt-1.5 border-t border-slate-800">
-                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
-                                        <p class="text-slate-200 font-sans">Klasifikasi masalah untuk analisis jenis keluhan terbanyak.</p>
-                                    </div>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                 </div>
-                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                             </div>
-                        </div>
-                    </label>
-                    <select name="reason" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
-                        <option value="">Semua Alasan</option>
-                        @foreach(($reasons ?? []) as $reason)
-                            <option value="{{ $reason }}" @selected(request('reason') === $reason)>{{ ucfirst(str_replace('_', ' ', $reason)) }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                        </label>
+                        <select name="reason" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                            <option value="">Semua Alasan</option>
+                            @foreach(($reasons ?? []) as $reason)
+                                <option value="{{ $reason }}" @selected(request('reason') === $reason)>{{ ucfirst(str_replace('_', ' ', $reason)) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-                <!-- Tampilkan & Reset -->
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                        Tampilkan
-                        <div class="relative group cursor-pointer inline-flex items-center">
-                            <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
-                                <div class="space-y-2">
-                                    <div>
-                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                        <p class="text-slate-200 font-sans">Mengatur jumlah baris data laporan yang ditampilkan dalam satu halaman tabel.</p>
+                    <!-- Destinasi Wisata -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Destinasi Wisata
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-sans">Menyaring laporan berdasarkan destinasi wisata tertentu.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                            <p class="text-slate-200 font-sans">Penyaringan data laporan agar mempermudah monitoring destinasi spesifik.</p>
+                                        </div>
                                     </div>
-                                    <div class="pt-1.5 border-t border-slate-800">
-                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
-                                        <p class="text-slate-200 font-sans">Navigasi halaman (pagination) tabel laporan pengguna.</p>
-                                    </div>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                 </div>
-                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                             </div>
-                        </div>
-                    </label>
-                    <div class="flex items-center gap-2">
-                        <select name="per_page" onchange="this.form.submit()" class="flex-1 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                        </label>
+                        <select name="destination_id" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                            <option value="">Semua Destinasi</option>
+                            @foreach(($destinations ?? []) as $dest)
+                                <option value="{{ $dest->_id }}" @selected(request('destination_id') === (string)$dest->_id)>{{ $dest->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Tampilkan -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                            Tampilkan
+                            <div class="relative group cursor-pointer inline-flex items-center">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200 font-sans">Mengatur jumlah baris data laporan yang ditampilkan dalam satu halaman tabel.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                            <p class="text-slate-200 font-sans">Navigasi halaman (pagination) tabel laporan pengguna.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </label>
+                        <select name="per_page" onchange="this.form.submit()" class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
                             @foreach([10, 15, 25, 50, 100] as $size)
                                 <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
                             @endforeach
                         </select>
-                        @if(request('search') || request('status') || request('reason') || request('per_page') != 15)
-                            <a href="{{ route('admin.reports.index') }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
-                                Reset
-                            </a>
-                        @endif
                     </div>
                 </div>
-            </div>
-        </form>
+            </form>
+
+            @if(request('search') || request('status') || request('reason') || request('destination_id') || request('per_page') != 15)
+                <div class="flex items-center gap-3 lg:mb-[2px] mt-4 lg:mt-0 flex-shrink-0">
+                    <a href="{{ route('admin.reports.index') }}" class="px-5 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
+                        Reset
+                    </a>
+                </div>
+            @endif
+        </div>
     </div>
 
     {{-- Table --}}
@@ -756,7 +796,7 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <!-- Status Laporan -->
                             <div class="space-y-1.5">
                                 <label class="text-xs font-bold text-gray-500 block">Status Laporan</label>
@@ -774,6 +814,16 @@
                                     <option value="">Semua Kategori</option>
                                     @foreach(($reasons ?? []) as $reason)
                                         <option value="{{ $reason }}">{{ ucfirst(str_replace('_', ' ', $reason)) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <!-- Destinasi Wisata -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-500 block">Destinasi Wisata</label>
+                                <select name="destination_id" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-[#066466] focus:ring-1 focus:ring-[#066466]/20 transition-all cursor-pointer">
+                                    <option value="">Semua Destinasi</option>
+                                    @foreach(($destinations ?? []) as $dest)
+                                        <option value="{{ $dest->_id }}">{{ $dest->name }}</option>
                                     @endforeach
                                 </select>
                             </div>

@@ -4,38 +4,42 @@
 @section('page_title', 'Profil Saya')
 @section('page_description', 'Kelola informasi profil, foto, dan kata sandi Anda.')
 
+@section('breadcrumb')
+<nav class="flex text-sm mb-6 text-gray-500 font-medium">
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Beranda</a>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-400">Pengaturan</span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-900 font-bold">Profil Saya</span>
+</nav>
+@endsection
+
 @section('content')
 <style>
     /* Hide the default empty page title container */
     .mb-5:has(h1:empty) { display: none !important; }
 </style>
 
-<!-- Breadcrumb Area -->
-<div class="flex items-center gap-2 text-[14px] text-gray-500 mb-6">
-    <span>Pengaturan</span>
-    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    <span class="font-bold text-gray-900">Profil Saya</span>
-</div>
 
 <!-- Settings Navigation Tabs -->
 @include('admin.settings.partials.tabs')
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8" x-data="{ 
+    preview: '{{ $admin->profile_photo ? image_url($admin->profile_photo) : '' }}',
+    handleFile(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => this.preview = e.target.result;
+            reader.readAsDataURL(file);
+        }
+    }
+}">
     <!-- Left: Profile Info & Photo -->
     <div class="lg:col-span-1 space-y-6">
         <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Profile Photo with Upload -->
-                <div class="relative group" x-data="{ 
-                    preview: '{{ $admin->profile_photo ? image_url($admin->profile_photo) : '' }}',
-                    handleFile(e) {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (e) => this.preview = e.target.result;
-                            reader.readAsDataURL(file);
-                        }
-                    }
-                }">
+                <div class="relative group">
                     <div class="w-32 h-32 bg-[#10B981] rounded-full flex items-center justify-center text-white font-bold text-4xl shadow-xl overflow-hidden border-4 border-white">
                         <template x-if="preview">
                             <img :src="preview" class="w-full h-full object-cover">

@@ -474,6 +474,7 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
+<script>
     let autocompleteService;
     let placesService;
     let map;

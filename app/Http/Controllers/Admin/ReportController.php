@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\MongoReport;
+use App\Models\MongoDB\MongoDestination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -29,6 +30,11 @@ class ReportController extends BaseAdminController
                 $query->where('reason', $request->reason);
             }
 
+            // Filter by destination
+            if ($request->filled('destination_id')) {
+                $query->where('destination_id', $request->destination_id);
+            }
+
             // Filter by assigned admin
             if ($request->filled('assigned')) {
                 if ($request->assigned === 'me' && $this->admin) {
@@ -50,11 +56,13 @@ class ReportController extends BaseAdminController
 
             $statuses = ['pending', 'reviewed', 'resolved'];
             $reasons = ['spam', 'inappropriate', 'fake', 'harassment', 'facility_damage', 'other'];
+            $destinations = MongoDestination::orderBy('name', 'asc')->get(['_id', 'name']);
 
             return view('admin.reports.index', [
                 'reports' => $reports,
                 'statuses' => $statuses,
                 'reasons' => $reasons,
+                'destinations' => $destinations,
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading reports from Mongo: ' . $e->getMessage());
@@ -209,6 +217,10 @@ class ReportController extends BaseAdminController
                 $query->where('reason', $request->reason);
             }
 
+            if ($request->filled('destination_id')) {
+                $query->where('destination_id', $request->destination_id);
+            }
+
             if ($request->filled('start_date')) {
                 $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
                 $query->where(function($q) use ($startDate) {
@@ -298,6 +310,10 @@ class ReportController extends BaseAdminController
 
             if ($request->filled('reason')) {
                 $query->where('reason', $request->reason);
+            }
+
+            if ($request->filled('destination_id')) {
+                $query->where('destination_id', $request->destination_id);
             }
 
             if ($request->filled('start_date')) {

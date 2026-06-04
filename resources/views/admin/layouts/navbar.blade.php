@@ -82,8 +82,12 @@
             <!-- User Menu -->
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" class="flex items-center space-x-3 text-gray-600 hover:text-emerald-600 p-1.5 hover:bg-gray-50 rounded-xl transition-all">
-                    <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                        {{ strtoupper(substr(auth('admin')->user()?->name ?? '-', 0, 1)) }}
+                    <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm overflow-hidden">
+                        @if(auth('admin')->user()?->profile_photo)
+                            <img src="{{ image_url(auth('admin')->user()->profile_photo) }}" class="w-full h-full object-cover">
+                        @else
+                            {{ strtoupper(substr(auth('admin')->user()?->name ?? '-', 0, 1)) }}
+                        @endif
                     </div>
                     <div class="hidden md:flex flex-col items-start leading-tight">
                         <span class="text-sm font-bold text-gray-800">{{ \Illuminate\Support\Str::limit(auth('admin')->user()?->name ?? '-', 15) }}</span>

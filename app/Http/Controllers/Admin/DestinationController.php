@@ -200,12 +200,23 @@ class DestinationController extends BaseAdminController
             $this->logActivity('create_mongo', 'destination', (string)$destination->_id, null, $destination->toArray());
             $this->clearDashboardCache();
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Destinasi berhasil ditambahkan',
+                    'destination' => $destination
+                ]);
+            }
+
             return redirect()
                 ->route('admin.destinations.index')
                 ->with('success', 'Destinasi berhasil ditambahkan');
 
         } catch (\Exception $e) {
             Log::error('Error creating destination in Mongo: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
             return back()->with('error', 'Error creating destination: ' . $e->getMessage());
         }
     }
@@ -356,7 +367,6 @@ class DestinationController extends BaseAdminController
             }
 
             if ($request->ajax() || $request->wantsJson()) {
-                session()->flash('success', 'Destinasi berhasil diperbarui');
                 return response()->json([
                     'success' => true,
                     'message' => 'Destinasi berhasil diperbarui',

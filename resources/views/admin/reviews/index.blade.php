@@ -8,24 +8,26 @@
 @section('page_actions')
 <div class="flex items-center gap-4">
     <!-- Cetak Analitik (PDF) -->
-    <div class="flex items-center gap-2">
-        <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-export-modal'))" class="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-indigo-600/20">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-            Cetak Analitik (PDF)
-        </button>
-        <div class="relative group cursor-pointer inline-flex items-center">
-            <svg class="w-4 h-4 text-gray-400 hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
-                <div class="space-y-2">
-                    <div>
-                        <span class="block font-bold text-indigo-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Aksi: Cetak Analitik</span>
-                        <p class="text-slate-200 font-sans leading-relaxed">Mencetak dokumen resmi PDF analitik sentimen ulasan lengkap dengan kop surat dinas, statistik distribusi rating, dan tanda tangan kepala dinas.</p>
-                    </div>
+  <div class="flex items-center gap-2">
+    <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-export-modal'))" class="flex items-center gap-2 px-8 py-3 bg-purple-800 text-white rounded-2xl font-bold hover:opacity-95 transition-all shadow-lg shadow-purple-800/30">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+        Cetak Analitik (PDF)
+    </button>
+    
+    <div class="relative group cursor-pointer inline-flex items-center">
+        <svg class="w-4 h-4 text-gray-400 hover:text-purple-800 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        
+        <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+            <div class="space-y-2">
+                <div>
+                    <span class="block font-bold text-purple-500 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Aksi: Cetak Analitik</span>
+                    <p class="text-slate-200 font-sans leading-relaxed">Mencetak dokumen resmi PDF analitik sentimen ulasan lengkap dengan kop surat dinas, statistik distribusi rating, dan tanda tangan kepala dinas.</p>
                 </div>
-                <div class="absolute bottom-full right-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
-            </div>
+            </div>  
+            <div class="absolute bottom-full right-2.5 border-[6px] border-transparent border-b-slate-900/95"></div>
         </div>
     </div>
+</div>
 
     <!-- Ekspor Daftar Ulasan (CSV) -->
     <div class="flex items-center gap-2">
@@ -55,9 +57,9 @@
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-400">Monitoring</span>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-400">Ulasan & Laporan</span>
+    <span class="text-gray-400">Ulasan Pengguna</span>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-900 font-bold">Ringkasan Ulasan</span>
+    <span class="text-gray-900 font-bold" id="breadcrumb-active-tab">Ringkasan Ulasan</span>
 </nav>
 @endsection
 
@@ -78,11 +80,15 @@
     jabatan: 'Kepala Dinas Kebudayaan dan Pariwisata',
 
     init() {
+        this.updateBreadcrumb(this.activeTab);
+
         this.$watch('activeTab', value => {
             localStorage.setItem('active_review_tab', value);
             const url = new URL(window.location.href);
             url.searchParams.set('tab', value);
             window.history.replaceState({}, '', url.toString());
+
+            this.updateBreadcrumb(value);
 
             if (value === 'summary') {
                 this.$nextTick(() => {
@@ -101,6 +107,13 @@
                     if (typeof window.initReviewsWordCloud === 'function') window.initReviewsWordCloud();
                 }, 200);
             });
+        }
+    },
+
+    updateBreadcrumb(tab) {
+        const el = document.getElementById('breadcrumb-active-tab');
+        if (el) {
+            el.textContent = tab === 'list' ? 'Daftar Ulasan' : 'Ringkasan Ulasan';
         }
     },
 
@@ -562,7 +575,7 @@
                     <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
                     <input type="hidden" name="tab" value="list">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                         <!-- Cari Ulasan -->
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -591,6 +604,59 @@
                                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari teks ulasan..."
                                     class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-[#066466] outline-none text-[14px] font-medium placeholder-gray-400 transition-all shadow-sm">
                             </div>
+                        </div>
+
+                        <!-- Destinasi Wisata -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                Destinasi Wisata
+                                <div class="relative group cursor-pointer inline-flex items-center">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200 font-sans">Menyaring ulasan yang ditulis khusus untuk destinasi wisata tertentu.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </label>
+                            <select name="destination_id" onchange="this.form.submit()"
+                                class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                                <option value="">Semua Destinasi</option>
+                                @foreach(($destinationsList ?? []) as $dest)
+                                    <option value="{{ $dest->_id }}" @selected(request('destination_id') == $dest->_id)>{{ $dest->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Sentimen -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                Sentimen Ulasan
+                                <div class="relative group cursor-pointer inline-flex items-center">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200 font-sans">Menyaring ulasan berdasarkan hasil klasifikasi sentimen.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </label>
+                            <select name="sentiment" onchange="this.form.submit()"
+                                class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                                <option value="">Semua Sentimen</option>
+                                <option value="positive" @selected(request('sentiment') === 'positive')>Positif</option>
+                                <option value="neutral" @selected(request('sentiment') === 'neutral')>Netral</option>
+                                <option value="negative" @selected(request('sentiment') === 'negative')>Negatif</option>
+                                <option value="pending" @selected(request('sentiment') === 'pending')>Pending</option>
+                            </select>
                         </div>
 
                         <!-- Rating Bintang -->
@@ -644,27 +710,26 @@
                                     </div>
                                 </div>
                             </label>
-                            <div class="flex items-center gap-2">
-                                <select name="per_page" onchange="this.form.submit()"
-                                    class="flex-1 px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
-                                    @foreach([10, 15, 25, 50, 100] as $size)
-                                        <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
-                                    @endforeach
-                                </select>
-                                @if(request('search') || request('rating') || request('per_page') != 15)
-                                    <a href="{{ route('admin.reviews.index', ['tab' => 'list']) }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
-                                        Reset
-                                    </a>
-                                @endif
-                            </div>
+                            <select name="per_page" onchange="this.form.submit()"
+                                class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                                @foreach([10, 15, 25, 50, 100] as $size)
+                                    <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 </form>
 
-                <!-- Batch Analysis -->
-                <div class="flex items-center gap-4 lg:mb-[2px] mt-4 lg:mt-0">
-                    <form method="POST" action="{{ route('admin.reviews.analyze-batch') }}">
+                <!-- Batch Analysis & Reset -->
+                <div class="flex items-center gap-3 lg:mb-[2px] mt-4 lg:mt-0 flex-shrink-0">
+                    @if(request('search') || request('rating') || request('destination_id') || request('sentiment') || request('per_page') != 15)
+                        <a href="{{ route('admin.reviews.index', ['tab' => 'list']) }}" class="px-5 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
+                            Reset
+                        </a>
+                    @endif
+
+                    <form method="POST" action="{{ route('admin.reviews.analyze-batch') }}" class="m-0">
                         @csrf
                         <input type="hidden" name="limit" value="50">
                         <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#066466] hover:bg-[#055355] text-white text-sm font-bold shadow-sm transition-all whitespace-nowrap">

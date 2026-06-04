@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\MongoReview;
+use App\Models\MongoDB\MongoDestination;
 use App\Services\SentimentAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +30,24 @@ class ReviewController extends BaseAdminController
             // Filter by rating
             if ($request->filled('rating')) {
                 $query->where('rating', (int)$request->rating);
+            }
+
+            // Filter by destination_id
+            if ($request->filled('destination_id')) {
+                $destId = $request->destination_id;
+                $query->where(function($q) use ($destId) {
+                    $q->where('destination_id', $destId)
+                      ->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                });
+            }
+
+            // Filter by sentiment_label
+            if ($request->filled('sentiment')) {
+                if ($request->sentiment === 'pending') {
+                    $query->whereNull('sentiment_label');
+                } else {
+                    $query->where('sentiment_label', $request->sentiment);
+                }
             }
 
             // Search in review text
@@ -152,6 +171,8 @@ class ReviewController extends BaseAdminController
                 return $trends;
             });
 
+            $destinationsList = MongoDestination::orderBy('name', 'asc')->get(['_id', 'name']);
+
             return view('admin.reviews.index', [
                 'reviews' => $reviews,
                 'ratings' => $ratings,
@@ -161,6 +182,7 @@ class ReviewController extends BaseAdminController
                 'predictionSummary' => $predictionSummary,
                 'keywordModelVersion' => $keywordModelVersion,
                 'sentimentTrends' => $sentimentTrends,
+                'destinationsList' => $destinationsList,
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading reviews from Mongo: ' . $e->getMessage());
@@ -420,6 +442,22 @@ class ReviewController extends BaseAdminController
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where('review', 'like', "%{$search}%");
+            }
+
+            if ($request->filled('destination_id')) {
+                $destId = $request->destination_id;
+                $query->where(function($q) use ($destId) {
+                    $q->where('destination_id', $destId)
+                      ->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                });
+            }
+
+            if ($request->filled('sentiment')) {
+                if ($request->sentiment === 'pending') {
+                    $query->whereNull('sentiment_label');
+                } else {
+                    $query->where('sentiment_label', $request->sentiment);
+                }
             }
 
             $reviews = $query->orderBy('created_at', 'desc')->get();

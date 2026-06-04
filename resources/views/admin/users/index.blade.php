@@ -86,8 +86,8 @@
         this.confirmType = isCurrentlyActive ? 'suspend' : 'activate';
         this.confirmTitle = isCurrentlyActive ? 'Suspend Pengguna' : 'Aktifkan Pengguna';
         this.confirmText = isCurrentlyActive 
-            ? 'Apakah Anda yakin ingin menangguhkan (suspend) akun "' + userName + '"? Akses masuk pengguna tersebut akan dibatasi.' 
-            : 'Apakah Anda yakin ingin mengaktifkan kembali akun "' + userName + '"?';
+            ? `Apakah Anda yakin ingin menangguhkan (suspend) akun '${userName}'? Akses masuk pengguna tersebut akan dibatasi.` 
+            : `Apakah Anda yakin ingin mengaktifkan kembali akun '${userName}'?`;
             
         this.confirmCallback = async () => {
             this.statusLoading = true;
