@@ -322,7 +322,7 @@
                 Menampilkan {{ $facilities->firstItem() }} - {{ $facilities->lastItem() }} dari {{ $facilities->total() }} data
             </div>
             <div>
-                {{ $facilities->links('vendor.pagination.tailwind') }}
+                {{ $facilities->links('vendor.pagination.tailwind-custom') }}
             </div>
         </div>
         @endif
