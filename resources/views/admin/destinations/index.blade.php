@@ -58,12 +58,14 @@
 @endsection
 
 @section('breadcrumb')
-<nav class="flex text-sm mb-6 text-gray-500 font-medium">
+<nav class="flex text-sm mb-6 text-gray-500 font-medium overflow-x-auto whitespace-nowrap">
     <a href="{{ route('admin.dashboard') }}" class="hover:text-emerald-600 transition-colors">Beranda</a>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
     <span class="text-gray-400">Content Management</span>
     <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
-    <span class="text-gray-900 font-bold">Destinasi</span>
+    <span class="text-gray-400">Destinasi</span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-900 font-bold" id="breadcrumb-active-tab">Kelola Destinasi</span>
 </nav>
 @endsection
 
@@ -74,7 +76,7 @@
     uploadProgressText: '',
     uploadSpeedText: '',
     deletedImages: [],
-    activeTab: '{{ $activeTab }}',
+    activeTab: (new URLSearchParams(window.location.search)).get('tab') || localStorage.getItem('active_dest_tab') || '{{ $activeTab }}',
     showCreateModal: false,
     showEditModal: false,
     editingDest: null,
@@ -92,6 +94,25 @@
     lightboxImage: '',
     lightboxMediaType: 'image',
     viewRotateTimer: null,
+
+    init() {
+        this.updateBreadcrumb(this.activeTab);
+
+        this.$watch('activeTab', value => {
+            localStorage.setItem('active_dest_tab', value);
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', value);
+            window.history.replaceState({}, '', url.toString());
+            this.updateBreadcrumb(value);
+        });
+    },
+
+    updateBreadcrumb(tab) {
+        const el = document.getElementById('breadcrumb-active-tab');
+        if (el) {
+            el.textContent = tab === 'trending' ? 'Trending & Analisis' : 'Kelola Destinasi';
+        }
+    },
 
     mediaUrl(path) {
         if (!path) {
@@ -208,14 +229,11 @@
     // Tab switcher
     switchTab(tab) {
         this.activeTab = tab;
-        const url = new URL(window.location);
-        url.searchParams.set('tab', tab);
-        window.history.pushState({}, '', url);
-        if (tab === 'trending') {
-             // Re-fetch trending data if needed, or simply reload if logic is server-side
-             if (!{{ isset($trendingDestinations) ? 'true' : 'false' }}) {
-                 window.location.href = url.toString();
-             }
+        // $watch handles URL sync, localStorage, and breadcrumb automatically
+        if (tab === 'trending' && !{{ isset($trendingDestinations) ? 'true' : 'false' }}) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tab);
+            window.location.href = url.toString();
         }
     },
 
@@ -249,7 +267,7 @@
                 this.editCloseTime = '17:00';
             }
         } catch(e) {
-            alert('Gagal mengambil data destinasi');
+            window.showAlert('Gagal mengambil data destinasi. Silakan coba lagi.', 'Gagal', 'error');
             this.showEditModal = false;
         } finally {
             this.loading = false;
@@ -272,7 +290,7 @@
             this.viewingDest.video_wait_until_ready = this.viewingDest.video_wait_until_ready ?? true;
             this.scheduleViewRotation();
         } catch(e) {
-            alert('Gagal mengambil data destinasi');
+            window.showAlert('Gagal mengambil data destinasi. Silakan coba lagi.', 'Gagal', 'error');
             this.showViewModal = false;
         } finally {
             this.loading = false;
@@ -470,6 +488,28 @@
     },
 
     async submitCreate() {
+        // Validasi client-side sebelum mengirim request
+        const latVal  = document.getElementById('create_latitude')?.value?.trim();
+        const lngVal  = document.getElementById('create_longitude')?.value?.trim();
+        const thumbEl = document.getElementById('create_thumbnail');
+
+        if (!latVal || !lngVal) {
+            window.showAlert(
+                'Lokasi destinasi belum ditentukan. Klik pada peta, gunakan tombol "Lokasi Saya", atau cari alamat di kotak pencarian peta untuk mengisi koordinat.',
+                'Lokasi Belum Dipilih',
+                'warning'
+            );
+            return;
+        }
+        if (!thumbEl || thumbEl.files.length === 0) {
+            window.showAlert(
+                'Media utama (cover/thumbnail) wajib diunggah. Pilih foto atau video utama destinasi terlebih dahulu.',
+                'Media Belum Dipilih',
+                'warning'
+            );
+            return;
+        }
+
         this.loading = true;
         const form = document.getElementById('createDestForm');
         const thumbnailInput = document.getElementById('create_thumbnail');
@@ -485,21 +525,19 @@
             const formData = new FormData(form);
             
             if (signData.success && signData.mode === 'cloudinary') {
-                this.showUploadProgress = true;
-                
-                // Upload thumbnail
+                // Upload thumbnail — set progress hanya jika ada file
                 if (thumbnailInput && thumbnailInput.files.length > 0) {
+                    this.showUploadProgress = true;
                     this.uploadProgressPercent = 0;
                     this.uploadProgressText = 'Menghubungkan ke Cloudinary untuk mengunggah cover...';
                     this.uploadSpeedText = '';
                     const res = await this.uploadToCloudinaryDirectly(thumbnailInput.files[0], signData);
                     formData.set('thumbnail', res.secure_url);
-                } else {
-                    throw new Error('Media utama (thumbnail) wajib dipilih.');
                 }
                 
                 // Upload additional images
                 if (imagesInput && imagesInput.files.length > 0) {
+                    this.showUploadProgress = true;
                     formData.delete('images[]');
                     for (let i = 0; i < imagesInput.files.length; i++) {
                         const file = imagesInput.files[i];
@@ -511,10 +549,12 @@
                     }
                 }
                 
-                this.uploadProgressPercent = 100;
-                this.uploadProgressText = 'Unggah media berhasil! Menyimpan data ke server...';
-                await new Promise(r => setTimeout(r, 500));
-                this.showUploadProgress = false;
+                if (this.showUploadProgress) {
+                    this.uploadProgressPercent = 100;
+                    this.uploadProgressText = 'Unggah media berhasil! Menyimpan data ke server...';
+                    await new Promise(r => setTimeout(r, 500));
+                    this.showUploadProgress = false;
+                }
                 
                 const response = await fetch('{{ route('admin.destinations.store') }}', {
                     method: 'POST',
@@ -526,7 +566,7 @@
                     body: formData
                 });
                 const result = await window.safeParseJSON(response);
-                if (result && result.success) {
+                if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Destinasi baru berhasil dibuat');
                     window.location.reload();
                 } else {
@@ -555,13 +595,35 @@
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(error.message, 'Error', 'error');
+            } else {
+                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+            }
         } finally {
             this.loading = false;
+            this.showUploadProgress = false;
         }
     },
 
     async submitEdit() {
+        if (!this.editingDest) {
+            window.showAlert('Data destinasi yang sedang diedit tidak ditemukan.', 'Perhatian', 'warning');
+            return;
+        }
+
+        // Validasi client-side koordinat
+        const latVal = document.getElementById('edit_latitude')?.value?.trim();
+        const lngVal = document.getElementById('edit_longitude')?.value?.trim();
+        if (!latVal || !lngVal) {
+            window.showAlert(
+                'Lokasi destinasi belum ditentukan. Klik pada peta, gunakan tombol "Lokasi Saya", atau cari alamat di kotak pencarian peta untuk mengisi koordinat.',
+                'Lokasi Belum Dipilih',
+                'warning'
+            );
+            return;
+        }
+
         this.loading = true;
         const form = document.getElementById('editDestForm');
         const thumbnailInput = document.getElementById('edit_thumbnail');
@@ -581,10 +643,9 @@
             });
             
             if (signData.success && signData.mode === 'cloudinary') {
-                this.showUploadProgress = true;
-                
-                // Upload thumbnail
+                // Upload thumbnail — set progress hanya jika ada file baru
                 if (thumbnailInput && thumbnailInput.files.length > 0) {
+                    this.showUploadProgress = true;
                     this.uploadProgressPercent = 0;
                     this.uploadProgressText = 'Menghubungkan ke Cloudinary untuk mengunggah cover...';
                     this.uploadSpeedText = '';
@@ -594,6 +655,7 @@
                 
                 // Upload additional images
                 if (imagesInput && imagesInput.files.length > 0) {
+                    this.showUploadProgress = true;
                     formData.delete('images[]');
                     for (let i = 0; i < imagesInput.files.length; i++) {
                         const file = imagesInput.files[i];
@@ -605,10 +667,12 @@
                     }
                 }
                 
-                this.uploadProgressPercent = 100;
-                this.uploadProgressText = 'Unggah media berhasil! Menyimpan data ke server...';
-                await new Promise(r => setTimeout(r, 500));
-                this.showUploadProgress = false;
+                if (this.showUploadProgress) {
+                    this.uploadProgressPercent = 100;
+                    this.uploadProgressText = 'Unggah media berhasil! Menyimpan data ke server...';
+                    await new Promise(r => setTimeout(r, 500));
+                    this.showUploadProgress = false;
+                }
                 
                 const response = await fetch(`/admin/destinations/${destId}`, {
                     method: 'POST',
@@ -620,7 +684,7 @@
                     body: formData
                 });
                 const result = await window.safeParseJSON(response);
-                if (result && result.success) {
+                if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Destinasi berhasil diperbarui');
                     window.location.reload();
                 } else {
@@ -649,25 +713,34 @@
         } catch(e) {
             console.error(e);
             this.showUploadProgress = false;
-            window.showAlert('Terjadi kesalahan: ' + e.message, 'Error', 'error');
+            if (e.message && e.message !== 'Unexpected token < in JSON at position 0') {
+                window.showAlert(e.message, 'Error', 'error');
+            } else {
+                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+            }
         } finally { 
-            this.loading = false; 
+            this.loading = false;
+            this.showUploadProgress = false;
         }
     }
 }">
 
-    <!-- Tab Navigation -->
-    <div class="flex items-center gap-1 bg-gray-100/50 p-1 rounded-2xl w-fit mb-8 border border-gray-200/50">
-        <button @click="switchTab('manage')" 
-            :class="activeTab === 'manage' ? 'bg-white text-sidebar shadow-sm border-gray-200' : 'text-gray-500 hover:text-gray-700'"
-            class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all border border-transparent">
-            Kelola Destinasi
-        </button>
-        <button @click="switchTab('trending')" 
-            :class="activeTab === 'trending' ? 'bg-white text-sidebar shadow-sm border-gray-200' : 'text-gray-500 hover:text-gray-700'"
-            class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all border border-transparent">
-            Trending & Analisis
-        </button>
+    {{-- Tab Navigation --}}
+    <div class="mb-8 border-b border-gray-200">
+        <nav class="flex gap-8 -mb-px">
+            <button type="button"
+                @click="switchTab('manage')"
+                :class="activeTab === 'manage' ? 'border-sidebar text-sidebar' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="pb-4 border-b-2 text-sm font-bold transition-colors">
+                Kelola Destinasi
+            </button>
+            <button type="button"
+                @click="switchTab('trending')"
+                :class="activeTab === 'trending' ? 'border-sidebar text-sidebar' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                class="pb-4 border-b-2 text-sm font-bold transition-colors">
+                Trending &amp; Analisis
+            </button>
+        </nav>
     </div>
 
     <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
@@ -952,50 +1025,57 @@
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-1.5 mb-1">
-                        <p class="text-sm font-medium text-gray-500">Total Pencarian</p>
+                        <p class="text-sm font-medium text-gray-500">Destinasi Aktif</p>
                         <div class="relative group cursor-pointer inline-flex items-center">
                             <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                 <div class="space-y-2">
                                     <div>
                                         <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                        <p class="text-slate-200 font-normal">Menampilkan jumlah pencarian destinasi wisata oleh wisatawan.</p>
+                                        <p class="text-slate-200 font-normal">Total destinasi wisata yang berstatus aktif dan dapat ditemukan wisatawan di aplikasi.</p>
                                     </div>
                                     <div class="pt-1.5 border-t border-slate-800">
-                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
-                                        <p class="text-slate-200 font-normal">Panel Admin untuk analisis statistik pencarian populer.</p>
+                                        <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Sumber Data</span>
+                                        <p class="text-slate-200 font-normal">Collection <code>destinations</code> — is_active: true.</p>
                                     </div>
                                 </div>
                                 <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
                             </div>
                         </div>
                     </div>
-                    <h3 class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_search']) }}</h3>
-                    <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
-                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
-                        +{{ $stats['search_increase'] }}% minggu ini
-                    </p>
+                    <h3 class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_destinations']) }}</h3>
+                    @if($stats['destinations_increase'] >= 0)
+                        <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
+                            +{{ $stats['destinations_increase'] }}% minggu ini
+                        </p>
+                    @else
+                        <p class="text-xs text-red-400 font-bold mt-2 flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+                            {{ $stats['destinations_increase'] }}% minggu ini
+                        </p>
+                    @endif
                 </div>
                 <div class="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-1.5 mb-1">
-                        <p class="text-sm font-medium text-gray-500">Wishlist Tertambah</p>
+                        <p class="text-sm font-medium text-gray-500">Total Wishlist</p>
                         <div class="relative group cursor-pointer inline-flex items-center">
                             <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                 <div class="space-y-2">
                                     <div>
                                         <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                        <p class="text-slate-200 font-normal">Melacak frekuensi wisatawan menambahkan destinasi ke daftar wishlist/simpanan mereka.</p>
+                                        <p class="text-slate-200 font-normal">Total destinasi yang disimpan ke wishlist oleh seluruh wisatawan.</p>
                                     </div>
                                     <div class="pt-1.5 border-t border-slate-800">
-                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
-                                        <p class="text-slate-200 font-normal">Panel Admin untuk mengukur tingkat minat destinasi.</p>
+                                        <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Sumber Data</span>
+                                        <p class="text-slate-200 font-normal">Collection <code>favorites</code> — MongoDB.</p>
                                     </div>
                                 </div>
                                 <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
@@ -1003,13 +1083,20 @@
                         </div>
                     </div>
                     <h3 class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_wishlist']) }}</h3>
-                    <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
-                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
-                        +{{ $stats['wishlist_increase'] }}% minggu ini
-                    </p>
+                    @if($stats['wishlist_increase'] >= 0)
+                        <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
+                            +{{ $stats['wishlist_increase'] }}% minggu ini
+                        </p>
+                    @else
+                        <p class="text-xs text-red-400 font-bold mt-2 flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+                            {{ $stats['wishlist_increase'] }}% minggu ini
+                        </p>
+                    @endif
                 </div>
                 <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                 </div>
             </div>
 
@@ -1023,11 +1110,11 @@
                                 <div class="space-y-2">
                                     <div>
                                         <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                        <p class="text-slate-200 font-normal">Jumlah akumulasi ulasan yang dikirimkan oleh wisatawan untuk seluruh destinasi.</p>
+                                        <p class="text-slate-200 font-normal">Total ulasan yang dikirimkan oleh wisatawan untuk seluruh destinasi.</p>
                                     </div>
                                     <div class="pt-1.5 border-t border-slate-800">
-                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
-                                        <p class="text-slate-200 font-normal">Panel Admin sebagai indikator umpan balik aktif.</p>
+                                        <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Sumber Data</span>
+                                        <p class="text-slate-200 font-normal">Collection <code>ratings</code> — MongoDB.</p>
                                     </div>
                                 </div>
                                 <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
@@ -1035,10 +1122,17 @@
                         </div>
                     </div>
                     <h3 class="text-3xl font-bold text-orange-500">{{ number_format($stats['total_review']) }}</h3>
-                    <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
-                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
-                        +{{ $stats['review_increase'] }}% minggu ini
-                    </p>
+                    @if($stats['review_increase'] >= 0)
+                        <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
+                            +{{ $stats['review_increase'] }}% minggu ini
+                        </p>
+                    @else
+                        <p class="text-xs text-red-400 font-bold mt-2 flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+                            {{ $stats['review_increase'] }}% minggu ini
+                        </p>
+                    @endif
                 </div>
                 <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
@@ -1048,7 +1142,7 @@
 
         <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8">
             <div class="flex items-center gap-1.5 mb-6">
-                <h3 class="text-lg font-bold text-gray-800">Tren Pencarian Destinasi — 7 Hari Terakhir</h3>
+                <h3 class="text-lg font-bold text-gray-800">Tren Ulasan Destinasi — 7 Hari Terakhir</h3>
                 <div class="relative group cursor-pointer inline-flex items-center">
                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
@@ -1284,11 +1378,11 @@
                         </div>
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Latitude</label>
-                            <input type="text" name="latitude" id="create_latitude" required placeholder="2.6845" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
+                            <input type="text" name="latitude" id="create_latitude" placeholder="Klik peta untuk mengisi" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
                         </div>
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Longitude</label>
-                            <input type="text" name="longitude" id="create_longitude" required placeholder="98.8756" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
+                            <input type="text" name="longitude" id="create_longitude" placeholder="Klik peta untuk mengisi" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700" readonly>
                         </div>
                         {{-- Map Picker for Create --}}
                         <div class="col-span-2 space-y-3">
@@ -2016,7 +2110,7 @@
              x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
             <!-- Circular Progress Indicator -->
             <div class="relative flex items-center justify-center mx-auto w-28 h-28">
-                <svg class="w-full h-full transform -rotate-90">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
                     <circle cx="56" cy="56" r="46" stroke="#f3f4f6" stroke-width="8" fill="transparent" />
                     <circle cx="56" cy="56" r="46" stroke="#066466" stroke-width="8" fill="transparent"
                             :stroke-dasharray="2 * Math.PI * 46"
@@ -2206,13 +2300,20 @@
                 const ctx = document.getElementById('trendChart')?.getContext('2d');
                 if (!ctx) return;
 
+                @php
+                    $chartLabels = $trendChartData['labels'] ?? ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+                    $chartValues = $trendChartData['data']   ?? [0,0,0,0,0,0,0];
+                @endphp
+                const chartLabels = @json($chartLabels);
+                const chartData   = @json($chartValues);
+
                 new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                        labels: chartLabels,
                         datasets: [{
-                            label: 'Pencarian',
-                            data: [420, 580, 490, 720, 850, 1100, 980],
+                            label: 'Ulasan Masuk',
+                            data: chartData,
                             borderColor: '#066466',
                             backgroundColor: 'rgba(6, 100, 102, 0.05)',
                             borderWidth: 3,
@@ -2229,7 +2330,7 @@
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#f0f0f0' } },
+                            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { borderDash: [5, 5], color: '#f0f0f0' } },
                             x: { grid: { display: false } }
                         }
                     }
@@ -2268,16 +2369,11 @@
                     });
                     const data = await res.json();
                     if (data.success) {
-                        this.mode = newMode;
-                        if (newMode === 'manual') {
-                            this.showSuccess('Berhasil!', `Mode trending diubah ke ${newMode}`);
-                            setTimeout(() => this.initSortable(), 500);
-                        } else {
-                            localStorage.setItem('pending_success_toast', data.message || `Mode trending diubah ke ${newMode}`);
-                            window.location.reload();
-                        }
+                        const modeLabel = newMode === 'manual' ? 'Manual' : 'Otomatis';
+                        localStorage.setItem('pending_success_toast', data.message || `Mode trending diubah ke ${modeLabel}`);
+                        window.location.reload();
                     }
-                } catch(e) { alert('Gagal mengubah mode'); }
+                } catch(e) { window.showAlert('Gagal mengubah mode trending. Silakan coba lagi.', 'Gagal', 'error'); }
             },
 
             async searchTrendingDestinations() {
@@ -2289,8 +2385,8 @@
             },
 
             async addItem(item) {
-                if (this.trendingList.length >= 10) { alert('Maksimal 10 destinasi trending'); return; }
-                if (this.trendingList.find(i => i.id_str === item.id_str)) { alert('Destinasi sudah ada di daftar'); return; }
+                if (this.trendingList.length >= 10) { window.showAlert('Daftar trending sudah penuh. Maksimal 10 destinasi dapat ditampilkan.', 'Batas Tercapai', 'warning'); return; }
+                if (this.trendingList.find(i => i.id_str === item.id_str)) { window.showAlert('Destinasi ini sudah ada dalam daftar trending.', 'Duplikasi', 'warning'); return; }
 
                 try {
                     const res = await fetch('{{ route('admin.trending.add') }}', {
@@ -2305,7 +2401,7 @@
                         this.searchResults = [];
                         this.showSuccess('Ditambahkan!', 'Destinasi berhasil masuk daftar trending');
                     }
-                } catch(e) { alert('Gagal menambahkan'); }
+                } catch(e) { window.showAlert('Gagal menambahkan destinasi ke daftar trending. Silakan coba lagi.', 'Gagal', 'error'); }
             },
 
             async removeItem(id) {
@@ -2320,7 +2416,7 @@
                         this.trendingList = this.trendingList.filter(i => i.id_str !== id);
                         this.showSuccess('Dihapus!', 'Destinasi dikeluarkan dari trending');
                     }
-                } catch(e) { alert('Gagal menghapus'); }
+                } catch(e) { window.showAlert('Gagal menghapus destinasi dari daftar trending. Silakan coba lagi.', 'Gagal', 'error'); }
             },
 
             async saveOrder() {
@@ -2333,7 +2429,7 @@
                     });
                     const data = await res.json();
                     if (data.success) this.showSuccess('Tersimpan!', 'Urutan trending berhasil diperbarui');
-                } catch(e) { alert('Gagal menyimpan urutan'); }
+                } catch(e) { window.showAlert('Gagal menyimpan urutan trending. Silakan coba lagi.', 'Gagal', 'error'); }
             },
 
             showSuccess(title, msg) {
@@ -2405,7 +2501,7 @@
     // Get current user location
     function getCurrentLocation(latId, lngId, mapElementId) {
         if (!navigator.geolocation) {
-            alert("Geolocation tidak didukung oleh browser Anda.");
+            window.showAlert("Geolocation tidak didukung oleh browser Anda.", "Tidak Didukung", "warning");
             return;
         }
 
@@ -2442,7 +2538,7 @@
             },
             (error) => {
                 console.error("Geolocation error:", error);
-                alert("Gagal mengambil lokasi: " + error.message);
+                window.showAlert("Gagal mengambil lokasi: " + error.message, "Lokasi Gagal", "error");
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
             },

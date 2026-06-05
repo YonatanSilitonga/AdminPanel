@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\MongoDestination;
+use App\Models\MongoDB\MongoReview;
 use App\Models\AppSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class TrendingDestinationController extends BaseAdminController
@@ -49,12 +51,12 @@ class TrendingDestinationController extends BaseAdminController
         }
 
         $stats = [
-            'total_search' => 7842,
-            'total_wishlist' => 1543,
-            'total_review' => 842,
-            'search_increase' => 12,
-            'wishlist_increase' => 12,
-            'review_increase' => 18
+            'total_destinations' => MongoDestination::where('is_active', true)->count(),
+            'total_wishlist'     => DB::connection('mongodb')->table('favorites')->count(),
+            'total_review'       => MongoReview::count(),
+            'destinations_increase' => 0,
+            'wishlist_increase'  => 0,
+            'review_increase'    => 0,
         ];
 
         return view('admin.destinations.trending', [

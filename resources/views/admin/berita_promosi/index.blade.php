@@ -401,6 +401,7 @@
             }
         } finally {
             this.loading = false;
+            this.showUploadProgress = false;
         }
     },
 
@@ -503,6 +504,7 @@
             }
         } finally {
             this.loading = false;
+            this.showUploadProgress = false;
         }
     },
 
