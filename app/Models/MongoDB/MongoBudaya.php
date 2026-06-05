@@ -54,6 +54,7 @@ class MongoBudaya extends Model
         'video_autoplay' => 'boolean',
         'video_loop' => 'boolean',
         'video_wait_until_ready' => 'boolean',
+        'images' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

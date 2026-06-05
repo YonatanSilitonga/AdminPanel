@@ -365,6 +365,7 @@ class BaseAdminController extends Controller
     {
         \Illuminate\Support\Facades\Cache::forget('admin.dashboard.stats_summary');
         \Illuminate\Support\Facades\Cache::forget('admin.dashboard.monthly_chart');
+        \Illuminate\Support\Facades\Cache::forget('admin.destinations.trending_stats');
     }
 
     /**

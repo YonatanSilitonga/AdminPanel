@@ -60,8 +60,12 @@ class DestinationController extends BaseAdminController
             
             $trendingDestinations = [];
             if ($mode === 'manual' && !empty($manualList)) {
-                $trendingDestinations = collect($manualList)->map(function($id) {
-                    $dest = MongoDestination::find((string)$id);
+                $ids = array_map('strval', $manualList);
+                $destinations = MongoDestination::whereIn('_id', $ids)->get()->keyBy(function($dest) {
+                    return (string)$dest->_id;
+                });
+                $trendingDestinations = collect($manualList)->map(function($id) use ($destinations) {
+                    $dest = $destinations->get((string)$id);
                     if ($dest) $dest->id_str = (string)$dest->_id;
                     return $dest;
                 })->filter()->values();
@@ -78,11 +82,18 @@ class DestinationController extends BaseAdminController
                     })->values();
             }
 
+            $cachedStats = \Illuminate\Support\Facades\Cache::remember('admin.destinations.trending_stats', now()->addMinutes(15), function () {
+                return [
+                    'stats' => $this->buildTrendingStats(),
+                    'trendChartData' => $this->buildWeeklyReviewTrend(),
+                ];
+            });
+
             $trendingData = [
                 'mode' => $mode,
                 'trendingDestinations' => $trendingDestinations,
-                'stats' => $this->buildTrendingStats(),
-                'trendChartData' => $this->buildWeeklyReviewTrend(),
+                'stats' => $cachedStats['stats'],
+                'trendChartData' => $cachedStats['trendChartData'],
             ];
         }
 
@@ -449,6 +460,8 @@ class DestinationController extends BaseAdminController
 
             $destination->images = $currentImages;
             $destination->save();
+
+            $this->clearDashboardCache();
 
             // Wrap logActivity in try-catch to prevent it from breaking the response
             try {

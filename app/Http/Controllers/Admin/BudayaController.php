@@ -70,15 +70,19 @@ class BudayaController extends BaseAdminController
             $budaya->image_url_type = media_is_video($budaya->image_url) ? 'video' : 'image';
         }
 
-        if ($budaya->images && is_array($budaya->images)) {
-            $budaya->images_url = array_map(fn ($img) => image_url($img), $budaya->images);
+        $images = $budaya->images;
+        if (is_string($images)) {
+            $images = json_decode($images, true) ?: [];
+        }
+        if ($images && is_array($images)) {
+            $budaya->images_url = array_map(fn ($img) => image_url($img), $images);
             $budaya->images_data = array_map(function ($img) {
                 return [
                     'path' => $img,
                     'url' => image_url($img),
                     'type' => media_is_video($img) ? 'video' : 'image',
                 ];
-            }, $budaya->images);
+            }, $images);
         }
 
         return $budaya;
@@ -228,6 +232,9 @@ class BudayaController extends BaseAdminController
             
             $deleteImages = $request->input('delete_images', []);
             $existingImages = $budaya->images ?? [];
+            if (is_string($existingImages)) {
+                $existingImages = json_decode($existingImages, true) ?: [];
+            }
             if ($budaya->image_url && empty($existingImages)) {
                 $existingImages = [$budaya->image_url];
             }
@@ -330,8 +337,12 @@ class BudayaController extends BaseAdminController
         try {
             $this->logActivity('delete', 'budaya', (string)$budaya->_id, $budaya->toArray());
             
-            if ($budaya->images) {
-                foreach($budaya->images as $img) {
+            $images = $budaya->images;
+            if (is_string($images)) {
+                $images = json_decode($images, true) ?: [];
+            }
+            if ($images && is_array($images)) {
+                foreach($images as $img) {
                     $this->deleteFile($img);
                 }
             } elseif ($budaya->image_url) {
