@@ -35,9 +35,12 @@ class ReviewController extends BaseAdminController
             // Filter by destination_id
             if ($request->filled('destination_id')) {
                 $destId = $request->destination_id;
-                $query->where(function($q) use ($destId) {
-                    $q->where('destination_id', $destId)
-                      ->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                $isDestObjectId = is_scalar($destId) && preg_match('/^[a-f\d]{24}$/i', (string)$destId);
+                $query->where(function($q) use ($destId, $isDestObjectId) {
+                    $q->where('destination_id', $destId);
+                    if ($isDestObjectId) {
+                        $q->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                    }
                 });
             }
 
@@ -446,9 +449,12 @@ class ReviewController extends BaseAdminController
 
             if ($request->filled('destination_id')) {
                 $destId = $request->destination_id;
-                $query->where(function($q) use ($destId) {
-                    $q->where('destination_id', $destId)
-                      ->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                $isDestObjectId = is_scalar($destId) && preg_match('/^[a-f\d]{24}$/i', (string)$destId);
+                $query->where(function($q) use ($destId, $isDestObjectId) {
+                    $q->where('destination_id', $destId);
+                    if ($isDestObjectId) {
+                        $q->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                    }
                 });
             }
 

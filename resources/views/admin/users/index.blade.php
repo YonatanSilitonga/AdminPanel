@@ -118,7 +118,6 @@
         
         this.showConfirmModal = true;
     }
-    }
 }">
 
     <!-- Stats Overview -->

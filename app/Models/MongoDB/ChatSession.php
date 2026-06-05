@@ -57,4 +57,12 @@ class ChatSession extends Model
     {
         return $query->whereNull('user_id');
     }
+
+    /**
+     * Get the user that owns the chat session.
+     */
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id', '_id');
+    }
 }

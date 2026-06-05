@@ -152,17 +152,17 @@
         <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Cari User ID -->
+            <!-- Cari Pengguna -->
             <div class="space-y-2 sm:col-span-2">
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                    Cari User ID
+                    Cari Pengguna
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                    <p class="text-slate-200 font-sans">Mencari sesi chatbot berdasarkan kode User ID spesifik.</p>
+                                    <p class="text-slate-200 font-sans">Mencari sesi chatbot berdasarkan nama, email, atau User ID pengguna.</p>
                                 </div>
                                 <div class="pt-1.5 border-t border-slate-800">
                                     <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
@@ -177,7 +177,7 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </span>
-                    <input type="text" name="user_id" value="{{ request('user_id') }}" placeholder="Cari User ID..." 
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, email, atau ID..." 
                         class="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-xl focus:ring-2 focus:ring-sidebar/10 focus:border-[#066466] outline-none text-sm transition-all shadow-sm placeholder-gray-400">
                 </div>
             </div>
@@ -240,7 +240,7 @@
                         <option value="50" @selected(request('per_page', 10) == 50)>50 Baris</option>
                         <option value="100" @selected(request('per_page', 10) == 100)>100 Baris</option>
                     </select>
-                    @if(request('user_id') || request('type') || request('per_page') != 10)
+                    @if(request('search') || request('type') || request('per_page') != 10)
                         <a href="{{ route('admin.chatbot-logs.index') }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
                             Reset
@@ -305,7 +305,10 @@
                         </td>
                         <td class="px-10 py-6">
                             @if($userId)
-                                <span class="px-4 py-1.5 bg-[#E6F6F2] text-[#00A884] text-[11px] font-bold rounded-xl uppercase tracking-wider">👤 User</span>
+                                <div class="flex flex-col">
+                                    <span class="text-[14px] font-bold text-gray-800">{{ $session->user->name ?? 'User Terdaftar' }}</span>
+                                    <span class="text-xs text-gray-400 mt-0.5">{{ $session->user->email ?? 'ID: ' . substr($userId, -8) }}</span>
+                                </div>
                             @else
                                 <span class="px-4 py-1.5 bg-gray-50 text-gray-500 text-[11px] font-bold rounded-xl uppercase tracking-wider">👥 Tamu</span>
                             @endif

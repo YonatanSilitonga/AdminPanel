@@ -114,11 +114,14 @@ class UserController extends BaseAdminController
 
         if (request()->ajax() || request()->wantsJson()) {
             $activities = [];
+            $isObjectId = is_scalar($id) && preg_match('/^[a-f\d]{24}$/i', (string)$id);
 
             // 1. Fetch real reviews
-            $reviews = MongoReview::where(function($q) use ($id) {
-                    $q->where('user_id', $id)
-                      ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+            $reviews = MongoReview::where(function($q) use ($id, $isObjectId) {
+                    $q->where('user_id', $id);
+                    if ($isObjectId) {
+                        $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                    }
                 })
                 ->with('destination')
                 ->latest()
@@ -138,9 +141,11 @@ class UserController extends BaseAdminController
             // 2. Fetch real wishlists (favorites)
             $favorites = \Illuminate\Support\Facades\DB::connection('mongodb')
                 ->table('favorites')
-                ->where(function($q) use ($id) {
-                    $q->where('user_id', $id)
-                      ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                ->where(function($q) use ($id, $isObjectId) {
+                    $q->where('user_id', $id);
+                    if ($isObjectId) {
+                        $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                    }
                 })
                 ->orderBy('created_at', 'desc')
                 ->take(5)
@@ -151,11 +156,17 @@ class UserController extends BaseAdminController
                     return (string)$d;
                 })->toArray();
                 
+                $validDestObjectIds = array_filter($destIds, function($dId) {
+                    return is_scalar($dId) && preg_match('/^[a-f\d]{24}$/i', (string)$dId);
+                });
+                $destObjectIdsMapped = array_map(fn($dId) => new \MongoDB\BSON\ObjectId($dId), $validDestObjectIds);
+
                 // Query destinations
-                $destinations = \App\Models\MongoDB\MongoDestination::whereIn('_id', $destIds)
-                    ->orWhereIn('_id', array_map(fn($id) => new \MongoDB\BSON\ObjectId($id), $destIds))
-                    ->get()
-                    ->keyBy(fn($d) => (string)$d->_id);
+                $destQuery = \App\Models\MongoDB\MongoDestination::whereIn('_id', $destIds);
+                if (!empty($destObjectIdsMapped)) {
+                    $destQuery->orWhereIn('_id', $destObjectIdsMapped);
+                }
+                $destinations = $destQuery->get()->keyBy(fn($d) => (string)$d->_id);
 
                 foreach ($favorites as $fav) {
                     $destIdStr = (string)$fav->destination_id;
@@ -186,9 +197,11 @@ class UserController extends BaseAdminController
             // 3. Fetch real trip plans
             $trips = \Illuminate\Support\Facades\DB::connection('mongodb')
                 ->table('trip_plans')
-                ->where(function($q) use ($id) {
-                    $q->where('user_id', $id)
-                      ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                ->where(function($q) use ($id, $isObjectId) {
+                    $q->where('user_id', $id);
+                    if ($isObjectId) {
+                        $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                    }
                 })
                 ->orderBy('created_at', 'desc')
                 ->take(5)
@@ -241,22 +254,28 @@ class UserController extends BaseAdminController
                 'user' => $user,
                 'initials' => collect(explode(' ', $user->name))->map(fn($n) => strtoupper(substr($n, 0, 1)))->take(2)->implode(''),
                 'stats' => [
-                    'reviews' => MongoReview::where(function($q) use ($id) {
-                        $q->where('user_id', $id)
-                          ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                    'reviews' => MongoReview::where(function($q) use ($id, $isObjectId) {
+                        $q->where('user_id', $id);
+                        if ($isObjectId) {
+                            $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                        }
                     })->count(),
                     'trips' => \Illuminate\Support\Facades\DB::connection('mongodb')
                         ->table('trip_plans')
-                        ->where(function($q) use ($id) {
-                            $q->where('user_id', $id)
-                              ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                        ->where(function($q) use ($id, $isObjectId) {
+                            $q->where('user_id', $id);
+                            if ($isObjectId) {
+                                $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                            }
                         })
                         ->count(),
                     'wishlists' => \Illuminate\Support\Facades\DB::connection('mongodb')
                         ->table('favorites')
-                        ->where(function($q) use ($id) {
-                            $q->where('user_id', $id)
-                              ->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                        ->where(function($q) use ($id, $isObjectId) {
+                            $q->where('user_id', $id);
+                            if ($isObjectId) {
+                                $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                            }
                         })
                         ->count(),
                 ],

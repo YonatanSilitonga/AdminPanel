@@ -23,9 +23,35 @@ class ChatbotLogController extends BaseAdminController
             }
         }
 
-        // Filter by user ID
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+        // Filter by user (Name/Email/ID)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            
+            $users = \App\Models\User::where('name', 'LIKE', "%{$search}%")
+                ->orWhere('email', 'LIKE', "%{$search}%")
+                ->get(['_id']);
+                
+            $query->where(function($q) use ($search, $users) {
+                $q->where('user_id', $search);
+                if (preg_match('/^[a-f\d]{24}$/i', $search)) {
+                    $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($search));
+                }
+                
+                if ($users->isNotEmpty()) {
+                    $idsStr = $users->pluck('_id')->map(fn($id) => (string)$id)->toArray();
+                    $q->orWhereIn('user_id', $idsStr);
+                    
+                    $objectIds = [];
+                    foreach ($idsStr as $idStr) {
+                        if (preg_match('/^[a-f\d]{24}$/i', $idStr)) {
+                            $objectIds[] = new \MongoDB\BSON\ObjectId($idStr);
+                        }
+                    }
+                    if (!empty($objectIds)) {
+                        $q->orWhereIn('user_id', $objectIds);
+                    }
+                }
+            });
         }
 
         // Advanced Sorting
@@ -41,7 +67,7 @@ class ChatbotLogController extends BaseAdminController
 
         // Rows per page
         $perPage = $request->get('per_page', 10);
-        $sessions = $query->paginate($perPage)->withQueryString();
+        $sessions = $query->with('user')->paginate($perPage)->withQueryString();
 
         // Stats
         $totalSessions = ChatSession::count();
@@ -92,11 +118,36 @@ class ChatbotLogController extends BaseAdminController
                 }
             }
 
-            if ($request->filled('user_id')) {
-                $query->where('user_id', $request->user_id);
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $users = \App\Models\User::where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->get(['_id']);
+                
+                $query->where(function($q) use ($search, $users) {
+                    $q->where('user_id', $search);
+                    if (preg_match('/^[a-f\d]{24}$/i', $search)) {
+                        $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($search));
+                    }
+                    
+                    if ($users->isNotEmpty()) {
+                        $idsStr = $users->pluck('_id')->map(fn($id) => (string)$id)->toArray();
+                        $q->orWhereIn('user_id', $idsStr);
+                        
+                        $objectIds = [];
+                        foreach ($idsStr as $idStr) {
+                            if (preg_match('/^[a-f\d]{24}$/i', $idStr)) {
+                                $objectIds[] = new \MongoDB\BSON\ObjectId($idStr);
+                            }
+                        }
+                        if (!empty($objectIds)) {
+                            $q->orWhereIn('user_id', $objectIds);
+                        }
+                    }
+                });
             }
 
-            $sessions = $query->get();
+            $sessions = $query->with('user')->get();
 
             $filename = 'chatbot_logs_' . date('Y-m-d_H-i-s') . '.csv';
             
@@ -108,15 +159,18 @@ class ChatbotLogController extends BaseAdminController
             $callback = function() use ($sessions) {
                 $file = fopen('php://output', 'w');
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
-                fputcsv($file, ['Session ID', 'User ID', 'Type', 'Total Messages', 'Last Activity'], ';');
+                fputcsv($file, ['Session ID', 'Nama User', 'Email User', 'Tipe', 'Total Pesan', 'Aktivitas Terakhir'], ';');
 
                 foreach ($sessions as $session) {
                     $type = (!empty($session->user_id)) ? 'User' : 'Guest';
+                    $userName = $session->user ? $session->user->name : ($session->user_id ? 'User Terdaftar (' . $session->user_id . ')' : 'Guest');
+                    $userEmail = $session->user ? $session->user->email : ($session->user_id ? '-' : 'Guest');
                     $messageCount = is_array($session->messages) ? count($session->messages) : 0;
                     
                     fputcsv($file, [
                         $session->_id,
-                        $session->user_id ?? 'Guest',
+                        $userName,
+                        $userEmail,
                         $type,
                         $messageCount,
                         $session->updated_at?->format('d-m-Y H:i') ?? '-',
