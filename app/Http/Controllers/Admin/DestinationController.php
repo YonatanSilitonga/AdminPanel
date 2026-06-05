@@ -194,7 +194,7 @@ class DestinationController extends BaseAdminController
         
         $validated = $request->validate([
             'name'          => 'required|string|min:3|max:200',
-            'description'   => 'required|string|min:10|max:500',
+            'description'   => 'required|string|min:10|max:5000',
             'location'      => 'required|string|max:500',
             'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
             'latitude'      => 'nullable|numeric|between:-90,90',
@@ -343,7 +343,7 @@ class DestinationController extends BaseAdminController
 
         $validated = $request->validate([
             'name'          => 'required|string|min:3|max:200',
-            'description'   => 'required|string|min:10|max:500',
+            'description'   => 'required|string|min:10|max:5000',
             'location'      => 'required|string|max:500',
             'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
             'latitude'      => 'nullable|numeric|between:-90,90',
