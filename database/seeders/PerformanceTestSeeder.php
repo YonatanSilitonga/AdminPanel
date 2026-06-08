@@ -14,7 +14,7 @@ use App\Models\DestinationGallery;
 use App\Models\Event;
 use App\Models\Review;
 use App\Models\Facility;
-use App\Models\RecommendationLog;
+use App\Models\MongoDB\MongoRecommendation;
 use App\Models\Report;
 use Carbon\Carbon;
 
@@ -277,42 +277,182 @@ class PerformanceTestSeeder extends Seeder
     }
     
     /**
-     * Create recommendation logs (MongoDB)
+     * Create recommendation logs (MongoDB) — matches MongoRecommendation model structure.
+     *
+     * Fields written to collection: recommendation_logs
+     *   - user_id             : string (ObjectId of User)
+     *   - destination_id      : string (ObjectId of Destination)
+     *   - recommendation_score: float  (trip duration in days)
+     *   - is_clicked          : boolean
+     *   - behavior_data       : array
+     *       - user_name   : string
+     *       - categories  : string[]
+     *       - budget      : int (IDR)
+     *       - duration    : int
+     *       - trip_title  : string
+     *       - itinerary   : array of { day, title, description, activities[] }
      */
     private function createRecommendationLogs(int $count, array $users, array $destinations): void
     {
-        $algorithms = ['content_based', 'collaborative', 'hybrid', 'popularity_based'];
-        
+        // Weighted category pool (realistic distribution)
+        $weightedPool = [];
+        foreach ([
+            'wisata_alam'    => 35,
+            'wisata_budaya'  => 28,
+            'wisata_kuliner' => 20,
+            'wisata_religi'  => 10,
+            'wisata_sejarah' => 7,
+        ] as $cat => $weight) {
+            for ($w = 0; $w < $weight; $w++) {
+                $weightedPool[] = $cat;
+            }
+        }
+
         for ($i = 1; $i <= $count; $i++) {
-            $user = $users[array_rand($users)];
-            $recommendedDests = array_slice($destinations, rand(0, count($destinations) - 6), 5);
-            
-            RecommendationLog::create([
-                'user_id' => (string)$user->id,
-                'algorithm' => $algorithms[array_rand($algorithms)],
-                'input_preferences' => [
-                    'categories' => ['wisata_alam', 'wisata_budaya'],
-                    'budget' => rand(100000, 1000000),
-                    'duration' => rand(1, 7),
+            $user        = $users[array_rand($users)];
+            $destination = $destinations[array_rand($destinations)];
+
+            // 1–3 unique categories
+            $numCats    = rand(1, 3);
+            $chosenCats = [];
+            for ($c = 0; $c < $numCats; $c++) {
+                $chosenCats[] = $weightedPool[array_rand($weightedPool)];
+            }
+            $chosenCats = array_values(array_unique($chosenCats));
+
+            $duration  = rand(1, 7);
+            $budget    = rand(500000, 5000000);
+            $destName  = $destination->name;
+            $tripTitle = "Trip ke {$destName} ({$duration} Hari)";
+            $itinerary = $this->generateItinerary($duration, $destName, $chosenCats);
+
+            MongoRecommendation::create([
+                'user_id'              => (string) $user->id,
+                'destination_id'       => (string) $destination->id,
+                'recommendation_score' => (float) $duration,
+                'is_clicked'           => (bool) (rand(1, 100) <= 35),
+                'behavior_data'        => [
+                    'user_name'  => $user->name,
+                    'categories' => $chosenCats,
+                    'budget'     => $budget,
+                    'duration'   => $duration,
+                    'trip_title' => $tripTitle,
+                    'itinerary'  => $itinerary,
                 ],
-                'recommended_destinations' => array_map(function($dest) {
-                    return [
-                        'destination_id' => (string)$dest->id,
-                        'destination_name' => $dest->name,
-                        'score' => rand(70, 100) / 100,
-                    ];
-                }, $recommendedDests),
-                'metadata' => [
-                    'processing_time_ms' => rand(50, 500),
-                    'model_version' => '1.0',
-                ],
-                'created_at' => Carbon::now()->subDays(rand(1, 365)),
+                'created_at' => Carbon::now()
+                    ->subDays(rand(0, 365))
+                    ->subHours(rand(0, 23))
+                    ->subMinutes(rand(0, 59)),
             ]);
-            
+
             if ($i % 5000 === 0) {
                 $this->command->info("  → Created {$i} recommendation logs...");
             }
         }
+    }
+
+    /**
+     * Generate a realistic day-by-day itinerary for the Lake Toba region.
+     */
+    private function generateItinerary(int $duration, string $destName, array $categories): array
+    {
+        // Activity pools per category
+        $activityPool = [
+            'wisata_alam' => [
+                "Mengunjungi {$destName} dan menikmati pemandangan alam",
+                'Hiking ke puncak perbukitan sekitar Danau Toba',
+                'Menikmati sunrise dari tepi danau',
+                'Berenang dan bermain air di tepian danau',
+                'Bersepeda mengelilingi area wisata',
+                'Mengunjungi Air Terjun Sipiso-piso',
+                'Menjelajahi hutan pinus di Tongging',
+                'Naik perahu menyusuri Danau Toba',
+                'Berkemah di tepi danau',
+                'Snorkeling di perairan jernih',
+            ],
+            'wisata_budaya' => [
+                'Mengunjungi Museum Batak TB Silalahi Center',
+                'Menyaksikan pertunjukan Tari Tor-Tor',
+                'Belajar membuat ulos (kain tenun Batak)',
+                'Mengunjungi Desa Adat Tomok di Samosir',
+                'Ziarah ke Makam Raja Sidabutar',
+                'Mengunjungi rumah adat Batak Toba',
+                'Menyaksikan upacara adat Gondang Sabangunan',
+                'Mengunjungi situs megalitik Batu Kursi Raja Siallagan',
+                'Belajar alat musik tradisional Batak',
+                'Mengunjungi pusat kerajinan ukiran kayu Batak',
+            ],
+            'wisata_kuliner' => [
+                'Sarapan arsik ikan mas khas Batak di warung lokal',
+                'Mencicipi saksang (daging khas Batak) di restoran setempat',
+                'Makan malam naniura (ikan mas mentah khas Batak)',
+                'Menikmati kopi Sidikalang di kedai lokal',
+                'Mencoba ombus-ombus (kue beras khas Batak)',
+                'Makan siang di tepi danau dengan menu ikan bakar',
+                'Berkunjung ke pasar tradisional Balige',
+                'Mencicipi dali ni horbo (keju susu kerbau khas Batak)',
+                'Menikmati soto Batak di warung pinggir jalan',
+            ],
+            'wisata_religi' => [
+                'Mengunjungi Gereja HKBP bersejarah di Tarutung',
+                'Berziarah ke Makam Guru Patimpus',
+                'Mengunjungi Salib Kasih di Tarutung',
+                'Mengikuti ibadah pagi di gereja lokal',
+                'Mengunjungi Vihara di sekitar Balige',
+            ],
+            'wisata_sejarah' => [
+                'Mengunjungi Museum Huta Bolon Simanindo',
+                'Mempelajari sejarah perang Batak di Museum Simalungun',
+                'Mengunjungi situs bersejarah benteng kolonial di Balige',
+                'Tur sejarah kota tua Pangururan di Samosir',
+                'Mengunjungi prasasti purbakala di Ambarita',
+            ],
+        ];
+
+        // Day theme templates
+        $dayThemes = [
+            ['title' => 'Kedatangan & Eksplorasi Awal', 'desc' => "Tiba di kawasan {$destName}, check-in, dan mulai menjelajahi area sekitar."],
+            ['title' => 'Wisata Alam & Petualangan',    'desc' => 'Hari penuh aktivitas outdoor menikmati keindahan alam Danau Toba.'],
+            ['title' => 'Eksplorasi Budaya Lokal',       'desc' => 'Mendalami warisan budaya Batak Toba yang kaya dan penuh makna.'],
+            ['title' => 'Kuliner & Pasar Tradisional',   'desc' => 'Menjelajahi cita rasa otentik masakan khas Batak Toba.'],
+            ['title' => 'Relaksasi & Alam Bebas',        'desc' => 'Menikmati ketenangan alam danau dan aktivitas santai.'],
+            ['title' => 'Wisata Sejarah & Heritage',     'desc' => 'Mengenal lebih dalam sejarah dan warisan leluhur Batak.'],
+            ['title' => 'Perpisahan & Oleh-oleh',        'desc' => 'Hari terakhir: berbelanja oleh-oleh dan bersiap pulang dengan kenangan indah.'],
+        ];
+
+        // Merge activity pool berdasarkan kategori yang dipilih
+        $relevantActivities = [];
+        foreach ($categories as $cat) {
+            if (isset($activityPool[$cat])) {
+                $relevantActivities = array_merge($relevantActivities, $activityPool[$cat]);
+            }
+        }
+        // Tambah kuliner sebagai pelengkap (selalu ada)
+        $relevantActivities = array_merge($relevantActivities, $activityPool['wisata_kuliner']);
+        $relevantActivities = array_values(array_unique($relevantActivities));
+        shuffle($relevantActivities);
+
+        $itinerary = [];
+        for ($day = 1; $day <= $duration; $day++) {
+            $themeIndex = min($day - 1, count($dayThemes) - 1);
+            // Ambil 2–4 aktivitas unik per hari
+            $numActivities  = rand(2, 4);
+            $startIdx       = (($day - 1) * 3) % max(1, count($relevantActivities));
+            $dayActivities  = [];
+            for ($a = 0; $a < $numActivities; $a++) {
+                $idx = ($startIdx + $a) % count($relevantActivities);
+                $dayActivities[] = $relevantActivities[$idx];
+            }
+
+            $itinerary[] = [
+                'day'         => $day,
+                'title'       => "Hari Ke-{$day}: " . $dayThemes[$themeIndex]['title'],
+                'description' => $dayThemes[$themeIndex]['desc'],
+                'activities'  => $dayActivities,
+            ];
+        }
+
+        return $itinerary;
     }
     
     /**
