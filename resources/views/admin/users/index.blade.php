@@ -50,15 +50,35 @@
     confirmText: '',
     confirmCallback: null,
     confirmType: 'suspend',
+    activeTab: 'activities',
+    suspendCategory: 'Spammer',
+    suspendReason: '',
     
     getInitials(name) {
         if (!name) return 'U';
         return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
     },
 
+    formatDateTime(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch(e) {
+            return dateStr;
+        }
+    },
+
     async openUserDetail(userBase) {
         this.showDetailModal = true;
         this.loadingDetail = true;
+        this.activeTab = 'activities';
         
         try {
             const response = await fetch(`/admin/users/${userBase.id}/activity`, {
@@ -89,7 +109,18 @@
             ? `Apakah Anda yakin ingin menangguhkan (suspend) akun '${userName}'? Akses masuk pengguna tersebut akan dibatasi.` 
             : `Apakah Anda yakin ingin mengaktifkan kembali akun '${userName}'?`;
             
+        // Reset fields
+        this.suspendCategory = 'Spammer';
+        this.suspendReason = '';
+            
         this.confirmCallback = async () => {
+            if (this.confirmType === 'suspend') {
+                if (!this.suspendReason.trim()) {
+                    window.showAlert('Alasan penangguhan wajib diisi.', 'Perhatian', 'warning');
+                    return;
+                }
+            }
+            
             this.statusLoading = true;
             try {
                 const response = await fetch(`/admin/users/${userId}/status`, {
@@ -97,8 +128,13 @@
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        suspend_category: this.suspendCategory,
+                        suspend_reason: this.suspendReason
+                    })
                 });
                 const result = await window.safeParseJSON(response);
                 
@@ -494,28 +530,10 @@
             </table>
         </div>
 
-        @if($users->hasPages())
-        <div class="px-8 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
-            <p class="text-[13px] text-gray-400 font-medium">Menampilkan {{ $users->firstItem() }}-{{ $users->lastItem() }} dari {{ $users->total() }} pengguna</p>
-            <div class="flex items-center gap-2">
-                @if($users->onFirstPage())
-                    <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Prev</span>
-                @else
-                    <a href="{{ $users->previousPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Prev</a>
-                @endif
-                
-                <div class="flex items-center gap-1">
-                    @foreach($users->getUrlRange(max(1, $users->currentPage()-1), min($users->lastPage(), $users->currentPage()+1)) as $page => $url)
-                        <a href="{{ $url }}" class="w-9 h-9 flex items-center justify-center text-[13px] font-bold {{ $page == $users->currentPage() ? 'bg-emerald-700 text-white shadow-lg shadow-emerald-700/30' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-all">{{ $page }}</a>
-                    @endforeach
-                </div>
-
-                @if($users->hasMorePages())
-                    <a href="{{ $users->nextPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Next</a>
-                @else
-                    <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Next</span>
-                @endif
-            </div>
+        @if(isset($users) && method_exists($users, 'links'))
+        <div class="px-10 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
+            <div class="text-gray-400 text-sm font-medium">Menampilkan {{ $users->firstItem() }}-{{ $users->lastItem() }} dari {{ $users->total() }} Pengguna</div>
+            <div>{{ $users->appends(request()->query())->links('vendor.pagination.tailwind-custom') }}</div>
         </div>
         @endif
     </div>
@@ -548,49 +566,169 @@
                             </div>
                             <h4 class="text-2xl font-bold text-gray-900" x-text="detailUser.user.name"></h4>
                             <p class="text-sm font-medium text-gray-400 mb-5" x-text="detailUser.user.email"></p>
-                            <span class="px-5 py-2 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-widest rounded-full border border-emerald-100" 
+                            <span class="px-5 py-2 text-[10px] font-bold uppercase tracking-widest rounded-full border" 
+                                  :class="detailUser.user.is_active ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'"
                                   x-text="detailUser.user.is_active ? 'AKTIF' : 'SUSPENDED'"></span>
-                        </div>
-
-                        <!-- Mini Stats Grid -->
-                        <div class="grid grid-cols-3 gap-5">
-                            <div class="bg-gray-50/50 rounded-[1.5rem] p-6 text-center border border-gray-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-gray-100 group">
-                                <p class="text-2xl font-bold text-gray-900 mb-0.5 group-hover:scale-110 transition-transform" x-text="detailUser.stats.reviews"></p>
-                                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Review</p>
-                            </div>
-                            <div class="bg-gray-50/50 rounded-[1.5rem] p-6 text-center border border-gray-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-gray-100 group">
-                                <p class="text-2xl font-bold text-gray-900 mb-0.5 group-hover:scale-110 transition-transform" x-text="detailUser.stats.trips"></p>
-                                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Trip</p>
-                            </div>
-                            <div class="bg-gray-50/50 rounded-[1.5rem] p-6 text-center border border-gray-100 transition-all hover:bg-white hover:shadow-xl hover:shadow-gray-100 group">
-                                <p class="text-2xl font-bold text-gray-900 mb-0.5 group-hover:scale-110 transition-transform" x-text="detailUser.stats.wishlists"></p>
-                                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Wishlist</p>
-                            </div>
-                        </div>
-
-                        <!-- Activity Timeline -->
-                        <div class="space-y-6">
-                            <div class="flex items-center gap-2 mb-2 px-1">
-                                <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <h5 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Riwayat Aktivitas</h5>
-                            </div>
-
-                            <div class="relative space-y-8 pl-1">
-                                <div class="absolute left-[21px] top-4 bottom-4 w-[1.5px] bg-gray-100"></div>
-                                <template x-for="activity in detailUser.activities">
-                                    <div class="relative flex items-center gap-5">
-                                        <div class="relative z-10 w-11 h-11 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm text-emerald-600 transition-transform hover:scale-110">
-                                            <template x-if="activity.icon === 'map'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg></template>
-                                            <template x-if="activity.icon === 'chat'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg></template>
-                                            <template x-if="activity.icon === 'heart'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></template>
-                                            <template x-if="activity.icon === 'search'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></template>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold text-gray-800 leading-tight mb-0.5" x-text="activity.title"></p>
-                                            <p class="text-xs font-medium text-gray-400 uppercase tracking-tighter" x-text="activity.time"></p>
-                                        </div>
+                            
+                            <!-- Suspension Details Display -->
+                            <template x-if="!detailUser.user.is_active">
+                                <div class="mt-6 p-5 bg-red-50/50 border border-red-100 rounded-2xl text-left w-full space-y-3 shadow-sm">
+                                    <div>
+                                        <div class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Kategori Pelanggaran</div>
+                                        <div class="text-sm font-bold text-gray-800 mt-0.5" x-text="detailUser.user.suspend_category || 'Tidak ditentukan'"></div>
                                     </div>
-                                </template>
+                                    <div class="border-t border-red-100/50 pt-2">
+                                        <div class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Alasan Penangguhan</div>
+                                        <div class="text-sm text-gray-600 mt-0.5 leading-relaxed font-medium" x-text="detailUser.user.suspend_reason || '-'"></div>
+                                    </div>
+                                    <template x-if="detailUser.user.suspended_at">
+                                        <div class="text-[10px] text-gray-400 font-medium border-t border-red-100/50 pt-2 flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            Ditangguhkan pada: <span class="font-bold text-gray-500" x-text="formatDateTime(detailUser.user.suspended_at)"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Interactive Stats Grid / Tabs -->
+                        <div class="grid grid-cols-4 gap-3">
+                            <button @click="activeTab = 'activities'"
+                                    :class="activeTab === 'activities' ? 'bg-[#066466] text-white shadow-lg shadow-[#066466]/20 border-[#066466]' : 'bg-gray-50/50 hover:bg-gray-100 text-gray-500 border border-gray-100'"
+                                    class="rounded-[1.5rem] p-4 text-center transition-all border flex flex-col items-center justify-center min-h-[82px] cursor-pointer">
+                                <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <p class="text-[11px] font-bold uppercase tracking-wider">Timeline</p>
+                            </button>
+                            <button @click="activeTab = 'reviews'"
+                                    :class="activeTab === 'reviews' ? 'bg-[#066466] text-white shadow-lg shadow-[#066466]/20 border-[#066466]' : 'bg-gray-50/50 hover:bg-gray-100 text-gray-500 border border-gray-100'"
+                                    class="rounded-[1.5rem] p-4 text-center transition-all border flex flex-col items-center justify-center min-h-[82px] cursor-pointer">
+                                <p class="text-xl font-bold mb-0.5 leading-none" x-text="detailUser.stats.reviews"></p>
+                                <p class="text-[11px] font-bold uppercase tracking-wider">Review</p>
+                            </button>
+                            <button @click="activeTab = 'trips'"
+                                    :class="activeTab === 'trips' ? 'bg-[#066466] text-white shadow-lg shadow-[#066466]/20 border-[#066466]' : 'bg-gray-50/50 hover:bg-gray-100 text-gray-500 border border-gray-100'"
+                                    class="rounded-[1.5rem] p-4 text-center transition-all border flex flex-col items-center justify-center min-h-[82px] cursor-pointer">
+                                <p class="text-xl font-bold mb-0.5 leading-none" x-text="detailUser.stats.trips"></p>
+                                <p class="text-[11px] font-bold uppercase tracking-wider">Trip</p>
+                            </button>
+                            <button @click="activeTab = 'wishlists'"
+                                    :class="activeTab === 'wishlists' ? 'bg-[#066466] text-white shadow-lg shadow-[#066466]/20 border-[#066466]' : 'bg-gray-50/50 hover:bg-gray-100 text-gray-500 border border-gray-100'"
+                                    class="rounded-[1.5rem] p-4 text-center transition-all border flex flex-col items-center justify-center min-h-[82px] cursor-pointer">
+                                <p class="text-xl font-bold mb-0.5 leading-none" x-text="detailUser.stats.wishlists"></p>
+                                <p class="text-[11px] font-bold uppercase tracking-wider">Wishlist</p>
+                            </button>
+                        </div>
+
+                        <!-- Tab Content -->
+                        <div class="mt-8">
+                            <!-- Tab: Timeline -->
+                            <div x-show="activeTab === 'activities'" class="space-y-6">
+                                <div class="flex items-center gap-2 mb-4 px-1">
+                                    <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <h5 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Riwayat Aktivitas</h5>
+                                </div>
+
+                                <div class="relative space-y-8 pl-1">
+                                    <div class="absolute left-[21px] top-4 bottom-4 w-[1.5px] bg-gray-100"></div>
+                                    <template x-for="activity in detailUser.activities">
+                                        <div class="relative flex items-center gap-5">
+                                            <div class="relative z-10 w-11 h-11 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm text-emerald-600 transition-transform hover:scale-110">
+                                                <template x-if="activity.icon === 'map'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg></template>
+                                                <template x-if="activity.icon === 'chat'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg></template>
+                                                <template x-if="activity.icon === 'heart'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></template>
+                                                <template x-if="activity.icon === 'search'"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></template>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-800 leading-tight mb-0.5" x-text="activity.title"></p>
+                                                <p class="text-xs font-medium text-gray-400 uppercase tracking-tighter" x-text="activity.time"></p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Tab: Reviews -->
+                            <div x-show="activeTab === 'reviews'" class="space-y-4">
+                                <div class="flex items-center justify-between mb-4 px-1">
+                                    <h5 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Daftar Ulasan</h5>
+                                </div>
+
+                                <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-2">
+                                    <template x-if="detailUser.reviews_list.length === 0">
+                                        <p class="text-sm text-gray-400 text-center py-6">Belum ada ulasan yang ditulis.</p>
+                                    </template>
+                                    <template x-for="rev in detailUser.reviews_list">
+                                        <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-2 shadow-sm">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm font-bold text-gray-800" x-text="rev.destination_name"></span>
+                                                <div class="flex items-center gap-0.5 text-yellow-400">
+                                                    <template x-for="i in Array.from({length: rev.rating})">
+                                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                            <p class="text-sm text-gray-600 font-medium italic" x-text="'&quot;' + rev.review + '&quot;'"></p>
+                                            <div class="flex items-center justify-between mt-1">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" 
+                                                      :class="rev.sentiment === 'positive' ? 'bg-emerald-50 text-emerald-600' : (rev.sentiment === 'neutral' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600')"
+                                                      x-text="rev.sentiment.charAt(0).toUpperCase() + rev.sentiment.slice(1)"></span>
+                                                <span class="text-[11px] text-gray-400 font-medium" x-text="rev.time"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Tab: Trips -->
+                            <div x-show="activeTab === 'trips'" class="space-y-4">
+                                <div class="flex items-center justify-between mb-4 px-1">
+                                    <h5 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Rencana Perjalanan (Itinerary)</h5>
+                                </div>
+
+                                <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-2">
+                                    <template x-if="detailUser.trips_list.length === 0">
+                                        <p class="text-sm text-gray-400 text-center py-6">Belum ada rencana perjalanan yang dibuat.</p>
+                                    </template>
+                                    <template x-for="trip in detailUser.trips_list">
+                                        <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm">
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-800" x-text="trip.title"></p>
+                                                <span class="text-xs text-gray-400 font-medium" x-text="trip.time"></span>
+                                            </div>
+                                            <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold" x-text="trip.duration + ' Hari'"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Tab: Wishlist -->
+                            <div x-show="activeTab === 'wishlists'" class="space-y-4">
+                                <div class="flex items-center justify-between mb-4 px-1">
+                                    <h5 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Destinasi Wishlist</h5>
+                                </div>
+
+                                <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-2">
+                                    <template x-if="detailUser.wishlist_list.length === 0">
+                                        <p class="text-sm text-gray-400 text-center py-6">Belum ada destinasi di wishlist.</p>
+                                    </template>
+                                    <template x-for="wish in detailUser.wishlist_list">
+                                        <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-sm">
+                                            <template x-if="wish.image">
+                                                <img :src="wish.image" class="w-16 h-12 object-cover rounded-xl shadow-sm border border-gray-200 flex-shrink-0">
+                                            </template>
+                                            <template x-if="!wish.image">
+                                                <div class="w-16 h-12 bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-center flex-shrink-0">
+                                                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                </div>
+                                            </template>
+                                            <div class="flex-grow min-w-0">
+                                                <p class="text-sm font-bold text-gray-800 truncate" x-text="wish.name"></p>
+                                                <p class="text-[11px] text-gray-400 truncate" x-text="wish.location"></p>
+                                            </div>
+                                            <span class="text-[10px] text-gray-400 font-medium text-right flex-shrink-0 pr-1" x-text="wish.time"></span>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
 
@@ -668,6 +806,30 @@
 
                         <h3 class="text-2xl font-bold text-gray-900 mb-4" x-text="confirmTitle"></h3>
                         <p class="text-[15px] text-gray-500 mb-2 leading-relaxed px-2" x-text="confirmText"></p>
+                        
+                        <!-- Suspend Form Fields (Only for Suspend) -->
+                        <template x-if="confirmType === 'suspend'">
+                            <div class="mt-6 text-left space-y-4 px-2">
+                                <div class="space-y-1.5">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Kategori Pelanggaran</label>
+                                    <select x-model="suspendCategory" 
+                                            class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm focus:border-[#EF4444] transition-all cursor-pointer">
+                                        <option value="Spammer">Spammer (Aktivitas Bot/Spam)</option>
+                                        <option value="Abuse/Toxic">Abuse/Toxic (Perilaku Kasar/SARA)</option>
+                                        <option value="Fraud/Scam">Fraud/Scam (Penipuan/Aktivitas Palsu)</option>
+                                        <option value="Inappropriate Profile">Inappropriate Profile (Profil Tidak Layak)</option>
+                                        <option value="Other">Other (Lainnya)</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Alasan Penangguhan</label>
+                                    <textarea x-model="suspendReason" 
+                                              placeholder="Tuliskan alasan penangguhan akun ini secara lengkap..." 
+                                              rows="3"
+                                              class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:border-[#EF4444] outline-none text-[14px] font-medium placeholder-gray-400 transition-all shadow-sm resize-none"></textarea>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Actions -->

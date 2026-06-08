@@ -104,12 +104,94 @@ class AuditLogController extends BaseAdminController
         $log = AdminActivityLog::findOrFail($id);
         $log->load('admin');
 
-        // If it's an AJAX request, return JSON
+        // Resolve entity name and url
+        $entityName = null;
+        $entityUrl = null;
+
+        if ($log->entity_id && $log->entity_type) {
+            try {
+                switch ($log->entity_type) {
+                    case 'destination':
+                        $item = \App\Models\MongoDB\MongoDestination::find($log->entity_id);
+                        if ($item) {
+                            $entityName = $item->name;
+                            $entityUrl = route('admin.destinations.edit', $log->entity_id);
+                        }
+                        break;
+                    case 'event':
+                        $item = \App\Models\MongoDB\MongoEvent::find($log->entity_id);
+                        if ($item) {
+                            $entityName = $item->name;
+                            $entityUrl = route('admin.events.edit', $log->entity_id);
+                        }
+                        break;
+                    case 'facility':
+                        $item = \App\Models\MongoDB\MongoFasilitasUmum::find($log->entity_id);
+                        if ($item) {
+                            $entityName = $item->name;
+                            $entityUrl = route('admin.fasilitas_umum.edit', $log->entity_id);
+                        }
+                        break;
+                    case 'budaya':
+                        $item = \App\Models\MongoDB\MongoBudaya::find($log->entity_id);
+                        if ($item) {
+                            $entityName = $item->name;
+                            $entityUrl = route('admin.budaya.edit', $log->entity_id);
+                        }
+                        break;
+                    case 'berita_promosi':
+                        $item = \App\Models\MongoDB\MongoBeritaPromosi::find($log->entity_id);
+                        if ($item) {
+                            $entityName = $item->title ?? $item->name;
+                            $entityUrl = route('admin.berita_promosi.edit', $log->entity_id);
+                        }
+                        break;
+                    case 'review':
+                        $item = \App\Models\MongoDB\MongoReview::find($log->entity_id);
+                        if ($item) {
+                            $entityName = 'Ulasan dari ' . ($item->reviewer_name ?? 'Anonim') . ($item->destination ? ' untuk ' . $item->destination->name : '');
+                            $entityUrl = route('admin.reviews.index') . '?search=' . $log->entity_id;
+                        }
+                        break;
+                    case 'report':
+                        $item = \App\Models\MongoDB\MongoReport::find($log->entity_id);
+                        if ($item) {
+                            $entityName = 'Laporan: ' . ($item->title ?? $item->category ?? 'Keluhan Wisatawan');
+                            $entityUrl = route('admin.reports.show', $log->entity_id);
+                        }
+                        break;
+                    case 'settings':
+                        $entityName = 'Pengaturan ' . ucfirst($log->entity_id);
+                        if ($log->entity_id === 'general') {
+                            $entityUrl = route('admin.settings.general');
+                        } elseif ($log->entity_id === 'api-keys') {
+                            $entityUrl = route('admin.settings.api-keys');
+                        } elseif ($log->entity_id === 'ai-config') {
+                            $entityUrl = route('admin.settings.ai-config');
+                        }
+                        break;
+                    case 'user':
+                        $item = \App\Models\User::find($log->entity_id);
+                        if ($item) {
+                            $entityName = 'Pengguna: ' . ($item->name ?? $item->email);
+                            $entityUrl = route('admin.users.index') . '?search=' . urlencode($item->email ?? $item->name);
+                        }
+                        break;
+                }
+            } catch (\Exception $e) {
+                // Ignore route or db resolution errors
+            }
+        }
+
+        // Return JSON with extra metadata if it's an AJAX request
         if (request()->header('X-Requested-With') === 'XMLHttpRequest') {
-            return response()->json($log);
+            $logData = $log->toArray();
+            $logData['resolved_entity_name'] = $entityName;
+            $logData['resolved_entity_url'] = $entityUrl;
+            return response()->json($logData);
         }
 
         // Otherwise return the detail view (fallback)
-        return view('admin.settings.audit-logs.show', compact('log'));
+        return view('admin.settings.audit-logs.show', compact('log', 'entityName', 'entityUrl'));
     }
 }

@@ -33,3 +33,10 @@ debug_*.php
 check_*.php
 profile_*.php
 *_dump.txt
+
+# Laravel Cache & Sessions
+/bootstrap/cache/*.php
+/storage/framework/cache/data/*
+/storage/framework/views/*.php
+/storage/framework/sessions/*
+/storage/framework/testing/*

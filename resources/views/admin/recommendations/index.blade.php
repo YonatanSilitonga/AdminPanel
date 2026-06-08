@@ -287,28 +287,10 @@
     </div>
 
     <!-- Pagination -->
-    @if($logs->hasPages())
-    <div class="px-8 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
-        <p class="text-[13px] text-gray-400 font-medium">Menampilkan {{ $logs->firstItem() }}-{{ $logs->lastItem() }} dari {{ $logs->total() }} record</p>
-        <div class="flex items-center gap-2">
-            @if($logs->onFirstPage())
-                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Prev</span>
-            @else
-                <a href="{{ $logs->previousPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Prev</a>
-            @endif
-            
-            <div class="flex items-center gap-1">
-                @foreach($logs->getUrlRange(max(1, $logs->currentPage()-1), min($logs->lastPage(), $logs->currentPage()+1)) as $page => $url)
-                    <a href="{{ $url }}" class="w-9 h-9 flex items-center justify-center text-[13px] font-bold {{ $page == $logs->currentPage() ? 'bg-emerald-700 text-white shadow-lg shadow-emerald-700/30' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-all">{{ $page }}</a>
-                @endforeach
-            </div>
-
-            @if($logs->hasMorePages())
-                <a href="{{ $logs->nextPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Next</a>
-            @else
-                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Next</span>
-            @endif
-        </div>
+    @if(isset($logs) && method_exists($logs, 'links'))
+    <div class="px-10 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
+        <div class="text-gray-400 text-sm font-medium">Menampilkan {{ $logs->firstItem() }}-{{ $logs->lastItem() }} dari {{ $logs->total() }} Rekomendasi</div>
+        <div>{{ $logs->appends(request()->query())->links('vendor.pagination.tailwind-custom') }}</div>
     </div>
     @endif
 </div>

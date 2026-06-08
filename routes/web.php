@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
-use App\Http\Controllers\Admin\DestinationGalleryController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\ReportController;
@@ -65,13 +64,6 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::patch('destinations/{destination}/status', [DestinationController::class, 'toggleStatus'])
             ->name('admin.destinations.toggle-status');
 
-        // Gallery management
-        Route::post('destinations/{destination}/gallery', [DestinationGalleryController::class, 'store'])
-            ->name('admin.gallery.store');
-        Route::delete('destinations/{destination}/gallery/{gallery}', [DestinationGalleryController::class, 'destroy'])
-            ->name('admin.gallery.destroy');
-        Route::patch('destinations/{destination}/gallery/order', [DestinationGalleryController::class, 'updateOrder'])
-            ->name('admin.gallery.order');
 
         // Facility management
         Route::post('destinations/{destination}/facilities', [FacilityController::class, 'store'])

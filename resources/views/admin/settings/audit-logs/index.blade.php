@@ -604,30 +604,10 @@
     </div>
 
     <!-- Pagination -->
-    @if($logs->hasPages())
-    <div class="px-8 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
-        <p class="text-[13px] text-gray-400 font-medium">
-            Menampilkan {{ $logs->firstItem() }}-{{ $logs->lastItem() }} dari {{ number_format($logs->total()) }} log
-        </p>
-        <div class="flex items-center gap-2">
-            @if($logs->onFirstPage())
-                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Prev</span>
-            @else
-                <a href="{{ $logs->previousPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-sidebar hover:text-white rounded-lg transition-all">Prev</a>
-            @endif
-
-            <div class="flex items-center gap-1">
-                @foreach($logs->getUrlRange(max(1, $logs->currentPage()-1), min($logs->lastPage(), $logs->currentPage()+1)) as $page => $url)
-                    <a href="{{ $url }}" class="w-9 h-9 flex items-center justify-center text-[13px] font-bold {{ $page == $logs->currentPage() ? 'bg-sidebar text-white shadow-lg shadow-sidebar/30' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-all">{{ $page }}</a>
-                @endforeach
-            </div>
-
-            @if($logs->hasMorePages())
-                <a href="{{ $logs->nextPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-sidebar hover:text-white rounded-lg transition-all">Next</a>
-            @else
-                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Next</span>
-            @endif
-        </div>
+    @if(isset($logs) && method_exists($logs, 'links'))
+    <div class="px-10 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
+        <div class="text-gray-400 text-sm font-medium">Menampilkan {{ $logs->firstItem() }}-{{ $logs->lastItem() }} dari {{ number_format($logs->total()) }} Log</div>
+        <div>{{ $logs->appends(request()->query())->links('vendor.pagination.tailwind-custom') }}</div>
     </div>
     @endif
 </div>
@@ -708,9 +688,29 @@
 
                 <!-- Entity ID -->
                 <template x-if="detailLog?.entity_id">
-                    <div class="p-4 bg-gray-50 rounded-2xl">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Entity ID</p>
-                        <p class="text-sm font-mono font-bold text-gray-700" x-text="detailLog?.entity_id"></p>
+                    <div class="p-4 bg-gray-50 rounded-2xl flex flex-col gap-1.5">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Entity</p>
+                        
+                        <!-- friendly resolved name -->
+                        <template x-if="detailLog?.resolved_entity_name">
+                            <p class="text-sm font-bold text-gray-800" x-text="detailLog.resolved_entity_name"></p>
+                        </template>
+                        
+                        <!-- raw entity ID -->
+                        <p class="text-xs font-mono text-gray-400 font-bold" x-text="'ID: ' + detailLog.entity_id"></p>
+                        
+                        <!-- action link -->
+                        <template x-if="detailLog?.resolved_entity_url">
+                            <div class="mt-1">
+                                <a :href="detailLog.resolved_entity_url" 
+                                   class="inline-flex items-center gap-2 px-4 py-2 bg-sidebar text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-sidebar/10 hover:shadow-md hover:bg-opacity-90">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                    Buka Halaman Detail
+                                </a>
+                            </div>
+                        </template>
                     </div>
                 </template>
 

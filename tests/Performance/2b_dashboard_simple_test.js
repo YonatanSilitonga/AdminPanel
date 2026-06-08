@@ -24,7 +24,11 @@ const BASE_URL = 'http://127.0.0.1:8000';
 
 export default function () {
     // 1. Authenticate user
-    loginAdmin();
+    let authData = loginAdmin();
+    if (!authData) {
+        console.error("Authentication failed, skipping iteration");
+        return;
+    }
     sleep(0.5);
 
     // 2. Load Main Dashboard (without heavy chart data)
@@ -33,6 +37,11 @@ export default function () {
         'Dashboard loaded (status 200)': (r) => r.status === 200,
         'Dashboard has content': (r) => r.body.length > 500,
     });
+    
+    if (dashboardRes.status !== 200) {
+        console.error(`Dashboard load failed: Status ${dashboardRes.status}`);
+    }
+    
     sleep(0.5);
 
     // NOTE: Chart data AJAX disabled for now due to performance issues (84 DB calls)

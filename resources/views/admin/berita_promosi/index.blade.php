@@ -38,8 +38,8 @@
 @section('content')
 <div x-data="{
     errors: {},
-    showCreateModal: {{ $errors->any() && !old('_method') ? 'true' : 'false' }},
-    showEditModal: {{ $errors->any() && old('_method') == 'PUT' ? 'true' : 'false' }},
+    showCreateModal: {{ (!empty($errors) && $errors->any() && !old('_method')) ? 'true' : 'false' }},
+    showEditModal: {{ (!empty($errors) && $errors->any() && old('_method') == 'PUT') ? 'true' : 'false' }},
     showViewModal: false,
     loading: false,
     viewingItem: null,

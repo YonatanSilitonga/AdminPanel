@@ -61,8 +61,11 @@ Checklist kesiapan production
 - File upload security
 
 ### 5. Performance Testing
+- **K6 Load Testing** ⭐ [See K6_TESTING_SUMMARY.md](./K6_TESTING_SUMMARY.md)
 - Load testing
 - Database query optimization
+- Stress testing
+- Capacity planning
 - Response time monitoring
 
 ---

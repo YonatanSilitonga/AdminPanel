@@ -34,8 +34,21 @@ class AppServiceProvider extends ServiceProvider
      */
     private function registerViewComposers(): void
     {
+        // Ensure $errors is always available in ALL admin views
+        // Blade @error directive & $errors->any() depend on it
+        View::composer('admin.*', function ($view) {
+            if (!$view->offsetExists('errors')) {
+                $view->with('errors', session()->get('errors', new \Illuminate\Support\ViewErrorBag()));
+            }
+        });
+
         // Compose data for admin layout with fallback for empty data
         View::composer(['admin.layouts.app', 'admin.layouts.navbar', 'admin.layouts.sidebar'], function ($view) {
+            // Ensure $errors is always available — Blade @error directive & $errors->any() depend on it
+            if (!$view->offsetExists('errors')) {
+                $view->with('errors', session()->get('errors', new \Illuminate\Support\ViewErrorBag()));
+            }
+
             try {
                 // Cache navbar data for 5 minutes to avoid N+1 queries
                 $cacheKey = 'admin.navbar.counts';

@@ -18,7 +18,11 @@ const BASE_URL = 'http://127.0.0.1:8000';
 
 export default function () {
     // 1. Authenticate user (this sets the session cookies for this VU)
-    loginAdmin();
+    let authData = loginAdmin();
+    if (!authData) {
+        console.error("Authentication failed, skipping iteration");
+        return;
+    }
     sleep(1);
 
     // 2. Load Main Dashboard
@@ -26,13 +30,29 @@ export default function () {
     check(dashboardRes, {
         'Dashboard loaded (status 200)': (r) => r.status === 200,
     });
+    
+    if (dashboardRes.status !== 200) {
+        console.error(`Dashboard load failed: Status ${dashboardRes.status}`);
+    }
     sleep(1);
 
     // 3. Load Dashboard Chart Data (AJAX endpoint)
     let chartRes = http.get(`${BASE_URL}/admin/dashboard/chart-data`);
     check(chartRes, {
         'Chart data loaded (status 200)': (r) => r.status === 200,
+        'Chart data is JSON': (r) => {
+            try {
+                JSON.parse(r.body);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        },
     });
+    
+    if (chartRes.status !== 200) {
+        console.error(`Chart data load failed: Status ${chartRes.status}`);
+    }
     sleep(1);
 
     // TODO: Implement AnalyticsController with these methods:
