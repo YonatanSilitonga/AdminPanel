@@ -28,8 +28,6 @@ class MongoBeritaPromosi extends Model
         'tanggal_tayang' => 'datetime',
         'tampilkan_di_carousel' => 'boolean',
         'is_active' => 'boolean',
-        'images' => 'array',
-        'videos' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

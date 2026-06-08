@@ -27,8 +27,8 @@
 @endsection
 
 @section('content')
-<div x-data="carouselManager()" x-init="init()" @open-create-modal.window="showCreateModal = true; createFileName = ''; createMediaPreview = ''; selectedMediaType = 'image';">
-    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true; createFileName = ''; createMediaPreview = ''; selectedMediaType = 'image';"></button>
+<div x-data="carouselManager()" x-init="init()" @open-create-modal.window="showCreateModal = true; createFileName = ''; createMediaPreview = ''; selectedMediaType = 'image'; errors = {};">
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true; createFileName = ''; createMediaPreview = ''; selectedMediaType = 'image'; errors = {};"></button>
     <!-- Header Summary Panel -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 mb-8 flex flex-wrap items-center justify-between gap-6">
         <div class="flex flex-wrap items-center gap-8">
@@ -520,26 +520,31 @@
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Judul Slide</label>
                                     <input type="text" name="title" required
                                         placeholder="Contoh: Promo Liburan Akhir Tahun"
-                                        class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                                        :class="errors.title ? 'border-red-500' : 'border-gray-200'"
+                                        class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                                    <p x-show="errors.title" class="text-xs text-red-500 mt-1" x-text="errors.title ? errors.title[0] : ''"></p>
                                 </div>
                                 <div class="space-y-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Subjudul</label>
                                     <input type="text" name="subtitle"
                                         placeholder="Contoh: Diskon hingga 50% untuk semua destinasi"
-                                        class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                                        :class="errors.subtitle ? 'border-red-500' : 'border-gray-200'"
+                                        class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                                    <p x-show="errors.subtitle" class="text-xs text-red-500 mt-1" x-text="errors.subtitle ? errors.subtitle[0] : ''"></p>
                                 </div>
                             </div>
 
                             <!-- Badge Kategori -->
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Badge Kategori</label>
-                                <select name="category_badge" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em] bg-white font-medium text-gray-700" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%23066466%22 stroke-width=%222.5%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')" @change="fetchContents($event.target.value)">
+                                <select name="category_badge" required :class="errors.category_badge ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em] bg-white font-medium text-gray-700" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%23066466%22 stroke-width=%222.5%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')" @change="fetchContents($event.target.value)">
                                     <option value="" disabled selected>Pilih kategori</option>
                                     <option value="DESTINASI">Destinasi</option>
                                     <option value="EVENT">Event</option>
                                     <option value="BERITA_PROMOSI">Berita & Promosi</option>
                                     <option value="BUDAYA">Budaya</option>
                                 </select>
+                                <p x-show="errors.category_badge" class="text-xs text-red-500 mt-1" x-text="errors.category_badge ? errors.category_badge[0] : ''"></p>
                             </div>
 
                             <!-- Konten Terkait -->
@@ -575,7 +580,7 @@
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest" x-text="selectedMediaType === 'video' ? 'File Video (Background)' : 'Gambar Background'"></label>
                                 <div class="relative group w-full h-36">
-                                    <input type="file" name="image_url" id="image_create" :accept="selectedMediaType === 'video' ? 'video/*' : 'image/*'" required
+                                    <input type="file" name="image_url" id="image_create" :accept="selectedMediaType === 'video' ? 'video/*' : 'image/*'"
                                         class="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
                                         @change="createFileName = $event.target.files[0] ? $event.target.files[0].name : '';
                                                  const file = $event.target.files[0];
@@ -614,6 +619,7 @@
                                         </template>
                                     </label>
                                 </div>
+                                <p x-show="errors.image_url" class="text-xs text-red-500 mt-1" x-text="errors.image_url ? errors.image_url[0] : ''"></p>
                             </div>
 
                             <!-- Display settings for Video -->
@@ -650,12 +656,16 @@
                                 <div class="space-y-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Periode Dari</label>
                                     <input type="date" name="start_date"
-                                        class="w-full border border-gray-200 rounded-xl px-4 py-3.5 outline-none transition-all text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar font-medium">
+                                        :class="errors.start_date ? 'border-red-500' : 'border-gray-200'"
+                                        class="w-full border rounded-xl px-4 py-3.5 outline-none transition-all text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar font-medium">
+                                    <p x-show="errors.start_date" class="text-xs text-red-500 mt-1" x-text="errors.start_date ? errors.start_date[0] : ''"></p>
                                 </div>
                                 <div class="space-y-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Periode Sampai</label>
                                     <input type="date" name="end_date"
-                                        class="w-full border border-gray-200 rounded-xl px-4 py-3.5 outline-none transition-all text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar font-medium">
+                                        :class="errors.end_date ? 'border-red-500' : 'border-gray-200'"
+                                        class="w-full border rounded-xl px-4 py-3.5 outline-none transition-all text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar font-medium">
+                                    <p x-show="errors.end_date" class="text-xs text-red-500 mt-1" x-text="errors.end_date ? errors.end_date[0] : ''"></p>
                                 </div>
                             </div>
 
@@ -768,23 +778,28 @@
                                 <div class="space-y-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Judul Slide</label>
                                     <input type="text" name="title" x-model="editingBanner.title" required
-                                        class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                                        :class="errors.title ? 'border-red-500' : 'border-gray-200'"
+                                        class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                                    <p x-show="errors.title" class="text-xs text-red-500 mt-1" x-text="errors.title ? errors.title[0] : ''"></p>
                                 </div>
                                 <div class="space-y-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Subjudul</label>
                                     <input type="text" name="subtitle" x-model="editingBanner.subtitle"
-                                        class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                                        :class="errors.subtitle ? 'border-red-500' : 'border-gray-200'"
+                                        class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-medium text-gray-700">
+                                    <p x-show="errors.subtitle" class="text-xs text-red-500 mt-1" x-text="errors.subtitle ? errors.subtitle[0] : ''"></p>
                                 </div>
                             </div>
 
                             <div class="space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Badge Kategori</label>
-                                <select name="category_badge" x-model="editingBanner.category_badge" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em] font-medium text-gray-700" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%23066466%22 stroke-width=%222.5%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')" @change="fetchContents($event.target.value)">
+                                <select name="category_badge" x-model="editingBanner.category_badge" required :class="errors.category_badge ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em] font-medium text-gray-700" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%23066466%22 stroke-width=%222.5%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')" @change="fetchContents($event.target.value)">
                                     <option value="DESTINASI">Destinasi</option>
                                     <option value="EVENT">Event</option>
                                     <option value="BERITA_PROMOSI">Berita & Promosi</option>
                                     <option value="BUDAYA">Budaya</option>
                                 </select>
+                                <p x-show="errors.category_badge" class="text-xs text-red-500 mt-1" x-text="errors.category_badge ? errors.category_badge[0] : ''"></p>
                             </div>
 
                             <!-- Konten Terkait -->
@@ -916,12 +931,16 @@
                                 <div class="space-y-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Periode Dari</label>
                                     <input type="date" name="start_date" x-model="editingBanner.start_date_formatted"
-                                        class="w-full border border-gray-200 rounded-xl px-4 py-3.5 outline-none transition-all text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar font-medium">
+                                        :class="errors.start_date ? 'border-red-500' : 'border-gray-200'"
+                                        class="w-full border rounded-xl px-4 py-3.5 outline-none transition-all text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar font-medium">
+                                    <p x-show="errors.start_date" class="text-xs text-red-500 mt-1" x-text="errors.start_date ? errors.start_date[0] : ''"></p>
                                 </div>
                                 <div class="space-y-2">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Periode Sampai</label>
                                     <input type="date" name="end_date" x-model="editingBanner.end_date_formatted"
-                                        class="w-full border border-gray-200 rounded-xl px-4 py-3.5 outline-none transition-all text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar font-medium">
+                                        :class="errors.end_date ? 'border-red-500' : 'border-gray-200'"
+                                        class="w-full border rounded-xl px-4 py-3.5 outline-none transition-all text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar font-medium">
+                                    <p x-show="errors.end_date" class="text-xs text-red-500 mt-1" x-text="errors.end_date ? errors.end_date[0] : ''"></p>
                                 </div>
                             </div>
 
@@ -1181,6 +1200,7 @@ function carouselManager() {
         uploadProgressPercent: 0,
         uploadProgressText: '',
         uploadSpeedText: '',
+        errors: {},
 
         openMediaPreview(url, mediaType = 'image') {
             if (!url) return;
@@ -1218,6 +1238,7 @@ function carouselManager() {
             this.editingBanner = null;
             this.fileName = '';
             this.editMediaPreview = '';
+            this.errors = {};
             try {
                 const response = await fetch(`/admin/carousel-banners/${id}/edit`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -1420,13 +1441,13 @@ function carouselManager() {
                     } else {
                         try {
                             const errRes = JSON.parse(xhr.responseText);
-                            reject(new Error(errRes.message || 'Gagal menyimpan data ke server'));
+                            reject(errRes);
                         } catch(e) {
-                            reject(new Error('Gagal menyimpan data ke server (Status: ' + xhr.status + ')'));
+                            reject({ message: 'Gagal menyimpan data ke server (Status: ' + xhr.status + ')' });
                         }
                     }
                 };
-                xhr.onerror = () => reject(new Error('Koneksi terputus ke server lokal.'));
+                xhr.onerror = () => reject({ message: 'Koneksi terputus ke server lokal.' });
                 xhr.send(formData);
             });
         },
@@ -1499,16 +1520,15 @@ function carouselManager() {
                     result = await window.safeParseJSON(response);
                 }
 
-                if (result.success) {
+                if (result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Slide carousel berhasil diperbarui');
                     window.location.reload();
-                } else {
+                } else if (result) {
                     window.showAlert(result.message || 'Gagal memperbarui banner', 'Gagal', 'error');
                 }
             } catch (error) {
                 console.error(error);
-                this.showUploadProgress = false;
-                window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+                window.handleServerError(error, this);
             } finally {
                 this.loading = false;
             }
@@ -1576,16 +1596,15 @@ function carouselManager() {
                     result = await window.safeParseJSON(response);
                 }
 
-                if (result.success) {
+                if (result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Slide carousel berhasil ditambahkan');
                     window.location.reload();
-                } else {
+                } else if (result) {
                     window.showAlert(result.message || 'Gagal membuat banner', 'Gagal', 'error');
                 }
             } catch (error) {
                 console.error(error);
-                this.showUploadProgress = false;
-                window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+                window.handleServerError(error, this);
             } finally {
                 this.loading = false;
             }

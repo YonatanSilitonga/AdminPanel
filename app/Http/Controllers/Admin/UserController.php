@@ -81,6 +81,17 @@ class UserController extends BaseAdminController
     {
         try {
             $user = User::findOrFail($id);
+            
+            // Prevent multiple suspend actions - if already suspended, don't allow toggle
+            // (This enforces that suspended status is "locked" and requires admin intervention)
+            if (!$user->is_active) {
+                $errorMsg = 'Akun ini sudah ditangguhkan. Perubahan status tidak diizinkan untuk akun yang sudah terkunci. Hubungi administrator untuk review lebih lanjut.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->with('error', $errorMsg);
+            }
+
             $newStatus = !$user->is_active;
             $user->is_active = $newStatus;
             $user->save();

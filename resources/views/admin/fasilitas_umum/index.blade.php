@@ -64,8 +64,8 @@
 @endsection
 
 @section('content')
-<div id="facility-manager" x-data="facilityManager()" @open-create-modal.window="showCreateModal = true">
-    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true" @open-create-modal.window="showCreateModal = true"></button>
+<div id="facility-manager" x-data="facilityManager()" @open-create-modal.window="showCreateModal = true; errors = {};">
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true; errors = {};" @open-create-modal.window="showCreateModal = true; errors = {};"></button>
     <!-- Filters & Search Bar -->
     <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
         <form method="GET" action="{{ route('admin.fasilitas_umum.index') }}" class="space-y-4">
@@ -361,12 +361,13 @@
                 <form id="createFacilityForm" @submit.prevent="submitCreate()" class="space-y-6">
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nama Fasilitas</label>
-                        <input type="text" name="name" required placeholder="Contoh: SPBU Balige Utara" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                        <input type="text" name="name" required placeholder="Contoh: SPBU Balige Utara" :class="errors.name ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                        <p x-show="errors.name" class="text-xs text-red-500 mt-1" x-text="errors.name ? errors.name[0] : ''"></p>
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Jenis Fasilitas</label>
-                        <select name="type" required class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold appearance-none bg-no-repeat bg-[right_1.5rem_center] bg-[length:1.2em_1.2em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                        <select name="type" required :class="errors.type ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold appearance-none bg-no-repeat bg-[right_1.5rem_center] bg-[length:1.2em_1.2em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
                             <option value="" disabled selected>Pilih jenis</option>
                             <option value="SPBU">SPBU</option>
                             <option value="Hotel">Hotel</option>
@@ -374,21 +375,25 @@
                             <option value="RS/Puskesmas">RS/Puskesmas</option>
                             <option value="ATM">ATM</option>
                         </select>
+                        <p x-show="errors.type" class="text-xs text-red-500 mt-1" x-text="errors.type ? errors.type[0] : ''"></p>
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Alamat</label>
-                        <textarea name="address" required placeholder="Contoh: Jl. Sisingamangaraja No. 12" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300 min-h-[100px]"></textarea>
+                        <textarea name="address" required placeholder="Contoh: Jl. Sisingamangaraja No. 12" :class="errors.address ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300 min-h-[100px]"></textarea>
+                        <p x-show="errors.address" class="text-xs text-red-500 mt-1" x-text="errors.address ? errors.address[0] : ''"></p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Latitude</label>
-                            <input type="text" name="latitude" id="create_latitude" required placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <input type="text" name="latitude" id="create_latitude" required placeholder="Contoh: 2.3361" :class="errors.latitude ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <p x-show="errors.latitude" class="text-xs text-red-500 mt-1" x-text="errors.latitude ? errors.latitude[0] : ''"></p>
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Longitude</label>
-                            <input type="text" name="longitude" id="create_longitude" required placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <input type="text" name="longitude" id="create_longitude" required placeholder="Contoh: 99.0494" :class="errors.longitude ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <p x-show="errors.longitude" class="text-xs text-red-500 mt-1" x-text="errors.longitude ? errors.longitude[0] : ''"></p>
                         </div>
                     </div>
 
@@ -416,27 +421,32 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Jam Operasional</label>
-                            <input type="text" name="operational_hours" required placeholder="Contoh: 06.00-22.00" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                            <input type="text" name="operational_hours" required placeholder="Contoh: 06.00-22.00" :class="errors.operational_hours ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                            <p x-show="errors.operational_hours" class="text-xs text-red-500 mt-1" x-text="errors.operational_hours ? errors.operational_hours[0] : ''"></p>
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nomor Telepon</label>
-                            <input type="text" name="phone_number" placeholder="Contoh: +62 812 3456 7890" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                            <input type="text" name="phone_number" placeholder="Contoh: +62 812 3456 7890" :class="errors.phone_number ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                            <p x-show="errors.phone_number" class="text-xs text-red-500 mt-1" x-text="errors.phone_number ? errors.phone_number[0] : ''"></p>
                         </div>
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Deskripsi Fasilitas</label>
-                        <textarea name="description" placeholder="Ceritakan tentang fasilitas ini..." class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300 min-h-[100px]"></textarea>
+                        <textarea name="description" placeholder="Ceritakan tentang fasilitas ini..." :class="errors.description ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300 min-h-[100px]"></textarea>
+                        <p x-show="errors.description" class="text-xs text-red-500 mt-1" x-text="errors.description ? errors.description[0] : ''"></p>
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Layanan Tersedia</label>
-                        <input type="text" name="available_services" placeholder="Pisahkan dengan koma. Contoh: Free Wi-Fi, Kolam Renang, Parkir" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                        <input type="text" name="available_services" placeholder="Pisahkan dengan koma. Contoh: Free Wi-Fi, Kolam Renang, Parkir" :class="errors.available_services ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                        <p x-show="errors.available_services" class="text-xs text-red-500 mt-1" x-text="errors.available_services ? errors.available_services[0] : ''"></p>
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Tags / Label</label>
-                        <input type="text" name="tags" placeholder="Pisahkan dengan koma. Contoh: Pemandangan Danau, Ramah Anak" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                        <input type="text" name="tags" placeholder="Pisahkan dengan koma. Contoh: Pemandangan Danau, Ramah Anak" :class="errors.tags ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300">
+                        <p x-show="errors.tags" class="text-xs text-red-500 mt-1" x-text="errors.tags ? errors.tags[0] : ''"></p>
                     </div>
 
                     <!-- Panduan Foto Fasilitas -->
@@ -595,33 +605,38 @@
                     <form id="editFacilityForm" @submit.prevent="submitUpdate()" class="space-y-6">
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nama Fasilitas</label>
-                        <input type="text" name="name" x-model="editingFacility.name" required class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                        <input type="text" name="name" x-model="editingFacility.name" required :class="errors.name ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                        <p x-show="errors.name" class="text-xs text-red-500 mt-1" x-text="errors.name ? errors.name[0] : ''"></p>
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Jenis Fasilitas</label>
-                        <select name="type" x-model="editingFacility.type" required class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold appearance-none bg-no-repeat bg-[right_1.5rem_center] bg-[length:1.2em_1.2em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                        <select name="type" x-model="editingFacility.type" required :class="errors.type ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold appearance-none bg-no-repeat bg-[right_1.5rem_center] bg-[length:1.2em_1.2em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22%239CA3AF%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
                             <option value="SPBU">SPBU</option>
                             <option value="Hotel">Hotel</option>
                             <option value="Resto">Resto</option>
                             <option value="RS/Puskesmas">RS/Puskesmas</option>
                             <option value="ATM">ATM</option>
                         </select>
+                        <p x-show="errors.type" class="text-xs text-red-500 mt-1" x-text="errors.type ? errors.type[0] : ''"></p>
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Alamat</label>
-                        <textarea name="address" x-model="editingFacility.address" required class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold min-h-[100px]"></textarea>
+                        <textarea name="address" x-model="editingFacility.address" required :class="errors.address ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold min-h-[100px]"></textarea>
+                        <p x-show="errors.address" class="text-xs text-red-500 mt-1" x-text="errors.address ? errors.address[0] : ''"></p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Latitude</label>
-                            <input type="text" name="latitude" id="edit_latitude" x-model="editingFacility.latitude" placeholder="Contoh: 2.3361" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <input type="text" name="latitude" id="edit_latitude" x-model="editingFacility.latitude" placeholder="Contoh: 2.3361" :class="errors.latitude ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <p x-show="errors.latitude" class="text-xs text-red-500 mt-1" x-text="errors.latitude ? errors.latitude[0] : ''"></p>
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Longitude</label>
-                            <input type="text" name="longitude" id="edit_longitude" x-model="editingFacility.longitude" placeholder="Contoh: 99.0494" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <input type="text" name="longitude" id="edit_longitude" x-model="editingFacility.longitude" placeholder="Contoh: 99.0494" :class="errors.longitude ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold placeholder-gray-300" readonly>
+                            <p x-show="errors.longitude" class="text-xs text-red-500 mt-1" x-text="errors.longitude ? errors.longitude[0] : ''"></p>
                         </div>
                     </div>
 
@@ -649,17 +664,20 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Jam Operasional</label>
-                            <input type="text" name="operational_hours" x-model="editingFacility.operational_hours" required class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                            <input type="text" name="operational_hours" x-model="editingFacility.operational_hours" required :class="errors.operational_hours ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                            <p x-show="errors.operational_hours" class="text-xs text-red-500 mt-1" x-text="errors.operational_hours ? errors.operational_hours[0] : ''"></p>
                         </div>
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nomor Telepon</label>
-                            <input type="text" name="phone_number" x-model="editingFacility.phone_number" placeholder="Contoh: +62 812 3456 7890" class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                            <input type="text" name="phone_number" x-model="editingFacility.phone_number" placeholder="Contoh: +62 812 3456 7890" :class="errors.phone_number ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                            <p x-show="errors.phone_number" class="text-xs text-red-500 mt-1" x-text="errors.phone_number ? errors.phone_number[0] : ''"></p>
                         </div>
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Deskripsi Fasilitas</label>
-                        <textarea name="description" x-model="editingFacility.description" placeholder="Ceritakan tentang fasilitas ini..." class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold min-h-[100px]"></textarea>
+                        <textarea name="description" x-model="editingFacility.description" placeholder="Ceritakan tentang fasilitas ini..." :class="errors.description ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold min-h-[100px]"></textarea>
+                        <p x-show="errors.description" class="text-xs text-red-500 mt-1" x-text="errors.description ? errors.description[0] : ''"></p>
                     </div>
 
                     <div class="space-y-1.5">
@@ -667,7 +685,8 @@
                         <input type="text" name="available_services" 
                             :value="editingFacility.available_services ? editingFacility.available_services.join(', ') : ''" 
                             placeholder="Pisahkan dengan koma. Contoh: Free Wi-Fi, Kolam Renang" 
-                            class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                            :class="errors.available_services ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                        <p x-show="errors.available_services" class="text-xs text-red-500 mt-1" x-text="errors.available_services ? errors.available_services[0] : ''"></p>
                     </div>
 
                     <div class="space-y-1.5">
@@ -675,7 +694,8 @@
                         <input type="text" name="tags" 
                             :value="editingFacility.tags ? editingFacility.tags.join(', ') : ''" 
                             placeholder="Pisahkan dengan koma. Contoh: Pemandangan Danau" 
-                            class="w-full border border-gray-100 bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                            :class="errors.tags ? 'border-red-500' : 'border-gray-100'" class="w-full border bg-gray-50/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all text-sm font-bold">
+                        <p x-show="errors.tags" class="text-xs text-red-500 mt-1" x-text="errors.tags ? errors.tags[0] : ''"></p>
                     </div>
 
                     <!-- Panduan Foto Fasilitas -->
@@ -1075,13 +1095,28 @@
 <script>
 function facilityManager() {
     return {
+        errors: {},
         showCreateModal: false,
         showEditModal: false,
         showViewModal: false,
         viewingFacility: null,
         loading: false,
         createIsActive: true,
-        editingFacility: null,
+        editingFacility: {
+            name: '',
+            type: '',
+            address: '',
+            latitude: '',
+            longitude: '',
+            operational_hours: '',
+            phone_number: '',
+            description: '',
+            available_services: [],
+            tags: [],
+            is_active: false,
+            images_data: [],
+            image_url: null,
+        },
         createFileName: '',
         showLightbox: false,
         lightboxImage: '',
@@ -1144,9 +1179,25 @@ function facilityManager() {
             if (!id) return;
             this.showViewModal = false;
             this.loading = true;
-            this.editingFacility = null;
+            // Reset editingFacility dengan struktur kosong, bukan null
+            this.editingFacility = {
+                name: '',
+                type: '',
+                address: '',
+                latitude: '',
+                longitude: '',
+                operational_hours: '',
+                phone_number: '',
+                description: '',
+                available_services: [],
+                tags: [],
+                is_active: false,
+                images_data: [],
+                image_url: null,
+            };
             this.editFileName = '';
             this.deletedImages = [];
+            this.errors = {};
             try {
                 const response = await fetch(`/admin/fasilitas-umum/${id}/edit`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -1320,6 +1371,7 @@ function facilityManager() {
                 xhr.open('POST', url);
                 xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
                 xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name=csrf-token]').getAttribute('content'));
+                xhr.setRequestHeader('Accept', 'application/json');
                 
                 let startTime = Date.now();
                 xhr.upload.addEventListener('progress', (e) => {
@@ -1347,19 +1399,25 @@ function facilityManager() {
                     } else {
                         try {
                             const errRes = JSON.parse(xhr.responseText);
-                            reject(new Error(errRes.message || 'Gagal menyimpan data ke server'));
+                            errRes.status = xhr.status;
+                            reject(errRes);
                         } catch(e) {
-                            reject(new Error('Gagal menyimpan data ke server (Status: ' + xhr.status + ')'));
+                            reject({
+                                success: false,
+                                status: xhr.status,
+                                message: 'Gagal menyimpan data ke server (Status: ' + xhr.status + ')'
+                            });
                         }
                     }
                 };
-                xhr.onerror = () => reject(new Error('Koneksi terputus ke server lokal.'));
+                xhr.onerror = () => reject({ message: 'Koneksi terputus ke server lokal.', errors: null });
                 xhr.send(formData);
             });
         },
 
         async submitCreate() {
             this.loading = true;
+            this.errors = {};
             const form = document.getElementById('createFacilityForm');
             const thumbnailInput = document.getElementById('create_image');
             const imagesInput = document.getElementById('create_images');
@@ -1417,6 +1475,9 @@ function facilityManager() {
                         localStorage.setItem('pending_success_toast', result.message || 'Fasilitas umum berhasil ditambahkan');
                         window.location.reload();
                     } else {
+                        if (response.status === 422 && result && result.errors) {
+                            throw result;
+                        }
                         window.showAlert(result?.message || 'Gagal menambahkan fasilitas', 'Gagal', 'error');
                     }
                 } else {
@@ -1436,13 +1497,21 @@ function facilityManager() {
                         localStorage.setItem('pending_success_toast', result.message || 'Fasilitas umum berhasil ditambahkan');
                         window.location.reload();
                     } else {
+                        if (result.status === 422 && result.errors) {
+                            throw result;
+                        }
                         window.showAlert(result.message || 'Gagal menyimpan fasilitas', 'Gagal', 'error');
                     }
                 }
             } catch (error) {
                 console.error(error);
                 this.showUploadProgress = false;
-                window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+                if (error && error.errors) {
+                    this.errors = error.errors;
+                    window.showAlert(error.message || 'Terdapat kesalahan validasi pada formulir.', 'Validasi Gagal', 'error');
+                } else {
+                    window.handleServerError(error, this);
+                }
             } finally {
                 this.loading = false;
             }
@@ -1456,6 +1525,7 @@ function facilityManager() {
             }
 
             this.loading = true;
+            this.errors = {};
             const form = document.getElementById('editFacilityForm');
             const thumbnailInput = document.getElementById('edit_image');
             const imagesInput = document.getElementById('edit_images');
@@ -1522,6 +1592,9 @@ function facilityManager() {
                         localStorage.setItem('pending_success_toast', result.message || 'Fasilitas umum berhasil diperbarui');
                         window.location.reload();
                     } else {
+                        if (response.status === 422 && result && result.errors) {
+                            throw result;
+                        }
                         window.showAlert(result?.message || 'Gagal memperbarui fasilitas', 'Gagal', 'error');
                     }
                 } else {
@@ -1541,13 +1614,21 @@ function facilityManager() {
                         localStorage.setItem('pending_success_toast', result.message || 'Fasilitas umum berhasil diperbarui');
                         window.location.reload();
                     } else {
+                        if (result.status === 422 && result.errors) {
+                            throw result;
+                        }
                         window.showAlert(result.message || 'Gagal menyimpan fasilitas', 'Gagal', 'error');
                     }
                 }
             } catch (error) {
                 console.error(error);
                 this.showUploadProgress = false;
-                window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+                if (error && error.errors) {
+                    this.errors = error.errors;
+                    window.showAlert(error.message || 'Terdapat kesalahan validasi pada formulir.', 'Validasi Gagal', 'error');
+                } else {
+                    window.handleServerError(error, this);
+                }
             } finally {
                 this.loading = false;
             }

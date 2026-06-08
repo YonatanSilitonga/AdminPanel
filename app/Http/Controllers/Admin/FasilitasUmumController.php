@@ -65,24 +65,24 @@ class FasilitasUmumController extends BaseAdminController
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|string|in:SPBU,Hotel,Resto,RS/Puskesmas,ATM',
-            'address' => 'required|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'phone_number' => 'nullable|string|max:50',
-            'description' => 'nullable|string',
-            'available_services' => 'nullable|string',
-            'tags' => 'nullable|string',
-            'operational_hours' => 'required|string|max:255',
-            'is_active' => 'boolean',
-            'images' => 'nullable|array',
-            'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
-            'image' => 'nullable|' . ($request->hasFile('image') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
-        ]);
-
         try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'type' => 'required|string|in:SPBU,Hotel,Resto,RS/Puskesmas,ATM',
+                'address' => 'required|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'phone_number' => 'nullable|string|max:50',
+                'description' => 'nullable|string',
+                'available_services' => 'nullable|string',
+                'tags' => 'nullable|string',
+                'operational_hours' => 'required|string|max:255',
+                'is_active' => 'boolean',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+                'image' => 'nullable|' . ($request->hasFile('image') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
+            ]);
+
             $validated['is_active'] = $request->boolean('is_active');
             
             if (isset($validated['available_services']) && $validated['available_services']) {
@@ -147,6 +147,15 @@ class FasilitasUmumController extends BaseAdminController
             $this->clearDashboardCache();
             return redirect()->route('admin.fasilitas_umum.index')
                 ->with('success', 'Fasilitas berhasil ditambahkan');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error creating facility: ' . $e->getMessage());
 
@@ -194,26 +203,26 @@ class FasilitasUmumController extends BaseAdminController
      */
     public function update(Request $request, string $id)
     {
-        $facility = MongoFasilitasUmum::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|string|in:SPBU,Hotel,Resto,RS/Puskesmas,ATM',
-            'address' => 'required|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'phone_number' => 'nullable|string|max:50',
-            'description' => 'nullable|string',
-            'available_services' => 'nullable|string',
-            'tags' => 'nullable|string',
-            'operational_hours' => 'required|string|max:255',
-            'is_active' => 'boolean',
-            'images' => 'nullable|array',
-            'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
-            'image' => 'nullable|' . ($request->hasFile('image') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
-        ]);
-
         try {
+            $facility = MongoFasilitasUmum::findOrFail($id);
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'type' => 'required|string|in:SPBU,Hotel,Resto,RS/Puskesmas,ATM',
+                'address' => 'required|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'phone_number' => 'nullable|string|max:50',
+                'description' => 'nullable|string',
+                'available_services' => 'nullable|string',
+                'tags' => 'nullable|string',
+                'operational_hours' => 'required|string|max:255',
+                'is_active' => 'boolean',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+                'image' => 'nullable|' . ($request->hasFile('image') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
+            ]);
+
             $validated['is_active'] = $request->boolean('is_active');
             
             if (isset($validated['available_services']) && $validated['available_services']) {
@@ -316,6 +325,15 @@ class FasilitasUmumController extends BaseAdminController
             $this->clearDashboardCache();
             return redirect()->route('admin.fasilitas_umum.index')
                 ->with('success', 'Fasilitas berhasil diperbarui');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error updating facility: ' . $e->getMessage());
 

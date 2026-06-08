@@ -52,7 +52,6 @@ class MongoDestination extends Model
         'latitude'   => 'float',
         'longitude'  => 'float',
         'is_active' => 'boolean',
-        'facilities' => 'array',
         'video_duration' => 'integer',
         'video_autoplay' => 'boolean',
         'video_loop' => 'boolean',
@@ -70,23 +69,35 @@ class MongoDestination extends Model
     /**
      * Get average rating from approved reviews
      */
-    public function getAverageRatingAttribute()
+    public function getAverageRatingAttribute($value)
     {   
-        $reviews = $this->reviews()->get();
-        
-        if ($reviews->isEmpty()) {
-            return 0;
+        if ($value !== null && $value !== '') {
+            return (float) $value;
         }
 
-        return $reviews->avg('rating') ?? 0;
+        $cacheKey = 'destination_avg_rating_' . $this->_id;
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function() {
+            $reviews = $this->reviews()->get();
+            if ($reviews->isEmpty()) {
+                return 0.0;
+            }
+            return (float) ($reviews->avg('rating') ?? 0.0);
+        });
     }
 
     /**
      * Get total review count from approved reviews
      */
-    public function getTotalReviewsAttribute()
+    public function getTotalReviewsAttribute($value)
     {
-        return $this->reviews()->count();
+        if ($value !== null && $value !== '') {
+            return (int) $value;
+        }
+
+        $cacheKey = 'destination_total_reviews_' . $this->_id;
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function() {
+            return (int) $this->reviews()->count();
+        });
     }
 
     /**

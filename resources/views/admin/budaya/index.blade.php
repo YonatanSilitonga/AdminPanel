@@ -40,11 +40,25 @@
 @section('content')
 
 <div x-data="{
+    errors: {},
     showCreateModal: {{ $errors->any() && !old('_method') ? 'true' : 'false' }},
     showEditModal: {{ $errors->any() && old('_method') == 'PUT' ? 'true' : 'false' }},
     showViewModal: false,
     loading: false,
-    editingBudaya: null,
+    editingBudaya: {
+        name: '',
+        category: '',
+        location: '',
+        description: '',
+        image_url: '',
+        image_url_type: 'image',
+        images_data: [],
+        video_duration: 10,
+        video_autoplay: true,
+        video_loop: true,
+        video_wait_until_ready: true,
+        is_active: false,
+    },
     viewingBudaya: null,
     createFileName: '',
     editFileName: '',
@@ -101,8 +115,23 @@
     async openEditModal(id) {
         if (!id) return;
         this.loading = true;
-        this.editingBudaya = null;
+        // Reset editingBudaya dengan struktur kosong, bukan null
+        this.editingBudaya = {
+            name: '',
+            category: '',
+            location: '',
+            description: '',
+            image_url: '',
+            image_url_type: 'image',
+            images_data: [],
+            video_duration: 10,
+            video_autoplay: true,
+            video_loop: true,
+            video_wait_until_ready: true,
+            is_active: false,
+        };
         this.deletedImages = [];
+        this.errors = {};
         try {
             const res = await fetch(`/admin/budaya/${id}/edit`, { 
                 headers: { 'X-Requested-With': 'XMLHttpRequest' } 
@@ -338,19 +367,25 @@
                 } else {
                     try {
                         const errRes = JSON.parse(xhr.responseText);
-                        reject(new Error(errRes.message || 'Gagal menyimpan data ke server'));
+                        errRes.status = xhr.status;
+                        reject(errRes);
                     } catch(e) {
-                        reject(new Error('Gagal menyimpan data ke server (Status: ' + xhr.status + ')'));
+                        reject({
+                            success: false,
+                            status: xhr.status,
+                            message: 'Gagal menyimpan data ke server (Status: ' + xhr.status + ')'
+                        });
                     }
                 }
             };
-            xhr.onerror = () => reject(new Error('Koneksi terputus ke server lokal.'));
+            xhr.onerror = () => reject({ message: 'Koneksi terputus ke server lokal.', errors: null });
             xhr.send(formData);
         });
     },
 
     async submitCreate() {
         this.loading = true;
+        this.errors = {};
         const form = document.getElementById('createBudayaForm');
         const thumbnailInput = document.getElementById('create_image');
         const imagesInput = document.getElementById('create_images');
@@ -410,6 +445,9 @@
                     localStorage.setItem('pending_success_toast', result.message || 'Budaya baru berhasil dibuat');
                     window.location.reload();
                 } else {
+                    if (response.status === 422 && result && result.errors) {
+                        throw result;
+                    }
                     const errorMsg = result?.message || 'Gagal membuat budaya';
                     window.showAlert(errorMsg, 'Gagal', 'error');
                 }
@@ -436,11 +474,11 @@
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            // Only trigger alert if we haven't handled the response validation directly
-            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
-                window.showAlert(error.message, 'Error', 'error');
+            if (error && error.errors) {
+                this.errors = error.errors;
+                window.showAlert(error.message || 'Terdapat kesalahan validasi pada formulir.', 'Validasi Gagal', 'error');
             } else {
-                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+                window.handleServerError(error, this);
             }
         } finally {
             this.loading = false;
@@ -455,6 +493,7 @@
         }
 
         this.loading = true;
+        this.errors = {};
         this.saveStatus = 'saving';
         this.saveMessage = '';
         const form = document.getElementById('editBudayaForm');
@@ -519,6 +558,9 @@
                     localStorage.setItem('pending_success_toast', this.saveMessage);
                     setTimeout(() => window.location.reload(), 650);
                 } else {
+                    if (response.status === 422 && result && result.errors) {
+                        throw result;
+                    }
                     this.saveStatus = 'error';
                     this.saveMessage = result?.message || 'Gagal menyimpan perubahan.';
                     window.showAlert(this.saveMessage, 'Gagal', 'error');
@@ -542,6 +584,9 @@
                     localStorage.setItem('pending_success_toast', this.saveMessage);
                     setTimeout(() => window.location.reload(), 650);
                 } else {
+                    if (result.status === 422 && result.errors) {
+                        throw result;
+                    }
                     this.saveStatus = 'error';
                     this.saveMessage = result.message || 'Gagal menyimpan perubahan.';
                     window.showAlert(this.saveMessage, 'Gagal', 'error');
@@ -552,10 +597,11 @@
             this.showUploadProgress = false;
             this.saveStatus = 'error';
             this.saveMessage = error.message || 'Terjadi kesalahan saat menyimpan.';
-            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
-                window.showAlert(error.message, 'Error', 'error');
+            if (error && error.errors) {
+                this.errors = error.errors;
+                window.showAlert(error.message || 'Terdapat kesalahan validasi pada formulir.', 'Validasi Gagal', 'error');
             } else {
-                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+                window.handleServerError(error, this);
             }
         } finally {
             this.loading = false;
@@ -563,7 +609,7 @@
     }
 }">
 
-    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true" @open-create-modal.window="showCreateModal = true; createFileName = ''; createPreviewUrl = '';"></button>
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true" @open-create-modal.window="showCreateModal = true; createFileName = ''; createPreviewUrl = ''; errors = {};"></button>
 
     {{-- /////////////////////////////////// --}}
     {{-- DESKTOP VIEW (ADMIN TABLE LAYOUT)   --}}
@@ -974,27 +1020,31 @@
                       <div class="grid grid-cols-2 gap-4">
                           <div class="col-span-2 space-y-2">
                               <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama / Judul Budaya</label>
-                              <input type="text" name="name" value="{{ old('name') }}" required placeholder="Cth: Makam Raja Sidabutar" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('name') border-red-500 @enderror">
-                              @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                              <input type="text" name="name" value="{{ old('name') }}" required placeholder="Cth: Makam Raja Sidabutar" :class="errors.name ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                              <p x-show="errors.name" class="text-xs text-red-500 mt-1" x-text="errors.name ? errors.name[0] : ''"></p>
+                              @error('name') <p x-show="!errors.name" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                           </div>
                           <div class="col-span-2  space-y-2">
                               <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori Utama</label>
-                              <select name="category" required class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700 @error('category') border-red-500 @enderror">
+                              <select name="category" required :class="errors.category ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                   @foreach($categories ?? ['Sejarah', 'Tradisi', 'Rumah Adat', 'Cerita Rakyat', 'Kuliner'] as $cat)
                                       <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                                   @endforeach
                               </select>
-                              @error('category') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                              <p x-show="errors.category" class="text-xs text-red-500 mt-1" x-text="errors.category ? errors.category[0] : ''"></p>
+                              @error('category') <p x-show="!errors.category" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                           </div>
                           <div class="col-span-2 space-y-2">
                               <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi Singkat</label>
-                              <input type="text" name="location" value="{{ old('location') }}" required placeholder="Cth: Pulau Samosir" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('location') border-red-500 @enderror">
-                              @error('location') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                              <input type="text" name="location" value="{{ old('location') }}" required placeholder="Cth: Pulau Samosir" :class="errors.location ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                              <p x-show="errors.location" class="text-xs text-red-500 mt-1" x-text="errors.location ? errors.location[0] : ''"></p>
+                              @error('location') <p x-show="!errors.location" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                           </div>
                           <div class="col-span-2 space-y-2">
                               <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
-                              <textarea name="description" rows="3" required placeholder="Penjelasan mengenai budaya ini..." class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300 @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
-                              @error('description') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                              <textarea name="description" rows="3" required placeholder="Penjelasan mengenai budaya ini..." :class="errors.description ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 placeholder-gray-300">{{ old('description') }}</textarea>
+                              <p x-show="errors.description" class="text-xs text-red-500 mt-1" x-text="errors.description ? errors.description[0] : ''"></p>
+                              @error('description') <p x-show="!errors.description" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                           </div>
 
                           <!-- Panduan Media Budaya -->
@@ -1022,25 +1072,55 @@
                               </div>
                           </div>
 
-                          <div class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div class="space-y-2">
-                                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Durasi Video (detik)</label>
-                                  <input type="number" name="video_duration" value="{{ old('video_duration') }}" min="1" max="600" placeholder="Opsional" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700 @error('video_duration') border-red-500 @enderror">
-                                  @error('video_duration') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                          <!-- Video Settings Section -->
+                          <div class="space-y-3">
+                              <h4 class="text-sm font-bold text-gray-700">Fitur Video</h4>
+                              
+                              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <!-- Durasi Video -->
+                                  <div class="p-4 bg-white/85 rounded-2xl border border-gray-200">
+                                      <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 pl-0.5">Durasi Video Tampil (Detik)</label>
+                                      <input type="number" name="video_duration" min="1" max="120" value="{{ old('video_duration', 10) }}" class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all">
+                                  </div>
+                                  <!-- Autoplay saat siap -->
+                                  <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                      <div>
+                                          <p class="font-bold text-gray-800 text-xs">Autoplay saat siap</p>
+                                          <p class="text-[9px] text-gray-400 mt-0.5">Putar otomatis saat siap</p>
+                                      </div>
+                                      <label class="relative inline-flex items-center cursor-pointer">
+                                          <input type="hidden" name="video_autoplay" value="0">
+                                          <input type="checkbox" name="video_autoplay" value="1" {{ old('video_autoplay', true) ? 'checked' : '' }} class="sr-only peer">
+                                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                      </label>
+                                  </div>
                               </div>
-                              <div class="space-y-3 rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-                                  <label class="flex items-center gap-3 cursor-pointer">
-                                      <input type="checkbox" name="video_autoplay" value="1" {{ old('video_autoplay') ? 'checked' : '' }} class="w-4 h-4 rounded border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                      <span class="text-sm font-semibold text-gray-700">Autoplay</span>
-                                  </label>
-                                  <label class="flex items-center gap-3 cursor-pointer">
-                                      <input type="checkbox" name="video_loop" value="1" {{ old('video_loop') ? 'checked' : '' }} class="w-4 h-4 rounded border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                      <span class="text-sm font-semibold text-gray-700">Loop</span>
-                                  </label>
-                                  <label class="flex items-center gap-3 cursor-pointer">
-                                      <input type="checkbox" name="video_wait_until_ready" value="1" {{ old('video_wait_until_ready') ? 'checked' : '' }} class="w-4 h-4 rounded border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                      <span class="text-sm font-semibold text-gray-700">Tunggu sampai siap</span>
-                                  </label>
+                              
+                              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <!-- Loop video -->
+                                  <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                      <div>
+                                          <p class="font-bold text-gray-800 text-xs">Loop video</p>
+                                          <p class="text-[9px] text-gray-400 mt-0.5">Ulangi video terus menerus</p>
+                                      </div>
+                                      <label class="relative inline-flex items-center cursor-pointer">
+                                          <input type="hidden" name="video_loop" value="0">
+                                          <input type="checkbox" name="video_loop" value="1" {{ old('video_loop', true) ? 'checked' : '' }} class="sr-only peer">
+                                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                      </label>
+                                  </div>
+                                  <!-- Tunggu video siap -->
+                                  <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                      <div>
+                                          <p class="font-bold text-gray-800 text-xs">Tunggu video siap</p>
+                                          <p class="text-[9px] text-gray-400 mt-0.5">Tunggu buffer sebelum diputar</p>
+                                      </div>
+                                      <label class="relative inline-flex items-center cursor-pointer">
+                                          <input type="hidden" name="video_wait_until_ready" value="0">
+                                          <input type="checkbox" name="video_wait_until_ready" value="1" {{ old('video_wait_until_ready', true) ? 'checked' : '' }} class="sr-only peer">
+                                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                      </label>
+                                  </div>
                               </div>
                           </div>
 
@@ -1188,23 +1268,27 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nama / Judul Budaya</label>
-                                <input type="text" name="name" x-model="editingBudaya.name" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                                <input type="text" name="name" x-model="editingBudaya.name" :class="errors.name ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                                <p x-show="errors.name" class="text-xs text-red-500 mt-1" x-text="errors.name ? errors.name[0] : ''"></p>
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Kategori Utama</label>
-                                <select name="category" x-model="editingBudaya.category" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                <select name="category" x-model="editingBudaya.category" :class="errors.category ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
                                     @foreach($categories ?? ['Sejarah', 'Tradisi', 'Rumah Adat', 'Cerita Rakyat', 'Kuliner'] as $cat)
                                         <option value="{{ $cat }}">{{ $cat }}</option>
                                     @endforeach
                                 </select>
+                                <p x-show="errors.category" class="text-xs text-red-500 mt-1" x-text="errors.category ? errors.category[0] : ''"></p>
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Lokasi Singkat</label>
-                                <input type="text" name="location" x-model="editingBudaya.location" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                <input type="text" name="location" x-model="editingBudaya.location" :class="errors.location ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                <p x-show="errors.location" class="text-xs text-red-500 mt-1" x-text="errors.location ? errors.location[0] : ''"></p>
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Deskripsi</label>
-                                <textarea name="description" rows="3" x-model="editingBudaya.description" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700"></textarea>
+                                <textarea name="description" rows="3" x-model="editingBudaya.description" :class="errors.description ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700"></textarea>
+                                <p x-show="errors.description" class="text-xs text-red-500 mt-1" x-text="errors.description ? errors.description[0] : ''"></p>
                             </div>
                             <!-- Panduan Media Budaya -->
                             <div class="col-span-2 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100/80 rounded-3xl p-5 text-xs text-gray-600 space-y-4 shadow-sm">
@@ -1231,24 +1315,55 @@
                                 </div>
                             </div>
 
-                            <div class="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Durasi Video (detik)</label>
-                                    <input type="number" name="video_duration" x-model="editingBudaya.video_duration" min="1" max="600" placeholder="Opsional" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                            <!-- Video Settings Section -->
+                            <div class="col-span-2 space-y-3">
+                                <h4 class="text-sm font-bold text-gray-700">Fitur Video</h4>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <!-- Durasi Video -->
+                                    <div class="p-4 bg-white/85 rounded-2xl border border-gray-200">
+                                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 pl-0.5">Durasi Video Tampil (Detik)</label>
+                                        <input type="number" name="video_duration" min="1" max="120" x-model="editingBudaya.video_duration" class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all">
+                                    </div>
+                                    <!-- Autoplay saat siap -->
+                                    <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                        <div>
+                                            <p class="font-bold text-gray-800 text-xs">Autoplay saat siap</p>
+                                            <p class="text-[9px] text-gray-400 mt-0.5">Putar otomatis saat siap</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="hidden" name="video_autoplay" value="0">
+                                            <input type="checkbox" name="video_autoplay" value="1" x-model="editingBudaya.video_autoplay" class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                        </label>
+                                    </div>
                                 </div>
-                                <div class="space-y-3 rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-                                    <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" name="video_autoplay" value="1" x-model="editingBudaya.video_autoplay" class="w-4 h-4 rounded border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                        <span class="text-sm font-semibold text-gray-700">Autoplay</span>
-                                    </label>
-                                    <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" name="video_loop" value="1" x-model="editingBudaya.video_loop" class="w-4 h-4 rounded border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                        <span class="text-sm font-semibold text-gray-700">Loop</span>
-                                    </label>
-                                    <label class="flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" name="video_wait_until_ready" value="1" x-model="editingBudaya.video_wait_until_ready" class="w-4 h-4 rounded border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                        <span class="text-sm font-semibold text-gray-700">Tunggu sampai siap</span>
-                                    </label>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <!-- Loop video -->
+                                    <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                        <div>
+                                            <p class="font-bold text-gray-800 text-xs">Loop video</p>
+                                            <p class="text-[9px] text-gray-400 mt-0.5">Ulangi video terus menerus</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="hidden" name="video_loop" value="0">
+                                            <input type="checkbox" name="video_loop" value="1" x-model="editingBudaya.video_loop" class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                        </label>
+                                    </div>
+                                    <!-- Tunggu video siap -->
+                                    <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                        <div>
+                                            <p class="font-bold text-gray-800 text-xs">Tunggu video siap</p>
+                                            <p class="text-[9px] text-gray-400 mt-0.5">Tunggu buffer sebelum diputar</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="hidden" name="video_wait_until_ready" value="0">
+                                            <input type="checkbox" name="video_wait_until_ready" value="1" x-model="editingBudaya.video_wait_until_ready" class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 

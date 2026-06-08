@@ -35,18 +35,20 @@ class DashboardController extends BaseAdminController
         // Top 5 Destinasi (Real Data dari MongoDB)
         $topDestinations = MongoDestination::orderBy('average_rating', 'desc')->limit(5)->get();
 
-        // Trip Statistics (Real Data dari RecommendationLog)
-        $today = Carbon::now()->startOfDay();
-        $weekStart = Carbon::now()->startOfWeek();
-        $weekEnd = Carbon::now()->endOfWeek();
-        $monthStart = Carbon::now()->startOfMonth();
-        $monthEnd = Carbon::now()->endOfMonth();
+        // Trip Statistics (Real Data dari RecommendationLog) - Cached for 10 minutes
+        $tripStats = \Illuminate\Support\Facades\Cache::remember('admin.dashboard.trip_stats', now()->addMinutes(10), function() {
+            $today = Carbon::now()->startOfDay();
+            $weekStart = Carbon::now()->startOfWeek();
+            $weekEnd = Carbon::now()->endOfWeek();
+            $monthStart = Carbon::now()->startOfMonth();
+            $monthEnd = Carbon::now()->endOfMonth();
 
-        $tripStats = [
-            'today' => MongoRecommendation::where('created_at', '>=', $today)->count(),
-            'week' => MongoRecommendation::whereBetween('created_at', [$weekStart, $weekEnd])->count(),
-            'month' => MongoRecommendation::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
-        ];
+            return [
+                'today' => MongoRecommendation::where('created_at', '>=', $today)->count(),
+                'week' => MongoRecommendation::whereBetween('created_at', [$weekStart, $weekEnd])->count(),
+                'month' => MongoRecommendation::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+            ];
+        });
 
         // Chart data is now handled via AJAX to speed up page load
         $chartData = []; 

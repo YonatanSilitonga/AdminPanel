@@ -47,9 +47,6 @@ class MongoFasilitasUmum extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'available_services' => 'array',
-        'tags' => 'array',
-        'images' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

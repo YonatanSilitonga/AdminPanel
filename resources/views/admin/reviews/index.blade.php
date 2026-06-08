@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
 @section('title', 'Ulasan Pengguna')
 @section('navbar_title', 'Ulasan')
@@ -17,7 +17,7 @@
     <div class="relative group cursor-pointer inline-flex items-center">
         <svg class="w-4 h-4 text-gray-400 hover:text-purple-800 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         
-        <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+        <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
             <div class="space-y-2">
                 <div>
                     <span class="block font-bold text-purple-500 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Aksi: Cetak Analitik</span>
@@ -37,7 +37,7 @@
         </a>
         <div class="relative group cursor-pointer inline-flex items-center">
             <svg class="w-4 h-4 text-gray-400 hover:text-emerald-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
+            <div class="absolute top-full right-0 mt-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal">
                 <div class="space-y-2">
                     <div>
                         <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Aksi: Ekspor Daftar Ulasan</span>
@@ -153,8 +153,7 @@
             }
             
             const data = await res.json();
-            console.log('Review data loaded:', data);
-            this.viewingReview = data;
+                        this.viewingReview = data;
         } catch(e) {
             console.error('Error loading review:', e);
             window.showAlert('Gagal mengambil data ulasan: ' + e.message, 'Error', 'error');
@@ -165,7 +164,7 @@
     },
 
     stars(n) {
-        return '★'.repeat(n) + '☆'.repeat(5 - n);
+        return 'â˜…'.repeat(n) + 'â˜†'.repeat(5 - n);
     }
 }">
     @php
@@ -266,14 +265,97 @@
         </nav>
     </div>
 
-    <div x-show="activeTab === 'summary'" class="space-y-8">
+    <div x-show="activeTab === 'summary'" x-cloak class="space-y-8">
+
+        {{-- â”€â”€â”€ FILTER BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+        <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5">
+            <div class="flex flex-wrap items-end gap-4">
+                {{-- Destinasi --}}
+                <div class="flex-1 min-w-[180px] space-y-1.5">
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-1">Destinasi</label>
+                    <select id="sf_destination"
+                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none hover:border-sidebar transition-all cursor-pointer">
+                        <option value="">Semua Destinasi</option>
+                        @foreach($destinationsList as $dest)
+                            <option value="{{ $dest->_id }}">{{ $dest->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Rating --}}
+                <div class="w-36 space-y-1.5">
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-1">Rating</label>
+                    <select id="sf_rating"
+                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none hover:border-sidebar transition-all cursor-pointer">
+                        <option value="">Semua</option>
+                        <option value="5">â­â­â­â­â­ 5</option>
+                        <option value="4">â­â­â­â­ 4</option>
+                        <option value="3">â­â­â­ 3</option>
+                        <option value="2">â­â­ 2</option>
+                        <option value="1">â­ 1</option>
+                    </select>
+                </div>
+
+                {{-- Sentimen --}}
+                <div class="w-44 space-y-1.5">
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-1">Sentimen</label>
+                    <select id="sf_sentiment"
+                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none hover:border-sidebar transition-all cursor-pointer">
+                        <option value="">Semua</option>
+                        <option value="positive">Positif</option>
+                        <option value="neutral">Netral</option>
+                        <option value="negative">Negatif</option>
+                        <option value="pending">Belum Dianalisis</option>
+                    </select>
+                </div>
+
+                {{-- Tanggal dari --}}
+                <div class="w-40 space-y-1.5">
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-1">Dari</label>
+                    <input type="date" id="sf_date_from"
+                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none hover:border-sidebar transition-all">
+                </div>
+
+                {{-- Tanggal sampai --}}
+                <div class="w-40 space-y-1.5">
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-1">Sampai</label>
+                    <input type="date" id="sf_date_to"
+                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none hover:border-sidebar transition-all">
+                </div>
+
+                {{-- Tombol Terapkan & Reset --}}
+                <div class="flex items-center gap-2 pt-5">
+                    <button type="button" id="sf_apply"
+                            class="px-6 py-2.5 bg-sidebar text-white rounded-xl text-sm font-bold hover:opacity-90 transition-all shadow-sm shadow-sidebar/20">
+                        Terapkan
+                    </button>
+                    <button type="button" id="sf_reset"
+                            class="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-all">
+                        Reset
+                    </button>
+                </div>
+
+                {{-- Loading indicator --}}
+                <div id="sf_loading" class="hidden items-center gap-2 pt-5">
+                    <svg class="animate-spin w-5 h-5 text-sidebar" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span class="text-xs font-bold text-gray-400">Memuat data...</span>
+                </div>
+            </div>
+
+            {{-- Active filter badges --}}
+            <div id="sf_active_badges" class="hidden flex-wrap gap-2 mt-3 pt-3 border-t border-gray-50"></div>
+        </div>
+        {{-- â”€â”€â”€ END FILTER BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-[2rem] bg-white border border-gray-100 shadow-sm p-5 relative">
                 <div class="flex items-center justify-between">
                     <p class="text-xs uppercase tracking-widest text-gray-400 font-bold">Total Ulasan</p>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -288,14 +370,14 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 text-3xl font-black text-gray-900">{{ number_format($sentimentSummary['total']) }}</p>
+                <p class="mt-3 text-3xl font-black text-gray-900" id="sf_stat_total">{{ number_format($sentimentSummary['total']) }}</p>
             </div>
             <div class="rounded-[2rem] bg-emerald-50 border border-emerald-100 shadow-sm p-5 relative">
                 <div class="flex items-center justify-between">
                     <p class="text-xs uppercase tracking-widest text-emerald-500 font-bold">Ulasan Positif</p>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-emerald-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -310,14 +392,14 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 text-3xl font-black text-emerald-700">{{ number_format($sentimentSummary['positive']) }}</p>
+                <p class="mt-3 text-3xl font-black text-emerald-700" id="sf_stat_positive">{{ number_format($sentimentSummary['positive']) }}</p>
             </div>
             <div class="rounded-[2rem] bg-amber-50 border border-amber-100 shadow-sm p-5 relative">
                 <div class="flex items-center justify-between">
                     <p class="text-xs uppercase tracking-widest text-amber-500 font-bold">Ulasan Netral</p>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-amber-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-amber-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -332,14 +414,14 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 text-3xl font-black text-amber-700">{{ number_format($sentimentSummary['neutral']) }}</p>
+                <p class="mt-3 text-3xl font-black text-amber-700" id="sf_stat_neutral">{{ number_format($sentimentSummary['neutral']) }}</p>
             </div>
             <div class="rounded-[2rem] bg-red-50 border border-red-100 shadow-sm p-5 relative">
                 <div class="flex items-center justify-between">
                     <p class="text-xs uppercase tracking-widest text-red-500 font-bold">Ulasan Negatif</p>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-red-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -354,7 +436,7 @@
                         </div>
                     </div>
                 </div>
-                <p class="mt-3 text-3xl font-black text-red-700">{{ number_format($sentimentSummary['negative']) }}</p>
+                <p class="mt-3 text-3xl font-black text-red-700" id="sf_stat_negative">{{ number_format($sentimentSummary['negative']) }}</p>
             </div>
         </div>
 
@@ -510,62 +592,237 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-6">Keyword Per Destinasi</h3>
-            @if(!empty($keywordSummary['destinations']))
-                <div class="grid gap-4 lg:grid-cols-2">
-                    @foreach(array_slice($keywordSummary['destinations'], 0, 6) as $destination)
-                        @php
-                            $destinationName = $destination['destination_name'] ?? $destination['name'] ?? $destination['destination_id'] ?? 'Destinasi';
-                            $destinationKeywords = array_slice($destination['top_keywords'] ?? [], 0, 8);
-                            $sentimentCounts = $destination['sentiment_counts'] ?? ['negative' => 0, 'neutral' => 0, 'positive' => 0];
-                            $totalSent = array_sum($sentimentCounts);
-                            $reviewCount = $destination['review_count'] ?? 0;
-                        @endphp
-                        <div class="group bg-gray-50/30 hover:bg-white border border-gray-100 hover:border-sidebar/20 rounded-2xl p-5 transition-all duration-300 hover:shadow-md">
-                            <div class="flex items-start justify-between gap-4 mb-4">
-                                <div class="flex-1">
-                                    <h4 class="text-sm font-bold text-gray-900 group-hover:text-sidebar transition-colors truncate">{{ $destinationName }}</h4>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">{{ $reviewCount }} ulasan teranalisis</p>
+        @php
+            // Build sentiment map: keyword → sentiment label
+            $sentimentMap = [];
+            if (!empty($keywordSummary['overall']['top_keywords_by_sentiment'])) {
+                foreach ($keywordSummary['overall']['top_keywords_by_sentiment'] as $sent => $kwList) {
+                    foreach ($kwList as $kw) {
+                        $k = trim($kw['keyword'] ?? '');
+                        if ($k !== '') $sentimentMap[$k] = $sent;
+                    }
+                }
+            }
+
+            // Pre-compute all display data in PHP — nothing goes into JS reactive state
+            $kdDests = [];
+            foreach (($keywordSummary['destinations'] ?? []) as $dest) {
+                $sc   = $dest['sentiment_counts'] ?? ['negative' => 0, 'neutral' => 0, 'positive' => 0];
+                $tot  = array_sum($sc);
+                $dom  = 'neutral'; $mx = 0;
+                foreach ($sc as $s => $c) { if ($c > $mx) { $mx = $c; $dom = $s; } }
+
+                // keyword badge CSS classes resolved in PHP — no JS class binding needed
+                $kwClassMap = ['positive' => 'bg-emerald-50 text-emerald-700 border-emerald-100',
+                               'negative' => 'bg-red-50 text-red-700 border-red-100',
+                               'neutral'  => 'bg-amber-50 text-amber-700 border-amber-100',
+                               'other'    => 'bg-white text-gray-600 border-gray-100'];
+                $domClassMap = ['positive' => 'bg-emerald-50 text-emerald-700',
+                                'negative' => 'bg-red-50 text-red-700',
+                                'neutral'  => 'bg-amber-50 text-amber-700'];
+                $domLblMap   = ['positive' => 'Positif', 'negative' => 'Negatif', 'neutral' => 'Netral'];
+
+                $keywords = [];
+                foreach (array_slice($dest['top_keywords'] ?? [], 0, 8) as $kw) {
+                    $word = $kw['keyword'] ?? '';
+                    $sent = $sentimentMap[$word] ?? 'other';
+                    $keywords[] = [
+                        'word'  => $word,
+                        'count' => $kw['count'] ?? 0,
+                        'cls'   => $kwClassMap[$sent] ?? $kwClassMap['other'],
+                    ];
+                }
+
+                // keyword words joined for data-attr search (lowercase, space-separated)
+                $kwSearch = implode(' ', array_map(fn($k) => strtolower($k['word']), $keywords));
+
+                $kdDests[] = [
+                    'name'        => $dest['destination_name'] ?? $dest['name'] ?? $dest['destination_id'] ?? 'Destinasi',
+                    'reviewCount' => $dest['review_count'] ?? 0,
+                    'sc'          => $sc,
+                    'tot'         => $tot,
+                    'dom'         => $dom,
+                    'domCls'      => $domClassMap[$dom] ?? $domClassMap['neutral'],
+                    'domLbl'      => $domLblMap[$dom] ?? 'Netral',
+                    'keywords'    => $keywords,
+                    'kwSearch'    => $kwSearch,
+                    // progress bar widths pre-computed
+                    'wPos'        => $tot > 0 ? round($sc['positive'] / $tot * 100) : 0,
+                    'wNeu'        => $tot > 0 ? round($sc['neutral']  / $tot * 100) : 0,
+                    'wNeg'        => $tot > 0 ? round($sc['negative'] / $tot * 100) : 0,
+                ];
+            }
+            $kdTotal  = count($kdDests);
+            $kdLimit  = 6;
+            $kdHidden = $kdTotal > $kdLimit; // whether "show more" button is needed
+        @endphp
+
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6" id="kd-section">
+
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-bold text-gray-900">Keyword Per Destinasi</h3>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-500"
+                      id="kd-count">{{ $kdTotal }} destinasi</span>
+            </div>
+
+            @if($kdTotal > 0)
+                {{-- Search & filter — plain HTML, no Alpine binding --}}
+                <div class="flex flex-wrap gap-3 mb-5">
+                    <div class="flex-1 min-w-[180px] relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input type="text" id="kd-search" placeholder="Cari destinasi atau keyword..."
+                               class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none hover:border-sidebar">
+                    </div>
+                    <select id="kd-filter"
+                            class="w-44 px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none hover:border-sidebar cursor-pointer">
+                        <option value="all">Semua Sentimen</option>
+                        <option value="positive">Positif Dominan</option>
+                        <option value="neutral">Netral Dominan</option>
+                        <option value="negative">Negatif Dominan</option>
+                    </select>
+                </div>
+
+                {{-- Grid — rendered fully in PHP/Blade, zero JS binding --}}
+                <div class="grid gap-4 lg:grid-cols-2" id="kd-grid">
+                    @foreach($kdDests as $i => $d)
+                        <div class="bg-gray-50/30 border border-gray-100 rounded-2xl p-5 kd-card"
+                             data-name="{{ strtolower($d['name']) }}"
+                             data-kw="{{ $d['kwSearch'] }}"
+                             data-dom="{{ $d['dom'] }}"
+                             @if($i >= $kdLimit) style="display:none" data-hidden="1" @endif>
+
+                            <div class="flex items-start justify-between gap-3 mb-3">
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-bold text-gray-900 truncate">{{ $d['name'] }}</h4>
+                                    <p class="text-[11px] text-gray-400 mt-0.5">{{ $d['reviewCount'] }} ulasan teranalisis</p>
                                 </div>
-                                <div class="flex h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden mt-2">
-                                    @if($totalSent > 0)
-                                        <div class="bg-emerald-500" style="width: {{ ($sentimentCounts['positive'] / $totalSent) * 100 }}%"></div>
-                                        <div class="bg-amber-400" style="width: {{ ($sentimentCounts['neutral'] / $totalSent) * 100 }}%"></div>
-                                        <div class="bg-red-500" style="width: {{ ($sentimentCounts['negative'] / $totalSent) * 100 }}%"></div>
-                                    @else
-                                        <div class="bg-gray-200 w-full"></div>
-                                    @endif
-                                </div>
+                                <span class="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full {{ $d['domCls'] }}">
+                                    {{ $d['domLbl'] }}
+                                </span>
                             </div>
-                            
-                            @if(!empty($destinationKeywords))
-                                <div class="flex flex-wrap gap-1.5">
-                                    @foreach($destinationKeywords as $kw)
-                                        <span class="inline-flex items-center px-2 py-1 rounded-lg bg-white border border-gray-100 text-[11px] font-medium text-gray-600 shadow-sm">
-                                            {{ $kw['keyword'] }}
-                                            <span class="ml-1.5 text-[9px] text-gray-300 font-bold">{{ $kw['count'] }}</span>
-                                        </span>
-                                    @endforeach
-                                </div>
-                            @else
-                                <p class="text-[11px] text-gray-400 italic">Belum ada keyword populer</p>
-                            @endif
+
+                            <div class="flex h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-3">
+                                <div class="bg-emerald-500" style="width:{{ $d['wPos'] }}%"></div>
+                                <div class="bg-amber-400"   style="width:{{ $d['wNeu'] }}%"></div>
+                                <div class="bg-red-500"     style="width:{{ $d['wNeg'] }}%"></div>
+                            </div>
+
+                            <div class="flex flex-wrap gap-1.5">
+                                @forelse($d['keywords'] as $kw)
+                                    <span class="inline-flex items-center px-2 py-1 rounded-lg border text-[11px] font-medium {{ $kw['cls'] }}">
+                                        {{ $kw['word'] }}<span class="ml-1 text-[9px] font-bold opacity-40">{{ $kw['count'] }}</span>
+                                    </span>
+                                @empty
+                                    <span class="text-[11px] text-gray-400 italic">Belum ada keyword</span>
+                                @endforelse
+                            </div>
                         </div>
                     @endforeach
                 </div>
-                @if(count($keywordSummary['destinations']) > 6)
-                    <p class="mt-6 text-center text-xs text-gray-400 italic">Dan {{ count($keywordSummary['destinations']) - 6 }} destinasi lainnya...</p>
+
+                <div id="kd-empty" class="hidden py-10 text-center">
+                    <p class="text-sm text-gray-400">Destinasi tidak ditemukan.</p>
+                </div>
+
+                @if($kdHidden)
+                <div id="kd-more-wrap" class="mt-5 text-center">
+                    <button type="button" id="kd-more"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-bold">
+                        <span id="kd-more-label">Tampilkan Semua ({{ $kdTotal }})</span>
+                        <svg id="kd-more-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                </div>
                 @endif
+
             @else
                 <div class="py-12 text-center">
                     <p class="text-sm text-gray-400">Data keyword per destinasi belum tersedia.</p>
                 </div>
             @endif
         </div>
+
+        {{-- Vanilla JS — only search/filter/toggle logic, no reactive framework --}}
+        <script>
+        (function () {
+            var searchEl  = document.getElementById('kd-search');
+            var filterEl  = document.getElementById('kd-filter');
+            var grid      = document.getElementById('kd-grid');
+            var countEl   = document.getElementById('kd-count');
+            var emptyEl   = document.getElementById('kd-empty');
+            var moreWrap  = document.getElementById('kd-more-wrap');
+            var moreBtn   = document.getElementById('kd-more');
+            var moreLabel = document.getElementById('kd-more-label');
+            var moreIcon  = document.getElementById('kd-more-icon');
+
+            if (!grid) return;
+
+            var LIMIT    = {{ $kdLimit }};
+            var showAll  = false;
+            var timer    = null;
+
+            function applyFilter() {
+                var q   = searchEl ? searchEl.value.toLowerCase().trim() : '';
+                var sf  = filterEl ? filterEl.value : 'all';
+                var cards = grid.querySelectorAll('.kd-card');
+                var visible = 0;
+
+                cards.forEach(function (card) {
+                    var nameMatch = !q || card.dataset.name.indexOf(q) !== -1;
+                    var kwMatch   = !q || card.dataset.kw.indexOf(q) !== -1;
+                    var sentMatch = sf === 'all' || card.dataset.dom === sf;
+                    var pass      = (nameMatch || kwMatch) && sentMatch;
+
+                    if (pass) {
+                        visible++;
+                        // respect show-all toggle when no search/filter active
+                        var overLimit = !q && sf === 'all' && !showAll && visible > LIMIT;
+                        card.style.display = overLimit ? 'none' : '';
+                        card.dataset.hidden = overLimit ? '1' : '0';
+                    } else {
+                        card.style.display = 'none';
+                        card.dataset.hidden = '1';
+                    }
+                });
+
+                if (countEl) countEl.textContent = visible + ' destinasi';
+                if (emptyEl) emptyEl.classList.toggle('hidden', visible > 0);
+
+                // Show/hide "show more" button
+                var isFiltering = q || sf !== 'all';
+                if (moreWrap) {
+                    moreWrap.style.display = (!isFiltering && visible > LIMIT && !showAll) || (!isFiltering && showAll && {{ $kdTotal }} > LIMIT) ? '' : 'none';
+                    if (moreLabel) moreLabel.textContent = showAll ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Semua (' + visible + ')';
+                    if (moreIcon)  moreIcon.style.transform = showAll ? 'rotate(180deg)' : '';
+                }
+            }
+
+            if (searchEl) {
+                searchEl.addEventListener('input', function () {
+                    clearTimeout(timer);
+                    timer = setTimeout(applyFilter, 250);
+                });
+            }
+
+            if (filterEl) {
+                filterEl.addEventListener('change', function () {
+                    showAll = false;
+                    applyFilter();
+                });
+            }
+
+            if (moreBtn) {
+                moreBtn.addEventListener('click', function () {
+                    showAll = !showAll;
+                    applyFilter();
+                });
+            }
+        })();
+        </script>
     </div>
 
-    <div x-show="activeTab === 'list'" class="space-y-8">
+    <div x-show="activeTab === 'list'" x-cloak class="space-y-8">
         {{-- Filter & Search --}}
         <div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
             <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
@@ -582,7 +839,7 @@
                                 Cari Ulasan
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -612,7 +869,7 @@
                                 Destinasi Wisata
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -638,7 +895,7 @@
                                 Sentimen Ulasan
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -665,7 +922,7 @@
                                 Rating Bintang
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -695,7 +952,7 @@
                                 Tampilkan
                                 <div class="relative group cursor-pointer inline-flex items-center">
                                     <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                         <div class="space-y-2">
                                             <div>
                                                 <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -742,7 +999,7 @@
         </div>
 
         {{-- Table --}}
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden review-table-wrap">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-50">
                     <thead class="bg-white">
@@ -771,7 +1028,7 @@
                                     </a>
                                     <div class="relative group cursor-pointer inline-flex items-center">
                                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                             <div class="space-y-2">
                                                 <div>
                                                     <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -797,7 +1054,7 @@
                                     </a>
                                     <div class="relative group cursor-pointer inline-flex items-center">
                                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                             <div class="space-y-2">
                                                 <div>
                                                     <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
@@ -826,7 +1083,7 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-50">
                         @forelse(($reviews ?? []) as $review)
-                            <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
+                            <tr class="hover:bg-gray-50/20 transition-colors border-b border-gray-50 last:border-0">
                                 <td class="px-10 py-6">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-sidebar/5 rounded-full flex items-center justify-center text-sidebar text-xs font-bold border border-sidebar/10 shadow-sm overflow-hidden">
@@ -839,9 +1096,9 @@
                                             @endphp
                                             <div class="flex items-center gap-1.5 mt-0.5">
                                                 @if($isRegistered)
-                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">👤 User</span>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">ðŸ‘¤ User</span>
                                                 @else
-                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">👥 Guest</span>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">ðŸ‘¥ Guest</span>
                                                 @endif
                                                 <span class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">ID: {{ substr((string)$review->user_id, -6) }}</span>
                                             </div>
@@ -954,7 +1211,7 @@
                         <h3 class="text-xl font-bold text-gray-900">Detail Ulasan</h3>
                         <div class="relative group cursor-pointer inline-flex items-center">
                             <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                 <div class="space-y-2">
                                     <div>
                                         <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Detail Ulasan</span>
@@ -983,10 +1240,10 @@
                             <div class="flex items-center gap-2">
                                 <p class="font-bold text-gray-800 text-sm" x-text="viewingReview?.reviewer_name || 'Anonim'"></p>
                                 <template x-if="viewingReview?.user_is_registered">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">👤 User</span>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">ðŸ‘¤ User</span>
                                 </template>
                                 <template x-if="!viewingReview?.user_is_registered">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">👥 Guest</span>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">ðŸ‘¥ Guest</span>
                                 </template>
                             </div>
                             <p class="text-xs text-gray-400 mt-0.5" x-text="viewingReview?.created_at ? new Date(viewingReview.created_at).toLocaleDateString('id-ID', {year:'numeric', month:'long', day:'numeric'}) : ''"></p>
@@ -1046,7 +1303,7 @@
                         </div>
                         <div class="relative group cursor-pointer inline-flex items-center mt-1">
                             <svg class="w-4 h-4 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                            <div class="absolute top-full left-0 mt-2 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                                 <div class="space-y-2">
                                     <div>
                                         <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">Cetak Analitik</span>
@@ -1163,9 +1420,7 @@
     let destinationChart = null;
 
     window.initReviewCharts = function() {
-        console.log('initReviewCharts: Rendering Chart.js charts');
-        
-        // Sentiment Trend Line Chart
+                // Sentiment Trend Line Chart
         const trendCtx = document.getElementById('sentimentTrendChart');
         if (trendCtx) {
             if (sentimentChart) {
@@ -1247,7 +1502,7 @@
             ratingChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['5 ★', '4 ★', '3 ★', '2 ★', '1 ★'],
+                    labels: ['5 â˜…', '4 â˜…', '3 â˜…', '2 â˜…', '1 â˜…'],
                     datasets: [{
                         data: [
                             {{ $ratingDistribution[5]['count'] ?? 0 }},
@@ -1343,80 +1598,218 @@
     };
 
     window.initReviewsWordCloud = function() {
-        const keywords = @json($keywordSummary['overall']['top_keywords'] ?? []);
-        const sentimentMap = @json($sentimentMap ?? []);
-        
-        console.log('WordCloud: Initializing with', keywords.length, 'keywords');
-        
         const canvas = document.getElementById('word-cloud-canvas');
-        if (canvas) {
-            const renderCloud = () => {
-                if (typeof WordCloud === 'undefined') {
-                    console.error('WordCloud: Library wordcloud2.js not loaded!');
-                    return;
-                }
+        if (!canvas) return;
 
-                const container = canvas.parentElement;
-                const width = container.offsetWidth;
-                const height = container.offsetHeight;
-                
-                if (width === 0 || height === 0) {
-                    console.warn('WordCloud: Container has 0 dimensions, retrying...');
-                    setTimeout(renderCloud, 500);
-                    return;
-                }
+        const doRender = () => {
+            if (typeof WordCloud === 'undefined') return;
+            const container = canvas.parentElement;
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            if (width === 0 || height === 0) { setTimeout(doRender, 500); return; }
 
-                canvas.width = width;
-                canvas.height = height;
+            canvas.width = width;
+            canvas.height = height;
 
-                const list = keywords.map(item => {
-                    let size = 22 + (item.count * 5);
-                    if (size > 90) size = 90; 
-                    return [item.keyword, size];
+            const keywords   = @json($keywordSummary['overall']['top_keywords'] ?? []);
+            const sentimentMap = @json($sentimentMap ?? []);
+            const sentColors = { positive: '#10b981', neutral: '#94a3b8', negative: '#f43f5e' };
+
+            const list = keywords.map(item => {
+                let size = 22 + (item.count * 5);
+                if (size > 90) size = 90;
+                return [item.keyword, size];
+            });
+
+            try {
+                WordCloud(canvas, {
+                    list, gridSize: 8, weightFactor: 1.2,
+                    fontFamily: "'Instrument Sans', sans-serif",
+                    color: w => sentColors[sentimentMap[w] || 'neutral'] || '#94a3b8',
+                    rotateRatio: 0, backgroundColor: 'transparent',
+                    ellipticity: 0.65, shuffle: false,
+                    clearCanvas: true, drawOutOfBound: false, shrinkToFit: true
                 });
+            } catch (e) {}
+        };
 
-                try {
-                    WordCloud(canvas, { 
-                        list: list,
-                        gridSize: 6,
-                        weightFactor: 1.2,
-                        fontFamily: "'Instrument Sans', sans-serif",
-                        color: function(word) {
-                            const sentiment = sentimentMap[word] || 'neutral';
-                            const colors = {
-                                'positive': '#10b981',
-                                'neutral': '#94a3b8',
-                                'negative': '#f43f5e'
-                            };
-                            return colors[sentiment] || '#94a3b8';
-                        },
-                        rotateRatio: 0,
-                        backgroundColor: 'transparent',
-                        ellipticity: 0.65,
-                        shuffle: true,
-                        clearCanvas: true,
-                        drawOutOfBound: false,
-                        shrinkToFit: true
-                    });
-                    console.log('WordCloud: Rendered successfully');
-                } catch (e) {
-                    console.error('WordCloud: Render failed', e);
-                }
-            };
-
-            renderCloud();
+        // Defer to idle time — never blocks scroll/paint
+        if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(doRender, { timeout: 2000 });
+        } else {
+            setTimeout(doRender, 300);
         }
     };
 
-    // Re-render WordCloud and resize charts on window resize
+    // Re-render WordCloud on window resize (debounced)
     let resizeTimeout;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-            if (typeof window.initReviewsWordCloud === 'function') {
-                window.initReviewsWordCloud();
+            if (typeof window.initReviewsWordCloud === 'function') window.initReviewsWordCloud();
+        }, 600);
+    }, { passive: true });
+
+    // â”€â”€â”€ SUMMARY FILTER LOGIC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    (function () {
+        const STATS_URL = '{{ route("admin.reviews.summary-stats") }}';
+
+        // Collect current filter values
+        function getFilters() {
+            return {
+                destination_id : document.getElementById('sf_destination')?.value || '',
+                rating         : document.getElementById('sf_rating')?.value || '',
+                sentiment      : document.getElementById('sf_sentiment')?.value || '',
+                date_from      : document.getElementById('sf_date_from')?.value || '',
+                date_to        : document.getElementById('sf_date_to')?.value || '',
+            };
+        }
+
+        // Show/hide loading and apply button
+        function setLoading(on) {
+            const loading = document.getElementById('sf_loading');
+            const btn     = document.getElementById('sf_apply');
+            if (loading) loading.classList.toggle('hidden', !on);
+            if (loading) loading.classList.toggle('flex', on);
+            if (btn) btn.disabled = on;
+        }
+
+        // Render active filter badges
+        function renderBadges(filters) {
+            const wrap = document.getElementById('sf_active_badges');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            const labels = {
+                destination_id : 'Destinasi',
+                rating         : 'Rating',
+                sentiment      : 'Sentimen',
+                date_from      : 'Dari',
+                date_to        : 'Sampai',
+            };
+            const sentimentLabels = { positive: 'Positif', neutral: 'Netral', negative: 'Negatif', pending: 'Belum Dianalisis' };
+            let hasAny = false;
+            Object.entries(filters).forEach(([key, val]) => {
+                if (!val) return;
+                hasAny = true;
+                let display = val;
+                if (key === 'destination_id') {
+                    const sel = document.getElementById('sf_destination');
+                    display = sel?.options[sel.selectedIndex]?.text || val;
+                }
+                if (key === 'sentiment') display = sentimentLabels[val] || val;
+                if (key === 'rating') display = `${val} â˜…`;
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center gap-1 px-3 py-1 bg-sidebar/10 text-sidebar text-xs font-bold rounded-full';
+                badge.innerHTML = `${labels[key]}: ${display}
+                    <button onclick="this.parentElement.remove(); document.getElementById('sf_${key}').value=''; applyFilters();" class="ml-1 hover:text-red-500 transition-colors">âœ•</button>`;
+                wrap.appendChild(badge);
+            });
+            wrap.classList.toggle('hidden', !hasAny);
+            wrap.classList.toggle('flex', hasAny);
+        }
+
+        // Update stat cards from response
+        function updateStatCards(data) {
+            const s = data.sentiment ?? {};
+            const map = {
+                'sf_stat_total'    : data.total ?? 0,
+                'sf_stat_positive' : s.positive ?? 0,
+                'sf_stat_neutral'  : s.neutral ?? 0,
+                'sf_stat_negative' : s.negative ?? 0,
+                'sf_stat_pending'  : s.pending ?? 0,
+                'sf_stat_avg'      : data.avg_rating ?? 0,
+            };
+            Object.entries(map).forEach(([id, val]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            });
+        }
+
+        // Rebuild all Chart.js charts with fresh data
+        function updateCharts(data) {
+            // Sentiment Trend Chart
+            if (sentimentChart && data.sentiment_trends) {
+                const t = data.sentiment_trends;
+                sentimentChart.data.labels                     = t.map(d => d.month);
+                sentimentChart.data.datasets[0].data           = t.map(d => d.positive);
+                sentimentChart.data.datasets[1].data           = t.map(d => d.neutral);
+                sentimentChart.data.datasets[2].data           = t.map(d => d.negative);
+                sentimentChart.update();
             }
-        }, 500);
-    });
+
+            // Rating Bar Chart
+            if (ratingChart && data.rating_dist) {
+                const rd = data.rating_dist;
+                ratingChart.data.datasets[0].data = [
+                    rd[5]?.count ?? 0,
+                    rd[4]?.count ?? 0,
+                    rd[3]?.count ?? 0,
+                    rd[2]?.count ?? 0,
+                    rd[1]?.count ?? 0,
+                ];
+                ratingChart.update();
+            }
+
+            // Destination Sentiment Chart
+            if (destinationChart && data.destinations?.length) {
+                const dests = data.destinations.slice(0, 8);
+                destinationChart.data.labels             = dests.map(d => d.destination_name || 'Destinasi');
+                destinationChart.data.datasets[0].data   = dests.map(d => d.sentiment_counts?.positive ?? 0);
+                destinationChart.data.datasets[1].data   = dests.map(d => d.sentiment_counts?.neutral ?? 0);
+                destinationChart.data.datasets[2].data   = dests.map(d => d.sentiment_counts?.negative ?? 0);
+                destinationChart.update();
+            }
+        }
+
+        // Main fetch & update function
+        window.applyFilters = async function () {
+            const filters = getFilters();
+            renderBadges(filters);
+            setLoading(true);
+            try {
+                const params = new URLSearchParams(Object.fromEntries(
+                    Object.entries(filters).filter(([, v]) => v)
+                ));
+                const res  = await fetch(`${STATS_URL}?${params.toString()}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    updateStatCards(data);
+                    updateCharts(data);
+                }
+            } catch (e) {
+                console.error('Filter error:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // Wire up buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('sf_apply')?.addEventListener('click', window.applyFilters);
+
+            document.getElementById('sf_reset')?.addEventListener('click', () => {
+                ['sf_destination', 'sf_rating', 'sf_sentiment'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+                ['sf_date_from', 'sf_date_to'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+                window.applyFilters();
+            });
+
+            // Auto-apply on select change (optional UX)
+            ['sf_destination', 'sf_rating', 'sf_sentiment'].forEach(id => {
+                document.getElementById(id)?.addEventListener('change', window.applyFilters);
+            });
+        });
+    })();
+    // â”€â”€â”€ END SUMMARY FILTER LOGIC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 </script>
 @endpush
+
+
+

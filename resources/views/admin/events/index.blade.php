@@ -242,9 +242,15 @@
                 } else {
                     try {
                         const errRes = JSON.parse(xhr.responseText);
-                        reject(new Error(errRes.message || 'Gagal menyimpan data ke server'));
+                        reject({
+                            message: errRes.message || 'Gagal menyimpan data ke server',
+                            errors: errRes.errors || null
+                        });
                     } catch(e) {
-                        reject(new Error('Gagal menyimpan data ke server (Status: ' + xhr.status + ')'));
+                        reject({
+                            message: 'Gagal menyimpan data ke server (Status: ' + xhr.status + ')',
+                            errors: null
+                        });
                     }
                 }
             };
@@ -401,12 +407,7 @@
             }
         } catch (error) {
             console.error(error);
-            this.showUploadProgress = false;
-            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
-                window.showAlert(error.message, 'Error', 'error');
-            } else {
-                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
-            }
+            window.handleServerError(error, this);
         } finally {
             this.loading = false;
         }
@@ -531,12 +532,7 @@
             }
         } catch (error) {
             console.error(error);
-            this.showUploadProgress = false;
-            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
-                window.showAlert(error.message, 'Error', 'error');
-            } else {
-                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
-            }
+            window.handleServerError(error, this);
         } finally {
             this.loading = false;
         }
@@ -763,7 +759,7 @@
                             <td class="px-10 py-6">
                                 <div class="flex items-center gap-4">
                                     @if(isset($event->banner_url) && $event->banner_url)
-                                        <img src="{{ image_url($event->banner_url) }}" alt="{{ $event->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" @click="lightboxImage = '{{ image_url($event->banner_url) }}'; showLightbox = true" title="Klik untuk memperbesar">
+                                        <img src="{{ image_url($event->banner_url) }}" alt="{{ $event->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" @click="lightboxImage = '{{ image_url($event->banner_url) }}'; showLightbox = true" title="Klik untuk memperbesar" loading="lazy">
                                     @else
                                         <div class="w-24 h-16 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
                                             <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -976,7 +972,8 @@
                                 </div>
                                 <div class="space-y-2 md:col-span-1">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
-                                    <input type="text" name="ticket_price" x-model="editingEvent.ticket_price" placeholder="Gratis / Rp 10rb" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                    <input type="text" name="ticket_price" x-model="editingEvent.ticket_price" placeholder="Gratis / Rp 10.000" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                    <p class="text-xs text-gray-500 mt-1">Format: Gratis atau nominal harga (contoh: Rp 10.000)</p>
                                 </div>
                                 <div class="space-y-2 md:col-span-1">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
@@ -1319,7 +1316,8 @@
                                     </div>
                                     <div class="space-y-2 md:col-span-1">
                                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
-                                        <input type="text" name="ticket_price" placeholder="Gratis / Rp 10rb" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                        <input type="text" name="ticket_price" placeholder="Gratis / Rp 10.000" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                        <p class="text-xs text-gray-500 mt-1">Format: Gratis atau nominal harga (contoh: Rp 10.000)</p>
                                     </div>
                                     <div class="space-y-2 md:col-span-1">
                                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
@@ -1586,8 +1584,20 @@
                             <div class="space-y-6">
                                 <div>
                                     <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Deskripsi</h4>
-                                    <div class="text-sm text-gray-500 leading-relaxed max-h-40 overflow-y-auto custom-scrollbar pr-2" x-text="viewingEvent?.description || 'Tidak ada deskripsi.'"></div>
+                                    <div class="text-sm text-gray-500 leading-relaxed max-h-40 overflow-y-auto custom-scrollbar pr-2" x-text="viewingEvent?.description || '-'"></div>
                                 </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</p>
+                                        <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingEvent?.ticket_price ? viewingEvent.ticket_price : '-'"></p>
+                                    </div>
+                                    <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</p>
+                                        <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingEvent?.best_time ? viewingEvent.best_time : '-'"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-6">
                                 <div>
                                     <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Jadwal Operasional</h4>
                                     <p class="text-sm font-bold text-gray-700" x-text="viewingEvent?.opening_hours || '-'"></p>

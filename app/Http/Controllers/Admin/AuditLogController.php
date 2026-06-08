@@ -24,17 +24,12 @@ class AuditLogController extends BaseAdminController
             $query->where('action', $request->input('action'));
         }
 
-        // Filter by entity type
-        if ($request->filled('entity_type')) {
-            $query->where('entity_type', $request->input('entity_type'));
+        // Filter by module (entity type)
+        if ($request->filled('module')) {
+            $query->where('entity_type', $request->input('module'));
         }
 
-        // Filter by admin
-        if ($request->filled('admin_id')) {
-            $query->where('admin_id', $request->input('admin_id'));
-        }
-
-        // Search in IP address
+        // Search in IP address, entity ID, or admin name
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -43,13 +38,40 @@ class AuditLogController extends BaseAdminController
             });
         }
 
-        // Date range filter
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->input('date_from'));
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        // Date range filter with better handling
+        if ($request->filled('date_range')) {
+            $range = $request->input('date_range');
+            
+            switch ($range) {
+                case 'today':
+                    $query->whereDate('created_at', '=', now()->toDateString());
+                    break;
+                case 'yesterday':
+                    $query->whereDate('created_at', '=', now()->subDay()->toDateString());
+                    break;
+                case 'last_7_days':
+                    $query->whereDate('created_at', '>=', now()->subDays(7)->toDateString());
+                    break;
+                case 'last_30_days':
+                    $query->whereDate('created_at', '>=', now()->subDays(30)->toDateString());
+                    break;
+                case 'this_month':
+                    $query->whereMonth('created_at', '=', now()->month)
+                          ->whereYear('created_at', '=', now()->year);
+                    break;
+                case 'last_month':
+                    $query->whereMonth('created_at', '=', now()->subMonth()->month)
+                          ->whereYear('created_at', '=', now()->subMonth()->year);
+                    break;
+                case 'custom':
+                    if ($request->filled('custom_date_from')) {
+                        $query->whereDate('created_at', '>=', $request->input('custom_date_from'));
+                    }
+                    if ($request->filled('custom_date_to')) {
+                        $query->whereDate('created_at', '<=', $request->input('custom_date_to'));
+                    }
+                    break;
+            }
         }
 
         // Sort
@@ -59,7 +81,7 @@ class AuditLogController extends BaseAdminController
 
         // Pagination
         $perPage = (int) $request->input('per_page', 25);
-        $logs = $query->paginate($perPage)->withQueryString();
+        $logs = $query->with('admin')->paginate($perPage)->withQueryString();
 
         // distinct('field')->pluck('field') returns nulls in mongodb/laravel-mongodb.
         // Use raw aggregation instead to get actual distinct values.
@@ -71,9 +93,7 @@ class AuditLogController extends BaseAdminController
             AdminActivityLog::raw(fn($col) => $col->distinct('entity_type', []))
         )->filter(fn($v) => !empty($v))->sort()->values();
 
-        $admins = Admin::orderBy('name', 'asc')->get();
-
-        return view('admin.settings.audit-logs.index', compact('logs', 'actions', 'entityTypes', 'admins'));
+        return view('admin.settings.audit-logs.index', compact('logs', 'actions', 'entityTypes'));
     }
 
     /**

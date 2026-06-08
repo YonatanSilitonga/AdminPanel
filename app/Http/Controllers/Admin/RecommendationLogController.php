@@ -15,63 +15,74 @@ class RecommendationLogController extends BaseAdminController
     public function index(Request $request)
     {
         try {
-            // Today's stats
-            $today = Carbon::now()->startOfDay();
-            $todayLogs = MongoRecommendation::where('created_at', '>=', $today)->count();
+            $stats = \Illuminate\Support\Facades\Cache::remember('admin.recommendations.stats_summary', now()->addMinutes(10), function() {
+                // Today's stats
+                $today = Carbon::now()->startOfDay();
+                $todayLogs = MongoRecommendation::where('created_at', '>=', $today)->count();
 
-            // This week stats
-            $weekStart = Carbon::now()->startOfWeek();
-            $weekEnd = Carbon::now()->endOfWeek();
-            $weekLogs = MongoRecommendation::where('created_at', '>=', $weekStart)
-                ->where('created_at', '<=', $weekEnd)
-                ->count();
+                // This week stats
+                $weekStart = Carbon::now()->startOfWeek();
+                $weekEnd = Carbon::now()->endOfWeek();
+                $weekLogs = MongoRecommendation::where('created_at', '>=', $weekStart)
+                    ->where('created_at', '<=', $weekEnd)
+                    ->count();
 
-            // This month stats
-            $monthStart = Carbon::now()->startOfMonth();
-            $monthEnd = Carbon::now()->endOfMonth();
-            $monthLogs = MongoRecommendation::where('created_at', '>=', $monthStart)
-                ->where('created_at', '<=', $monthEnd)
-                ->count();
+                // This month stats
+                $monthStart = Carbon::now()->startOfMonth();
+                $monthEnd = Carbon::now()->endOfMonth();
+                $monthLogs = MongoRecommendation::where('created_at', '>=', $monthStart)
+                    ->where('created_at', '<=', $monthEnd)
+                    ->count();
 
-            // Average duration (recommendation score)
-            $allLogs = MongoRecommendation::get();
-            $avgDuration = $allLogs->count() > 0 
-                ? round($allLogs->avg('recommendation_score'), 1)
-                : 0;
+                // Average duration (recommendation score) - Optimized to run as DB aggregation directly
+                $totalCount = MongoRecommendation::count();
+                $avgDuration = $totalCount > 0 
+                    ? round(MongoRecommendation::avg('recommendation_score'), 1)
+                    : 0;
 
-            // Popular destinations
-            $popularDestinations = MongoRecommendation::with('destination')
-                ->orderBy('created_at', 'desc')
-                ->limit(100)
-                ->get()
-                ->groupBy('destination_id')
-                ->map(fn($group) => (object)[
-                    'destination_id' => $group->first()->destination_id,
-                    'count' => $group->count(),
-                    'destination' => $group->first()->destination
-                ])
-                ->sortByDesc('count')
-                ->take(5)
-                ->values();
+                // Popular destinations (eager loaded & sorted)
+                $popularDestinations = MongoRecommendation::with('destination')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(100)
+                    ->get()
+                    ->groupBy('destination_id')
+                    ->map(fn($group) => (object)[
+                        'destination_id' => $group->first()->destination_id,
+                        'count' => $group->count(),
+                        'destination' => $group->first()->destination
+                    ])
+                    ->sortByDesc('count')
+                    ->take(5)
+                    ->values();
 
-            // Clicked recommendations
-            $clickedCount = MongoRecommendation::where('is_clicked', true)->count();
-            $totalCount = MongoRecommendation::count();
-            $clickRate = $totalCount > 0 
-                ? round(($clickedCount / $totalCount) * 100, 1)
-                : 0;
+                // Clicked recommendations
+                $clickedCount = MongoRecommendation::where('is_clicked', true)->count();
+                $clickRate = $totalCount > 0 
+                    ? round(($clickedCount / $totalCount) * 100, 1)
+                    : 0;
 
-            // Trip planner logs (paginated)
+                // Distribution data for chart
+                $distributionData = [
+                    '1-3 Hari' => MongoRecommendation::where('recommendation_score', '<', 3)->count(),
+                    '4-7 Hari' => MongoRecommendation::whereBetween('recommendation_score', [3, 7])->count(),
+                    '8+ Hari' => MongoRecommendation::where('recommendation_score', '>', 7)->count(),
+                ];
+
+                return compact('todayLogs', 'weekLogs', 'monthLogs', 'avgDuration', 'clickRate', 'popularDestinations', 'distributionData');
+            });
+
+            $todayLogs = $stats['todayLogs'];
+            $weekLogs = $stats['weekLogs'];
+            $monthLogs = $stats['monthLogs'];
+            $avgDuration = $stats['avgDuration'];
+            $clickRate = $stats['clickRate'];
+            $popularDestinations = $stats['popularDestinations'];
+            $distributionData = $stats['distributionData'];
+
+            // Trip planner logs (paginated - not cached)
             $logs = MongoRecommendation::with(['destination', 'user'])
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
-
-            // Distribution data for chart
-            $distributionData = [
-                '1-3 Hari' => MongoRecommendation::where('recommendation_score', '<', 3)->count(),
-                '4-7 Hari' => MongoRecommendation::whereBetween('recommendation_score', [3, 7])->count(),
-                '8+ Hari' => MongoRecommendation::where('recommendation_score', '>', 7)->count(),
-            ];
 
             // User preferences (mock data - dapat dari behavior_data jika ada)
             $userPreferences = [

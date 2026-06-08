@@ -49,33 +49,33 @@ class EventController extends BaseAdminController
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
-            'location' => 'required|string|max:255',
-            'organizer' => 'nullable|string|max:255',
-            'tags' => 'nullable|string',
-            'description' => 'required|string',
-            'long_description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'images' => 'nullable|array',
-            'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
-            'banner' => 'nullable|' . ($request->hasFile('banner') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
-            'schedule' => 'nullable|array',
-            'schedule.*.time' => 'nullable|string',
-            'schedule.*.activity' => 'nullable|string',
-            'opening_hours' => 'nullable|string|max:255',
-            'opening_hours_start' => 'nullable|date_format:H:i',
-            'opening_hours_end' => 'nullable|date_format:H:i',
-            'ticket_price' => 'nullable|string|max:255',
-            'best_time' => 'nullable|string|max:255',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'is_active' => 'nullable|boolean',
-        ]);
-
         try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
+                'location' => 'required|string|max:255',
+                'organizer' => 'nullable|string|max:255',
+                'tags' => 'nullable|string',
+                'description' => 'required|string',
+                'long_description' => 'nullable|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+                'banner' => 'nullable|' . ($request->hasFile('banner') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
+                'schedule' => 'nullable|array',
+                'schedule.*.time' => 'nullable|string',
+                'schedule.*.activity' => 'nullable|string',
+                'opening_hours' => 'nullable|string|max:255',
+                'opening_hours_start' => 'nullable|date_format:H:i',
+                'opening_hours_end' => 'nullable|date_format:H:i',
+                'ticket_price' => 'nullable|string|max:255',
+                'best_time' => 'nullable|string|max:255',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180',
+                'is_active' => 'nullable|boolean',
+            ]);
+
             // Combine opening hours if separate fields are provided
             $openingHours = $validated['opening_hours'] ?? null;
             if (!$openingHours && !empty($validated['opening_hours_start']) && !empty($validated['opening_hours_end'])) {
@@ -164,6 +164,15 @@ class EventController extends BaseAdminController
             $this->clearDashboardCache();
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil ditambahkan');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error creating event: ' . $e->getMessage());
 
@@ -217,35 +226,35 @@ class EventController extends BaseAdminController
      */
     public function update(Request $request, string $id)
     {
-        $event = MongoEvent::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
-            'location' => 'required|string|max:255',
-            'organizer' => 'nullable|string|max:255',
-            'tags' => 'nullable|string',
-            'description' => 'required|string',
-            'long_description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'images' => 'nullable|array',
-            'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
-            'banner' => 'nullable|' . ($request->hasFile('banner') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
-            'schedule' => 'nullable|array',
-            'schedule.*.time' => 'nullable|string',
-            'schedule.*.activity' => 'nullable|string',
-            'opening_hours' => 'nullable|string|max:255',
-            'opening_hours_start' => 'nullable|date_format:H:i',
-            'opening_hours_end' => 'nullable|date_format:H:i',
-            'ticket_price' => 'nullable|string|max:255',
-            'best_time' => 'nullable|string|max:255',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'is_active' => 'nullable|boolean',
-        ]);
-
         try {
+            $event = MongoEvent::findOrFail($id);
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
+                'location' => 'required|string|max:255',
+                'organizer' => 'nullable|string|max:255',
+                'tags' => 'nullable|string',
+                'description' => 'required|string',
+                'long_description' => 'nullable|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+                'banner' => 'nullable|' . ($request->hasFile('banner') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
+                'schedule' => 'nullable|array',
+                'schedule.*.time' => 'nullable|string',
+                'schedule.*.activity' => 'nullable|string',
+                'opening_hours' => 'nullable|string|max:255',
+                'opening_hours_start' => 'nullable|date_format:H:i',
+                'opening_hours_end' => 'nullable|date_format:H:i',
+                'ticket_price' => 'nullable|string|max:255',
+                'best_time' => 'nullable|string|max:255',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180',
+                'is_active' => 'nullable|boolean',
+            ]);
+
             $oldValues = $event->toArray();
 
             // Combine opening hours if separate fields are provided
@@ -370,6 +379,15 @@ class EventController extends BaseAdminController
             $this->clearDashboardCache();
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil diperbarui');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error updating event: ' . $e->getMessage());
 

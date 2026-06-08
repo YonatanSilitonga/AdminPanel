@@ -175,6 +175,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // ============ REVIEWS (Admin + Moderator) ============
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::get('reviews/summary/stats', [ReviewController::class, 'summaryStats'])->name('admin.reviews.summary-stats');
         Route::match(['get', 'post'], 'reviews/analytics/print', [ReviewController::class, 'printAnalytics'])->name('admin.reviews.print-analytics');
         Route::get('reviews/export', [ReviewController::class, 'export'])->name('admin.reviews.export');
         Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('admin.reviews.show');
