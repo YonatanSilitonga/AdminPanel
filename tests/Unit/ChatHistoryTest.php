@@ -3,19 +3,19 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
-use App\Models\ChatHistory;
+use App\Models\MongoDB\ChatSession;
 
 class ChatHistoryTest extends TestCase
 {
-    public function test_can_instantiate_ChatHistory()
+    public function test_can_instantiate_ChatSession()
     {
-        $model = new ChatHistory();
-        $this->assertInstanceOf(ChatHistory::class, $model);
+        $model = new ChatSession();
+        $this->assertInstanceOf(ChatSession::class, $model);
     }
 
-    public function test_ChatHistory_uses_mysql_connection()
+    public function test_ChatSession_uses_mongodb_connection()
     {
-        $model = new ChatHistory();
-        $this->assertEquals('mysql', $model->getConnectionName());
+        $model = new ChatSession();
+        $this->assertEquals('mongodb', $model->getConnectionName());
     }
 }

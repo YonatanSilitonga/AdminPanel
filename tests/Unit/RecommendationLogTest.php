@@ -3,19 +3,19 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
-use App\Models\RecommendationLog;
+use App\Models\MongoDB\MongoRecommendation;
 
 class RecommendationLogTest extends TestCase
 {
-    public function test_can_instantiate_RecommendationLog()
+    public function test_can_instantiate_MongoRecommendation()
     {
-        $model = new RecommendationLog();
-        $this->assertInstanceOf(RecommendationLog::class, $model);
+        $model = new MongoRecommendation();
+        $this->assertInstanceOf(MongoRecommendation::class, $model);
     }
 
-    public function test_RecommendationLog_uses_mongodb_connection()
+    public function test_MongoRecommendation_uses_mongodb_connection()
     {
-        $model = new RecommendationLog();
+        $model = new MongoRecommendation();
         $this->assertEquals('mongodb', $model->getConnectionName());
     }
 }
