@@ -17,6 +17,8 @@ class MongoReview extends Model
         'rating',
         'review',
         'status',
+        'approved_by',
+        'reason',
         'sentiment_label',
         'sentiment_confidence',
         'sentiment_scores',

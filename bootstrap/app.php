@@ -64,16 +64,17 @@ return Application::configure(basePath: dirname(__DIR__))
                     ], 404);
                 }
 
-                if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException) {
+                if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException || 
+                    ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException && $e->getStatusCode() === 403)) {
                     if ($request->expectsJson() || $request->ajax()) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Access denied. You do not have permission to perform this action.'
+                            'message' => $e->getMessage() ?: 'Access denied. You do not have permission to perform this action.'
                         ], 403);
                     }
                     return response()->view('admin.errors.403', [
                         'message' => 'Access denied.',
-                        'reason' => 'You do not have permission to perform this action.',
+                        'reason' => $e->getMessage() ?: 'You do not have permission to perform this action.',
                     ], 403);
                 }
 

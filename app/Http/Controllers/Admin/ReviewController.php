@@ -431,6 +431,50 @@ class ReviewController extends BaseAdminController
     }
 
     /**
+     * Approve a pending review
+     */
+    public function approve(string $id, Request $request)
+    {
+        try {
+            $review = MongoReview::findOrFail($id);
+            $review->update([
+                'status' => 'approved',
+                'approved_by' => auth('admin')->id()
+            ]);
+            
+            $this->clearReviewCaches();
+            $this->logActivity('approve_review', 'review', $id);
+
+            return back()->with('success', 'Ulasan berhasil disetujui.');
+        } catch (\Exception $e) {
+            Log::error('Error approving review: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menyetujui ulasan.');
+        }
+    }
+
+    /**
+     * Reject a pending review
+     */
+    public function reject(string $id, Request $request)
+    {
+        try {
+            $review = MongoReview::findOrFail($id);
+            $review->update([
+                'status' => 'rejected',
+                'reason' => $request->input('reason')
+            ]);
+
+            $this->clearReviewCaches();
+            $this->logActivity('reject_review', 'review', $id);
+
+            return back()->with('success', 'Ulasan berhasil ditolak.');
+        } catch (\Exception $e) {
+            Log::error('Error rejecting review: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menolak ulasan.');
+        }
+    }
+
+    /**
      * Export reviews to CSV.
      */
     public function export(Request $request)

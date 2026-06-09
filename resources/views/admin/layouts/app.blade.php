@@ -162,7 +162,7 @@
                         <!-- Alerts -->
                         <div id="dynamic-alerts-container"></div>
 
-                        @if ($errors->any())
+                        @if (isset($errors) && $errors->any())
                             <div class="mb-5 p-4 bg-red-50 border border-red-200/40 rounded-2xl">
                                 <div class="flex items-center gap-3 mb-2">
                                     <div class="flex-shrink-0 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white">

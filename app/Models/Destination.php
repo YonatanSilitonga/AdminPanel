@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Destination extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected $connection = 'mongodb';
 
     protected $fillable = [
         'name',
