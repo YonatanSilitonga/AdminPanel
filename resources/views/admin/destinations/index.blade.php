@@ -449,6 +449,7 @@
             xhr.open('POST', url);
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
             xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name=csrf-token]').getAttribute('content'));
+            xhr.setRequestHeader('Accept', 'application/json');
             
             let startTime = Date.now();
             xhr.upload.addEventListener('progress', (e) => {
@@ -472,35 +473,32 @@
             
             xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    resolve(JSON.parse(xhr.responseText));
+                    try {
+                        resolve(JSON.parse(xhr.responseText));
+                    } catch(e) {
+                        reject(new Error('Server mengembalikan respons yang tidak valid.'));
+                    }
                 } else {
+                    // Reject dengan full response object agar caller bisa akses .errors (422 validation)
                     try {
                         const errRes = JSON.parse(xhr.responseText);
-                        reject(new Error(errRes.message || 'Gagal menyimpan data ke server'));
+                        reject(errRes);
                     } catch(e) {
-                        reject(new Error('Gagal menyimpan data ke server (Status: ' + xhr.status + ')'));
+                        reject({ message: 'Gagal menyimpan data ke server (Status: ' + xhr.status + ')' });
                     }
                 }
             };
-            xhr.onerror = () => reject(new Error('Koneksi terputus ke server lokal.'));
+            xhr.onerror = () => reject({ message: 'Koneksi terputus ke server lokal.' });
             xhr.send(formData);
         });
     },
 
     async submitCreate() {
-        // Validasi client-side sebelum mengirim request
+        const thumbEl = document.getElementById('create_thumbnail');
         const latVal  = document.getElementById('create_latitude')?.value?.trim();
         const lngVal  = document.getElementById('create_longitude')?.value?.trim();
-        const thumbEl = document.getElementById('create_thumbnail');
 
-        if (!latVal || !lngVal) {
-            window.showAlert(
-                'Lokasi destinasi belum ditentukan. Klik pada peta, gunakan tombol \'Lokasi Saya\', atau cari alamat di kotak pencarian peta untuk mengisi koordinat.',
-                'Lokasi Belum Dipilih',
-                'warning'
-            );
-            return;
-        }
+        // Validasi thumbnail wajib
         if (!thumbEl || thumbEl.files.length === 0) {
             window.showAlert(
                 'Media utama (cover/thumbnail) wajib diunggah. Pilih foto atau video utama destinasi terlebih dahulu.',
@@ -510,10 +508,48 @@
             return;
         }
 
+        // Validasi koordinat � deteksi apakah Maps billing bermasalah
+        if (!latVal || !lngVal) {
+            const mapsUnavailable = (typeof google === 'undefined' || typeof google.maps === 'undefined') || window.__googleMapsDisabled;
+            if (mapsUnavailable) {
+                window.showAlert(
+                    'Google Maps tidak tersedia karena API Key belum mengaktifkan billing. Koordinat wajib diisi untuk menyimpan destinasi. Hubungi administrator untuk mengaktifkan Google Maps Billing.',
+                    'Google Maps Tidak Tersedia',
+                    'error'
+                );
+            } else {
+                window.showAlert(
+                    'Lokasi destinasi belum ditentukan. Klik pada peta, gunakan tombol \'Lokasi Saya\', atau cari alamat di kotak pencarian peta untuk mengisi koordinat.',
+                    'Lokasi Belum Dipilih',
+                    'warning'
+                );
+            }
+            return;
+        }
+
+        // Reset state sebelum async
         this.loading = true;
+        this.showUploadProgress = false;
+
         const form = document.getElementById('createDestForm');
         const thumbnailInput = document.getElementById('create_thumbnail');
         const imagesInput = document.getElementById('create_images');
+
+        const handleServerError = (result) => {
+            this.showUploadProgress = false;
+            if (result && result.errors) {
+                // Tampilkan error validasi field pertama yang ditemukan
+                const firstField = Object.keys(result.errors)[0];
+                const firstMsg = result.errors[firstField][0];
+                window.showAlert(
+                    (result.message || 'Terdapat kesalahan validasi.') + '\n\n' + firstMsg,
+                    'Validasi Gagal',
+                    'error'
+                );
+            } else {
+                window.showAlert(result?.message || 'Gagal menyimpan destinasi. Silakan coba lagi.', 'Gagal', 'error');
+            }
+        };
         
         try {
             const signRes = await fetch('/admin/carousel-banners/sign-upload?module=destinations');
@@ -525,7 +561,7 @@
             const formData = new FormData(form);
             
             if (signData.success && signData.mode === 'cloudinary') {
-                // Upload thumbnail — set progress hanya jika ada file
+                // Upload thumbnail ke Cloudinary
                 if (thumbnailInput && thumbnailInput.files.length > 0) {
                     this.showUploadProgress = true;
                     this.uploadProgressPercent = 0;
@@ -535,7 +571,7 @@
                     formData.set('thumbnail', res.secure_url);
                 }
                 
-                // Upload additional images
+                // Upload additional images ke Cloudinary
                 if (imagesInput && imagesInput.files.length > 0) {
                     this.showUploadProgress = true;
                     formData.delete('images[]');
@@ -556,49 +592,65 @@
                     this.showUploadProgress = false;
                 }
                 
-                const response = await fetch('{{ route('admin.destinations.store') }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
-                        'Accept': 'application/json'
-                    },
-                    body: formData
-                });
-                const result = await window.safeParseJSON(response);
+                let response, result;
+                try {
+                    response = await fetch('{{ route('admin.destinations.store') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+                    result = await window.safeParseJSON(response);
+                } catch (fetchErr) {
+                    window.showAlert('Gagal menghubungi server. Periksa koneksi internet Anda.', 'Error Koneksi', 'error');
+                    return;
+                }
+
                 if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Destinasi baru berhasil dibuat');
                     window.location.reload();
                 } else {
-                    window.showAlert(result?.message || 'Gagal membuat destinasi', 'Gagal', 'error');
+                    handleServerError(result);
                 }
             } else {
-                // Fallback to local upload with progress
+                // Fallback: local upload dengan progress
                 this.showUploadProgress = true;
                 this.uploadProgressPercent = 0;
-                this.uploadProgressText = 'Menghubungkan ke server lokal...';
+                this.uploadProgressText = 'Mengunggah ke server lokal...';
                 this.uploadSpeedText = '';
                 
-                const result = await this.uploadToLocalWithProgress(formData, '{{ route('admin.destinations.store') }}');
+                let result;
+                try {
+                    result = await this.uploadToLocalWithProgress(formData, '{{ route('admin.destinations.store') }}');
+                } catch (uploadErr) {
+                    // uploadErr adalah object {message, errors} dari server 422, atau {message} dari error lain
+                    handleServerError(uploadErr);
+                    return;
+                }
+
                 this.uploadProgressPercent = 100;
                 this.uploadProgressText = 'Berhasil disimpan!';
                 await new Promise(r => setTimeout(r, 500));
                 this.showUploadProgress = false;
                 
-                if (result.success) {
+                if (result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Destinasi baru berhasil dibuat');
                     window.location.reload();
                 } else {
-                    window.showAlert(result.message || 'Gagal menyimpan destinasi', 'Gagal', 'error');
+                    handleServerError(result);
                 }
             }
         } catch (error) {
-            console.error(error);
+            console.error('submitCreate error:', error);
             this.showUploadProgress = false;
-            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
-                window.showAlert(error.message, 'Error', 'error');
+            const msg = (error && error.message) ? error.message : null;
+            if (msg && msg !== 'Unexpected token < in JSON at position 0' && msg !== 'Server returned an invalid response.') {
+                window.showAlert(msg, 'Error', 'error');
             } else {
-                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+                window.showAlert('Terjadi kesalahan saat menghubungi server. Silakan coba lagi.', 'Error', 'error');
             }
         } finally {
             this.loading = false;
@@ -616,19 +668,45 @@
         const latVal = document.getElementById('edit_latitude')?.value?.trim();
         const lngVal = document.getElementById('edit_longitude')?.value?.trim();
         if (!latVal || !lngVal) {
-            window.showAlert(
-                'Lokasi destinasi belum ditentukan. Klik pada peta, gunakan tombol \'Lokasi Saya\', atau cari alamat di kotak pencarian peta untuk mengisi koordinat.',
-                'Lokasi Belum Dipilih',
-                'warning'
-            );
+            const mapsUnavailable = (typeof google === 'undefined' || typeof google.maps === 'undefined') || window.__googleMapsDisabled;
+            if (mapsUnavailable) {
+                window.showAlert(
+                    'Google Maps tidak tersedia. Koordinat tidak bisa diubah saat ini. Hubungi administrator untuk mengaktifkan Google Maps Billing.',
+                    'Google Maps Tidak Tersedia',
+                    'error'
+                );
+            } else {
+                window.showAlert(
+                    'Lokasi destinasi belum ditentukan. Klik pada peta, gunakan tombol \'Lokasi Saya\', atau cari alamat di kotak pencarian peta untuk mengisi koordinat.',
+                    'Lokasi Belum Dipilih',
+                    'warning'
+                );
+            }
             return;
         }
 
         this.loading = true;
+        this.showUploadProgress = false;
+
         const form = document.getElementById('editDestForm');
         const thumbnailInput = document.getElementById('edit_thumbnail');
         const imagesInput = document.getElementById('edit_images');
         const destId = this.editingDest._id || this.editingDest.id;
+
+        const handleServerError = (result) => {
+            this.showUploadProgress = false;
+            if (result && result.errors) {
+                const firstField = Object.keys(result.errors)[0];
+                const firstMsg = result.errors[firstField][0];
+                window.showAlert(
+                    (result.message || 'Terdapat kesalahan validasi.') + '\n\n' + firstMsg,
+                    'Validasi Gagal',
+                    'error'
+                );
+            } else {
+                window.showAlert(result?.message || 'Gagal menyimpan destinasi. Silakan coba lagi.', 'Gagal', 'error');
+            }
+        };
         
         try {
             const signRes = await fetch('/admin/carousel-banners/sign-upload?module=destinations');
@@ -643,7 +721,7 @@
             });
             
             if (signData.success && signData.mode === 'cloudinary') {
-                // Upload thumbnail — set progress hanya jika ada file baru
+                // Upload thumbnail baru ke Cloudinary
                 if (thumbnailInput && thumbnailInput.files.length > 0) {
                     this.showUploadProgress = true;
                     this.uploadProgressPercent = 0;
@@ -653,7 +731,7 @@
                     formData.set('thumbnail', res.secure_url);
                 }
                 
-                // Upload additional images
+                // Upload additional images ke Cloudinary
                 if (imagesInput && imagesInput.files.length > 0) {
                     this.showUploadProgress = true;
                     formData.delete('images[]');
@@ -674,49 +752,64 @@
                     this.showUploadProgress = false;
                 }
                 
-                const response = await fetch(`/admin/destinations/${destId}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
-                        'Accept': 'application/json'
-                    },
-                    body: formData
-                });
-                const result = await window.safeParseJSON(response);
+                let response, result;
+                try {
+                    response = await fetch(`/admin/destinations/${destId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+                    result = await window.safeParseJSON(response);
+                } catch (fetchErr) {
+                    window.showAlert('Gagal menghubungi server. Periksa koneksi internet Anda.', 'Error Koneksi', 'error');
+                    return;
+                }
+
                 if (response.ok && result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Destinasi berhasil diperbarui');
                     window.location.reload();
                 } else {
-                    window.showAlert(result?.message || 'Gagal menyimpan', 'Gagal', 'error');
+                    handleServerError(result);
                 }
             } else {
-                // Fallback to local upload with progress
+                // Fallback: local upload dengan progress
                 this.showUploadProgress = true;
                 this.uploadProgressPercent = 0;
-                this.uploadProgressText = 'Menghubungkan ke server lokal...';
+                this.uploadProgressText = 'Mengunggah ke server lokal...';
                 this.uploadSpeedText = '';
                 
-                const result = await this.uploadToLocalWithProgress(formData, `/admin/destinations/${destId}`);
+                let result;
+                try {
+                    result = await this.uploadToLocalWithProgress(formData, `/admin/destinations/${destId}`);
+                } catch (uploadErr) {
+                    handleServerError(uploadErr);
+                    return;
+                }
+
                 this.uploadProgressPercent = 100;
                 this.uploadProgressText = 'Berhasil disimpan!';
                 await new Promise(r => setTimeout(r, 500));
                 this.showUploadProgress = false;
                 
-                if (result.success) {
+                if (result && result.success) {
                     localStorage.setItem('pending_success_toast', result.message || 'Destinasi berhasil diperbarui');
                     window.location.reload();
                 } else {
-                    window.showAlert(result.message || 'Gagal menyimpan', 'Gagal', 'error');
+                    handleServerError(result);
                 }
             }
         } catch(e) {
-            console.error(e);
+            console.error('submitEdit error:', e);
             this.showUploadProgress = false;
-            if (e.message && e.message !== 'Unexpected token < in JSON at position 0') {
-                window.showAlert(e.message, 'Error', 'error');
+            const msg = (e && e.message) ? e.message : null;
+            if (msg && msg !== 'Unexpected token < in JSON at position 0' && msg !== 'Server returned an invalid response.') {
+                window.showAlert(msg, 'Error', 'error');
             } else {
-                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
+                window.showAlert('Terjadi kesalahan saat menghubungi server. Silakan coba lagi.', 'Error', 'error');
             }
         } finally { 
             this.loading = false;
@@ -743,7 +836,7 @@
         </nav>
     </div>
 
-    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true"></button>
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true; loading = false; showUploadProgress = false"></button>
 
     {{-- TAB 1: MANAGE DESTINATIONS --}}
     <div x-show="activeTab === 'manage'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
@@ -940,7 +1033,7 @@
                 <tbody class="bg-white divide-y divide-gray-50">
                     @forelse(($destinations ?? []) as $index => $destination)
                         <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
-                            <td class="px-8 py-5 text-sm font-semibold text-gray-400">{{ $index + 1 }}</td>
+                            <td class="px-8 py-5 text-sm font-semibold text-gray-400">{{ (int)$index + 1 }}</td>
                             <td class="px-10 py-6">
                                 <div class="flex items-center gap-4">
                                     @if(isset($destination->images) && count($destination->images) > 0)
@@ -948,7 +1041,7 @@
                                         @if(media_is_video($destinationCover))
                                             <video src="{{ image_url($destinationCover) }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" x-on:click.stop.prevent="openMediaLightbox('{{ image_url($destinationCover) }}', 'video')" muted playsinline preload="metadata"></video>
                                         @else
-                                            <img src="{{ image_url($destinationCover) }}" alt="{{ $destination->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" x-on:click.stop.prevent="openMediaLightbox('{{ image_url($destinationCover) }}', 'image')" title="Klik untuk memperbesar">
+                                            <img src="{{ image_url($destinationCover) }}" alt="{{ $destination->name }}" class="w-24 h-16 object-cover rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-300" x-on:click.stop.prevent="openMediaLightbox('{{ image_url($destinationCover) }}', 'image')" title="Klik untuk memperbesar" loading="lazy">
                                         @endif
                                     @else
                                         <div class="w-24 h-16 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center">
@@ -1044,15 +1137,15 @@
                         </div>
                     </div>
                     <h3 class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_destinations']) }}</h3>
-                    @if($stats['destinations_increase'] >= 0)
+                    @if((int)$stats['destinations_increase'] >= 0)
                         <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
-                            +{{ $stats['destinations_increase'] }}% minggu ini
+                            +{{ (int)$stats['destinations_increase'] }}% minggu ini
                         </p>
                     @else
                         <p class="text-xs text-red-400 font-bold mt-2 flex items-center">
                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
-                            {{ $stats['destinations_increase'] }}% minggu ini
+                            {{ (int)$stats['destinations_increase'] }}% minggu ini
                         </p>
                     @endif
                 </div>
@@ -1083,15 +1176,15 @@
                         </div>
                     </div>
                     <h3 class="text-3xl font-bold text-gray-900">{{ number_format($stats['total_wishlist']) }}</h3>
-                    @if($stats['wishlist_increase'] >= 0)
+                    @if((int)$stats['wishlist_increase'] >= 0)
                         <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
-                            +{{ $stats['wishlist_increase'] }}% minggu ini
+                            +{{ (int)$stats['wishlist_increase'] }}% minggu ini
                         </p>
                     @else
                         <p class="text-xs text-red-400 font-bold mt-2 flex items-center">
                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
-                            {{ $stats['wishlist_increase'] }}% minggu ini
+                            {{ (int)$stats['wishlist_increase'] }}% minggu ini
                         </p>
                     @endif
                 </div>
@@ -1122,15 +1215,15 @@
                         </div>
                     </div>
                     <h3 class="text-3xl font-bold text-orange-500">{{ number_format($stats['total_review']) }}</h3>
-                    @if($stats['review_increase'] >= 0)
+                    @if((int)$stats['review_increase'] >= 0)
                         <p class="text-xs text-green-500 font-bold mt-2 flex items-center">
                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
-                            +{{ $stats['review_increase'] }}% minggu ini
+                            +{{ (int)$stats['review_increase'] }}% minggu ini
                         </p>
                     @else
                         <p class="text-xs text-red-400 font-bold mt-2 flex items-center">
                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
-                            {{ $stats['review_increase'] }}% minggu ini
+                            {{ (int)$stats['review_increase'] }}% minggu ini
                         </p>
                     @endif
                 </div>
@@ -1425,7 +1518,8 @@
                             </div>
                             <div class="space-y-2 col-span-1">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
-                                <input type="text" name="ticket_price" value="Gratis" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                <input type="text" name="ticket_price" value="Gratis" placeholder="Gratis / Rp 10.000" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                <p class="text-xs text-gray-500 mt-1">Format: Gratis atau nominal harga (contoh: Rp 10.000)</p>
                             </div>
                             <div class="space-y-2 col-span-1">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
@@ -1698,7 +1792,8 @@
                                 </div>
                                 <div class="space-y-2 col-span-1">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</label>
-                                    <input type="text" name="ticket_price" x-model="editingDest.ticket_price" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                    <input type="text" name="ticket_price" x-model="editingDest.ticket_price" placeholder="Gratis / Rp 10.000" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-sidebar/10 outline-none text-sm font-medium text-gray-700">
+                                    <p class="text-xs text-gray-500 mt-1">Format: Gratis atau nominal harga (contoh: Rp 10.000)</p>
                                 </div>
                                 <div class="space-y-2 col-span-1">
                                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</label>
@@ -2031,26 +2126,34 @@
                             <div class="space-y-6">
                                 <div>
                                     <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Deskripsi</h4>
-                                    <div class="text-sm text-gray-500 leading-relaxed line-clamp-6 custom-scrollbar pr-2" x-text="viewingDest?.description || 'Tidak ada deskripsi.'"></div>
+                                    <div class="text-sm text-gray-500 leading-relaxed line-clamp-6 custom-scrollbar pr-2" x-text="viewingDest?.description || '-'"></div>
                                 </div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
-                                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Durasi Video</p>
-                                            <p class="text-sm font-bold text-gray-800 mt-1" x-text="(viewingDest?.video_duration || 10) + ' detik'"></p>
-                                        </div>
-                                        <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
-                                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Autoplay</p>
-                                            <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_autoplay ? 'Aktif' : 'Nonaktif'"></p>
-                                        </div>
-                                        <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
-                                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loop</p>
-                                            <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_loop ? 'Aktif' : 'Nonaktif'"></p>
-                                        </div>
-                                        <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
-                                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Siap Diputar</p>
-                                            <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_wait_until_ready ? 'Ya' : 'Tidak'"></p>
-                                        </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tiket Masuk</p>
+                                        <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.ticket_price ? viewingDest.ticket_price : '-'"></p>
                                     </div>
+                                    <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Waktu Terbaik</p>
+                                        <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.best_time ? viewingDest.best_time : '-'"></p>
+                                    </div>
+                                    <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Durasi Video</p>
+                                        <p class="text-sm font-bold text-gray-800 mt-1" x-text="(viewingDest?.video_duration || 10) + ' detik'"></p>
+                                    </div>
+                                    <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Autoplay</p>
+                                        <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_autoplay ? 'Aktif' : 'Nonaktif'"></p>
+                                    </div>
+                                    <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loop</p>
+                                        <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_loop ? 'Aktif' : 'Nonaktif'"></p>
+                                    </div>
+                                    <div class="rounded-2xl bg-gray-50 p-3 border border-gray-100">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Siap Diputar</p>
+                                        <p class="text-sm font-bold text-gray-800 mt-1" x-text="viewingDest?.video_wait_until_ready ? 'Ya' : 'Tidak'"></p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -2143,12 +2246,13 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places&callback=Function.prototype" async defer></script>
 <script>
-    // Handler untuk error autentikasi Google Maps
+    // Handler untuk error autentikasi Google Maps (billing tidak aktif, key tidak valid, dll)
     window.gm_authFailure = function() {
-        console.error('Google Maps authentication failed! Periksa API Key Anda.');
+        console.warn('Google Maps: Auth/Billing failure. Maps will be disabled.');
+        window.__googleMapsDisabled = true;
         const pickers = document.querySelectorAll('[id*="map_picker"]');
         pickers.forEach(p => {
-            p.innerHTML = '<div class="flex items-center justify-center h-full text-red-500 text-xs font-bold p-4 text-center">Google Maps Error: API Key tidak valid atau belum diaktifkan.</div>';
+            p.innerHTML = '<div class="flex items-center justify-center h-full bg-red-50 rounded-2xl"><div class="text-center p-4"><svg class="w-8 h-8 text-red-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg><p class="text-red-500 text-xs font-bold">Google Maps tidak aktif</p><p class="text-gray-400 text-[10px] mt-1">API Key perlu mengaktifkan billing</p></div></div>';
         });
     };
 
@@ -2582,5 +2686,5 @@
         });
     }
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places&callback=Function.prototype" async defer></script>
+
 @endpush

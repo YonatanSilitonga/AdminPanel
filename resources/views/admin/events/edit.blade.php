@@ -10,6 +10,7 @@
     imagesData: {{ json_encode($event->images_data ?? []) }},
     deletedImages: [],
     fileName: '',
+    errors: {},
     showUploadProgress: false,
     uploadProgressPercent: 0,
     uploadProgressText: '',
@@ -198,17 +199,18 @@
                 } else {
                     try {
                         const errRes = JSON.parse(xhr.responseText);
-                        reject(new Error(errRes.message || 'Gagal menyimpan data ke server'));
+                        reject(errRes);
                     } catch(e) {
-                        reject(new Error('Gagal menyimpan data ke server (Status: ' + xhr.status + ')'));
+                        reject({ message: 'Gagal menyimpan data ke server (Status: ' + xhr.status + ')' });
                     }
                 }
             };
-            xhr.onerror = () => reject(new Error('Koneksi terputus ke server lokal.'));
+            xhr.onerror = () => reject({ message: 'Koneksi terputus ke server lokal.' });
             xhr.send(formData);
         });
     },
-    async submitForm(e) {
+    async submitEdit(e) {
+        this.errors = {};
         const form = e.target;
         const fileInput = document.getElementById('images');
         const files = fileInput ? fileInput.files : [];
@@ -251,16 +253,31 @@
                     hiddenInput.value = url;
                     form.appendChild(hiddenInput);
                 });
-                
-                form.submit();
+
+                // Submit via AJAX to catch validation errors
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    window.location.href = '{{ route("admin.events.index") }}';
+                } else if (result.errors) {
+                    this.errors = result.errors;
+                    throw result;
+                } else {
+                    window.showAlert(result.message || 'Gagal menyimpan data', 'Gagal', 'error');
+                }
             } else {
+                const formData = new FormData(form);
                 if (files && files.length > 0) {
                     this.showUploadProgress = true;
                     this.uploadProgressPercent = 0;
                     this.uploadProgressText = 'Menghubungkan ke server lokal...';
                     this.uploadSpeedText = '';
                     
-                    const formData = new FormData(form);
                     const result = await this.uploadToLocalWithProgress(formData, form.action);
                     
                     this.uploadProgressPercent = 100;
@@ -270,21 +287,38 @@
                     
                     if (result.success) {
                         window.location.href = '{{ route("admin.events.index") }}';
+                    } else if (result.errors) {
+                        this.errors = result.errors;
+                        throw result;
                     } else {
                         window.showAlert(result.message || 'Gagal menyimpan data', 'Gagal', 'error');
                     }
                 } else {
-                    form.submit();
+                    // No file - AJAX submit for validation errors
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = '{{ route("admin.events.index") }}';
+                    } else if (result.errors) {
+                        this.errors = result.errors;
+                        throw result;
+                    } else {
+                        window.showAlert(result.message || 'Gagal menyimpan data', 'Gagal', 'error');
+                    }
                 }
             }
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            window.showAlert(error.message || 'Terjadi kesalahan saat menyimpan data', 'Error', 'error');
+            window.handleServerError(error, this);
         }
     }
 }" class="max-w-4xl mx-auto">
-    <form @submit.prevent="submitForm($event)" action="{{ route('admin.events.update', $event) }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-8">
+    <form @submit.prevent="submitEdit($event)" action="{{ route('admin.events.update', $event) }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-8">
         @csrf
         @method('PUT')
 
@@ -299,21 +333,23 @@
             <!-- Nama Event -->
             <div class="space-y-2">
                 <label class="block text-sm font-semibold text-gray-700">Nama Event</label>
-                <input type="text" name="name" value="{{ old('name', $event->name) }}" placeholder="Festival Danau Toba" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
-                @error('name')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                <input type="text" name="name" value="{{ old('name', $event->name) }}" placeholder="Festival Danau Toba" :class="errors.name ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                <p x-show="errors.name" class="text-xs text-red-500 mt-1" x-text="errors.name ? errors.name[0] : ''"></p>
+                @error('name')<p x-show="!errors.name" class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <!-- Kategori -->
             <div class="space-y-2">
                 <label class="block text-sm font-semibold text-gray-700">Kategori</label>
-                <select name="category" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22currentColor%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
+                <select name="category" :class="errors.category ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220%200%2024%2024%22 stroke=%22currentColor%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19%209l-7%207-7-7%22/%3E%3C/svg%3E')">
                     <option value="">Pilih Kategori</option>
                     <option value="Budaya" @selected(old('category', $event->category) == 'Budaya')>Budaya</option>
                     <option value="Adat" @selected(old('category', $event->category) == 'Adat')>Adat</option>
                     <option value="Olahraga" @selected(old('category', $event->category) == 'Olahraga')>Olahraga</option>
                     <option value="Kuliner" @selected(old('category', $event->category) == 'Kuliner')>Kuliner</option>
                 </select>
-                @error('category')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                <p x-show="errors.category" class="text-xs text-red-500 mt-1" x-text="errors.category ? errors.category[0] : ''"></p>
+                @error('category')<p x-show="!errors.category" class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <!-- Tanggal -->
@@ -321,25 +357,28 @@
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-gray-700">Tanggal Mulai</label>
                     <div class="relative">
-                        <input type="date" name="start_date" value="{{ old('start_date', $event->start_date->format('Y-m-d')) }}" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                        <input type="date" name="start_date" value="{{ old('start_date', $event->start_date->format('Y-m-d')) }}" :class="errors.start_date ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
                     </div>
-                    @error('start_date')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    <p x-show="errors.start_date" class="text-xs text-red-500 mt-1" x-text="errors.start_date ? errors.start_date[0] : ''"></p>
+                    @error('start_date')<p x-show="!errors.start_date" class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
 
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-gray-700">Tanggal Selesai</label>
                     <div class="relative">
-                        <input type="date" name="end_date" value="{{ old('end_date', $event->end_date->format('Y-m-d')) }}" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                        <input type="date" name="end_date" value="{{ old('end_date', $event->end_date->format('Y-m-d')) }}" :class="errors.end_date ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
                     </div>
-                    @error('end_date')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                    <p x-show="errors.end_date" class="text-xs text-red-500 mt-1" x-text="errors.end_date ? errors.end_date[0] : ''"></p>
+                    @error('end_date')<p x-show="!errors.end_date" class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
 
             <!-- Lokasi -->
             <div class="space-y-2">
                 <label class="block text-sm font-semibold text-gray-700">Lokasi</label>
-                <input type="text" name="location" value="{{ old('location', $event->location) }}" placeholder="Lapangan Balige" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
-                @error('location')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                <input type="text" name="location" value="{{ old('location', $event->location) }}" placeholder="Lapangan Balige" :class="errors.location ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                <p x-show="errors.location" class="text-xs text-red-500 mt-1" x-text="errors.location ? errors.location[0] : ''"></p>
+                @error('location')<p x-show="!errors.location" class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -396,8 +435,9 @@
             <!-- Deskripsi -->
             <div class="space-y-2">
                 <label class="block text-sm font-semibold text-gray-700">Deskripsi</label>
-                <textarea name="description" rows="4" placeholder="Masukkan deskripsi event..." class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">{{ old('description', $event->description) }}</textarea>
-                @error('description')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                <textarea name="description" rows="4" placeholder="Masukkan deskripsi event..." :class="errors.description ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">{{ old('description', $event->description) }}</textarea>
+                <p x-show="errors.description" class="text-xs text-red-500 mt-1" x-text="errors.description ? errors.description[0] : ''"></p>
+                @error('description')<p x-show="!errors.description" class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
             </div>
 
             <!-- Jadwal Kegiatan -->

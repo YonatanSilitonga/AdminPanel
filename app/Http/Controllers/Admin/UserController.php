@@ -81,9 +81,33 @@ class UserController extends BaseAdminController
     {
         try {
             $user = User::findOrFail($id);
+            
             $newStatus = !$user->is_active;
+
+            if (!$newStatus) {
+                // Suspend action requires validation
+                $validated = $request->validate([
+                    'suspend_category' => 'required|string|in:Spammer,Abuse/Toxic,Fraud/Scam,Inappropriate Profile,Other',
+                    'suspend_reason' => 'required|string|max:500',
+                ]);
+
+                $user->suspend_category = $validated['suspend_category'];
+                $user->suspend_reason = $validated['suspend_reason'];
+                $user->suspended_at = now();
+                $user->suspended_by = auth()->id();
+            } else {
+                // Activate action clears suspend details
+                $user->suspend_category = null;
+                $user->suspend_reason = null;
+                $user->suspended_at = null;
+                $user->suspended_by = null;
+            }
+
             $user->is_active = $newStatus;
             $user->save();
+
+            // Clear stats cache
+            \Illuminate\Support\Facades\Cache::forget('admin.users.stats');
 
             $statusText = $newStatus ? 'diaktifkan' : 'ditangguhkan (suspend)';
             
@@ -96,6 +120,15 @@ class UserController extends BaseAdminController
             }
 
             return redirect()->route('admin.users.index')->with('success', "Akun {$user->name} berhasil {$statusText}");
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->validator->errors()->first(),
+                    'errors' => $e->validator->errors()
+                ], 422);
+            }
+            return back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
             Log::error('Error toggling user status: ' . $e->getMessage());
             if ($request->ajax() || $request->wantsJson()) {

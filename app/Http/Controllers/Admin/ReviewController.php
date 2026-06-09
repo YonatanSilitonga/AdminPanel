@@ -193,6 +193,157 @@ class ReviewController extends BaseAdminController
         }
     }
 
+    /**
+     * Return filtered summary stats for the analytics tab (AJAX).
+     * Supports: destination_id, date_from, date_to, rating, sentiment
+     */
+    public function summaryStats(Request $request): JsonResponse
+    {
+        try {
+            $destId   = $request->input('destination_id');
+            $dateFrom = $request->input('date_from');
+            $dateTo   = $request->input('date_to');
+            $rating   = $request->input('rating');
+            $sentiment = $request->input('sentiment');
+
+            // Base query builder with filters applied
+            $base = function () use ($destId, $dateFrom, $dateTo, $rating, $sentiment) {
+                $q = MongoReview::query();
+
+                if ($destId) {
+                    $isObjectId = is_scalar($destId) && preg_match('/^[a-f\d]{24}$/i', (string)$destId);
+                    $q->where(function ($sub) use ($destId, $isObjectId) {
+                        $sub->where('destination_id', $destId);
+                        if ($isObjectId) {
+                            $sub->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                        }
+                    });
+                }
+
+                if ($dateFrom) {
+                    $q->where('created_at', '>=', \Carbon\Carbon::parse($dateFrom)->startOfDay());
+                }
+                if ($dateTo) {
+                    $q->where('created_at', '<=', \Carbon\Carbon::parse($dateTo)->endOfDay());
+                }
+
+                if ($rating) {
+                    $q->where('rating', (int) $rating);
+                }
+
+                if ($sentiment) {
+                    if ($sentiment === 'pending') {
+                        $q->whereNull('sentiment_label');
+                    } else {
+                        $q->where('sentiment_label', $sentiment);
+                    }
+                }
+
+                return $q;
+            };
+
+            // --- Sentiment summary card counts ---
+            $total    = (clone $base())->count();
+            $positive = (clone $base())->where('sentiment_label', 'positive')->count();
+            $neutral  = (clone $base())->where('sentiment_label', 'neutral')->count();
+            $negative = (clone $base())->where('sentiment_label', 'negative')->count();
+            $pending  = (clone $base())->whereNull('sentiment_label')->count();
+
+            // --- Rating distribution ---
+            $ratingDist = [];
+            foreach ([5, 4, 3, 2, 1] as $r) {
+                $count = (clone $base())->where('rating', $r)->count();
+                $ratingDist[$r] = [
+                    'count'      => $count,
+                    'percentage' => $total > 0 ? round(($count / $total) * 100) : 0,
+                ];
+            }
+
+            // --- Average rating ---
+            $allRatings   = (clone $base())->pluck('rating')->toArray();
+            $validRatings = array_filter($allRatings, fn ($v) => is_numeric($v) && $v > 0);
+            $avgRating    = count($validRatings) > 0
+                ? round(array_sum($validRatings) / count($validRatings), 1)
+                : 0;
+
+            // --- Sentiment trends (monthly, last 6 months) ---
+            $trends = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month     = now()->subMonths($i);
+                $startDate = $month->copy()->startOfMonth();
+                $endDate   = $month->copy()->endOfMonth();
+
+                $trends[] = [
+                    'month'    => $month->translatedFormat('M Y'),
+                    'positive' => (clone $base())->whereBetween('created_at', [$startDate, $endDate])->where('sentiment_label', 'positive')->count(),
+                    'neutral'  => (clone $base())->whereBetween('created_at', [$startDate, $endDate])->where('sentiment_label', 'neutral')->count(),
+                    'negative' => (clone $base())->whereBetween('created_at', [$startDate, $endDate])->where('sentiment_label', 'negative')->count(),
+                ];
+            }
+
+            // --- Top destinations by review count (max 8) with sentiment breakdown ---
+            $destReviews = (clone $base())
+                ->whereNotNull('destination_id')
+                ->get(['destination_id', 'sentiment_label', 'rating']);
+
+            $destMap = [];
+            foreach ($destReviews as $rv) {
+                $id = (string) $rv->destination_id;
+                if (!isset($destMap[$id])) {
+                    $destMap[$id] = ['positive' => 0, 'neutral' => 0, 'negative' => 0, 'total' => 0, 'rating_sum' => 0];
+                }
+                $label = $rv->sentiment_label ?? 'neutral';
+                if (isset($destMap[$id][$label])) {
+                    $destMap[$id][$label]++;
+                }
+                $destMap[$id]['total']++;
+                if (is_numeric($rv->rating)) {
+                    $destMap[$id]['rating_sum'] += (int) $rv->rating;
+                }
+            }
+
+            arsort($destMap);
+            $topDestIds = array_slice(array_keys($destMap), 0, 8);
+
+            $destNames = [];
+            if (!empty($topDestIds)) {
+                MongoDestination::whereIn('_id', $topDestIds)
+                    ->get(['_id', 'name'])
+                    ->each(function ($d) use (&$destNames) {
+                        $destNames[(string)$d->_id] = $d->name;
+                    });
+            }
+
+            $destinationStats = array_map(function ($id) use ($destMap, $destNames) {
+                $d = $destMap[$id];
+                return [
+                    'destination_id'   => $id,
+                    'destination_name' => $destNames[$id] ?? 'Destinasi',
+                    'sentiment_counts' => [
+                        'positive' => $d['positive'],
+                        'neutral'  => $d['neutral'],
+                        'negative' => $d['negative'],
+                    ],
+                    'total'      => $d['total'],
+                    'avg_rating' => $d['total'] > 0 ? round($d['rating_sum'] / $d['total'], 1) : 0,
+                ];
+            }, $topDestIds);
+
+            return response()->json([
+                'success'          => true,
+                'total'            => $total,
+                'avg_rating'       => $avgRating,
+                'sentiment'        => compact('total', 'positive', 'neutral', 'negative', 'pending'),
+                'rating_dist'      => $ratingDist,
+                'sentiment_trends' => $trends,
+                'destinations'     => array_values($destinationStats),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Review summaryStats error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     public function show(string $id, Request $request)
     {
         try {
@@ -411,22 +562,70 @@ class ReviewController extends BaseAdminController
     /**
      * Delete review from MongoDB
      */
-    public function destroy(string $id)
+    public function destroy(string $id, Request $request)
     {
         try {
             $review = MongoReview::findOrFail($id);
-            $review->delete();
+            
+            // Prevent deletion of approved reviews - they are locked
+            if ($review->status === 'approved') {
+                $errorMsg = 'Ulasan yang sudah di-approve tidak dapat dihapus langsung. '
+                    . 'Status ulasan yang sudah disetujui terkunci untuk menjaga integritas data destinasi dan audit trail. '
+                    . 'Hubungi super admin jika perlu penghapusan paksa.';
+                
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->with('error', $errorMsg);
+            }
 
-            $this->clearReviewCaches();
+            // Soft delete: mark as deleted instead of hard delete
+            $oldData = [
+                'status' => $review->status,
+                'rating' => $review->rating,
+                'review' => $review->review,
+                'sentiment_label' => $review->sentiment_label,
+            ];
 
-            $this->logActivity('delete_review_mongo', 'review', $id);
+            $review->is_deleted = true;
+            $review->deleted_by = (string)$this->admin->id;
+            $review->deleted_at = now();
+            $review->deletion_reason = $request->input('deletion_reason', 'Admin-initiated deletion');
+            $review->save();
+
+            // Clear all affected caches
+            $this->clearAllAffectedCaches($review);
+
+            // Log deletion with complete context
+            $this->logActivity(
+                'soft_delete_review_mongo',
+                'review',
+                $id,
+                $oldData,
+                [
+                    'is_deleted' => true,
+                    'deleted_by' => (string)$this->admin->id,
+                    'deletion_reason' => $review->deletion_reason,
+                ]
+            );
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Ulasan berhasil dihapus (soft delete). Data disimpan untuk audit trail.'
+                ]);
+            }
 
             return redirect()
                 ->route('admin.reviews.index')
-                ->with('success', 'Review deleted from MongoDB successfully');
+                ->with('success', 'Ulasan berhasil dihapus. Data disimpan dalam log untuk audit trail.');
         } catch (\Exception $e) {
             Log::error('Error deleting review from Mongo: ' . $e->getMessage());
-            return back()->with('error', 'Error deleting review');
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menghapus ulasan.'], 500);
+            }
+            return back()->with('error', 'Gagal menghapus ulasan.');
         }
     }
 
@@ -739,6 +938,43 @@ class ReviewController extends BaseAdminController
             \Illuminate\Support\Facades\Cache::forget('review_keyword_summary_' . date('Y-m-d_H', strtotime('-1 hour')));
         } catch (\Exception $e) {
             Log::error('Failed to clear review caches: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Clear all affected caches when review is modified or deleted
+     * This includes review stats, destination stats, trending data, and user stats
+     */
+    private function clearAllAffectedCaches(MongoReview $review): void
+    {
+        try {
+            // Clear review-specific caches
+            $this->clearReviewCaches();
+            
+            // Clear destination stats cache if destination_id exists
+            if ($review->destination_id) {
+                \Illuminate\Support\Facades\Cache::forget("destination_stats_{$review->destination_id}");
+                \Illuminate\Support\Facades\Cache::forget("destination_reviews_{$review->destination_id}");
+            }
+            
+            // Clear user stats cache if user_id exists
+            if ($review->user_id) {
+                \Illuminate\Support\Facades\Cache::forget("user_activity_{$review->user_id}");
+            }
+            
+            // Clear trending destinations cache (since stats changed)
+            \Illuminate\Support\Facades\Cache::forget('trending_destinations');
+            \Illuminate\Support\Facades\Cache::forget('trending_destinations_auto');
+            
+            // Clear dashboard stats cache
+            \Illuminate\Support\Facades\Cache::forget('admin.dashboard.stats');
+            
+            // Clear admin users stats cache
+            \Illuminate\Support\Facades\Cache::forget('admin.users.stats');
+            
+            Log::info("All affected caches cleared for review deletion: {$review->_id}");
+        } catch (\Exception $e) {
+            Log::error('Failed to clear all affected caches: ' . $e->getMessage());
         }
     }
 }

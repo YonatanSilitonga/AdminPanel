@@ -124,6 +124,16 @@ class ReportController extends BaseAdminController
 
             $report = MongoReport::findOrFail($id);
             $oldStatus = $report->status;
+
+            // Prevent status change if report is already resolved (status terkunci)
+            if ($oldStatus === 'resolved') {
+                $errorMsg = 'Laporan sudah selesai diproses. Perubahan status tidak diizinkan untuk laporan yang sudah terkunci.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->with('error', $errorMsg);
+            }
+
             $report->status = $request->status;
             $report->assigned_to = $report->assigned_to ?? (string)$this->admin->id;
             $report->save();
@@ -131,10 +141,10 @@ class ReportController extends BaseAdminController
             $this->logActivity('update_report_status_mongo', 'report', $id, ['status' => $oldStatus], ['status' => $request->status]);
 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Status updated.']);
+                return response()->json(['success' => true, 'message' => 'Status berhasil diubah.']);
             }
 
-            return back()->with('success', 'Report status updated in MongoDB');
+            return back()->with('success', 'Status laporan berhasil diubah');
         } catch (\Exception $e) {
             Log::error('Error updating report status in Mongo: ' . $e->getMessage());
 
@@ -158,6 +168,16 @@ class ReportController extends BaseAdminController
             ]);
 
             $report = MongoReport::findOrFail($id);
+            
+            // Prevent action if report is already resolved (status terkunci)
+            if ($report->status === 'resolved') {
+                $errorMsg = 'Laporan sudah selesai diproses. Tindakan tidak dapat diubah pada laporan yang sudah terkunci.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->with('error', $errorMsg);
+            }
+
             $oldAction = $report->action_taken;
             
             $report->action_taken = $request->action;

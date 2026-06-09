@@ -352,28 +352,10 @@
     </div>
 
     <!-- Pagination -->
-    @if($sessions->hasPages())
-    <div class="px-8 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
-        <p class="text-[13px] text-gray-400 font-medium">Menampilkan {{ $sessions->firstItem() }}-{{ $sessions->lastItem() }} dari {{ $sessions->total() }} sesi</p>
-        <div class="flex items-center gap-2">
-            @if($sessions->onFirstPage())
-                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Prev</span>
-            @else
-                <a href="{{ $sessions->previousPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Prev</a>
-            @endif
-            
-            <div class="flex items-center gap-1">
-                @foreach($sessions->getUrlRange(max(1, $sessions->currentPage()-1), min($sessions->lastPage(), $sessions->currentPage()+1)) as $page => $url)
-                    <a href="{{ $url }}" class="w-9 h-9 flex items-center justify-center text-[13px] font-bold {{ $page == $sessions->currentPage() ? 'bg-emerald-700 text-white shadow-lg shadow-emerald-700/30' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-all">{{ $page }}</a>
-                @endforeach
-            </div>
-
-            @if($sessions->hasMorePages())
-                <a href="{{ $sessions->nextPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-emerald-600 hover:text-white rounded-lg transition-all">Next</a>
-            @else
-                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Next</span>
-            @endif
-        </div>
+    @if(isset($sessions) && method_exists($sessions, 'links'))
+    <div class="px-10 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
+        <div class="text-gray-400 text-sm font-medium">Menampilkan {{ $sessions->firstItem() }}-{{ $sessions->lastItem() }} dari {{ $sessions->total() }} Sesi</div>
+        <div>{{ $sessions->appends(request()->query())->links('vendor.pagination.tailwind-custom') }}</div>
     </div>
     @endif
 </div>

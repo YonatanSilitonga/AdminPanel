@@ -46,19 +46,78 @@
 
     getActionColor(action) {
         const colors = {
-            'create': 'bg-green-50 text-green-700',
-            'update': 'bg-blue-50 text-blue-700',
-            'delete': 'bg-red-50 text-red-700',
-            'soft_delete': 'bg-orange-50 text-orange-700',
-            'restore': 'bg-purple-50 text-purple-700',
-            'approve': 'bg-emerald-50 text-emerald-700',
-            'reject': 'bg-pink-50 text-pink-700',
-            'toggle_maintenance': 'bg-yellow-50 text-yellow-700',
-            'update_settings': 'bg-indigo-50 text-indigo-700',
-            'update_api_keys': 'bg-cyan-50 text-cyan-700',
-            'update_ai_config': 'bg-violet-50 text-violet-700',
+            // Generic CRUD
+            'create':                          'bg-green-50 text-green-700',
+            'update':                          'bg-blue-50 text-blue-700',
+            'delete':                          'bg-red-50 text-red-700',
+            'soft_delete':                     'bg-orange-50 text-orange-700',
+            'restore':                         'bg-purple-50 text-purple-700',
+            // Destination
+            'create_mongo':                    'bg-green-50 text-green-700',
+            'update_mongo':                    'bg-blue-50 text-blue-700',
+            'delete_mongo':                    'bg-red-50 text-red-700',
+            // Report
+            'update_report_status_mongo':      'bg-blue-50 text-blue-700',
+            'delete_report_mongo':             'bg-red-50 text-red-700',
+            // Review / Sentiment
+            'analyze_review_sentiment':        'bg-violet-50 text-violet-700',
+            'batch_analyze_review_sentiment':  'bg-violet-50 text-violet-700',
+            // Status & toggle
+            'toggle_status':                   'bg-amber-50 text-amber-700',
+            'update_status':                   'bg-amber-50 text-amber-700',
+            'approve':                         'bg-emerald-50 text-emerald-700',
+            'reject':                          'bg-pink-50 text-pink-700',
+            // Settings
+            'update_general_settings':         'bg-indigo-50 text-indigo-700',
+            'update_settings':                 'bg-indigo-50 text-indigo-700',
+            'update_api_keys':                 'bg-cyan-50 text-cyan-700',
+            'update_ai_config':                'bg-violet-50 text-violet-700',
+            // Maintenance
+            'toggle_maintenance':              'bg-yellow-50 text-yellow-700',
         };
+        // Fallback: detect by prefix
+        if (!colors[action]) {
+            if (action?.startsWith('create')) return 'bg-green-50 text-green-700';
+            if (action?.startsWith('update')) return 'bg-blue-50 text-blue-700';
+            if (action?.startsWith('delete')) return 'bg-red-50 text-red-700';
+            if (action?.startsWith('analyze') || action?.startsWith('batch')) return 'bg-violet-50 text-violet-700';
+        }
         return colors[action] || 'bg-gray-50 text-gray-700';
+    },
+
+    getActionLabel(action) {
+        const labels = {
+            // Generic CRUD
+            'create':                          'Tambah Data',
+            'update':                          'Ubah Data',
+            'delete':                          'Hapus Data',
+            'soft_delete':                     'Arsipkan Data',
+            'restore':                         'Pulihkan Data',
+            // Destination
+            'create_mongo':                    'Tambah Destinasi',
+            'update_mongo':                    'Ubah Destinasi',
+            'delete_mongo':                    'Hapus Destinasi',
+            // Report
+            'update_report_status_mongo':      'Ubah Status Laporan',
+            'delete_report_mongo':             'Hapus Laporan',
+            // Review / Sentiment
+            'analyze_review_sentiment':        'Analisis Sentimen Ulasan',
+            'batch_analyze_review_sentiment':  'Analisis Sentimen Massal',
+            // Status & toggle
+            'toggle_status':                   'Ubah Status Aktif',
+            'update_status':                   'Ubah Status',
+            'approve':                         'Setujui',
+            'reject':                          'Tolak',
+            // Settings
+            'update_general_settings':         'Ubah Pengaturan Umum',
+            'update_settings':                 'Ubah Pengaturan',
+            'update_api_keys':                 'Ubah API Keys',
+            'update_ai_config':                'Ubah Konfigurasi AI',
+            // Maintenance
+            'toggle_maintenance':              'Toggle Mode Pemeliharaan',
+        };
+        // Fallback: humanize the raw action string
+        return labels[action] || (action ? action.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '-');
     }
 }" x-cloak>
 
@@ -170,15 +229,16 @@
 </div>
 
 <!-- Filter Bar -->
-<div class="bg-white rounded-[2rem] border border-gray-100 p-6 mb-8 shadow-sm">
-    <form method="GET" action="{{ route('admin.settings.audit-logs') }}" class="space-y-4" id="audit-filter-form">
+<div class="bg-white rounded-[2rem] border border-gray-100 p-8 mb-8 shadow-sm">
+    <form method="GET" action="{{ route('admin.settings.audit-logs') }}" class="space-y-6" id="audit-filter-form">
         <input type="hidden" name="sort_by" value="{{ request('sort_by', 'created_at') }}">
         <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {{-- Kata Kunci --}}
-            <div class="flex flex-col gap-1.5">
-                <div class="flex items-center gap-1.5">
+        <!-- Row 1: Search, Action, Module -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- Kata Kunci Search --}}
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Kata Kunci</span>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -198,51 +258,21 @@
                     </div>
                 </div>
                 <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-4">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                         <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </span>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="IP address atau Entity ID..."
-                        class="w-full pl-12 pr-4 py-2.5 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-300 font-medium">
+                        class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar outline-none text-sm shadow-sm placeholder-gray-400 font-medium transition-all">
                 </div>
-            </div>
-
-            {{-- Admin Filter --}}
-            <div class="flex flex-col gap-1.5">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Admin</span>
-                    <div class="relative group cursor-pointer inline-flex items-center">
-                        <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
-                            <div class="space-y-2">
-                                <div>
-                                    <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
-                                    <p class="text-slate-200 font-normal">Menampilkan aktivitas yang hanya dilakukan oleh administrator tertentu.</p>
-                                </div>
-                                <div class="pt-1.5 border-t border-slate-800">
-                                    <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Digunakan Di</span>
-                                    <p class="text-slate-200 font-normal">Pemfilteran pencarian log audit.</p>
-                                </div>
-                            </div>
-                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
-                        </div>
-                    </div>
-                </div>
-                <select name="admin_id" onchange="this.form.submit()"
-                    class="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-sidebar/10">
-                    <option value="">Semua Admin</option>
-                    @foreach($admins as $admin)
-                        <option value="{{ $admin->id }}" @selected(request('admin_id') == $admin->id)>{{ $admin->name }}</option>
-                    @endforeach
-                </select>
             </div>
 
             {{-- Action Filter --}}
-            <div class="flex flex-col gap-1.5">
-                <div class="flex items-center gap-1.5">
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Tindakan</span>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans font-sans">
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
@@ -258,27 +288,52 @@
                     </div>
                 </div>
                 <select name="action" onchange="this.form.submit()"
-                    class="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-sidebar/10">
+                    class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:border-sidebar transition-all focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236B7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat pr-10">
                     <option value="">Semua Tindakan</option>
+                    @php
+                        $filterActionLabels = [
+                            'create'                          => 'Tambah Data',
+                            'update'                          => 'Ubah Data',
+                            'delete'                          => 'Hapus Data',
+                            'soft_delete'                     => 'Arsipkan Data',
+                            'restore'                         => 'Pulihkan Data',
+                            'create_mongo'                    => 'Tambah Destinasi',
+                            'update_mongo'                    => 'Ubah Destinasi',
+                            'delete_mongo'                    => 'Hapus Destinasi',
+                            'update_report_status_mongo'      => 'Ubah Status Laporan',
+                            'delete_report_mongo'             => 'Hapus Laporan',
+                            'analyze_review_sentiment'        => 'Analisis Sentimen Ulasan',
+                            'batch_analyze_review_sentiment'  => 'Analisis Sentimen Massal',
+                            'toggle_status'                   => 'Ubah Status Aktif',
+                            'update_status'                   => 'Ubah Status',
+                            'approve'                         => 'Setujui',
+                            'reject'                          => 'Tolak',
+                            'update_general_settings'         => 'Ubah Pengaturan Umum',
+                            'update_settings'                 => 'Ubah Pengaturan',
+                            'update_api_keys'                 => 'Ubah API Keys',
+                            'update_ai_config'                => 'Ubah Konfigurasi AI',
+                            'toggle_maintenance'              => 'Toggle Mode Pemeliharaan',
+                        ];
+                    @endphp
                     @foreach($actions->filter(fn($a) => !empty($a)) as $action)
                         <option value="{{ $action }}" @selected(request('action') === $action)>
-                            {{ ucfirst(str_replace('_', ' ', $action)) }}
+                            {{ $filterActionLabels[$action] ?? ucwords(str_replace('_', ' ', $action)) }}
                         </option>
                     @endforeach
                 </select>
             </div>
 
-            {{-- Entity Type Filter --}}
-            <div class="flex flex-col gap-1.5">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Entitas</span>
+            {{-- Module Filter --}}
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Modul</span>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
-                                    <p class="text-slate-200 font-normal">Memfilter log audit berdasarkan tipe data/model entitas yang dimanipulasi.</p>
+                                    <p class="text-slate-200 font-normal">Memfilter log audit berdasarkan modul sistem yang dimanipulasi.</p>
                                 </div>
                                 <div class="pt-1.5 border-t border-slate-800">
                                     <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Digunakan Di</span>
@@ -289,28 +344,35 @@
                         </div>
                     </div>
                 </div>
-                <select name="entity_type" onchange="this.form.submit()"
-                    class="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-sidebar/10">
-                    <option value="">Semua Entitas</option>
+                <select name="module" onchange="this.form.submit()"
+                    class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:border-sidebar transition-all focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236B7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat pr-10">
+                    <option value="">Semua Modul</option>
                     @foreach($entityTypes->filter(fn($t) => !empty($t)) as $type)
-                        <option value="{{ $type }}" @selected(request('entity_type') === $type)>
+                        <option value="{{ $type }}" @selected(request('module') === $type)>
                             {{ ucfirst(str_replace('_', ' ', $type)) }}
                         </option>
                     @endforeach
                 </select>
             </div>
+        </div>
 
-            {{-- Rentang Tanggal --}}
-            <div class="flex flex-col gap-1.5 sm:col-span-2">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Rentang Tanggal</span>
+        <!-- Row 2: Period, Display, Reset -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+
+            {{-- Periode Waktu --}}
+            <div class="lg:col-span-7 flex flex-col gap-2" x-data="{ 
+                dateRange: '{{ request('date_range', '') }}',
+                showCustom: {{ request('date_range') === 'custom' ? 'true' : 'false' }}
+            }">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Periode Waktu</span>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
                                     <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Tujuan</span>
-                                    <p class="text-slate-200 font-normal">Membatasi penayangan log hanya dalam batas awal (dari) dan batas akhir (hingga) tanggal tertentu.</p>
+                                    <p class="text-slate-200 font-normal">Membatasi penayangan log berdasarkan periode waktu tertentu dengan pilihan preset atau rentang kustom.</p>
                                 </div>
                                 <div class="pt-1.5 border-t border-slate-800">
                                     <span class="block font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5 font-sans">Digunakan Di</span>
@@ -321,17 +383,35 @@
                         </div>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" onchange="this.form.submit()"
-                        class="w-full px-4 py-2 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-500 font-medium focus:ring-2 focus:ring-sidebar/10">
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" onchange="this.form.submit()"
-                        class="w-full px-4 py-2 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-500 font-medium focus:ring-2 focus:ring-sidebar/10">
+                <div class="grid lg:grid-cols-3 gap-3">
+                    <select name="date_range" 
+                        x-model="dateRange"
+                        @change="showCustom = ($event.target.value === 'custom'); if ($event.target.value !== 'custom') $el.form.submit();"
+                        class="lg:col-span-1 w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:border-sidebar transition-all focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236B7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat pr-10">
+                        <option value="">Semua Waktu</option>
+                        <option value="today" @selected(request('date_range') === 'today')>Hari Ini</option>
+                        <option value="yesterday" @selected(request('date_range') === 'yesterday')>Kemarin</option>
+                        <option value="last_7_days" @selected(request('date_range') === 'last_7_days')>7 Hari Terakhir</option>
+                        <option value="last_30_days" @selected(request('date_range') === 'last_30_days')>30 Hari Terakhir</option>
+                        <option value="this_month" @selected(request('date_range') === 'this_month')>Bulan Ini</option>
+                        <option value="last_month" @selected(request('date_range') === 'last_month')>Bulan Lalu</option>
+                        <option value="custom" @selected(request('date_range') === 'custom')>Rentang Kustom</option>
+                    </select>
+                    
+                    <div x-show="showCustom" x-transition class="lg:col-span-2 grid grid-cols-2 gap-3">
+                        <input type="date" name="custom_date_from" value="{{ request('custom_date_from') }}" 
+                            placeholder="Dari Tanggal"
+                            class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-500 font-medium focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar transition-all">
+                        <input type="date" name="custom_date_to" value="{{ request('custom_date_to') }}" 
+                            placeholder="Sampai Tanggal"
+                            class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-500 font-medium focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar transition-all">
+                    </div>
                 </div>
             </div>
 
             {{-- Tampilkan --}}
-            <div class="flex flex-col gap-1.5">
-                <div class="flex items-center gap-1.5">
+            <div class="lg:col-span-3 flex flex-col gap-2">
+                <div class="flex items-center gap-2">
                     <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Tampilkan</span>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -351,22 +431,30 @@
                     </div>
                 </div>
                 <select name="per_page" onchange="this.form.submit()"
-                    class="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-bold focus:ring-2 focus:ring-sidebar/10 cursor-pointer">
+                    class="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-sm shadow-sm text-gray-600 font-medium cursor-pointer hover:border-sidebar transition-all focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236B7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat pr-10">
                     @foreach([10, 25, 50, 100] as $val)
                         <option value="{{ $val }}" @selected(request('per_page', 25) == $val)>{{ $val }} Baris</option>
                     @endforeach
                 </select>
             </div>
 
-            {{-- Reset Button --}}
-            <div class="flex items-end">
-                @if(request()->anyFilled(['search', 'admin_id', 'action', 'entity_type', 'date_from', 'date_to']))
-                    <a href="{{ route('admin.settings.audit-logs') }}"
-                        class="w-full text-center py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-2xl text-sm transition-colors border border-red-100 shadow-sm flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        Reset Filter
-                    </a>
-                @endif
+            {{-- Tombol Aksi --}}
+            <div class="lg:col-span-2 flex flex-col gap-2">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest opacity-0 pointer-events-none">Aksi</span>
+                <div class="flex gap-3">
+                    @if(request()->anyFilled(['search', 'action', 'module', 'date_range', 'custom_date_from', 'custom_date_to']))
+                        <a href="{{ route('admin.settings.audit-logs') }}"
+                            class="flex-1 text-center py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-2xl text-sm transition-all border border-red-200 shadow-sm flex items-center justify-center gap-2 hover:shadow-md">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            Reset
+                        </a>
+                    @endif
+                    <button type="submit" x-show="$el.form.date_range.value === 'custom'" x-cloak
+                        class="flex-1 py-3 bg-sidebar hover:bg-sidebar-dark text-white font-bold rounded-2xl text-sm transition-all shadow-sm flex items-center justify-center gap-2 hover:shadow-md">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        Terapkan
+                    </button>
+                </div>
             </div>
         </div>
     </form>
@@ -402,19 +490,67 @@
                 @forelse($logs as $log)
                     @php
                         $actionColors = [
-                            'create'             => 'bg-green-50 text-green-700',
-                            'update'             => 'bg-blue-50 text-blue-700',
-                            'delete'             => 'bg-red-50 text-red-700',
-                            'soft_delete'        => 'bg-orange-50 text-orange-700',
-                            'restore'            => 'bg-purple-50 text-purple-700',
-                            'approve'            => 'bg-emerald-50 text-emerald-700',
-                            'reject'             => 'bg-pink-50 text-pink-700',
-                            'toggle_maintenance' => 'bg-yellow-50 text-yellow-700',
-                            'update_settings'    => 'bg-indigo-50 text-indigo-700',
-                            'update_api_keys'    => 'bg-cyan-50 text-cyan-700',
-                            'update_ai_config'   => 'bg-violet-50 text-violet-700',
+                            'create'                          => 'bg-green-50 text-green-700',
+                            'update'                          => 'bg-blue-50 text-blue-700',
+                            'delete'                          => 'bg-red-50 text-red-700',
+                            'soft_delete'                     => 'bg-orange-50 text-orange-700',
+                            'restore'                         => 'bg-purple-50 text-purple-700',
+                            'create_mongo'                    => 'bg-green-50 text-green-700',
+                            'update_mongo'                    => 'bg-blue-50 text-blue-700',
+                            'delete_mongo'                    => 'bg-red-50 text-red-700',
+                            'update_report_status_mongo'      => 'bg-blue-50 text-blue-700',
+                            'delete_report_mongo'             => 'bg-red-50 text-red-700',
+                            'analyze_review_sentiment'        => 'bg-violet-50 text-violet-700',
+                            'batch_analyze_review_sentiment'  => 'bg-violet-50 text-violet-700',
+                            'toggle_status'                   => 'bg-amber-50 text-amber-700',
+                            'update_status'                   => 'bg-amber-50 text-amber-700',
+                            'approve'                         => 'bg-emerald-50 text-emerald-700',
+                            'reject'                          => 'bg-pink-50 text-pink-700',
+                            'update_general_settings'         => 'bg-indigo-50 text-indigo-700',
+                            'update_settings'                 => 'bg-indigo-50 text-indigo-700',
+                            'update_api_keys'                 => 'bg-cyan-50 text-cyan-700',
+                            'update_ai_config'                => 'bg-violet-50 text-violet-700',
+                            'toggle_maintenance'              => 'bg-yellow-50 text-yellow-700',
                         ];
-                        $color = $actionColors[$log->action] ?? 'bg-gray-50 text-gray-700';
+                        $actionLabels = [
+                            'create'                          => 'Tambah Data',
+                            'update'                          => 'Ubah Data',
+                            'delete'                          => 'Hapus Data',
+                            'soft_delete'                     => 'Arsipkan Data',
+                            'restore'                         => 'Pulihkan Data',
+                            'create_mongo'                    => 'Tambah Destinasi',
+                            'update_mongo'                    => 'Ubah Destinasi',
+                            'delete_mongo'                    => 'Hapus Destinasi',
+                            'update_report_status_mongo'      => 'Ubah Status Laporan',
+                            'delete_report_mongo'             => 'Hapus Laporan',
+                            'analyze_review_sentiment'        => 'Analisis Sentimen Ulasan',
+                            'batch_analyze_review_sentiment'  => 'Analisis Sentimen Massal',
+                            'toggle_status'                   => 'Ubah Status Aktif',
+                            'update_status'                   => 'Ubah Status',
+                            'approve'                         => 'Setujui',
+                            'reject'                          => 'Tolak',
+                            'update_general_settings'         => 'Ubah Pengaturan Umum',
+                            'update_settings'                 => 'Ubah Pengaturan',
+                            'update_api_keys'                 => 'Ubah API Keys',
+                            'update_ai_config'                => 'Ubah Konfigurasi AI',
+                            'toggle_maintenance'              => 'Toggle Mode Pemeliharaan',
+                        ];
+                        // Fallback color by prefix
+                        $rawAction = $log->action ?? '';
+                        if (isset($actionColors[$rawAction])) {
+                            $color = $actionColors[$rawAction];
+                        } elseif (str_starts_with($rawAction, 'create')) {
+                            $color = 'bg-green-50 text-green-700';
+                        } elseif (str_starts_with($rawAction, 'update')) {
+                            $color = 'bg-blue-50 text-blue-700';
+                        } elseif (str_starts_with($rawAction, 'delete')) {
+                            $color = 'bg-red-50 text-red-700';
+                        } elseif (str_starts_with($rawAction, 'analyze') || str_starts_with($rawAction, 'batch')) {
+                            $color = 'bg-violet-50 text-violet-700';
+                        } else {
+                            $color = 'bg-gray-50 text-gray-700';
+                        }
+                        $label = $actionLabels[$rawAction] ?? ucwords(str_replace('_', ' ', $rawAction));
                     @endphp
                     <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
                         <td class="px-10 py-6">
@@ -434,7 +570,7 @@
                         </td>
                         <td class="px-10 py-6">
                             <span class="px-3 py-1.5 {{ $color }} rounded-lg text-[11px] font-bold uppercase tracking-wider">
-                                {{ ucfirst(str_replace('_', ' ', $log->action)) }}
+                                {{ $label }}
                             </span>
                         </td>
                         <td class="px-10 py-6">
@@ -468,30 +604,10 @@
     </div>
 
     <!-- Pagination -->
-    @if($logs->hasPages())
-    <div class="px-8 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
-        <p class="text-[13px] text-gray-400 font-medium">
-            Menampilkan {{ $logs->firstItem() }}-{{ $logs->lastItem() }} dari {{ number_format($logs->total()) }} log
-        </p>
-        <div class="flex items-center gap-2">
-            @if($logs->onFirstPage())
-                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Prev</span>
-            @else
-                <a href="{{ $logs->previousPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-sidebar hover:text-white rounded-lg transition-all">Prev</a>
-            @endif
-
-            <div class="flex items-center gap-1">
-                @foreach($logs->getUrlRange(max(1, $logs->currentPage()-1), min($logs->lastPage(), $logs->currentPage()+1)) as $page => $url)
-                    <a href="{{ $url }}" class="w-9 h-9 flex items-center justify-center text-[13px] font-bold {{ $page == $logs->currentPage() ? 'bg-sidebar text-white shadow-lg shadow-sidebar/30' : 'text-gray-500 hover:bg-gray-100' }} rounded-lg transition-all">{{ $page }}</a>
-                @endforeach
-            </div>
-
-            @if($logs->hasMorePages())
-                <a href="{{ $logs->nextPageUrl() }}" class="px-4 py-2 text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-sidebar hover:text-white rounded-lg transition-all">Next</a>
-            @else
-                <span class="px-4 py-2 text-[13px] font-bold text-gray-300 bg-gray-50 rounded-lg cursor-not-allowed">Next</span>
-            @endif
-        </div>
+    @if(isset($logs) && method_exists($logs, 'links'))
+    <div class="px-10 py-6 border-t border-gray-50 flex items-center justify-between bg-white">
+        <div class="text-gray-400 text-sm font-medium">Menampilkan {{ $logs->firstItem() }}-{{ $logs->lastItem() }} dari {{ number_format($logs->total()) }} Log</div>
+        <div>{{ $logs->appends(request()->query())->links('vendor.pagination.tailwind-custom') }}</div>
     </div>
     @endif
 </div>
@@ -562,7 +678,7 @@
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Action</p>
                         <span class="inline-block px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider"
                               :class="getActionColor(detailLog?.action)"
-                              x-text="detailLog?.action ? detailLog.action.replace(/_/g, ' ') : '-'"></span>
+                              x-text="getActionLabel(detailLog?.action)"></span>
                     </div>
                     <div class="p-4 bg-gray-50 rounded-2xl">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Entity Type</p>
@@ -572,9 +688,29 @@
 
                 <!-- Entity ID -->
                 <template x-if="detailLog?.entity_id">
-                    <div class="p-4 bg-gray-50 rounded-2xl">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Entity ID</p>
-                        <p class="text-sm font-mono font-bold text-gray-700" x-text="detailLog?.entity_id"></p>
+                    <div class="p-4 bg-gray-50 rounded-2xl flex flex-col gap-1.5">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Entity</p>
+                        
+                        <!-- friendly resolved name -->
+                        <template x-if="detailLog?.resolved_entity_name">
+                            <p class="text-sm font-bold text-gray-800" x-text="detailLog.resolved_entity_name"></p>
+                        </template>
+                        
+                        <!-- raw entity ID -->
+                        <p class="text-xs font-mono text-gray-400 font-bold" x-text="'ID: ' + detailLog.entity_id"></p>
+                        
+                        <!-- action link -->
+                        <template x-if="detailLog?.resolved_entity_url">
+                            <div class="mt-1">
+                                <a :href="detailLog.resolved_entity_url" 
+                                   class="inline-flex items-center gap-2 px-4 py-2 bg-sidebar text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-sidebar/10 hover:shadow-md hover:bg-opacity-90">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                    Buka Halaman Detail
+                                </a>
+                            </div>
+                        </template>
                     </div>
                 </template>
 

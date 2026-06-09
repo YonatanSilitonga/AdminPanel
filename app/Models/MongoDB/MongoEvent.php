@@ -48,9 +48,6 @@ class MongoEvent extends Model
         'start_date'  => 'datetime',
         'end_date'    => 'datetime',
         'is_active'   => 'boolean',
-        'tags'        => 'array',
-        'schedule'    => 'array',
-        'images'      => 'array',
         'created_at'  => 'datetime',
         'updated_at'  => 'datetime',
     ];

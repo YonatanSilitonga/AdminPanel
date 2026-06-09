@@ -47,7 +47,11 @@ class Admin extends Authenticatable
      */
     public function hasRole(string $role): bool
     {
-        return $this->role && $this->role->name === $role;
+        $cacheKey = 'admin_role_' . $this->_id;
+        $roleName = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(5), function() {
+            return $this->role?->name;
+        });
+        return $roleName === $role;
     }
 
     /**
@@ -55,7 +59,11 @@ class Admin extends Authenticatable
      */
     public function hasAnyRole(string ...$roles): bool
     {
-        return $this->role && in_array($this->role->name, $roles);
+        $cacheKey = 'admin_role_' . $this->_id;
+        $roleName = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(5), function() {
+            return $this->role?->name;
+        });
+        return $roleName && in_array($roleName, $roles, true);
     }
 
     /**
@@ -63,8 +71,12 @@ class Admin extends Authenticatable
      */
     public function hasPermission(string $permission): bool
     {
-        if (!$this->role) return false;
-        return $this->role->permissions()->where('name', $permission)->exists();
+        $cacheKey = 'admin_permissions_' . $this->_id;
+        $userPermissions = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(5), function() {
+            if (!$this->role) return [];
+            return $this->role->permissions()->pluck('name')->toArray();
+        });
+        return in_array($permission, $userPermissions, true);
     }
 
     /**
@@ -72,10 +84,13 @@ class Admin extends Authenticatable
      */
     public function hasAllPermissions(string ...$permissions): bool
     {
-        if (!$this->role) return false;
-        $userPermissions = $this->role->permissions()->pluck('name')->toArray();
+        $cacheKey = 'admin_permissions_' . $this->_id;
+        $userPermissions = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(5), function() {
+            if (!$this->role) return [];
+            return $this->role->permissions()->pluck('name')->toArray();
+        });
         foreach ($permissions as $permission) {
-            if (!in_array($permission, $userPermissions)) {
+            if (!in_array($permission, $userPermissions, true)) {
                 return false;
             }
         }
@@ -117,7 +132,10 @@ class Admin extends Authenticatable
      */
     public function getPermissions(): array
     {
-        if (!$this->role) return [];
-        return $this->role->permissions()->pluck('name')->toArray();
+        $cacheKey = 'admin_permissions_' . $this->_id;
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(5), function() {
+            if (!$this->role) return [];
+            return $this->role->permissions()->pluck('name')->toArray();
+        });
     }
 }

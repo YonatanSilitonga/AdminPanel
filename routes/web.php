@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
-use App\Http\Controllers\Admin\DestinationGalleryController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\ReportController;
@@ -65,13 +64,6 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::patch('destinations/{destination}/status', [DestinationController::class, 'toggleStatus'])
             ->name('admin.destinations.toggle-status');
 
-        // Gallery management
-        Route::post('destinations/{destination}/gallery', [DestinationGalleryController::class, 'store'])
-            ->name('admin.gallery.store');
-        Route::delete('destinations/{destination}/gallery/{gallery}', [DestinationGalleryController::class, 'destroy'])
-            ->name('admin.gallery.destroy');
-        Route::patch('destinations/{destination}/gallery/order', [DestinationGalleryController::class, 'updateOrder'])
-            ->name('admin.gallery.order');
 
         // Facility management
         Route::post('destinations/{destination}/facilities', [FacilityController::class, 'store'])
@@ -175,6 +167,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // ============ REVIEWS (Admin + Moderator) ============
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::get('reviews/summary/stats', [ReviewController::class, 'summaryStats'])->name('admin.reviews.summary-stats');
         Route::match(['get', 'post'], 'reviews/analytics/print', [ReviewController::class, 'printAnalytics'])->name('admin.reviews.print-analytics');
         Route::get('reviews/export', [ReviewController::class, 'export'])->name('admin.reviews.export');
         Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('admin.reviews.show');
@@ -210,10 +203,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::middleware('admin.role:admin,super_admin')->group(function () {
         Route::get('recommendations', [RecommendationLogController::class, 'index'])
             ->name('admin.recommendations.index');
-        Route::get('recommendations/{log}', [RecommendationLogController::class, 'show'])
-            ->name('admin.recommendations.show');
         Route::get('recommendations/export', [RecommendationLogController::class, 'export'])
             ->name('admin.recommendations.export');
+        Route::get('recommendations/{log}', [RecommendationLogController::class, 'show'])
+            ->name('admin.recommendations.show');
     });
 
     // ============ CHATBOT LOGS (Admin + Moderator) ============

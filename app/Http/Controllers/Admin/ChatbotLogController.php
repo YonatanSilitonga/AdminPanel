@@ -54,6 +54,10 @@ class ChatbotLogController extends BaseAdminController
             });
         }
 
+        // IMPORTANT: Filter out sessions without messages to avoid showing empty sessions
+        // Uses MongoDB $expr operator to check array size > 0
+        $query->whereRaw(['messages' => ['$exists' => true, '$not' => ['$size' => 0]]]);
+
         // Advanced Sorting
         $sortColumn = $request->get('sort_by', 'updated_at');
         $sortOrder = $request->get('sort_order', 'desc');
@@ -146,6 +150,10 @@ class ChatbotLogController extends BaseAdminController
                     }
                 });
             }
+
+            // IMPORTANT: Filter out sessions without messages to keep export clean
+            // Uses MongoDB $expr operator to check array size > 0
+            $query->whereRaw(['messages' => ['$exists' => true, '$not' => ['$size' => 0]]]);
 
             $sessions = $query->with('user')->get();
 

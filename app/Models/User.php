@@ -34,6 +34,10 @@ class User extends Authenticatable
         'password',
         'is_active',
         'role', // Single role: member/standard
+        'suspend_category',
+        'suspend_reason',
+        'suspended_at',
+        'suspended_by',
     ];
 
     /**
@@ -57,6 +61,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'suspended_at' => 'datetime',
         ];
     }
 }

@@ -53,19 +53,19 @@ class BeritaPromosiController extends BaseAdminController
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'judul' => 'required|string|max:255',
-            'tipe' => 'required|in:BERITA,PROMO',
-            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
-            'images' => 'nullable|array',
-            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string',
-            'start_time' => 'nullable|integer|min:0',
-            'end_time' => 'nullable|integer|min:0',
-            'konten' => 'required|string',
-            'tanggal_tayang' => 'required|date',
-        ]);
-
         try {
+            $validated = $request->validate([
+                'judul' => 'required|string|max:255',
+                'tipe' => 'required|in:BERITA,PROMO',
+                'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string',
+                'start_time' => 'nullable|integer|min:0',
+                'end_time' => 'nullable|integer|min:0',
+                'konten' => 'required|string',
+                'tanggal_tayang' => 'required|date',
+            ]);
+
             $data = $request->except(['images', 'thumbnail', 'start_time', 'end_time', '_token', 'is_active']);
             $currentMedia = [];
 
@@ -194,6 +194,15 @@ class BeritaPromosiController extends BaseAdminController
             }
 
             return redirect()->back()->with('success', 'Berhasil Ditambahkan');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -247,21 +256,21 @@ class BeritaPromosiController extends BaseAdminController
 
     public function update(Request $request, string $id)
     {
-        $bp = MongoBeritaPromosi::findOrFail($id);
-
-        $validated = $request->validate([
-            'judul' => 'required|string|max:255',
-            'tipe' => 'required|in:BERITA,PROMO',
-            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
-            'images' => 'nullable|array',
-            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string',
-            'start_time' => 'nullable|integer|min:0',
-            'end_time' => 'nullable|integer|min:0',
-            'konten' => 'required|string',
-            'tanggal_tayang' => 'required|date',
-        ]);
-
         try {
+            $bp = MongoBeritaPromosi::findOrFail($id);
+
+            $validated = $request->validate([
+                'judul' => 'required|string|max:255',
+                'tipe' => 'required|in:BERITA,PROMO',
+                'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:51200' : 'string',
+                'start_time' => 'nullable|integer|min:0',
+                'end_time' => 'nullable|integer|min:0',
+                'konten' => 'required|string',
+                'tanggal_tayang' => 'required|date',
+            ]);
+
             $data = $request->except(['images', 'thumbnail', 'start_time', 'end_time', '_token', '_method', 'is_active', 'delete_images']);
             $deleteImages = $request->input('delete_images', []);
             $existingMedia = $bp->images ?? [];
@@ -398,6 +407,15 @@ class BeritaPromosiController extends BaseAdminController
             }
 
             return redirect()->back()->with('success', 'Berhasil Diperbarui');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([

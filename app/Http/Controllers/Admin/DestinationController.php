@@ -53,7 +53,20 @@ class DestinationController extends BaseAdminController
         $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
         // --- Trending Logic (Only if tab is trending) ---
-        $trendingData = [];
+        $trendingData = [
+            'mode' => null,
+            'trendingDestinations' => collect(),
+            'stats' => [
+                'total_destinations' => 0,
+                'total_wishlist' => 0,
+                'total_review' => 0,
+                'destinations_increase' => 0,
+                'wishlist_increase' => 0,
+                'review_increase' => 0,
+            ],
+            'trendChartData' => ['labels' => [], 'data' => []],
+        ];
+        
         if ($activeTab === 'trending') {
             $mode = \App\Models\AppSetting::get('trending_mode', 'manual');
             $manualList = \App\Models\AppSetting::get('trending_list', []);
@@ -115,40 +128,40 @@ class DestinationController extends BaseAdminController
         $lastWeekEnd   = $now->copy()->subWeek()->endOfWeek();
 
         // --- Total Reviews (collection: ratings) ---
-        $totalReview = MongoReview::count();
+        $totalReview = (int) MongoReview::count();
 
-        $reviewThisWeek = MongoReview::where('created_at', '>=', $thisWeekStart)->count();
-        $reviewLastWeek = MongoReview::where('created_at', '>=', $lastWeekStart)
+        $reviewThisWeek = (int) MongoReview::where('created_at', '>=', $thisWeekStart)->count();
+        $reviewLastWeek = (int) MongoReview::where('created_at', '>=', $lastWeekStart)
                             ->where('created_at', '<=', $lastWeekEnd)->count();
         $reviewIncrease = $reviewLastWeek > 0
-            ? (int) round((($reviewThisWeek - $reviewLastWeek) / $reviewLastWeek) * 100)
+            ? (int) round((($reviewThisWeek - $reviewLastWeek) / (float) $reviewLastWeek) * 100)
             : ($reviewThisWeek > 0 ? 100 : 0);
 
         // --- Total Wishlist (collection: favorites) ---
-        $totalWishlist = DB::connection('mongodb')
+        $totalWishlist = (int) DB::connection('mongodb')
                             ->table('favorites')->count();
 
-        $wishlistThisWeek = DB::connection('mongodb')
+        $wishlistThisWeek = (int) DB::connection('mongodb')
                             ->table('favorites')
                             ->where('created_at', '>=', $thisWeekStart)->count();
-        $wishlistLastWeek = DB::connection('mongodb')
+        $wishlistLastWeek = (int) DB::connection('mongodb')
                             ->table('favorites')
                             ->where('created_at', '>=', $lastWeekStart)
                             ->where('created_at', '<=', $lastWeekEnd)->count();
         $wishlistIncrease = $wishlistLastWeek > 0
-            ? (int) round((($wishlistThisWeek - $wishlistLastWeek) / $wishlistLastWeek) * 100)
+            ? (int) round((($wishlistThisWeek - $wishlistLastWeek) / (float) $wishlistLastWeek) * 100)
             : ($wishlistThisWeek > 0 ? 100 : 0);
 
         // --- Total Active Destinations sebagai pengganti search ---
-        $totalActive = MongoDestination::where('is_active', true)->count();
+        $totalActive = (int) MongoDestination::where('is_active', true)->count();
 
-        $activeThisWeek = MongoDestination::where('is_active', true)
+        $activeThisWeek = (int) MongoDestination::where('is_active', true)
                             ->where('created_at', '>=', $thisWeekStart)->count();
-        $activeLastWeek = MongoDestination::where('is_active', true)
+        $activeLastWeek = (int) MongoDestination::where('is_active', true)
                             ->where('created_at', '>=', $lastWeekStart)
                             ->where('created_at', '<=', $lastWeekEnd)->count();
         $activeIncrease = $activeLastWeek > 0
-            ? (int) round((($activeThisWeek - $activeLastWeek) / $activeLastWeek) * 100)
+            ? (int) round((($activeThisWeek - $activeLastWeek) / (float) $activeLastWeek) * 100)
             : ($activeThisWeek > 0 ? 100 : 0);
 
         return [
@@ -201,33 +214,33 @@ class DestinationController extends BaseAdminController
      */
     public function store(Request $request)
     {
-        Log::info('Destination store attempt', $request->except(['thumbnail', 'images']));
-        
-        $validated = $request->validate([
-            'name'          => 'required|string|min:3|max:200',
-            'description'   => 'required|string|min:10|max:5000',
-            'location'      => 'required|string|max:500',
-            'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
-            'latitude'      => 'nullable|numeric|between:-90,90',
-            'longitude'     => 'nullable|numeric|between:-180,180',
-            'facilities'    => 'nullable|string',
-            'thumbnail'     => 'required',
-            'images.*'      => 'nullable',
-            'opening_hours' => 'nullable|string|max:255',
-            'ticket_price'  => 'nullable|string|max:255',
-            'best_time'     => 'nullable|string|max:255',
-            'start_time'    => 'nullable|integer|min:0',
-        ], [
-            'name.required'        => 'Nama destinasi wajib diisi.',
-            'name.min'             => 'Nama destinasi minimal 3 karakter.',
-            'description.required' => 'Deskripsi wajib diisi.',
-            'description.min'      => 'Deskripsi minimal 10 karakter.',
-            'location.required'    => 'Lokasi wajib diisi.',
-            'category.required'    => 'Kategori wajib dipilih.',
-            'thumbnail.required'   => 'Media utama (thumbnail) wajib diunggah.',
-        ]);
-
         try {
+            Log::info('Destination store attempt', $request->except(['thumbnail', 'images']));
+            
+            $validated = $request->validate([
+                'name'          => 'required|string|min:3|max:200',
+                'description'   => 'required|string|min:10|max:5000',
+                'location'      => 'required|string|max:500',
+                'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
+                'latitude'      => 'nullable|numeric|between:-90,90',
+                'longitude'     => 'nullable|numeric|between:-180,180',
+                'facilities'    => 'nullable|string',
+                'thumbnail'     => 'required',
+                'images.*'      => 'nullable',
+                'opening_hours' => 'nullable|string|max:255',
+                'ticket_price'  => 'nullable|string|max:255',
+                'best_time'     => 'nullable|string|max:255',
+                'start_time'    => 'nullable|integer|min:0',
+            ], [
+                'name.required'        => 'Nama destinasi wajib diisi.',
+                'name.min'             => 'Nama destinasi minimal 3 karakter.',
+                'description.required' => 'Deskripsi wajib diisi.',
+                'description.min'      => 'Deskripsi minimal 10 karakter.',
+                'location.required'    => 'Lokasi wajib diisi.',
+                'category.required'    => 'Kategori wajib dipilih.',
+                'thumbnail.required'   => 'Media utama (thumbnail) wajib diunggah.',
+            ]);
+
             $destination = new MongoDestination();
             $destination->name = $validated['name'];
             $destination->description = $validated['description'];
@@ -307,6 +320,15 @@ class DestinationController extends BaseAdminController
                 ->route('admin.destinations.index')
                 ->with('success', 'Destinasi berhasil ditambahkan');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error creating destination in Mongo: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             if ($request->ajax() || $request->wantsJson()) {
@@ -350,33 +372,33 @@ class DestinationController extends BaseAdminController
      */
     public function update(Request $request, string $id)
     {
-        $destination = MongoDestination::findOrFail($id);
-
-        $validated = $request->validate([
-            'name'          => 'required|string|min:3|max:200',
-            'description'   => 'required|string|min:10|max:5000',
-            'location'      => 'required|string|max:500',
-            'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
-            'latitude'      => 'nullable|numeric|between:-90,90',
-            'longitude'     => 'nullable|numeric|between:-180,180',
-            'facilities'    => 'nullable|string',
-            'thumbnail'     => 'nullable',
-            'images.*'      => 'nullable',
-            'opening_hours' => 'nullable|string|max:255',
-            'ticket_price'  => 'nullable|string|max:255',
-            'best_time'     => 'nullable|string|max:255',
-            'start_time'    => 'nullable|integer|min:0',
-            'end_time'      => 'nullable|integer|min:0',
-        ], [
-            'name.required'        => 'Nama destinasi wajib diisi.',
-            'name.min'             => 'Nama destinasi minimal 3 karakter.',
-            'description.required' => 'Deskripsi wajib diisi.',
-            'description.min'      => 'Deskripsi minimal 10 karakter.',
-            'location.required'    => 'Lokasi wajib diisi.',
-            'category.required'    => 'Kategori wajib dipilih.',
-        ]);
-
         try {
+            $destination = MongoDestination::findOrFail($id);
+
+            $validated = $request->validate([
+                'name'          => 'required|string|min:3|max:200',
+                'description'   => 'required|string|min:10|max:5000',
+                'location'      => 'required|string|max:500',
+                'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
+                'latitude'      => 'nullable|numeric|between:-90,90',
+                'longitude'     => 'nullable|numeric|between:-180,180',
+                'facilities'    => 'nullable|string',
+                'thumbnail'     => 'nullable',
+                'images.*'      => 'nullable',
+                'opening_hours' => 'nullable|string|max:255',
+                'ticket_price'  => 'nullable|string|max:255',
+                'best_time'     => 'nullable|string|max:255',
+                'start_time'    => 'nullable|integer|min:0',
+                'end_time'      => 'nullable|integer|min:0',
+            ], [
+                'name.required'        => 'Nama destinasi wajib diisi.',
+                'name.min'             => 'Nama destinasi minimal 3 karakter.',
+                'description.required' => 'Deskripsi wajib diisi.',
+                'description.min'      => 'Deskripsi minimal 10 karakter.',
+                'location.required'    => 'Lokasi wajib diisi.',
+                'category.required'    => 'Kategori wajib dipilih.',
+            ]);
+
             $oldValues = $destination->toArray();
 
             $destination->name = $validated['name'];
@@ -482,6 +504,15 @@ class DestinationController extends BaseAdminController
                 ->route('admin.destinations.index')
                 ->with('success', 'Destinasi berhasil diperbarui');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error updating destination in Mongo: ' . $e->getMessage());
 

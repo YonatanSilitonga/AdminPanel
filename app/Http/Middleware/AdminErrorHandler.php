@@ -103,6 +103,7 @@ class AdminErrorHandler
                     return response()->view('admin.errors.500', [
                         'message' => 'An unexpected error occurred.',
                         'code' => $response->getStatusCode(),
+                        'errors' => new \Illuminate\Support\ViewErrorBag(),
                     ], 500);
             }
 
@@ -126,6 +127,7 @@ class AdminErrorHandler
 
             return response()->view('admin.errors.500', [
                 'message' => 'An unexpected error occurred.',
+                'errors' => new \Illuminate\Support\ViewErrorBag(),
             ], 500);
         }
     }

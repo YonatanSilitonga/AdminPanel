@@ -37,8 +37,9 @@
 
 @section('content')
 <div x-data="{
-    showCreateModal: {{ $errors->any() && !old('_method') ? 'true' : 'false' }},
-    showEditModal: {{ $errors->any() && old('_method') == 'PUT' ? 'true' : 'false' }},
+    errors: {},
+    showCreateModal: {{ (!empty($errors) && $errors->any() && !old('_method')) ? 'true' : 'false' }},
+    showEditModal: {{ (!empty($errors) && $errors->any() && old('_method') == 'PUT') ? 'true' : 'false' }},
     showViewModal: false,
     loading: false,
     viewingItem: null,
@@ -49,7 +50,15 @@
     showLightbox: false,
     lightboxImage: '',
     lightboxMediaType: 'image',
-    editingItem: null,
+    editingItem: {
+        thumbnail: '',
+        thumbnail_url: '',
+        images_data: [],
+        video_duration: 10,
+        video_autoplay: true,
+        video_loop: true,
+        video_wait_until_ready: true,
+    },
     deletedImages: [],
     activeViewImageIndex: 0,
     videoStartTime: 0,
@@ -89,12 +98,17 @@
     async openEditModal(id) {
         if (!id) return;
         this.loading = true;
+        this.errors = {};
         try {
             const response = await fetch(`/admin/berita-promosi/${id}/edit`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
             const data = await window.safeParseJSON(response);
             this.editingItem = data;
+            this.editingItem.video_duration = this.editingItem.video_duration ?? 10;
+            this.editingItem.video_autoplay = this.editingItem.video_autoplay ?? true;
+            this.editingItem.video_loop = this.editingItem.video_loop ?? true;
+            this.editingItem.video_wait_until_ready = this.editingItem.video_wait_until_ready ?? true;
             this.deletedImages = [];
             
             // Populate form
@@ -296,20 +310,25 @@
                     resolve(JSON.parse(xhr.responseText));
                 } else {
                     try {
-                        const errRes = JSON.parse(xhr.responseText);
-                        reject(new Error(errRes.message || 'Gagal menyimpan data ke server'));
-                    } catch(e) {
-                        reject(new Error('Gagal menyimpan data ke server (Status: ' + xhr.status + ')'));
-                    }
+                    const errRes = JSON.parse(xhr.responseText);
+                    errRes.status = xhr.status;
+                    reject(errRes);
+                } catch(e) {
+                    reject({
+                        message: 'Gagal menyimpan data ke server (Status: ' + xhr.status + ')',
+                        errors: null
+                    });
+                }
                 }
             };
-            xhr.onerror = () => reject(new Error('Koneksi terputus ke server lokal.'));
+            xhr.onerror = () => reject({ message: 'Koneksi terputus ke server lokal.', errors: null });
             xhr.send(formData);
         });
     },
 
     async submitCreate() {
         this.loading = true;
+        this.errors = {};
         const form = document.getElementById('createForm');
         const thumbnailInput = document.getElementById('create_thumbnail');
         const imagesInput = document.getElementById('create_images');
@@ -369,6 +388,9 @@
                     localStorage.setItem('pending_success_toast', result.message || 'Berita/promosi berhasil ditambahkan');
                     window.location.reload();
                 } else {
+                    if (response.status === 422 && result && result.errors) {
+                        throw result;
+                    }
                     window.showAlert((result && result.message) || 'Gagal menyimpan berita/promosi', 'Gagal', 'error');
                 }
             } else {
@@ -388,17 +410,16 @@
                     localStorage.setItem('pending_success_toast', result.message || 'Berita/promosi berhasil ditambahkan');
                     window.location.reload();
                 } else {
+                    if (result.status === 422 && result.errors) {
+                        throw result;
+                    }
                     window.showAlert(result.message || 'Gagal menyimpan berita/promosi', 'Gagal', 'error');
                 }
             }
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
-                window.showAlert(error.message, 'Error', 'error');
-            } else {
-                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
-            }
+            window.handleServerError(error, this);
         } finally {
             this.loading = false;
             this.showUploadProgress = false;
@@ -412,6 +433,7 @@
         }
 
         this.loading = true;
+        this.errors = {};
         const form = document.getElementById('editForm');
         const thumbnailInput = document.getElementById('edit_thumbnail');
         const imagesInput = document.getElementById('edit_images');
@@ -472,6 +494,9 @@
                     localStorage.setItem('pending_success_toast', result.message || 'Berita/promosi berhasil diperbarui');
                     window.location.reload();
                 } else {
+                    if (response.status === 422 && result && result.errors) {
+                        throw result;
+                    }
                     window.showAlert((result && result.message) || 'Gagal memperbarui berita/promosi', 'Gagal', 'error');
                 }
             } else {
@@ -491,17 +516,16 @@
                     localStorage.setItem('pending_success_toast', result.message || 'Berita/promosi berhasil diperbarui');
                     window.location.reload();
                 } else {
+                    if (result.status === 422 && result.errors) {
+                        throw result;
+                    }
                     window.showAlert(result.message || 'Gagal memperbarui berita/promosi', 'Gagal', 'error');
                 }
             }
         } catch (error) {
             console.error(error);
             this.showUploadProgress = false;
-            if (error.message && error.message !== 'Unexpected token < in JSON at position 0') {
-                window.showAlert(error.message, 'Error', 'error');
-            } else {
-                window.showAlert('Terjadi kesalahan saat menghubungi server.', 'Error', 'error');
-            }
+            window.handleServerError(error, this);
         } finally {
             this.loading = false;
             this.showUploadProgress = false;
@@ -611,7 +635,7 @@
         }
     }
 }">
-    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true; createPreviewUrl = ''; createFileName = '';" @open-create-modal.window="showCreateModal = true; createPreviewUrl = ''; createFileName = '';"></button>
+    <button type="button" class="hidden" data-open-create-modal @click="showCreateModal = true; createPreviewUrl = ''; createFileName = ''; errors = {};" @open-create-modal.window="showCreateModal = true; createPreviewUrl = ''; createFileName = ''; errors = {};"></button>
     <div class="mb-6"></div>
 
     <!-- Filters -->
@@ -902,16 +926,18 @@
                     <div class="space-y-5">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Judul</label>
-                            <input type="text" name="judul" value="{{ old('judul') }}" required placeholder="Masukkan judul berita atau promosi" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('judul') border-red-500 @enderror">
-                            @error('judul') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <input type="text" name="judul" value="{{ old('judul') }}" required placeholder="Masukkan judul berita atau promosi" :class="errors.judul ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm">
+                            <p x-show="errors.judul" class="text-xs text-red-500 mt-1" x-text="errors.judul ? errors.judul[0] : ''"></p>
+                            @error('judul') <p x-show="!errors.judul" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tipe</label>
-                            <select name="tipe" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm appearance-none bg-white @error('tipe') border-red-500 @enderror">
+                            <select name="tipe" required :class="errors.tipe ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm appearance-none bg-white">
                                 <option value="BERITA" {{ old('tipe') == 'BERITA' ? 'selected' : '' }}>BERITA</option>
                                 <option value="PROMO" {{ old('tipe') == 'PROMO' ? 'selected' : '' }}>PROMO</option>
                             </select>
-                            @error('tipe') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <p x-show="errors.tipe" class="text-xs text-red-500 mt-1" x-text="errors.tipe ? errors.tipe[0] : ''"></p>
+                            @error('tipe') <p x-show="!errors.tipe" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
 
                         <!-- Panduan Manajemen Foto -->
@@ -1008,13 +1034,67 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Konten</label>
-                            <textarea name="konten" required rows="4" placeholder="Tulis konten berita/promosi di sini..." class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('konten') border-red-500 @enderror">{{ old('konten') }}</textarea>
-                            @error('konten') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <textarea name="konten" required rows="4" placeholder="Tulis konten berita/promosi di sini..." :class="errors.konten ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm">{{ old('konten') }}</textarea>
+                            <p x-show="errors.konten" class="text-xs text-red-500 mt-1" x-text="errors.konten ? errors.konten[0] : ''"></p>
+                            @error('konten') <p x-show="!errors.konten" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Tayang</label>
-                            <input type="date" name="tanggal_tayang" value="{{ old('tanggal_tayang') }}" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('tanggal_tayang') border-red-500 @enderror">
-                            @error('tanggal_tayang') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <input type="date" name="tanggal_tayang" value="{{ old('tanggal_tayang') }}" required :class="errors.tanggal_tayang ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm">
+                            <p x-show="errors.tanggal_tayang" class="text-xs text-red-500 mt-1" x-text="errors.tanggal_tayang ? errors.tanggal_tayang[0] : ''"></p>
+                            @error('tanggal_tayang') <p x-show="!errors.tanggal_tayang" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Video Settings Section -->
+                        <div class="space-y-3">
+                            <h4 class="text-sm font-bold text-gray-700">Fitur Video</h4>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <!-- Durasi Video -->
+                                <div class="p-4 bg-white/85 rounded-2xl border border-gray-200">
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 pl-0.5">Durasi Video Tampil (Detik)</label>
+                                    <input type="number" name="video_duration" min="1" max="120" value="{{ old('video_duration', 10) }}" class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all">
+                                </div>
+                                <!-- Autoplay saat siap -->
+                                <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-xs">Autoplay saat siap</p>
+                                        <p class="text-[9px] text-gray-400 mt-0.5">Putar otomatis saat siap</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="video_autoplay" value="0">
+                                        <input type="checkbox" name="video_autoplay" value="1" {{ old('video_autoplay', true) ? 'checked' : '' }} class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <!-- Loop video -->
+                                <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-xs">Loop video</p>
+                                        <p class="text-[9px] text-gray-400 mt-0.5">Ulangi video terus menerus</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="video_loop" value="0">
+                                        <input type="checkbox" name="video_loop" value="1" {{ old('video_loop', true) ? 'checked' : '' }} class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                    </label>
+                                </div>
+                                <!-- Tunggu video siap -->
+                                <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-xs">Tunggu video siap</p>
+                                        <p class="text-[9px] text-gray-400 mt-0.5">Tunggu buffer sebelum diputar</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="video_wait_until_ready" value="0">
+                                        <input type="checkbox" name="video_wait_until_ready" value="1" {{ old('video_wait_until_ready', true) ? 'checked' : '' }} class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
@@ -1077,16 +1157,18 @@
                     <div class="space-y-5">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Judul</label>
-                            <input type="text" id="edit_judul" name="judul" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('judul') border-red-500 @enderror">
-                            @error('judul') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <input type="text" id="edit_judul" name="judul" required :class="errors.judul ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm">
+                            <p x-show="errors.judul" class="text-xs text-red-500 mt-1" x-text="errors.judul ? errors.judul[0] : ''"></p>
+                            @error('judul') <p x-show="!errors.judul" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tipe</label>
-                            <select id="edit_tipe" name="tipe" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm appearance-none bg-white @error('tipe') border-red-500 @enderror">
+                            <select id="edit_tipe" name="tipe" required :class="errors.tipe ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm appearance-none bg-white">
                                 <option value="BERITA">BERITA</option>
                                 <option value="PROMO">PROMO</option>
                             </select>
-                            @error('tipe') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <p x-show="errors.tipe" class="text-xs text-red-500 mt-1" x-text="errors.tipe ? errors.tipe[0] : ''"></p>
+                            @error('tipe') <p x-show="!errors.tipe" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
 
                         <!-- Panduan Manajemen Foto -->
@@ -1352,13 +1434,67 @@
 
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Konten</label>
-                            <textarea id="edit_konten" name="konten" required rows="4" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('konten') border-red-500 @enderror"></textarea>
-                            @error('konten') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <textarea id="edit_konten" name="konten" required rows="4" :class="errors.konten ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"></textarea>
+                            <p x-show="errors.konten" class="text-xs text-red-500 mt-1" x-text="errors.konten ? errors.konten[0] : ''"></p>
+                            @error('konten') <p x-show="!errors.konten" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tanggal Tayang</label>
-                            <input type="date" id="edit_tanggal" name="tanggal_tayang" required class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm @error('tanggal_tayang') border-red-500 @enderror">
-                            @error('tanggal_tayang') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                            <input type="date" id="edit_tanggal" name="tanggal_tayang" required :class="errors.tanggal_tayang ? 'border-red-500' : 'border-gray-200'" class="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm">
+                            <p x-show="errors.tanggal_tayang" class="text-xs text-red-500 mt-1" x-text="errors.tanggal_tayang ? errors.tanggal_tayang[0] : ''"></p>
+                            @error('tanggal_tayang') <p x-show="!errors.tanggal_tayang" class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Video Settings Section -->
+                        <div class="space-y-3">
+                            <h4 class="text-sm font-bold text-gray-700">Fitur Video</h4>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <!-- Durasi Video -->
+                                <div class="p-4 bg-white/85 rounded-2xl border border-gray-200">
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 pl-0.5">Durasi Video Tampil (Detik)</label>
+                                    <input type="number" name="video_duration" min="1" max="120" x-model="editingItem.video_duration" class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none transition-all">
+                                </div>
+                                <!-- Autoplay saat siap -->
+                                <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-xs">Autoplay saat siap</p>
+                                        <p class="text-[9px] text-gray-400 mt-0.5">Putar otomatis saat siap</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="video_autoplay" value="0">
+                                        <input type="checkbox" name="video_autoplay" value="1" x-model="editingItem.video_autoplay" class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <!-- Loop video -->
+                                <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-xs">Loop video</p>
+                                        <p class="text-[9px] text-gray-400 mt-0.5">Ulangi video terus menerus</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="video_loop" value="0">
+                                        <input type="checkbox" name="video_loop" value="1" x-model="editingItem.video_loop" class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                    </label>
+                                </div>
+                                <!-- Tunggu video siap -->
+                                <div class="p-4 bg-white/85 rounded-2xl flex items-center justify-between border border-gray-200">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-xs">Tunggu video siap</p>
+                                        <p class="text-[9px] text-gray-400 mt-0.5">Tunggu buffer sebelum diputar</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="video_wait_until_ready" value="0">
+                                        <input type="checkbox" name="video_wait_until_ready" value="1" x-model="editingItem.video_wait_until_ready" class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sidebar"></div>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">

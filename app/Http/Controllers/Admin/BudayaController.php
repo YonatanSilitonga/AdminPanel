@@ -93,25 +93,25 @@ class BudayaController extends BaseAdminController
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|in:Sejarah,Tradisi,Rumah Adat,Cerita Rakyat,Kuliner',
-            'category_mobile' => 'nullable|string|max:100',
-            'location' => 'required|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'description' => 'required|string',
-            'is_active' => 'boolean',
-            'video_duration' => 'nullable|integer|min:1|max:600',
-            'video_autoplay' => 'nullable|boolean',
-            'video_loop' => 'nullable|boolean',
-            'video_wait_until_ready' => 'nullable|boolean',
-            'images' => 'nullable|array',
-            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string',
-            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
-        ]);
-
         try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'category' => 'required|string|in:Sejarah,Tradisi,Rumah Adat,Cerita Rakyat,Kuliner',
+                'category_mobile' => 'nullable|string|max:100',
+                'location' => 'required|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'description' => 'required|string',
+                'is_active' => 'boolean',
+                'video_duration' => 'nullable|integer|min:1|max:600',
+                'video_autoplay' => 'nullable|boolean',
+                'video_loop' => 'nullable|boolean',
+                'video_wait_until_ready' => 'nullable|boolean',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string',
+                'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
+            ]);
+
             $validated['is_active'] = $request->has('is_active');
             $validated['video_autoplay'] = $request->has('video_autoplay');
             $validated['video_loop'] = $request->has('video_loop');
@@ -168,6 +168,15 @@ class BudayaController extends BaseAdminController
             $this->clearDashboardCache();
             return redirect()->route('admin.budaya.index')
                 ->with('success', 'Berhasil Ditambahkan');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error creating budaya: ' . $e->getMessage());
 
@@ -203,27 +212,27 @@ class BudayaController extends BaseAdminController
      */
     public function update(Request $request, string $id)
     {
-        $budaya = MongoBudaya::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|in:Sejarah,Tradisi,Rumah Adat,Cerita Rakyat,Kuliner',
-            'category_mobile' => 'nullable|string|max:100',
-            'location' => 'required|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'description' => 'required|string',
-            'is_active' => 'boolean',
-            'video_duration' => 'nullable|integer|min:1|max:600',
-            'video_autoplay' => 'nullable|boolean',
-            'video_loop' => 'nullable|boolean',
-            'video_wait_until_ready' => 'nullable|boolean',
-            'images' => 'nullable|array',
-            'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string',
-            'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
-        ]);
-
         try {
+            $budaya = MongoBudaya::findOrFail($id);
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'category' => 'required|string|in:Sejarah,Tradisi,Rumah Adat,Cerita Rakyat,Kuliner',
+                'category_mobile' => 'nullable|string|max:100',
+                'location' => 'required|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'description' => 'required|string',
+                'is_active' => 'boolean',
+                'video_duration' => 'nullable|integer|min:1|max:600',
+                'video_autoplay' => 'nullable|boolean',
+                'video_loop' => 'nullable|boolean',
+                'video_wait_until_ready' => 'nullable|boolean',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string',
+                'thumbnail' => 'nullable|' . ($request->hasFile('thumbnail') ? 'file|mimes:jpeg,png,webp,jpg,mp4,mov,avi,webm,ogg|max:51200' : 'string'),
+            ]);
+
             $validated['is_active'] = $request->has('is_active');
             $validated['video_autoplay'] = $request->has('video_autoplay');
             $validated['video_loop'] = $request->has('video_loop');
@@ -313,6 +322,15 @@ class BudayaController extends BaseAdminController
             $this->clearDashboardCache();
             return redirect()->route('admin.budaya.index')
                 ->with('success', 'Berhasil Diperbarui');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error updating budaya: ' . $e->getMessage());
 

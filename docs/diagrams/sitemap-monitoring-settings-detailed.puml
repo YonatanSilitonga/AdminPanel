@@ -1,0 +1,90 @@
+@startuml Sitemap - Monitoring & Settings (Simple)
+
+skinparam rectangle {
+    BackgroundColor<<monitoring>> #DBEAFE
+    BackgroundColor<<settings>> #FEF3C7
+    BackgroundColor<<page>> #F0F9FF
+    BorderColor #333333
+    RoundCorner 5
+}
+
+legend top right
+  🔓 = All Admin
+  🛡️ = Super Admin Only
+endlegend
+
+rectangle "Dashboard 🔓" as dashboard
+
+package "MONITORING 🔓" <<monitoring>> {
+    rectangle "Analytics" as analytics {
+        rectangle "Dashboard" as analytics_dash
+        rectangle "Destinations" as analytics_dest
+        rectangle "Events" as analytics_event
+        rectangle "Reports" as analytics_report
+    }
+    
+    rectangle "Chatbot Logs" as chatbot {
+        rectangle "List Sessions" as chatbot_list
+        rectangle "View Detail" as chatbot_detail
+        rectangle "Export CSV" as chatbot_export
+    }
+    
+    rectangle "Recommendations" as recommendations {
+        rectangle "Dashboard & Stats" as rec_dash
+        rectangle "View Detail" as rec_detail
+        rectangle "Export CSV" as rec_export
+    }
+    
+    rectangle "Reports (Pengaduan)" as reports {
+        rectangle "List Reports" as reports_list
+        rectangle "View Detail" as reports_detail
+        rectangle "Assign to Admin" as reports_assign
+        rectangle "Update Status" as reports_status
+        rectangle "Take Action" as reports_action
+        rectangle "Export/Print" as reports_export
+    }
+}
+
+package "SETTINGS 🛡️" <<settings>> {
+    rectangle "General Settings" as settings_general
+    rectangle "API Keys" as settings_api
+    rectangle "AI Configuration" as settings_ai
+    rectangle "Audit Logs" as audit_logs
+}
+
+dashboard -down-> analytics
+dashboard -down-> chatbot
+dashboard -down-> recommendations
+dashboard -down-> reports
+dashboard -down-> settings_general
+dashboard -down-> settings_api
+dashboard -down-> settings_ai
+dashboard -down-> audit_logs
+
+analytics_dash -down-> analytics_dest
+analytics_dash -down-> analytics_event
+analytics_dash -down-> analytics_report
+
+chatbot_list -down-> chatbot_detail
+chatbot_list -down-> chatbot_export
+
+rec_dash -down-> rec_detail
+rec_dash -down-> rec_export
+
+reports_list -down-> reports_detail
+reports_list -down-> reports_assign
+reports_list -down-> reports_status
+reports_list -down-> reports_action
+reports_list -down-> reports_export
+
+note right of reports
+  Status: pending → reviewed → resolved (locked)
+  Actions: delete_content, warn_user, ignore
+end note
+
+note right of audit_logs
+  Tracks all admin activities
+  Filters: action, module, date range
+end note
+
+@enduml

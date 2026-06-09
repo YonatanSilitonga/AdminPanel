@@ -83,20 +83,22 @@ class CarouselBannerController extends BaseAdminController
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'subtitle' => 'nullable|string|max:255',
-            'category_badge' => 'required|string|max:50',
-            'image_url' => 'required|' . ($request->hasFile('image_url') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:204800' : 'string'),
-            'content_id' => 'nullable|string',
-            'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'media_type' => 'required|in:image,video',
-            'play_duration' => 'nullable|integer|min:1',
-        ]);
-
         try {
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'subtitle' => 'nullable|string|max:255',
+                'category_badge' => 'required|string|max:50',
+                'image_url' => 'required|' . ($request->hasFile('image_url') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:204800' : 'string'),
+                'content_id' => 'nullable|string',
+                'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'media_type' => 'required|in:image,video',
+                'play_duration' => 'nullable|integer|min:1',
+            ], [
+                'end_date.after_or_equal' => 'Tanggal akhir tidak boleh lebih awal dari tanggal mulai',
+            ]);
+
             $data = $request->except(['image_url', '_token']);
             
             if ($request->hasFile('image_url')) {
@@ -143,6 +145,12 @@ class CarouselBannerController extends BaseAdminController
                 'success' => true,
                 'message' => 'Slide Carousel berhasil ditambahkan'
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terdapat kesalahan validasi pada formulir.',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -168,22 +176,24 @@ class CarouselBannerController extends BaseAdminController
 
     public function update(Request $request, string $id)
     {
-        $banner = CarouselBanner::findOrFail($id);
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'subtitle' => 'nullable|string|max:255',
-            'category_badge' => 'required|string|max:50',
-            'image_url' => 'nullable|' . ($request->hasFile('image_url') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:204800' : 'string'),
-            'content_id' => 'nullable|string',
-            'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'media_type' => 'required|in:image,video',
-            'play_duration' => 'nullable|integer|min:1',
-        ]);
-
         try {
+            $banner = CarouselBanner::findOrFail($id);
+
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'subtitle' => 'nullable|string|max:255',
+                'category_badge' => 'required|string|max:50',
+                'image_url' => 'nullable|' . ($request->hasFile('image_url') ? 'file|mimes:jpeg,png,jpg,webp,mp4,mov,avi,webm,ogg|max:204800' : 'string'),
+                'content_id' => 'nullable|string',
+                'content_type' => 'nullable|in:destinasi,event,berita_promosi,budaya',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'media_type' => 'required|in:image,video',
+                'play_duration' => 'nullable|integer|min:1',
+            ], [
+                'end_date.after_or_equal' => 'Tanggal akhir tidak boleh lebih awal dari tanggal mulai',
+            ]);
+
             $data = $request->except(['image_url', '_token', '_method']);
             
             if ($request->hasFile('image_url')) {
@@ -239,6 +249,12 @@ class CarouselBannerController extends BaseAdminController
                 'success' => true,
                 'message' => 'Slide Carousel berhasil diperbarui'
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terdapat kesalahan validasi pada formulir.',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Carousel Update Error: ' . $e->getMessage(), [
                 'id' => $id,

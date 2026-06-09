@@ -106,6 +106,23 @@
             border: 1px solid rgba(229, 231, 235, 0.9) !important;
             box-shadow: 0 35px 80px -20px rgba(15, 23, 42, 0.35) !important;
         }
+
+        /* Scroll performance: disable pointer-events on hover tooltips while scrolling */
+        .is-scrolling .group:hover > div[class*="opacity-0"],
+        .is-scrolling [class*="group-hover\\:opacity-100"] {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Tooltip transition — hanya opacity, bukan transition-all */
+        [class*="group-hover\\:opacity-100"] {
+            transition: opacity 150ms ease !important;
+        }
+
+        /* Isolate table repaint dari halaman */
+        .review-table-wrap {
+            contain: layout;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -162,7 +179,7 @@
                         <!-- Alerts -->
                         <div id="dynamic-alerts-container"></div>
 
-                        @if (isset($errors) && $errors->any())
+                        @if ($errors->any())
                             <div class="mb-5 p-4 bg-red-50 border border-red-200/40 rounded-2xl">
                                 <div class="flex items-center gap-3 mb-2">
                                     <div class="flex-shrink-0 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white">
@@ -319,7 +336,8 @@
     </div>
 
     <!-- Global Alert Modal -->
-    <div x-data="{ show: false, title: 'Perhatian', message: '', type: 'error' }"
+    <div id="global-alert-modal"
+         x-data="{ show: false, title: 'Perhatian', message: '', type: 'error' }"
          @show-alert.window="show = true; message = $event.detail.message; title = $event.detail.title || 'Perhatian'; type = $event.detail.type || 'error'"
          x-show="show" class="fixed inset-0 z-[150] overflow-y-auto" x-cloak>
         <div class="flex items-center justify-center min-h-screen px-4 py-8">
@@ -385,15 +403,58 @@
     <!-- Scripts -->
     <script>
         // Global helper to show the custom alert modal
-        window.showAlert = function(message, title = 'Perhatian', type = 'error') {
-            window.dispatchEvent(new CustomEvent('show-alert', {
-                detail: { message, title, type }
-            }));
+        // Uses direct DOM manipulation as primary method + Alpine event as fallback
+        window.showAlert = function(message, title, type) {
+            title = title || 'Perhatian';
+            type  = type  || 'error';
+
+            // --- Method 1: Direct DOM manipulation (works even before Alpine is ready) ---
+            var alertEl = document.getElementById('global-alert-modal');
+            if (alertEl) {
+                var _x = Alpine && Alpine.$data ? Alpine.$data(alertEl) : null;
+                if (_x) {
+                    _x.show    = true;
+                    _x.message = message;
+                    _x.title   = title;
+                    _x.type    = type;
+                    return;
+                }
+            }
+
+            // --- Method 2: CustomEvent (Alpine listener) ---
+            var doDispatch = function() {
+                window.dispatchEvent(new CustomEvent('show-alert', {
+                    detail: { message: message, title: title, type: type }
+                }));
+            };
+            doDispatch();
+            setTimeout(doDispatch, 80);
         };
 
         // Override default window.alert to route through the custom modal
         window.alert = function(message) {
             window.showAlert(message, 'Perhatian', 'error');
+        };
+
+        // Global error handler for server responses (422, 500, etc)
+        // Standardized handling of error.errors field validation messages
+        window.handleServerError = function(error, currentThis) {
+            if (currentThis && typeof currentThis.showUploadProgress !== 'undefined') {
+                currentThis.showUploadProgress = false;
+            }
+            
+            if (error && error.errors) {
+                // Tampilkan error validasi field pertama yang ditemukan
+                const firstField = Object.keys(error.errors)[0];
+                const firstMsg = error.errors[firstField][0];
+                window.showAlert(
+                    (error.message || 'Terdapat kesalahan validasi.') + '\n\n' + firstMsg,
+                    'Validasi Gagal',
+                    'error'
+                );
+            } else {
+                window.showAlert(error?.message || 'Gagal menyimpan data. Silakan coba lagi.', 'Gagal', 'error');
+            }
         };
 
         // CSRF token for AJAX (Vanilla JS)
@@ -408,7 +469,20 @@
 
         // Helper to safely parse JSON from a fetch response (handles prepended PHP warnings)
         window.safeParseJSON = async function(response) {
-            const text = await response.text();
+            let text = '';
+            try {
+                text = await response.text();
+            } catch (e) {
+                // CORB or network error blocked the response body
+                throw new Error('Response was blocked or network error occurred. Status: ' + response.status);
+            }
+            if (!text || text.trim() === '') {
+                // Empty body — could be CORB block or redirect
+                if (!response.ok) {
+                    throw new Error('Server returned status ' + response.status + ' with empty response.');
+                }
+                return null;
+            }
             try {
                 return JSON.parse(text);
             } catch (error) {
@@ -425,8 +499,8 @@
                     }
                 } catch (fallbackError) {}
                 
-                console.error("Invalid JSON response:", text);
-                throw new Error("Server returned an invalid response.");
+                console.error("Invalid JSON response:", text.substring(0, 500));
+                throw new Error("Server returned an invalid response. Status: " + response.status);
             }
         };
 
@@ -532,6 +606,29 @@
         });
     </script>
 
+    @if (!empty($errors) && $errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                window.showAlert('Terdapat kesalahan validasi pada formulir. Silakan periksa kembali input Anda.', 'Validasi Gagal', 'error');
+            });
+        </script>
+    @endif
+
     @stack('scripts')
+    <script>
+        // Disable expensive hover effects while scrolling for better frame rate
+        (function() {
+            const main = document.querySelector('main.overflow-auto');
+            if (!main) return;
+            let t;
+            main.addEventListener('scroll', function() {
+                document.body.classList.add('is-scrolling');
+                clearTimeout(t);
+                t = setTimeout(function() {
+                    document.body.classList.remove('is-scrolling');
+                }, 150);
+            }, { passive: true });
+        })();
+    </script>
 </body>
 </html>
