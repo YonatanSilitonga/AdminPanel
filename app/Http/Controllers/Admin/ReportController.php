@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\MongoReport;
+use App\Models\MongoDB\MongoDestination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -17,7 +18,7 @@ class ReportController extends BaseAdminController
     {
         Log::info('Report index accessed', ['request' => $request->all()]);
         try {
-            $query = MongoReport::query();
+            $query = MongoReport::with(['destination', 'user']);
 
             // Filter by status
             if ($request->filled('status')) {
@@ -29,6 +30,11 @@ class ReportController extends BaseAdminController
                 $query->where('reason', $request->reason);
             }
 
+            // Filter by destination
+            if ($request->filled('destination_id')) {
+                $query->where('destination_id', $request->destination_id);
+            }
+
             // Filter by assigned admin
             if ($request->filled('assigned')) {
                 if ($request->assigned === 'me' && $this->admin) {
@@ -36,19 +42,6 @@ class ReportController extends BaseAdminController
                 } elseif ($request->assigned === 'unassigned') {
                     $query->whereNull('assigned_to');
                 }
-            }
-
-            // Search in description, user ID, reason, or destination name
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('description', 'like', "%{$search}%")
-                      ->orWhere('user_id', 'like', "%{$search}%")
-                      ->orWhere('reason', 'like', "%{$search}%")
-                      ->orWhereHas('destination', function ($destQuery) use ($search) {
-                          $destQuery->where('name', 'like', "%{$search}%");
-                      });
-                });
             }
 
             // Pagination & Sorting
@@ -63,11 +56,13 @@ class ReportController extends BaseAdminController
 
             $statuses = ['pending', 'reviewed', 'resolved'];
             $reasons = ['spam', 'inappropriate', 'fake', 'harassment', 'facility_damage', 'other'];
+            $destinations = MongoDestination::orderBy('name', 'asc')->get(['_id', 'name']);
 
             return view('admin.reports.index', [
                 'reports' => $reports,
                 'statuses' => $statuses,
                 'reasons' => $reasons,
+                'destinations' => $destinations,
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading reports from Mongo: ' . $e->getMessage());
@@ -78,10 +73,13 @@ class ReportController extends BaseAdminController
     public function show(string $id, Request $request)
     {
         try {
-            $report = MongoReport::findOrFail($id);
+            $report = MongoReport::with(['destination', 'user'])->findOrFail($id);
 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json($report->append('all_image_urls'));
+                $report->append('all_image_urls');
+                $reportData = $report->toArray();
+                $reportData['user_is_registered'] = $report->user && !empty($report->user->password) && (!empty($report->user->email) || !empty($report->user->name));
+                return response()->json($reportData);
             }
 
             return view('admin.reports.show', ['report' => $report]);
@@ -126,6 +124,16 @@ class ReportController extends BaseAdminController
 
             $report = MongoReport::findOrFail($id);
             $oldStatus = $report->status;
+
+            // Prevent status change if report is already resolved (status terkunci)
+            if ($oldStatus === 'resolved') {
+                $errorMsg = 'Laporan sudah selesai diproses. Perubahan status tidak diizinkan untuk laporan yang sudah terkunci.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->with('error', $errorMsg);
+            }
+
             $report->status = $request->status;
             $report->assigned_to = $report->assigned_to ?? (string)$this->admin->id;
             $report->save();
@@ -133,10 +141,10 @@ class ReportController extends BaseAdminController
             $this->logActivity('update_report_status_mongo', 'report', $id, ['status' => $oldStatus], ['status' => $request->status]);
 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Status updated.']);
+                return response()->json(['success' => true, 'message' => 'Status berhasil diubah.']);
             }
 
-            return back()->with('success', 'Report status updated in MongoDB');
+            return back()->with('success', 'Status laporan berhasil diubah');
         } catch (\Exception $e) {
             Log::error('Error updating report status in Mongo: ' . $e->getMessage());
 
@@ -160,6 +168,16 @@ class ReportController extends BaseAdminController
             ]);
 
             $report = MongoReport::findOrFail($id);
+            
+            // Prevent action if report is already resolved (status terkunci)
+            if ($report->status === 'resolved') {
+                $errorMsg = 'Laporan sudah selesai diproses. Tindakan tidak dapat diubah pada laporan yang sudah terkunci.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->with('error', $errorMsg);
+            }
+
             $oldAction = $report->action_taken;
             
             $report->action_taken = $request->action;
@@ -204,7 +222,7 @@ class ReportController extends BaseAdminController
     }
 
     /**
-     * Export reports to CSV.
+     * Export reports to CSV/Excel.
      */
     public function export(Request $request)
     {
@@ -219,42 +237,71 @@ class ReportController extends BaseAdminController
                 $query->where('reason', $request->reason);
             }
 
-            // Search in description, user ID, reason, or destination name
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('description', 'like', "%{$search}%")
-                      ->orWhere('user_id', 'like', "%{$search}%")
-                      ->orWhere('reason', 'like', "%{$search}%")
-                      ->orWhereHas('destination', function ($destQuery) use ($search) {
-                          $destQuery->where('name', 'like', "%{$search}%");
-                      });
+            if ($request->filled('destination_id')) {
+                $query->where('destination_id', $request->destination_id);
+            }
+
+            if ($request->filled('start_date')) {
+                $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+                $query->where(function($q) use ($startDate) {
+                    $q->where('created_at', '>=', $startDate)
+                      ->orWhere('created_at', '>=', $startDate->timestamp * 1000);
+                });
+            }
+
+            if ($request->filled('end_date')) {
+                $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+                $query->where(function($q) use ($endDate) {
+                    $q->where('created_at', '<=', $endDate)
+                      ->orWhere('created_at', '<=', $endDate->timestamp * 1000);
                 });
             }
 
             $reports = $query->orderBy('created_at', 'desc')->get();
 
-            $filename = 'reports_data_' . date('Y-m-d_H-i-s') . '.csv';
+            $format = $request->input('format', 'csv');
+            if ($format === 'excel') {
+                $filename = 'reports_data_' . date('Y-m-d_H-i-s') . '.xls';
+                $contentType = 'application/vnd.ms-excel';
+            } else {
+                $filename = 'reports_data_' . date('Y-m-d_H-i-s') . '.csv';
+                $contentType = 'text/csv; charset=utf-8';
+            }
             
             $headers = [
-                'Content-Type' => 'text/csv; charset=utf-8',
+                'Content-Type' => $contentType,
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ];
 
             $callback = function() use ($reports) {
                 $file = fopen('php://output', 'w');
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
-                fputcsv($file, ['ID', 'Pelapor', 'Target/Destinasi', 'Alasan', 'Deskripsi', 'Status', 'Tanggal'], ';');
+                fputcsv($file, ['ID', 'Pelapor', 'Tipe Pelapor', 'Target/Destinasi', 'Alasan', 'Deskripsi', 'Status', 'Tanggal'], ';');
 
                 foreach ($reports as $report) {
+                    // Extract Date
+                    $rawTs = $report->created_at;
+                    if ($rawTs instanceof \MongoDB\BSON\UTCDateTime) {
+                        $ts = \Carbon\Carbon::createFromTimestampMs((int)$rawTs->toDateTime()->format('Uv'));
+                    } elseif (is_numeric($rawTs)) {
+                        $ts = \Carbon\Carbon::createFromTimestampMs((int)$rawTs);
+                    } elseif ($rawTs instanceof \Carbon\Carbon) {
+                        $ts = $rawTs;
+                    } else {
+                        $ts = null;
+                    }
+
+                    $isRegistered = $report->user && !empty($report->user->password) && (!empty($report->user->email) || !empty($report->user->name));
+                    $userType = $isRegistered ? 'User' : 'Guest';
                     fputcsv($file, [
                         $report->_id,
-                        $report->user_id ?? 'Anonim',
+                        $report->reporter_name,
+                        $userType,
                         $report->destination?->name ?? 'Umum',
                         $report->reason ?? '-',
                         $report->description ?? '-',
                         $report->status ?? 'pending',
-                        $report->created_at?->format('d-m-Y H:i') ?? '-',
+                        $ts ? $ts->format('d-m-Y H:i') : '-',
                     ], ';');
                 }
 
@@ -266,6 +313,88 @@ class ReportController extends BaseAdminController
         } catch (\Exception $e) {
             Log::error('Report export error: ' . $e->getMessage());
             return redirect()->route('admin.reports.index')->with('error', 'Gagal mengekspor data laporan.');
+        }
+    }
+
+    /**
+     * Render the report in an official government print format.
+     */
+    public function printReport(Request $request)
+    {
+        try {
+            $query = MongoReport::with(['destination', 'user']);
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('reason')) {
+                $query->where('reason', $request->reason);
+            }
+
+            if ($request->filled('destination_id')) {
+                $query->where('destination_id', $request->destination_id);
+            }
+
+            if ($request->filled('start_date')) {
+                $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+                $query->where(function($q) use ($startDate) {
+                    $q->where('created_at', '>=', $startDate)
+                      ->orWhere('created_at', '>=', $startDate->timestamp * 1000);
+                });
+            }
+
+            if ($request->filled('end_date')) {
+                $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+                $query->where(function($q) use ($endDate) {
+                    $q->where('created_at', '<=', $endDate)
+                      ->orWhere('created_at', '<=', $endDate->timestamp * 1000);
+                });
+            }
+
+            $reports = $query->orderBy('created_at', 'desc')->get();
+
+            // Extract government layout parameters
+            $instansi = $request->input('instansi', 'PEMERINTAH KABUPATEN TOBA/DINAS KEBUDAYAAN DAN PARIWISATA');
+            $alamat = $request->input('alamat', 'Jl. Bukit Pagar Batu No. 1, Balige, Kabupaten Toba, Sumatera Utara');
+            $email = $request->input('email', 'disbudpar@tobakab.go.id');
+            $telp = $request->input('telp', '(0632) 123456');
+            $website = $request->input('website', 'https://disbudpar.tobakab.go.id');
+            $nomorSurat = $request->input('nomor_surat', '050/321/Disbudpar/' . date('Y'));
+            $hal = $request->input('hal', 'Laporan Pengaduan dan Penanganan Keluhan Wisatawan');
+            $namaPenandatangan = $request->input('nama_penandatangan', 'Sandro M. S. Simanjuntak, S.T., M.Si.');
+            $nipPenandatangan = $request->input('nip_penandatangan', '19780512 200501 1 003');
+            $jabatan = $request->input('jabatan', 'Kepala Dinas Kebudayaan dan Pariwisata');
+
+            // Get Logo from settings or custom upload
+            $logoUrl = null;
+            if ($request->hasFile('custom_logo')) {
+                $file = $request->file('custom_logo');
+                $extension = $file->getClientOriginalExtension();
+                $logoUrl = 'data:image/' . ($extension == 'svg' ? 'svg+xml' : $extension) . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            } else {
+                $logoPath = \App\Models\AppSetting::get('logo');
+                $logoUrl = $logoPath ? (str_starts_with($logoPath, 'http') ? $logoPath : \Illuminate\Support\Facades\Storage::url($logoPath)) : null;
+            }
+
+            return view('admin.reports.print', compact(
+                'reports',
+                'instansi',
+                'alamat',
+                'email',
+                'telp',
+                'website',
+                'nomorSurat',
+                'hal',
+                'namaPenandatangan',
+                'nipPenandatangan',
+                'jabatan',
+                'logoUrl'
+            ));
+
+        } catch (\Exception $e) {
+            Log::error('Report print error: ' . $e->getMessage());
+            return redirect()->route('admin.reports.index')->with('error', 'Gagal memuat cetakan laporan: ' . $e->getMessage());
         }
     }
 }

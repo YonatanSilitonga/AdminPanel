@@ -5,41 +5,46 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Admin;
-use App\Models\Review;
-use App\Models\Destination;
-use App\Models\User;
+use App\Models\MongoDB\MongoReview;
 use App\Models\Role;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ReviewModerationTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected Admin $admin;
-    protected Review $review;
+    protected MongoReview $review;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Seed roles and permissions
         $this->artisan('db:seed', ['--class' => 'AdminSeeder']);
 
         // Create moderator admin
-        $moderatorRole = Role::where('name', 'moderator')->first();
+        $moderatorRole = Role::firstOrCreate(['name' => 'moderator'], ['description' => 'Moderator role']);
         $this->admin = Admin::factory()->create([
             'role_id' => $moderatorRole->id,
         ]);
 
-        // Create a pending review
-        $destination = Destination::factory()->create();
-        $user = User::factory()->create();
-        $this->review = Review::factory()->create([
-            'destination_id' => $destination->id,
-            'user_id' => $user->id,
-            'status' => 'pending',
+        // Create a pending review directly in the 'ratings' collection (what MongoReview uses)
+        $this->review = MongoReview::create([
+            'destination_id' => null,
+            'user_id'        => null,
+            'rating'         => 4,
+            'review'         => 'Test review content.',
+            'status'         => 'pending',
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        // Clean up the test review from the ratings collection
+        if (isset($this->review)) {
+            $this->review->delete();
+        }
+
+        parent::tearDown();
     }
 
     public function test_moderator_can_view_pending_reviews()
@@ -53,8 +58,10 @@ class ReviewModerationTest extends TestCase
 
     public function test_moderator_can_approve_review()
     {
+        $this->withoutExceptionHandling();
+
         $response = $this->actingAs($this->admin, 'admin')
-            ->post(route('admin.reviews.approve', $this->review));
+            ->patch(route('admin.reviews.approve', $this->review->_id));
 
         $this->review->refresh();
         $this->assertEquals('approved', $this->review->status);
@@ -63,8 +70,10 @@ class ReviewModerationTest extends TestCase
 
     public function test_moderator_can_reject_review()
     {
+        $this->withoutExceptionHandling();
+
         $response = $this->actingAs($this->admin, 'admin')
-            ->post(route('admin.reviews.reject', $this->review), [
+            ->patch(route('admin.reviews.reject', $this->review->_id), [
                 'reason' => 'Contains inappropriate content',
             ]);
 
@@ -74,13 +83,13 @@ class ReviewModerationTest extends TestCase
 
     public function test_unauthorized_admin_cannot_moderate_reviews()
     {
-        $editorRole = Role::where('name', 'editor')->first();
+        $editorRole = Role::firstOrCreate(['name' => 'editor'], ['description' => 'Editor role']);
         $editor = Admin::factory()->create([
             'role_id' => $editorRole->id,
         ]);
 
         $response = $this->actingAs($editor, 'admin')
-            ->post(route('admin.reviews.approve', $this->review));
+            ->patch(route('admin.reviews.approve', $this->review->_id));
 
         $response->assertStatus(403);
     }

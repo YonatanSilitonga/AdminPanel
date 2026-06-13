@@ -4,50 +4,42 @@
 @section('page_title', 'Profil Saya')
 @section('page_description', 'Kelola informasi profil, foto, dan kata sandi Anda.')
 
+@section('breadcrumb')
+<nav class="flex text-sm mb-6 text-gray-500 font-medium">
+    <a href="{{ route('admin.dashboard') }}" class="hover:text-sidebar transition-colors">Beranda</a>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-400">Pengaturan</span>
+    <span class="mx-2 text-gray-300"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span>
+    <span class="text-gray-900 font-bold">Profil Saya</span>
+</nav>
+@endsection
+
 @section('content')
 <style>
     /* Hide the default empty page title container */
     .mb-5:has(h1:empty) { display: none !important; }
-    
-    .settings-tab-active {
-        color: #6349A5;
-        border-bottom: 3px solid #6349A5;
-        font-weight: 700;
-    }
 </style>
 
-<!-- Breadcrumb Area -->
-<div class="flex items-center gap-2 text-[14px] text-gray-500 mb-6">
-    <span>Pengaturan</span>
-    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    <span class="font-bold text-gray-900">Profil Saya</span>
-</div>
 
-<!-- Unified Navigation Tabs -->
-<div class="flex items-center gap-8 border-b border-gray-100 mb-8 px-2 overflow-x-auto whitespace-nowrap custom-scrollbar">
-    <a href="{{ route('admin.profile') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.profile') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">Profil Saya</a>
-    <a href="{{ route('admin.settings.general') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.settings.general') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">Pengaturan Umum</a>
-    <a href="{{ route('admin.settings.api-keys') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.settings.api-keys') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">API & Integrasi</a>
-    <a href="{{ route('admin.settings.ai-config') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.settings.ai-config') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">Konfigurasi AI</a>
-    <a href="{{ route('admin.settings.audit-logs') }}" class="pb-4 text-[15px] {{ request()->routeIs('admin.settings.audit-logs') ? 'settings-tab-active' : 'font-medium text-gray-400 hover:text-gray-700 transition-colors' }}">Log Audit</a>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Settings Navigation Tabs -->
+@include('admin.settings.partials.tabs')
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8" x-data="{ 
+    preview: '{{ $admin->profile_photo ? image_url($admin->profile_photo) : '' }}',
+    handleFile(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => this.preview = e.target.result;
+            reader.readAsDataURL(file);
+        }
+    }
+}">
     <!-- Left: Profile Info & Photo -->
     <div class="lg:col-span-1 space-y-6">
         <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
             <div class="p-8 flex flex-col items-center text-center">
                 <!-- Profile Photo with Upload -->
-                <div class="relative group" x-data="{ 
-                    preview: '{{ $admin->profile_photo ? image_url($admin->profile_photo) : '' }}',
-                    handleFile(e) {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (e) => this.preview = e.target.result;
-                            reader.readAsDataURL(file);
-                        }
-                    }
-                }">
+                <div class="relative group">
                     <div class="w-32 h-32 bg-[#10B981] rounded-full flex items-center justify-center text-white font-bold text-4xl shadow-xl overflow-hidden border-4 border-white">
                         <template x-if="preview">
                             <img :src="preview" class="w-full h-full object-cover">
@@ -112,11 +104,47 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap</label>
+                        <div class="flex items-center gap-1.5 mb-2">
+                            <label class="block text-sm font-bold text-gray-700">Nama Lengkap</label>
+                            <div class="relative group cursor-pointer">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 font-normal">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200">Nama lengkap Anda yang akan digunakan sebagai nama tampilan resmi di seluruh sistem.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
+                                            <p class="text-slate-200">Header navigasi, detail log audit, dan laporan admin.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </div>
                         <input type="text" name="name" value="{{ old('name', $admin->name) }}" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Alamat Email</label>
+                        <div class="flex items-center gap-1.5 mb-2">
+                            <label class="block text-sm font-bold text-gray-700">Alamat Email</label>
+                            <div class="relative group cursor-pointer">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 font-normal">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200">Alamat email aktif yang digunakan untuk proses autentikasi (login) dan menerima notifikasi sistem.</p>
+                                        </div>
+                                        <div class="pt-1.5 border-t border-slate-800">
+                                            <span class="block font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">Digunakan Di</span>
+                                            <p class="text-slate-200">Autentikasi akun admin dan pengiriman alert sistem.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </div>
                         <input type="email" name="email" value="{{ old('email', $admin->email) }}" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none font-medium" required>
                     </div>
                 </div>
@@ -147,7 +175,21 @@
 
                 <div class="space-y-6">
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Kata Sandi Saat Ini</label>
+                        <div class="flex items-center gap-1.5 mb-2">
+                            <label class="block text-sm font-bold text-gray-700">Kata Sandi Saat Ini</label>
+                            <div class="relative group cursor-pointer">
+                                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 font-normal">
+                                    <div class="space-y-2">
+                                        <div>
+                                            <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                            <p class="text-slate-200">Memverifikasi keabsahan identitas Anda saat ini untuk mencegah perubahan kata sandi yang tidak sah.</p>
+                                        </div>
+                                    </div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="relative">
                             <input :type="showCurrent ? 'text' : 'password'" name="current_password" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all outline-none font-medium pr-12" required>
                             <button type="button" @click="showCurrent = !showCurrent" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
@@ -159,7 +201,21 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-2">Kata Sandi Baru</label>
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <label class="block text-sm font-bold text-gray-700">Kata Sandi Baru</label>
+                                <div class="relative group cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 font-normal">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200">Membuat kata sandi baru untuk menggantikan kata sandi lama Anda demi menjaga keamanan akun.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="relative">
                                 <input :type="showNew ? 'text' : 'password'" name="password" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all outline-none font-medium pr-12" required>
                                 <button type="button" @click="showNew = !showNew" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -169,7 +225,21 @@
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-2">Konfirmasi Sandi Baru</label>
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <label class="block text-sm font-bold text-gray-700">Konfirmasi Sandi Baru</label>
+                                <div class="relative group cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-sidebar transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 font-normal">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200">Memasukkan ulang kata sandi baru Anda untuk memastikan kesesuaian dan mencegah kesalahan penulisan.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="relative">
                                 <input :type="showConfirm ? 'text' : 'password'" name="password_confirmation" class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all outline-none font-medium pr-12" required>
                                 <button type="button" @click="showConfirm = !showConfirm" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">

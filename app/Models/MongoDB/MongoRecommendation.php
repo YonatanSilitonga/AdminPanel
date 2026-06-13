@@ -52,6 +52,14 @@ class MongoRecommendation extends Model
     }
 
     /**
+     * Get the user this recommendation refers to
+     */
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id', '_id');
+    }
+
+    /**
      * Scope to filter by user ID
      */
     public function scopeForUser($query, string $userId)

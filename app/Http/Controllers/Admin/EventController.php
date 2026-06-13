@@ -49,31 +49,33 @@ class EventController extends BaseAdminController
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
-            'location' => 'required|string|max:255',
-            'organizer' => 'nullable|string|max:255',
-            'tags' => 'nullable|string',
-            'description' => 'required|string',
-            'long_description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'banner' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
-            'schedule' => 'nullable|array',
-            'schedule.*.time' => 'nullable|string',
-            'schedule.*.activity' => 'nullable|string',
-            'opening_hours' => 'nullable|string|max:255',
-            'opening_hours_start' => 'nullable|date_format:H:i',
-            'opening_hours_end' => 'nullable|date_format:H:i',
-            'ticket_price' => 'nullable|string|max:255',
-            'best_time' => 'nullable|string|max:255',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'is_active' => 'nullable|boolean',
-        ]);
-
         try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
+                'location' => 'required|string|max:255',
+                'organizer' => 'nullable|string|max:255',
+                'tags' => 'nullable|string',
+                'description' => 'required|string',
+                'long_description' => 'nullable|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+                'banner' => 'nullable|' . ($request->hasFile('banner') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
+                'schedule' => 'nullable|array',
+                'schedule.*.time' => 'nullable|string',
+                'schedule.*.activity' => 'nullable|string',
+                'opening_hours' => 'nullable|string|max:255',
+                'opening_hours_start' => 'nullable|date_format:H:i',
+                'opening_hours_end' => 'nullable|date_format:H:i',
+                'ticket_price' => 'nullable|string|max:255',
+                'best_time' => 'nullable|string|max:255',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180',
+                'is_active' => 'nullable|boolean',
+            ]);
+
             // Combine opening hours if separate fields are provided
             $openingHours = $validated['opening_hours'] ?? null;
             if (!$openingHours && !empty($validated['opening_hours_start']) && !empty($validated['opening_hours_end'])) {
@@ -114,12 +116,33 @@ class EventController extends BaseAdminController
                 $event->schedule = [];
             }
 
-            // Image handling (Identical to Destination)
+            $uploadedImages = [];
+            
+            // Check direct strings
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+            }
+            if ($request->filled('banner') && is_string($request->input('banner')) && (str_starts_with($request->input('banner'), 'http://') || str_starts_with($request->input('banner'), 'https://'))) {
+                $uploadedImages[] = $request->input('banner');
+            }
+
             if ($request->hasFile('banner')) {
                 $path = $this->processImage($request->file('banner'), 'events');
-                if ($path) {
-                    $event->banner_url = $path;
+                if ($path) $uploadedImages[] = $path;
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->processImage($file, 'events');
+                    if ($path) $uploadedImages[] = $path;
                 }
+            }
+            if (count($uploadedImages) > 0) {
+                $event->banner_url = $uploadedImages[0];
+                $event->images = $uploadedImages;
             }
 
             $event->save();
@@ -138,8 +161,18 @@ class EventController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil ditambahkan');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error creating event: ' . $e->getMessage());
 
@@ -159,7 +192,30 @@ class EventController extends BaseAdminController
         $event = MongoEvent::findOrFail($id);
 
         if ($request->ajax() || $request->wantsJson()) {
+            if ($event->banner_url) {
+                $event->banner_url_full = image_url($event->banner_url);
+            }
+            if ($event->images && is_array($event->images)) {
+                $event->images_url = array_map(function($img) {
+                    return image_url($img);
+                }, $event->images);
+                $event->images_data = array_map(function($img) {
+                    return [
+                        'path' => $img,
+                        'url' => image_url($img)
+                    ];
+                }, $event->images);
+            }
             return response()->json($event);
+        }
+
+        if ($event->images && is_array($event->images)) {
+            $event->images_data = array_map(function($img) {
+                return [
+                    'path' => $img,
+                    'url' => image_url($img)
+                ];
+            }, $event->images);
         }
 
         return view('admin.events.edit', compact('event'));
@@ -170,33 +226,35 @@ class EventController extends BaseAdminController
      */
     public function update(Request $request, string $id)
     {
-        $event = MongoEvent::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
-            'location' => 'required|string|max:255',
-            'organizer' => 'nullable|string|max:255',
-            'tags' => 'nullable|string',
-            'description' => 'required|string',
-            'long_description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'banner' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
-            'schedule' => 'nullable|array',
-            'schedule.*.time' => 'nullable|string',
-            'schedule.*.activity' => 'nullable|string',
-            'opening_hours' => 'nullable|string|max:255',
-            'opening_hours_start' => 'nullable|date_format:H:i',
-            'opening_hours_end' => 'nullable|date_format:H:i',
-            'ticket_price' => 'nullable|string|max:255',
-            'best_time' => 'nullable|string|max:255',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'is_active' => 'nullable|boolean',
-        ]);
-
         try {
+            $event = MongoEvent::findOrFail($id);
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'category' => 'required|string|in:Budaya,Adat,Olahraga,Kuliner',
+                'location' => 'required|string|max:255',
+                'organizer' => 'nullable|string|max:255',
+                'tags' => 'nullable|string',
+                'description' => 'required|string',
+                'long_description' => 'nullable|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+                'banner' => 'nullable|' . ($request->hasFile('banner') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
+                'schedule' => 'nullable|array',
+                'schedule.*.time' => 'nullable|string',
+                'schedule.*.activity' => 'nullable|string',
+                'opening_hours' => 'nullable|string|max:255',
+                'opening_hours_start' => 'nullable|date_format:H:i',
+                'opening_hours_end' => 'nullable|date_format:H:i',
+                'ticket_price' => 'nullable|string|max:255',
+                'best_time' => 'nullable|string|max:255',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180',
+                'is_active' => 'nullable|boolean',
+            ]);
+
             $oldValues = $event->toArray();
 
             // Combine opening hours if separate fields are provided
@@ -232,15 +290,69 @@ class EventController extends BaseAdminController
                 }));
             }
 
-            // Image handling (Identical to Destination)
-            if ($request->hasFile('banner')) {
-                if ($event->banner_url) {
-                    $this->deleteFile($event->banner_url);
+            // Image handling
+            $deleteImages = $request->input('delete_images', []);
+            $existingImages = $event->images ?? [];
+            if ($event->banner_url && empty($existingImages)) {
+                $existingImages = [$event->banner_url];
+            }
+
+            if (!empty($deleteImages) && is_array($deleteImages)) {
+                foreach ($deleteImages as $delImg) {
+                    $this->deleteFile($delImg);
+                    $existingImages = array_filter($existingImages, function($img) use ($delImg) {
+                        return !$this->pathsMatch($img, $delImg);
+                    });
                 }
+                $existingImages = array_values($existingImages);
+            }
+
+            $uploadedImages = [];
+            
+            // Check direct strings
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+            if ($request->filled('banner') && is_string($request->input('banner')) && (str_starts_with($request->input('banner'), 'http://') || str_starts_with($request->input('banner'), 'https://'))) {
+                $path = $request->input('banner');
+                if (count($existingImages) > 0) {
+                    $this->deleteFile($existingImages[0]);
+                    $existingImages[0] = $path;
+                } else {
+                    array_unshift($existingImages, $path);
+                }
+            }
+
+            if ($request->hasFile('banner')) {
                 $path = $this->processImage($request->file('banner'), 'events');
                 if ($path) {
-                    $event->banner_url = $path;
+                    if (count($existingImages) > 0) {
+                        $this->deleteFile($existingImages[0]);
+                        $existingImages[0] = $path;
+                    } else {
+                        array_unshift($existingImages, $path);
+                    }
                 }
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->processImage($file, 'events');
+                    if ($path) $uploadedImages[] = $path;
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+
+            if (count($existingImages) > 0) {
+                $event->banner_url = $existingImages[0];
+                $event->images = $existingImages;
+            } else {
+                $event->banner_url = null;
+                $event->images = [];
             }
 
             // Slug update
@@ -264,8 +376,18 @@ class EventController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil diperbarui');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error updating event: ' . $e->getMessage());
 
@@ -293,6 +415,7 @@ class EventController extends BaseAdminController
             
             $this->eventService->deleteEvent($event);
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.events.index')
                 ->with('success', 'Event berhasil dihapus');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

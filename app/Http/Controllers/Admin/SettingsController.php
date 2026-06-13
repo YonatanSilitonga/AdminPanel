@@ -30,112 +30,75 @@ class SettingsController extends BaseAdminController
     public function updateGeneral(Request $request)
     {
         $validated = $request->validate([
-            'site_name' => 'required|string|max:255',
-            'support_email' => 'required|email|max:255',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
+            'favicon' => 'nullable|image|mimes:png,jpg,jpeg,ico|max:512',
+            'primary_color' => 'required|string|max:7',
+            'secondary_color' => 'required|string|max:7',
+            'default_language' => 'required|in:id,en',
+            'enable_reviews' => 'boolean',
+            'enable_reports' => 'boolean',
+            'moderate_reviews' => 'boolean',
+            'notify_new_review' => 'boolean',
+            'notify_new_report' => 'boolean',
+            'notify_new_user' => 'boolean',
+            'notify_system_error' => 'boolean',
+            'dark_mode' => 'boolean',
         ]);
 
         try {
             $oldValues = AppSetting::getAllSettings();
             
-            AppSetting::set('site_name', $validated['site_name']);
-            AppSetting::set('support_email', $validated['support_email']);
+            // Handle logo upload
+            if ($request->hasFile('logo')) {
+                $oldLogo = AppSetting::get('logo');
+                $logoPath = $this->uploadFile($request->file('logo'), 'settings', [
+                    'mimes' => ['image/png', 'image/jpeg', 'image/svg+xml', 'image/svg', 'image/webp'],
+                    'max_size' => 2
+                ]);
+                if ($logoPath) {
+                    if ($oldLogo) {
+                        $this->deleteFile($oldLogo);
+                    }
+                    AppSetting::set('logo', $logoPath);
+                }
+            }
+
+            // Handle favicon upload
+            if ($request->hasFile('favicon')) {
+                $oldFavicon = AppSetting::get('favicon');
+                $faviconPath = $this->uploadFile($request->file('favicon'), 'settings', [
+                    'mimes' => ['image/png', 'image/jpeg', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/webp', 'image/ico'],
+                    'max_size' => 0.5
+                ]);
+                if ($faviconPath) {
+                    if ($oldFavicon) {
+                        $this->deleteFile($oldFavicon);
+                    }
+                    AppSetting::set('favicon', $faviconPath);
+                }
+            }
+
+            AppSetting::set('primary_color', $validated['primary_color']);
+            AppSetting::set('secondary_color', $validated['secondary_color']);
+            AppSetting::set('default_language', $validated['default_language']);
+            
+            AppSetting::set('enable_reviews', $request->has('enable_reviews'), 'boolean');
+            AppSetting::set('enable_reports', $request->has('enable_reports'), 'boolean');
+            AppSetting::set('moderate_reviews', $request->has('moderate_reviews'), 'boolean');
+            
+            AppSetting::set('notify_new_review', $request->has('notify_new_review'), 'boolean');
+            AppSetting::set('notify_new_report', $request->has('notify_new_report'), 'boolean');
+            AppSetting::set('notify_new_user', $request->has('notify_new_user'), 'boolean');
+            AppSetting::set('notify_system_error', $request->has('notify_system_error'), 'boolean');
+            AppSetting::set('dark_mode', $request->has('dark_mode'), 'boolean');
 
             $newValues = AppSetting::getAllSettings();
-            $this->logActivity('update_settings', 'settings', 'general', $oldValues, $newValues);
+            $this->logActivity('update_general_settings', 'settings', 'general', $oldValues, $newValues);
 
-            return redirect()->back()->with('success', 'General settings updated successfully.');
+            return redirect()->back()->with('success', 'Pengaturan berhasil diperbarui.');
         } catch (\Exception $e) {
             Log::error('Error updating general settings: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to update settings: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Display API keys form.
-     */
-    public function editApiKeys()
-    {
-        $settings = AppSetting::getAllSettings();
-        return view('admin.settings.api-keys', compact('settings'));
-    }
-
-    /**
-     * Update API keys.
-     */
-    public function updateApiKeys(Request $request)
-    {
-        $validated = $request->validate([
-            'maps_api_key' => 'nullable|string',
-            'ai_api_key' => 'nullable|string',
-        ]);
-
-        try {
-            $oldValues = AppSetting::getAllSettings();
-            
-            AppSetting::set('maps_api_key', $validated['maps_api_key'] ?? '');
-            AppSetting::set('ai_api_key', $validated['ai_api_key'] ?? '');
-
-            $newValues = AppSetting::getAllSettings();
-            $this->logActivity('update_api_keys', 'settings', 'api_keys', $oldValues, $newValues);
-
-            return redirect()->back()->with('success', 'API keys updated successfully.');
-        } catch (\Exception $e) {
-            Log::error('Error updating API keys: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to update API keys.');
-        }
-    }
-
-    /**
-     * Display AI configuration form.
-     */
-    public function editAiConfig()
-    {
-        $settings = AppSetting::getAllSettings();
-        return view('admin.settings.ai-config', compact('settings'));
-    }
-
-    /**
-     * Update AI configuration.
-     */
-    public function updateAiConfig(Request $request)
-    {
-        $validated = $request->validate([
-            'model_name' => 'required|string',
-            'temperature' => 'required|numeric|min:0|max:2',
-        ]);
-
-        try {
-            $oldValues = AppSetting::getAllSettings();
-            
-            AppSetting::set('model_name', $validated['model_name']);
-            AppSetting::set('temperature', $validated['temperature'], 'float');
-
-            $newValues = AppSetting::getAllSettings();
-            $this->logActivity('update_ai_config', 'settings', 'ai_config', $oldValues, $newValues);
-
-            return redirect()->back()->with('success', 'AI configuration updated successfully.');
-        } catch (\Exception $e) {
-            Log::error('Error updating AI config: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to update AI configuration.');
-        }
-    }
-
-    /**
-     * Toggle maintenance mode.
-     */
-    public function toggleMaintenance()
-    {
-        try {
-            $currentStatus = AppSetting::get('maintenance_mode', false);
-            AppSetting::set('maintenance_mode', !$currentStatus, 'boolean');
-            
-            $statusStr = !$currentStatus ? 'enabled' : 'disabled';
-            $this->logActivity('toggle_maintenance', 'settings', 'maintenance', ['status' => $currentStatus], ['status' => !$currentStatus]);
-
-            return redirect()->back()->with('success', "Maintenance mode {$statusStr} successfully.");
-        } catch (\Exception $e) {
-            Log::error('Error toggling maintenance mode: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to toggle maintenance mode.');
+            return redirect()->back()->with('error', 'Gagal memperbarui pengaturan: ' . $e->getMessage());
         }
     }
 }

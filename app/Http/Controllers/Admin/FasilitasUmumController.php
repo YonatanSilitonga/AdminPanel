@@ -65,22 +65,24 @@ class FasilitasUmumController extends BaseAdminController
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|string|in:SPBU,Hotel,Resto,RS/Puskesmas,ATM',
-            'address' => 'required|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'phone_number' => 'nullable|string|max:50',
-            'description' => 'nullable|string',
-            'available_services' => 'nullable|string',
-            'tags' => 'nullable|string',
-            'operational_hours' => 'required|string|max:255',
-            'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
-        ]);
-
         try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'type' => 'required|string|in:SPBU,Hotel,Resto,RS/Puskesmas,ATM',
+                'address' => 'required|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'phone_number' => 'nullable|string|max:50',
+                'description' => 'nullable|string',
+                'available_services' => 'nullable|string',
+                'tags' => 'nullable|string',
+                'operational_hours' => 'required|string|max:255',
+                'is_active' => 'boolean',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+                'image' => 'nullable|' . ($request->hasFile('image') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
+            ]);
+
             $validated['is_active'] = $request->boolean('is_active');
             
             if (isset($validated['available_services']) && $validated['available_services']) {
@@ -95,8 +97,37 @@ class FasilitasUmumController extends BaseAdminController
                 $validated['tags'] = [];
             }
             
+            $uploadedImages = [];
+            
+            // Check direct strings
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+            }
+            if ($request->filled('image') && is_string($request->input('image')) && (str_starts_with($request->input('image'), 'http://') || str_starts_with($request->input('image'), 'https://'))) {
+                $uploadedImages[] = $request->input('image');
+            }
+
             if ($request->hasFile('image')) {
-                $validated['image_url'] = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                $path = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                if ($path) $uploadedImages[] = $path;
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->uploadFile($file, 'fasilitas_umum');
+                    if ($path) $uploadedImages[] = $path;
+                }
+            }
+            if (count($uploadedImages) > 0) {
+                $validated['image_url'] = $uploadedImages[0];
+                $validated['images'] = $uploadedImages;
+            }
+            
+            if (isset($validated['image'])) {
+                unset($validated['image']);
             }
 
             $validated['admin_id'] = $this->admin->id;
@@ -113,8 +144,18 @@ class FasilitasUmumController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.fasilitas_umum.index')
                 ->with('success', 'Fasilitas berhasil ditambahkan');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error creating facility: ' . $e->getMessage());
 
@@ -137,6 +178,20 @@ class FasilitasUmumController extends BaseAdminController
         $facility = MongoFasilitasUmum::findOrFail($id);
 
         if ($request->ajax() || $request->wantsJson()) {
+            if ($facility->image_url) {
+                $facility->image_url_full = image_url($facility->image_url);
+            }
+            if ($facility->images && is_array($facility->images)) {
+                $facility->images_url = array_map(function($img) {
+                    return image_url($img);
+                }, $facility->images);
+                $facility->images_data = array_map(function($img) {
+                    return [
+                        'path' => $img,
+                        'url' => image_url($img)
+                    ];
+                }, $facility->images);
+            }
             return response()->json($facility);
         }
 
@@ -148,24 +203,26 @@ class FasilitasUmumController extends BaseAdminController
      */
     public function update(Request $request, string $id)
     {
-        $facility = MongoFasilitasUmum::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|string|in:SPBU,Hotel,Resto,RS/Puskesmas,ATM',
-            'address' => 'required|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'phone_number' => 'nullable|string|max:50',
-            'description' => 'nullable|string',
-            'available_services' => 'nullable|string',
-            'tags' => 'nullable|string',
-            'operational_hours' => 'required|string|max:255',
-            'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
-        ]);
-
         try {
+            $facility = MongoFasilitasUmum::findOrFail($id);
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'type' => 'required|string|in:SPBU,Hotel,Resto,RS/Puskesmas,ATM',
+                'address' => 'required|string',
+                'latitude' => 'nullable|numeric',
+                'longitude' => 'nullable|numeric',
+                'phone_number' => 'nullable|string|max:50',
+                'description' => 'nullable|string',
+                'available_services' => 'nullable|string',
+                'tags' => 'nullable|string',
+                'operational_hours' => 'required|string|max:255',
+                'is_active' => 'boolean',
+                'images' => 'nullable|array',
+                'images.*' => $request->hasFile('images') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string',
+                'image' => 'nullable|' . ($request->hasFile('image') ? 'image|mimes:jpeg,png,webp|max:10240' : 'string'),
+            ]);
+
             $validated['is_active'] = $request->boolean('is_active');
             
             if (isset($validated['available_services']) && $validated['available_services']) {
@@ -180,11 +237,76 @@ class FasilitasUmumController extends BaseAdminController
                 $validated['tags'] = [];
             }
             
-            if ($request->hasFile('image')) {
-                if ($facility->image_url) {
-                    $this->deleteFile($facility->image_url);
+            $deleteImages = $request->input('delete_images', []);
+            $existingImages = $facility->images ?? [];
+            if ($facility->image_url && empty($existingImages)) {
+                $existingImages = [$facility->image_url];
+            }
+
+            if (!empty($deleteImages) && is_array($deleteImages)) {
+                foreach ($deleteImages as $delImg) {
+                    $this->deleteFile($delImg);
+                    $existingImages = array_filter($existingImages, function($img) use ($delImg) {
+                        return !$this->pathsMatch($img, $delImg);
+                    });
                 }
-                $validated['image_url'] = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                $existingImages = array_values($existingImages);
+            }
+
+            $uploadedImages = [];
+            
+            // Check direct strings
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $uploadedImages[] = $img;
+                    }
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+            if ($request->filled('image') && is_string($request->input('image')) && (str_starts_with($request->input('image'), 'http://') || str_starts_with($request->input('image'), 'https://'))) {
+                $path = $request->input('image');
+                if (count($existingImages) > 0) {
+                    $this->deleteFile($existingImages[0]);
+                    $existingImages[0] = $path;
+                } else {
+                    array_unshift($existingImages, $path);
+                }
+            }
+
+            if ($request->hasFile('image')) {
+                $path = $this->uploadFile($request->file('image'), 'fasilitas_umum');
+                if ($path) {
+                    if (count($existingImages) > 0) {
+                        $this->deleteFile($existingImages[0]);
+                        $existingImages[0] = $path;
+                    } else {
+                        array_unshift($existingImages, $path);
+                    }
+                }
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->uploadFile($file, 'fasilitas_umum');
+                    if ($path) $uploadedImages[] = $path;
+                }
+                $existingImages = array_merge($existingImages, $uploadedImages);
+            }
+
+            if (count($existingImages) > 0) {
+                $validated['image_url'] = $existingImages[0];
+                $validated['images'] = $existingImages;
+            } else {
+                $validated['image_url'] = null;
+                $validated['images'] = [];
+            }
+            
+            // Just ensure File objects are not passed
+            if (isset($validated['image']) && $validated['image'] instanceof \Illuminate\Http\UploadedFile) {
+                unset($validated['image']);
+            }
+            if (isset($validated['images']) && is_array($validated['images']) && count($validated['images']) > 0 && $validated['images'][0] instanceof \Illuminate\Http\UploadedFile) {
+                unset($validated['images']);
             }
             
             $oldValues = $facility->toArray();
@@ -200,8 +322,18 @@ class FasilitasUmumController extends BaseAdminController
                 ]);
             }
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.fasilitas_umum.index')
                 ->with('success', 'Fasilitas berhasil diperbarui');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error updating facility: ' . $e->getMessage());
 
@@ -249,12 +381,17 @@ class FasilitasUmumController extends BaseAdminController
         try {
             $this->logActivity('delete', 'facility', (string)$facility->_id, $facility->toArray());
             
-            if ($facility->image_url) {
+            if ($facility->images) {
+                foreach($facility->images as $img) {
+                    $this->deleteFile($img);
+                }
+            } elseif ($facility->image_url) {
                 $this->deleteFile($facility->image_url);
             }
             
             $facility->delete();
 
+            $this->clearDashboardCache();
             return redirect()->route('admin.fasilitas_umum.index')
                 ->with('success', 'Fasilitas berhasil dihapus');
         } catch (\Exception $e) {

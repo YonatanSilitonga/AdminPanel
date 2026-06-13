@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
-use App\Http\Controllers\Admin\DestinationGalleryController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\ReportController;
@@ -85,13 +84,6 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::patch('destinations/{destination}/status', [DestinationController::class, 'toggleStatus'])
             ->name('admin.destinations.toggle-status');
 
-        // Gallery management
-        Route::post('destinations/{destination}/gallery', [DestinationGalleryController::class, 'store'])
-            ->name('admin.gallery.store');
-        Route::delete('destinations/{destination}/gallery/{gallery}', [DestinationGalleryController::class, 'destroy'])
-            ->name('admin.gallery.destroy');
-        Route::patch('destinations/{destination}/gallery/order', [DestinationGalleryController::class, 'updateOrder'])
-            ->name('admin.gallery.order');
 
         // Facility management
         Route::post('destinations/{destination}/facilities', [FacilityController::class, 'store'])
@@ -133,7 +125,9 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
     // ============ CAROUSEL & BANNER ============
     Route::middleware('admin.role:admin,super_admin')->group(function () {
+        Route::get('carousel-banners/sign-upload', [CarouselBannerController::class, 'signUpload'])->name('admin.carousel_banners.sign-upload');
         Route::patch('carousel-banners/order', [CarouselBannerController::class, 'updateOrder'])->name('admin.carousel_banners.order');
+        Route::patch('carousel-banners/settings', [CarouselBannerController::class, 'updateSettings'])->name('admin.carousel_banners.update-settings');
         Route::patch('carousel-banners/{id}/toggle-active', [CarouselBannerController::class, 'toggleActive'])->name('admin.carousel_banners.toggle-active');
         Route::get('carousel-banners/contents-by-category', [CarouselBannerController::class, 'getContentsByCategory'])->name('admin.carousel_banners.contents-by-category');
         Route::resource('carousel-banners', CarouselBannerController::class, [
@@ -195,6 +189,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // ============ REVIEWS (Admin + Moderator) ============
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::get('reviews/summary/stats', [ReviewController::class, 'summaryStats'])->name('admin.reviews.summary-stats');
+        Route::match(['get', 'post'], 'reviews/analytics/print', [ReviewController::class, 'printAnalytics'])->name('admin.reviews.print-analytics');
         Route::get('reviews/export', [ReviewController::class, 'export'])->name('admin.reviews.export');
         Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('admin.reviews.show');
         Route::post('reviews/{review}/analyze', [ReviewController::class, 'analyze'])->name('admin.reviews.analyze');
@@ -208,6 +204,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::middleware('admin.role:moderator,admin,super_admin')->group(function () {
         Route::get('reports', [ReportController::class, 'index'])->name('admin.reports.index');
         Route::get('reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
+        Route::match(['get', 'post'], 'reports/print', [ReportController::class, 'printReport'])->name('admin.reports.print');
         Route::get('reports/{report}', [ReportController::class, 'show'])->name('admin.reports.show');
         Route::patch('reports/{report}/resolve', [ReportController::class, 'resolve'])->name('admin.reports.resolve');
         Route::post('reports/{report}/action', [ReportController::class, 'takeAction'])->name('admin.reports.action');
@@ -228,10 +225,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::middleware('admin.role:admin,super_admin')->group(function () {
         Route::get('recommendations', [RecommendationLogController::class, 'index'])
             ->name('admin.recommendations.index');
-        Route::get('recommendations/{log}', [RecommendationLogController::class, 'show'])
-            ->name('admin.recommendations.show');
         Route::get('recommendations/export', [RecommendationLogController::class, 'export'])
             ->name('admin.recommendations.export');
+        Route::get('recommendations/{log}', [RecommendationLogController::class, 'show'])
+            ->name('admin.recommendations.show');
     });
 
     // ============ CHATBOT LOGS (Admin + Moderator) ============
@@ -265,22 +262,6 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
             ->name('admin.settings.general');
         Route::put('settings/general', [SettingsController::class, 'updateGeneral'])
             ->name('admin.settings.general.update');
-
-        // API Keys
-        Route::get('settings/api-keys', [SettingsController::class, 'editApiKeys'])
-            ->name('admin.settings.api-keys');
-        Route::put('settings/api-keys', [SettingsController::class, 'updateApiKeys'])
-            ->name('admin.settings.api-keys.update');
-
-        // AI Configuration
-        Route::get('settings/ai-config', [SettingsController::class, 'editAiConfig'])
-            ->name('admin.settings.ai-config');
-        Route::put('settings/ai-config', [SettingsController::class, 'updateAiConfig'])
-            ->name('admin.settings.ai-config.update');
-
-        // Maintenance Mode
-        Route::patch('settings/maintenance', [SettingsController::class, 'toggleMaintenance'])
-            ->name('admin.settings.maintenance');
 
         // Audit Logs
         Route::get('settings/audit-logs', [AuditLogController::class, 'index'])

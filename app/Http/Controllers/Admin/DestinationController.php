@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\MongoDestination;
+use App\Models\MongoDB\MongoReview;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class DestinationController extends BaseAdminController
 {
@@ -52,15 +53,32 @@ class DestinationController extends BaseAdminController
         $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
         // --- Trending Logic (Only if tab is trending) ---
-        $trendingData = [];
+        $trendingData = [
+            'mode' => null,
+            'trendingDestinations' => collect(),
+            'stats' => [
+                'total_destinations' => 0,
+                'total_wishlist' => 0,
+                'total_review' => 0,
+                'destinations_increase' => 0,
+                'wishlist_increase' => 0,
+                'review_increase' => 0,
+            ],
+            'trendChartData' => ['labels' => [], 'data' => []],
+        ];
+        
         if ($activeTab === 'trending') {
             $mode = \App\Models\AppSetting::get('trending_mode', 'manual');
             $manualList = \App\Models\AppSetting::get('trending_list', []);
             
             $trendingDestinations = [];
             if ($mode === 'manual' && !empty($manualList)) {
-                $trendingDestinations = collect($manualList)->map(function($id) {
-                    $dest = MongoDestination::find((string)$id);
+                $ids = array_map('strval', $manualList);
+                $destinations = MongoDestination::whereIn('_id', $ids)->get()->keyBy(function($dest) {
+                    return (string)$dest->_id;
+                });
+                $trendingDestinations = collect($manualList)->map(function($id) use ($destinations) {
+                    $dest = $destinations->get((string)$id);
                     if ($dest) $dest->id_str = (string)$dest->_id;
                     return $dest;
                 })->filter()->values();
@@ -77,17 +95,18 @@ class DestinationController extends BaseAdminController
                     })->values();
             }
 
+            $cachedStats = \Illuminate\Support\Facades\Cache::remember('admin.destinations.trending_stats', now()->addMinutes(15), function () {
+                return [
+                    'stats' => $this->buildTrendingStats(),
+                    'trendChartData' => $this->buildWeeklyReviewTrend(),
+                ];
+            });
+
             $trendingData = [
                 'mode' => $mode,
                 'trendingDestinations' => $trendingDestinations,
-                'stats' => [
-                    'total_search' => 7842,
-                    'total_wishlist' => 1543,
-                    'total_review' => 842,
-                    'search_increase' => 12,
-                    'wishlist_increase' => 12,
-                    'review_increase' => 18
-                ]
+                'stats' => $cachedStats['stats'],
+                'trendChartData' => $cachedStats['trendChartData'],
             ];
         }
 
@@ -96,6 +115,86 @@ class DestinationController extends BaseAdminController
             'categories' => $categories,
             'activeTab' => $activeTab
         ], $trendingData));
+    }
+
+    /**
+     * Build real trending stats from MongoDB collections.
+     */
+    private function buildTrendingStats(): array
+    {
+        $now   = now();
+        $thisWeekStart = $now->copy()->startOfWeek();
+        $lastWeekStart = $now->copy()->subWeek()->startOfWeek();
+        $lastWeekEnd   = $now->copy()->subWeek()->endOfWeek();
+
+        // --- Total Reviews (collection: ratings) ---
+        $totalReview = (int) MongoReview::count();
+
+        $reviewThisWeek = (int) MongoReview::where('created_at', '>=', $thisWeekStart)->count();
+        $reviewLastWeek = (int) MongoReview::where('created_at', '>=', $lastWeekStart)
+                            ->where('created_at', '<=', $lastWeekEnd)->count();
+        $reviewIncrease = $reviewLastWeek > 0
+            ? (int) round((($reviewThisWeek - $reviewLastWeek) / (float) $reviewLastWeek) * 100)
+            : ($reviewThisWeek > 0 ? 100 : 0);
+
+        // --- Total Wishlist (collection: favorites) ---
+        $totalWishlist = (int) DB::connection('mongodb')
+                            ->table('favorites')->count();
+
+        $wishlistThisWeek = (int) DB::connection('mongodb')
+                            ->table('favorites')
+                            ->where('created_at', '>=', $thisWeekStart)->count();
+        $wishlistLastWeek = (int) DB::connection('mongodb')
+                            ->table('favorites')
+                            ->where('created_at', '>=', $lastWeekStart)
+                            ->where('created_at', '<=', $lastWeekEnd)->count();
+        $wishlistIncrease = $wishlistLastWeek > 0
+            ? (int) round((($wishlistThisWeek - $wishlistLastWeek) / (float) $wishlistLastWeek) * 100)
+            : ($wishlistThisWeek > 0 ? 100 : 0);
+
+        // --- Total Active Destinations sebagai pengganti search ---
+        $totalActive = (int) MongoDestination::where('is_active', true)->count();
+
+        $activeThisWeek = (int) MongoDestination::where('is_active', true)
+                            ->where('created_at', '>=', $thisWeekStart)->count();
+        $activeLastWeek = (int) MongoDestination::where('is_active', true)
+                            ->where('created_at', '>=', $lastWeekStart)
+                            ->where('created_at', '<=', $lastWeekEnd)->count();
+        $activeIncrease = $activeLastWeek > 0
+            ? (int) round((($activeThisWeek - $activeLastWeek) / (float) $activeLastWeek) * 100)
+            : ($activeThisWeek > 0 ? 100 : 0);
+
+        return [
+            'total_destinations' => $totalActive,
+            'total_wishlist'     => $totalWishlist,
+            'total_review'       => $totalReview,
+            'destinations_increase' => $activeIncrease,
+            'wishlist_increase'  => $wishlistIncrease,
+            'review_increase'    => $reviewIncrease,
+        ];
+    }
+
+    /**
+     * Build weekly review trend data (last 7 days) from MongoDB.
+     */
+    private function buildWeeklyReviewTrend(): array
+    {
+        $labels = [];
+        $data   = [];
+        $dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date  = now()->subDays($i)->startOfDay();
+            $end   = now()->subDays($i)->endOfDay();
+            $count = MongoReview::where('created_at', '>=', $date)
+                        ->where('created_at', '<=', $end)
+                        ->count();
+
+            $labels[] = $dayNames[$date->dayOfWeek];
+            $data[]   = $count;
+        }
+
+        return ['labels' => $labels, 'data' => $data];
     }
 
     /**
@@ -115,31 +214,40 @@ class DestinationController extends BaseAdminController
      */
     public function store(Request $request)
     {
-        Log::info('Destination store attempt', $request->except(['thumbnail', 'images']));
-        
-        $validated = $request->validate([
-            'name' => 'required|string|min:3|max:200',
-            'description' => 'required|string|min:10|max:500',
-            'location' => 'required|string|max:500',
-            'category' => 'required|in:park,beach,museum,historical,nature,cultural,religi',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'facilities' => 'nullable|string',
-            'thumbnail' => 'required|image|mimes:jpeg,png,webp|max:10240',
-            'images.*' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
-            'opening_hours' => 'nullable|string|max:255',
-            'ticket_price' => 'nullable|string|max:255',
-            'best_time' => 'nullable|string|max:255',
-        ]);
-
         try {
+            Log::info('Destination store attempt', $request->except(['thumbnail', 'images']));
+            
+            $validated = $request->validate([
+                'name'          => 'required|string|min:3|max:200',
+                'description'   => 'required|string|min:10|max:5000',
+                'location'      => 'required|string|max:500',
+                'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
+                'latitude'      => 'nullable|numeric|between:-90,90',
+                'longitude'     => 'nullable|numeric|between:-180,180',
+                'facilities'    => 'nullable|string',
+                'thumbnail'     => 'required',
+                'images.*'      => 'nullable',
+                'opening_hours' => 'nullable|string|max:255',
+                'ticket_price'  => 'nullable|string|max:255',
+                'best_time'     => 'nullable|string|max:255',
+                'start_time'    => 'nullable|integer|min:0',
+            ], [
+                'name.required'        => 'Nama destinasi wajib diisi.',
+                'name.min'             => 'Nama destinasi minimal 3 karakter.',
+                'description.required' => 'Deskripsi wajib diisi.',
+                'description.min'      => 'Deskripsi minimal 10 karakter.',
+                'location.required'    => 'Lokasi wajib diisi.',
+                'category.required'    => 'Kategori wajib dipilih.',
+                'thumbnail.required'   => 'Media utama (thumbnail) wajib diunggah.',
+            ]);
+
             $destination = new MongoDestination();
             $destination->name = $validated['name'];
             $destination->description = $validated['description'];
             $destination->location = $validated['location'];
             $destination->category = $validated['category'];
-            $destination->latitude = (float) $validated['latitude'];
-            $destination->longitude = (float) $validated['longitude'];
+            $destination->latitude  = isset($validated['latitude'])  ? (float) $validated['latitude']  : null;
+            $destination->longitude = isset($validated['longitude']) ? (float) $validated['longitude'] : null;
             
             // Normalisasi facilities: handle input koma-separated dari form
             $destination->facilities = $this->parseFacilitiesInput($request->facilities);
@@ -147,28 +255,45 @@ class DestinationController extends BaseAdminController
             $destination->opening_hours = $validated['opening_hours'] ?? '08:00 - 17:00';
             $destination->ticket_price = $validated['ticket_price'] ?? 'Gratis';
             $destination->best_time = $validated['best_time'] ?? 'Kapan saja';
+            $destination->video_duration = (int) ($validated['video_duration'] ?? 10);
+            $destination->video_autoplay = $request->boolean('video_autoplay', true);
+            $destination->video_loop = $request->boolean('video_loop', true);
+            $destination->video_wait_until_ready = $request->boolean('video_wait_until_ready', true);
 
             $destination->is_active = true;
             $destination->is_featured = false;
             $destination->admin_id = $this->admin->id;
 
-            $images = [];
+            $currentImages = [];
 
             // Upload thumbnail
-            if ($request->hasFile('thumbnail')) {
+            if ($request->filled('thumbnail') && is_string($request->input('thumbnail')) && (str_starts_with($request->input('thumbnail'), 'http://') || str_starts_with($request->input('thumbnail'), 'https://'))) {
+                $currentImages[] = $request->input('thumbnail');
+            } elseif ($request->hasFile('thumbnail')) {
                 $path = $this->processImage($request->file('thumbnail'), 'destinations');
-                if ($path) $images[] = $path; // Simpan relative path
-            }
-
-            // Upload additional images
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $file) {
-                    $path = $this->processImage($file, 'destinations');
-                    if ($path) $images[] = $path; // Simpan relative path
+                if ($path) {
+                    $currentImages[] = $path;
                 }
             }
 
-            $destination->images = $images;
+            // Upload additional images
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $currentImages[] = $img;
+                    }
+                }
+            }
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    $path = $this->processImage($file, 'destinations');
+                    if ($path) {
+                        $currentImages[] = $path;
+                    }
+                }
+            }
+
+            $destination->images = $currentImages;
             $saved = $destination->save();
 
             if ($saved) {
@@ -178,13 +303,34 @@ class DestinationController extends BaseAdminController
             }
 
             $this->logActivity('create_mongo', 'destination', (string)$destination->_id, null, $destination->toArray());
+            $this->clearDashboardCache();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Destinasi berhasil ditambahkan',
+                    'destination' => $destination
+                ]);
+            }
 
             return redirect()
                 ->route('admin.destinations.index')
                 ->with('success', 'Destinasi berhasil ditambahkan');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error creating destination in Mongo: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
             return back()->with('error', 'Error creating destination: ' . $e->getMessage());
         }
     }
@@ -195,6 +341,20 @@ class DestinationController extends BaseAdminController
         $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
 
         if ($request->ajax() || $request->wantsJson()) {
+            if ($destination->images && is_array($destination->images)) {
+                $destination->images_url = array_map(function($img) {
+                    $media = get_media_info($img);
+                    return $media['url'];
+                }, $destination->images);
+                $destination->images_data = array_map(function($img) {
+                    $media = get_media_info($img);
+                    return [
+                        'path' => is_array($img) ? ($img['url'] ?? '') : $img,
+                        'url' => $media['url'],
+                        'type' => $media['type'],
+                    ];
+                }, $destination->images);
+            }
             return response()->json($destination);
         }
 
@@ -209,32 +369,41 @@ class DestinationController extends BaseAdminController
      */
     public function update(Request $request, string $id)
     {
-        $destination = MongoDestination::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'required|string|min:3|max:200',
-            'description' => 'required|string|min:10|max:500',
-            'location' => 'required|string|max:500',
-            'category' => 'required|in:park,beach,museum,historical,nature,cultural,religi',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'facilities' => 'nullable|string',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
-            'images.*' => 'nullable|image|mimes:jpeg,png,webp|max:10240',
-            'opening_hours' => 'nullable|string|max:255',
-            'ticket_price' => 'nullable|string|max:255',
-            'best_time' => 'nullable|string|max:255',
-        ]);
-
         try {
+            $destination = MongoDestination::findOrFail($id);
+
+            $validated = $request->validate([
+                'name'          => 'required|string|min:3|max:200',
+                'description'   => 'required|string|min:10|max:5000',
+                'location'      => 'required|string|max:500',
+                'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
+                'latitude'      => 'nullable|numeric|between:-90,90',
+                'longitude'     => 'nullable|numeric|between:-180,180',
+                'facilities'    => 'nullable|string',
+                'thumbnail'     => 'nullable',
+                'images.*'      => 'nullable',
+                'opening_hours' => 'nullable|string|max:255',
+                'ticket_price'  => 'nullable|string|max:255',
+                'best_time'     => 'nullable|string|max:255',
+                'start_time'    => 'nullable|integer|min:0',
+                'end_time'      => 'nullable|integer|min:0',
+            ], [
+                'name.required'        => 'Nama destinasi wajib diisi.',
+                'name.min'             => 'Nama destinasi minimal 3 karakter.',
+                'description.required' => 'Deskripsi wajib diisi.',
+                'description.min'      => 'Deskripsi minimal 10 karakter.',
+                'location.required'    => 'Lokasi wajib diisi.',
+                'category.required'    => 'Kategori wajib dipilih.',
+            ]);
+
             $oldValues = $destination->toArray();
 
             $destination->name = $validated['name'];
             $destination->description = $validated['description'];
             $destination->location = $validated['location'];
             $destination->category = $validated['category'];
-            $destination->latitude = (float) $validated['latitude'];
-            $destination->longitude = (float) $validated['longitude'];
+            $destination->latitude  = isset($validated['latitude'])  ? (float) $validated['latitude']  : $destination->latitude;
+            $destination->longitude = isset($validated['longitude']) ? (float) $validated['longitude'] : $destination->longitude;
 
             if ($request->has('facilities')) {
                 $destination->facilities = $this->parseFacilitiesInput($request->facilities);
@@ -243,16 +412,43 @@ class DestinationController extends BaseAdminController
             $destination->opening_hours = $validated['opening_hours'] ?? $destination->opening_hours;
             $destination->ticket_price = $validated['ticket_price'] ?? $destination->ticket_price;
             $destination->best_time = $validated['best_time'] ?? $destination->best_time;
+            $destination->video_duration = (int) ($validated['video_duration'] ?? ($destination->video_duration ?? 10));
+            $destination->video_autoplay = $request->boolean('video_autoplay', $destination->video_autoplay ?? true);
+            $destination->video_loop = $request->boolean('video_loop', $destination->video_loop ?? true);
+            $destination->video_wait_until_ready = $request->boolean('video_wait_until_ready', $destination->video_wait_until_ready ?? true);
 
             $currentImages = $destination->images ?? [];
 
+            $deleteImages = $request->input('delete_images', []);
+            if (!empty($deleteImages) && is_array($deleteImages)) {
+                foreach ($deleteImages as $delImg) {
+                    $this->deleteFile($delImg);
+                    $currentImages = array_filter($currentImages, function($img) use ($delImg) {
+                        $imgUrl = is_array($img) ? $img['url'] : $img;
+                        return !$this->pathsMatch($imgUrl, $delImg);
+                    });
+                }
+                $currentImages = array_values($currentImages);
+            }
+
             // --- Logika Update Thumbnail (Index 0) ---
-            if ($request->hasFile('thumbnail')) {
+            if ($request->filled('thumbnail') && is_string($request->input('thumbnail')) && (str_starts_with($request->input('thumbnail'), 'http://') || str_starts_with($request->input('thumbnail'), 'https://'))) {
+                $newThumb = $request->input('thumbnail');
+                if (count($currentImages) > 0) {
+                    // Hapus thumbnail lama dari storage
+                    $oldThumb = is_array($currentImages[0]) ? ($currentImages[0]['url'] ?? $currentImages[0]) : $currentImages[0];
+                    $this->deleteFile($oldThumb);
+                    $currentImages[0] = $newThumb;
+                } else {
+                    array_unshift($currentImages, $newThumb);
+                }
+            } elseif ($request->hasFile('thumbnail')) {
                 $newThumb = $this->processImage($request->file('thumbnail'), 'destinations');
                 if ($newThumb) {
                     if (count($currentImages) > 0) {
                         // Hapus thumbnail lama dari storage
-                        $this->deleteFile($currentImages[0]);
+                        $oldThumb = is_array($currentImages[0]) ? ($currentImages[0]['url'] ?? $currentImages[0]) : $currentImages[0];
+                        $this->deleteFile($oldThumb);
                         $currentImages[0] = $newThumb;
                     } else {
                         array_unshift($currentImages, $newThumb);
@@ -260,18 +456,27 @@ class DestinationController extends BaseAdminController
                 }
             }
 
-            // --- Logika Tambah Gambar ke Gallery ---
+            // --- Logika Tambah Gambar/Video ke Gallery ---
+            if ($request->filled('images')) {
+                foreach ($request->input('images') as $img) {
+                    if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                        $currentImages[] = $img;
+                    }
+                }
+            }
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
                     $path = $this->processImage($file, 'destinations');
                     if ($path) {
-                        $currentImages[] = $path; // Tambahkan ke akhir array
+                        $currentImages[] = $path;
                     }
                 }
             }
 
             $destination->images = $currentImages;
             $destination->save();
+
+            $this->clearDashboardCache();
 
             // Wrap logActivity in try-catch to prevent it from breaking the response
             try {
@@ -281,7 +486,6 @@ class DestinationController extends BaseAdminController
             }
 
             if ($request->ajax() || $request->wantsJson()) {
-                session()->flash('success', 'Destinasi berhasil diperbarui');
                 return response()->json([
                     'success' => true,
                     'message' => 'Destinasi berhasil diperbarui',
@@ -293,6 +497,15 @@ class DestinationController extends BaseAdminController
                 ->route('admin.destinations.index')
                 ->with('success', 'Destinasi berhasil diperbarui');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terdapat kesalahan validasi pada formulir.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error updating destination in Mongo: ' . $e->getMessage());
 
@@ -317,6 +530,7 @@ class DestinationController extends BaseAdminController
 
             // Log action
             $this->logActivity('delete_mongo', 'destination', $id);
+            $this->clearDashboardCache();
 
             return redirect()
                 ->route('admin.destinations.index')
@@ -411,13 +625,18 @@ class DestinationController extends BaseAdminController
         return response()->json(['success' => true, 'message' => 'Destinasi ditambahkan ke trending']);
     }
 
-    public function removeTrendingDestination($id)
+    public function removeTrendingDestination(Request $request, $id)
     {
         $currentList = \App\Models\AppSetting::get('trending_list', []);
         $id = (string)$id;
         $newList = array_values(array_filter($currentList, fn($item) => (string)$item !== $id));
         \App\Models\AppSetting::set('trending_list', $newList, 'json');
-        return response()->json(['success' => true, 'message' => 'Destinasi dihapus dari trending']);
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Destinasi dihapus dari trending']);
+        }
+        
+        return redirect()->back()->with('success', 'Destinasi berhasil dihapus dari trending');
     }
 
     public function resetTrendingToAutomatic()

@@ -6,8 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Panel') - Smart Tourism</title>
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+    @if(app_setting('favicon'))
+        <link rel="icon" href="{{ image_url(app_setting('favicon')) }}">
+    @else
+        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+        <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+    @endif
 
     <!-- Tailwind CSS (Local via Vite) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -92,6 +96,23 @@
             border: 1px solid rgba(229, 231, 235, 0.9) !important;
             box-shadow: 0 35px 80px -20px rgba(15, 23, 42, 0.35) !important;
         }
+
+        /* Scroll performance: disable pointer-events on hover tooltips while scrolling */
+        .is-scrolling .group:hover > div[class*="opacity-0"],
+        .is-scrolling [class*="group-hover\\:opacity-100"] {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Tooltip transition — hanya opacity, bukan transition-all */
+        [class*="group-hover\\:opacity-100"] {
+            transition: opacity 150ms ease !important;
+        }
+
+        /* Isolate table repaint dari halaman */
+        .review-table-wrap {
+            contain: layout;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -140,8 +161,8 @@
                 @include('admin.layouts.navbar')
 
                 <!-- Page Content -->
-                <main class="flex-1 overflow-auto custom-scrollbar">
-                    <div id="page-content" class="max-w-[1700px] mx-auto px-6 md:px-10 py-8 page-enter">
+                <main class="flex-1 overflow-auto custom-scrollbar flex flex-col">
+                    <div id="page-content" class="max-w-[1700px] w-full mx-auto px-6 md:px-10 py-8 page-enter flex-1">
                         <!-- Breadcrumb -->
                         @yield('breadcrumb')
 
@@ -159,74 +180,74 @@
                         </div>
 
                         <!-- Alerts -->
+                        <div id="dynamic-alerts-container"></div>
+
                         @if ($errors->any())
-                            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            <div class="mb-5 p-4 bg-red-50 border border-red-200/40 rounded-2xl">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex-shrink-0 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </div>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-red-800">Validation Errors</h3>
-                                        <ul class="mt-2 list-disc list-inside text-sm text-red-700">
-                                            @foreach ($errors->all() as $error)
-                                                <li>{{ $error }}</li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
+                                    <p class="text-sm font-bold text-red-800">Kesalahan Validasi</p>
                                 </div>
+                                <ul class="list-disc list-inside text-xs text-red-700 pl-8 space-y-1">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
                             </div>
                         @endif
 
                         @if (session('success'))
-                            <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
-                                    </div>
+                            <div class="mb-5 p-4 bg-[#E6F6F2] border border-[#00A884]/20 rounded-2xl flex items-center gap-3">
+                                <div class="flex-shrink-0 w-5 h-5 bg-[#00A884] rounded-full flex items-center justify-center text-white">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
                                 </div>
+                                <p class="text-sm font-bold text-[#00A884]">{{ session('success') }}</p>
                             </div>
                         @endif
 
                         @if (session('error'))
-                            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.707-9.707a1 1 0 011.414 0L12 9.586l1.293-1.293a1 1 0 111.414 1.414L13.414 11l1.293 1.293a1 1 0 01-1.414 1.414L12 12.414l-1.293 1.293a1 1 0 01-1.414-1.414L9.586 11 8.293 9.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
-                                    </div>
+                            <div class="mb-5 p-4 bg-red-50 border border-red-200/40 rounded-2xl flex items-center gap-3">
+                                <div class="flex-shrink-0 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
                                 </div>
+                                <p class="text-sm font-bold text-red-800">{{ session('error') }}</p>
                             </div>
                         @endif
 
                         @if (session('info'))
-                            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zM9 8a1 1 0 112 0v5a1 1 0 11-2 0V8zm1-3a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm font-medium text-blue-800">{{ session('info') }}</p>
-                                    </div>
+                            <div class="mb-5 p-4 bg-blue-50 border border-blue-200/40 rounded-2xl flex items-center gap-3">
+                                <div class="flex-shrink-0 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
                                 </div>
+                                <p class="text-sm font-bold text-blue-800">{{ session('info') }}</p>
                             </div>
                         @endif
 
                         <!-- Page Content -->
                         @yield('content')
                     </div>
+
+                    <!-- Footer -->
+                    <footer class="w-full px-6 md:px-10 py-6 mt-auto">
+                        <div class="max-w-[1700px] mx-auto border-t border-gray-100 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <p class="text-[13px] text-gray-400 font-medium">
+                                &copy; {{ date('Y') }} <span class="text-sidebar font-bold">Aplikasi Wisata Toba</span>. Hak Cipta Dilindungi.
+                            </p>
+                            <p class="text-[13px] text-gray-400 font-medium">
+                                Versi 1.0.0
+                            </p>
+                        </div>
+                    </footer>
                 </main>
             </div>
         </div>
@@ -319,8 +340,128 @@
         </div>
     </div>
 
+    <!-- Global Alert Modal -->
+    <div id="global-alert-modal"
+         x-data="{ show: false, title: 'Perhatian', message: '', type: 'error' }"
+         @show-alert.window="show = true; message = $event.detail.message; title = $event.detail.title || 'Perhatian'; type = $event.detail.type || 'error'"
+         x-show="show" class="fixed inset-0 z-[150] overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4 py-8">
+            <!-- Backdrop -->
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 transition-opacity bg-black/40 backdrop-blur-sm" @click="show = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <!-- Modal Panel -->
+            <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-sm bg-white shadow-2xl rounded-[2rem] text-gray-800 overflow-hidden z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                
+                <div class="px-8 py-6 text-center mt-4">
+                    <!-- Icon based on type -->
+                    <div class="mx-auto mb-6">
+                        <!-- Error Icon -->
+                        <div x-show="type === 'error'" class="w-[72px] h-[72px] bg-red-50 rounded-full flex items-center justify-center mx-auto">
+                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+                        
+                        <!-- Warning Icon -->
+                        <div x-show="type === 'warning'" class="w-[72px] h-[72px] bg-amber-50 rounded-full flex items-center justify-center mx-auto">
+                            <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+
+                        <!-- Success Icon -->
+                        <div x-show="type === 'success'" class="w-[72px] h-[72px] bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
+                            <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+
+                        <!-- Info Icon -->
+                        <div x-show="type === 'info'" class="w-[72px] h-[72px] bg-blue-50 rounded-full flex items-center justify-center mx-auto">
+                            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h3 class="text-[20px] font-bold text-gray-900 mb-3" x-text="title"></h3>
+                    <p class="text-[14px] text-gray-500 mb-2 leading-relaxed px-2" x-text="message"></p>
+                </div>
+
+                <div class="flex gap-3 px-8 pb-6 justify-center">
+                    <button type="button" @click="show = false" class="w-full py-3 text-[14px] font-bold text-white bg-sidebar rounded-xl transition-all shadow-[0_4px_12px_-4px_rgba(6,100,102,0.3)]">
+                        Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script>
+        // Global helper to show the custom alert modal
+        // Uses direct DOM manipulation as primary method + Alpine event as fallback
+        window.showAlert = function(message, title, type) {
+            title = title || 'Perhatian';
+            type  = type  || 'error';
+
+            // --- Method 1: Direct DOM manipulation (works even before Alpine is ready) ---
+            var alertEl = document.getElementById('global-alert-modal');
+            if (alertEl) {
+                var _x = Alpine && Alpine.$data ? Alpine.$data(alertEl) : null;
+                if (_x) {
+                    _x.show    = true;
+                    _x.message = message;
+                    _x.title   = title;
+                    _x.type    = type;
+                    return;
+                }
+            }
+
+            // --- Method 2: CustomEvent (Alpine listener) ---
+            var doDispatch = function() {
+                window.dispatchEvent(new CustomEvent('show-alert', {
+                    detail: { message: message, title: title, type: type }
+                }));
+            };
+            doDispatch();
+            setTimeout(doDispatch, 80);
+        };
+
+        // Override default window.alert to route through the custom modal
+        window.alert = function(message) {
+            window.showAlert(message, 'Perhatian', 'error');
+        };
+
+        // Global error handler for server responses (422, 500, etc)
+        // Standardized handling of error.errors field validation messages
+        window.handleServerError = function(error, currentThis) {
+            if (currentThis && typeof currentThis.showUploadProgress !== 'undefined') {
+                currentThis.showUploadProgress = false;
+            }
+            
+            if (error && error.errors) {
+                // Tampilkan error validasi field pertama yang ditemukan
+                const firstField = Object.keys(error.errors)[0];
+                const firstMsg = error.errors[firstField][0];
+                window.showAlert(
+                    (error.message || 'Terdapat kesalahan validasi.') + '\n\n' + firstMsg,
+                    'Validasi Gagal',
+                    'error'
+                );
+            } else {
+                window.showAlert(error?.message || 'Gagal menyimpan data. Silakan coba lagi.', 'Gagal', 'error');
+            }
+        };
+
         // CSRF token for AJAX (Vanilla JS)
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         if (typeof jQuery !== 'undefined') {
@@ -333,7 +474,20 @@
 
         // Helper to safely parse JSON from a fetch response (handles prepended PHP warnings)
         window.safeParseJSON = async function(response) {
-            const text = await response.text();
+            let text = '';
+            try {
+                text = await response.text();
+            } catch (e) {
+                // CORB or network error blocked the response body
+                throw new Error('Response was blocked or network error occurred. Status: ' + response.status);
+            }
+            if (!text || text.trim() === '') {
+                // Empty body — could be CORB block or redirect
+                if (!response.ok) {
+                    throw new Error('Server returned status ' + response.status + ' with empty response.');
+                }
+                return null;
+            }
             try {
                 return JSON.parse(text);
             } catch (error) {
@@ -350,8 +504,8 @@
                     }
                 } catch (fallbackError) {}
                 
-                console.error("Invalid JSON response:", text);
-                throw new Error("Server returned an invalid response.");
+                console.error("Invalid JSON response:", text.substring(0, 500));
+                throw new Error("Server returned an invalid response. Status: " + response.status);
             }
         };
 
@@ -374,9 +528,112 @@
             return new Intl.NumberFormat('id-ID').format(value);
         }
 
-        // Page navigation transition disabled.
+        // Skeleton Loading Injector for Instant Perceived Navigation & Refresh
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Check for pending success/error notifications in localStorage
+            const pendingSuccess = localStorage.getItem('pending_success_toast');
+            if (pendingSuccess) {
+                const container = document.getElementById('dynamic-alerts-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="mb-5 p-4 bg-[#E6F6F2] border border-[#00A884]/20 rounded-2xl flex items-center gap-3">
+                            <div class="flex-shrink-0 w-5 h-5 bg-[#00A884] rounded-full flex items-center justify-center text-white">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <p class="text-sm font-bold text-[#00A884]">${pendingSuccess}</p>
+                        </div>
+                    `;
+                }
+                localStorage.removeItem('pending_success_toast');
+            }
+
+            const pendingError = localStorage.getItem('pending_error_toast');
+            if (pendingError) {
+                const container = document.getElementById('dynamic-alerts-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="mb-5 p-4 bg-red-50 border border-red-200/40 rounded-2xl flex items-center gap-3">
+                            <div class="flex-shrink-0 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </div>
+                            <p class="text-sm font-bold text-red-800">${pendingError}</p>
+                        </div>
+                    `;
+                }
+                localStorage.removeItem('pending_error_toast');
+            }
+            
+            // Generic Loading State for ALL layouts (Dashboard, Settings, Lists)
+            const showSkeletonLoader = () => {
+                const pageContent = document.getElementById('page-content');
+                if (pageContent && !pageContent.dataset.skeletonActive) {
+                    pageContent.dataset.skeletonActive = "true";
+                    
+                    // Instead of a fake skeleton that mismatches the layout, 
+                    // we dim the CURRENT layout and make it pulse smoothly.
+                    pageContent.style.transition = 'opacity 0.2s ease-out';
+                    pageContent.classList.add('opacity-40', 'animate-pulse', 'pointer-events-none', 'select-none');
+                    
+                    // Optional: Add a small loading indicator at the top right of the page content
+                    const loaderBadge = document.createElement('div');
+                    loaderBadge.className = 'fixed top-24 right-10 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 z-50 animate-bounce';
+                    loaderBadge.innerHTML = `
+                        <svg class="animate-spin h-5 w-5 text-sidebar" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm font-semibold text-gray-700">Memuat...</span>
+                    `;
+                    document.body.appendChild(loaderBadge);
+                }
+            };
+
+            // 1. Intercept sidebar & internal link clicks
+            const internalLinks = document.querySelectorAll('a[href^="{{ url('/admin') }}"]:not([target="_blank"]):not([href="#"])');
+            internalLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.defaultPrevented) return;
+                    const href = this.getAttribute('href');
+                    if (href === window.location.href) return;
+                    showSkeletonLoader();
+                });
+            });
+
+            // 2. Intercept Page Refresh (F5), Form Submissions, and Browser Navigation
+            window.addEventListener('beforeunload', function () {
+                showSkeletonLoader();
+            });
+        });
     </script>
 
+    @if (!empty($errors) && $errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                window.showAlert('Terdapat kesalahan validasi pada formulir. Silakan periksa kembali input Anda.', 'Validasi Gagal', 'error');
+            });
+        </script>
+    @endif
+
     @stack('scripts')
+    <script>
+        // Disable expensive hover effects while scrolling for better frame rate
+        (function() {
+            const main = document.querySelector('main.overflow-auto');
+            if (!main) return;
+            let t;
+            main.addEventListener('scroll', function() {
+                document.body.classList.add('is-scrolling');
+                clearTimeout(t);
+                t = setTimeout(function() {
+                    document.body.classList.remove('is-scrolling');
+                }, 150);
+            }, { passive: true });
+        })();
+    </script>
 </body>
 </html>

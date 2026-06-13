@@ -31,6 +31,7 @@ class MongoEvent extends Model
         'start_date',
         'end_date',
         'banner_url',
+        'images',
         'is_active',
         'admin_id',
         'schedule',
@@ -47,8 +48,6 @@ class MongoEvent extends Model
         'start_date'  => 'datetime',
         'end_date'    => 'datetime',
         'is_active'   => 'boolean',
-        'tags'        => 'array',
-        'schedule'    => 'array',
         'created_at'  => 'datetime',
         'updated_at'  => 'datetime',
     ];

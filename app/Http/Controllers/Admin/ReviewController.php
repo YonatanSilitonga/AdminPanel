@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\MongoDB\MongoReview;
+use App\Models\MongoDB\MongoDestination;
 use App\Services\SentimentAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -24,23 +25,38 @@ class ReviewController extends BaseAdminController
     public function index(Request $request)
     {
         try {
-            $query = MongoReview::with('destination');
+            $query = MongoReview::with(['destination', 'user']);
 
             // Filter by rating
             if ($request->filled('rating')) {
                 $query->where('rating', (int)$request->rating);
             }
 
-            // Search in review text, user ID, or destination name
+            // Filter by destination_id
+            if ($request->filled('destination_id')) {
+                $destId = $request->destination_id;
+                $isDestObjectId = is_scalar($destId) && preg_match('/^[a-f\d]{24}$/i', (string)$destId);
+                $query->where(function($q) use ($destId, $isDestObjectId) {
+                    $q->where('destination_id', $destId);
+                    if ($isDestObjectId) {
+                        $q->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                    }
+                });
+            }
+
+            // Filter by sentiment_label
+            if ($request->filled('sentiment')) {
+                if ($request->sentiment === 'pending') {
+                    $query->whereNull('sentiment_label');
+                } else {
+                    $query->where('sentiment_label', $request->sentiment);
+                }
+            }
+
+            // Search in review text
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('review', 'like', "%{$search}%")
-                      ->orWhere('user_id', 'like', "%{$search}%")
-                      ->orWhereHas('destination', function ($destQuery) use ($search) {
-                          $destQuery->where('name', 'like', "%{$search}%");
-                      });
-                });
+                $query->where('review', 'like', "%{$search}%");
             }
 
             // Pagination
@@ -54,25 +70,34 @@ class ReviewController extends BaseAdminController
                 ->withQueryString();
 
             $ratings = [1, 2, 3, 4, 5];
-            $totalReviews = MongoReview::count();
-            $ratingDistribution = [];
-
-            foreach ([5, 4, 3, 2, 1] as $rating) {
-                $count = MongoReview::where('rating', $rating)->count();
-
-                $ratingDistribution[$rating] = [
-                    'count' => $count,
-                    'percentage' => $totalReviews > 0 ? round(($count / $totalReviews) * 100) : 0,
+            
+            // Cache the aggregation queries for 5 minutes to avoid 10 sequential DB hits
+            $statsCacheKey = 'review_stats_summary';
+            $statsData = \Illuminate\Support\Facades\Cache::remember($statsCacheKey, now()->addMinutes(5), function () {
+                $total = MongoReview::count();
+                $dist = [];
+                foreach ([5, 4, 3, 2, 1] as $rating) {
+                    $count = MongoReview::where('rating', $rating)->count();
+                    $dist[$rating] = [
+                        'count' => $count,
+                        'percentage' => $total > 0 ? round(($count / $total) * 100) : 0,
+                    ];
+                }
+                
+                $sentiments = [
+                    'total' => $total,
+                    'positive' => MongoReview::where('sentiment_label', 'positive')->count(),
+                    'neutral' => MongoReview::where('sentiment_label', 'neutral')->count(),
+                    'negative' => MongoReview::where('sentiment_label', 'negative')->count(),
+                    'pending' => MongoReview::whereNull('sentiment_label')->count(),
                 ];
-            }
+                
+                return ['total' => $total, 'distribution' => $dist, 'sentiments' => $sentiments];
+            });
 
-            $sentimentSummary = [
-                'total' => $totalReviews,
-                'positive' => MongoReview::where('sentiment_label', 'positive')->count(),
-                'neutral' => MongoReview::where('sentiment_label', 'neutral')->count(),
-                'negative' => MongoReview::where('sentiment_label', 'negative')->count(),
-                'pending' => MongoReview::whereNull('sentiment_label')->count(),
-            ];
+            $totalReviews = $statsData['total'];
+            $ratingDistribution = $statsData['distribution'];
+            $sentimentSummary = $statsData['sentiments'];
 
             $keywordSummary = [
                 'overall' => [
@@ -94,27 +119,62 @@ class ReviewController extends BaseAdminController
             $predictionSummary = [];
             $keywordModelVersion = null;
 
-            $reviewsForKeywords = MongoReview::whereNotNull('sentiment_label')
-                ->orderBy('created_at', 'desc')
-                ->limit(500)
-                ->get(['_id', 'destination_id', 'review']);
+            $cacheKey = 'review_keyword_summary_' . date('Y-m-d_H'); // Cache per jam
+            $cachedSummary = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(2), function () {
+                $reviewsForKeywords = MongoReview::whereNotNull('sentiment_label')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(500)
+                    ->get(['_id', 'destination_id', 'review']);
 
-            if ($reviewsForKeywords->isNotEmpty()) {
-                $summaryPayload = $reviewsForKeywords->map(fn ($review) => [
-                    'id' => (string) $review->_id,
-                    'text' => (string) ($review->review ?? ''),
-                    'destination_id' => $review->destination_id ? (string) $review->destination_id : null,
-                ])->values()->all();
+                if ($reviewsForKeywords->isNotEmpty()) {
+                    $summaryPayload = $reviewsForKeywords->map(fn ($review) => [
+                        'id' => (string) $review->_id,
+                        'text' => (string) ($review->review ?? ''),
+                        'destination_id' => $review->destination_id ? (string) $review->destination_id : null,
+                    ])->values()->all();
 
-                $summaryResponse = $this->sentimentService->summaryKeywords($summaryPayload, 50);
-
-                if ($summaryResponse['success'] ?? false) {
-                    $summaryData = $summaryResponse['data'] ?? [];
-                    $keywordSummary = $summaryData['keyword_summary'] ?? $keywordSummary;
-                    $predictionSummary = $summaryData['prediction_summary'] ?? [];
-                    $keywordModelVersion = $summaryData['model_version'] ?? null;
+                    return $this->sentimentService->summaryKeywords($summaryPayload, 50);
                 }
+                return null;
+            });
+
+            if ($cachedSummary && ($cachedSummary['success'] ?? false)) {
+                $summaryData = $cachedSummary['data'] ?? [];
+                $keywordSummary = $this->enrichKeywordSummaryWithDestinationNames($summaryData['keyword_summary'] ?? $keywordSummary);
+                $predictionSummary = $summaryData['prediction_summary'] ?? [];
+                $keywordModelVersion = $summaryData['model_version'] ?? null;
             }
+
+            // Calculate trends for the last 6 months
+            $trendsCacheKey = 'review_trends_6_months';
+            $sentimentTrends = \Illuminate\Support\Facades\Cache::remember($trendsCacheKey, now()->addMinutes(5), function () {
+                $trends = [];
+                for ($i = 5; $i >= 0; $i--) {
+                    $month = now()->subMonths($i);
+                    $startDate = $month->copy()->startOfMonth();
+                    $endDate = $month->copy()->endOfMonth();
+                    
+                    $positive = MongoReview::whereBetween('created_at', [$startDate, $endDate])
+                        ->where('sentiment_label', 'positive')
+                        ->count();
+                    $neutral = MongoReview::whereBetween('created_at', [$startDate, $endDate])
+                        ->where('sentiment_label', 'neutral')
+                        ->count();
+                    $negative = MongoReview::whereBetween('created_at', [$startDate, $endDate])
+                        ->where('sentiment_label', 'negative')
+                        ->count();
+                        
+                    $trends[] = [
+                        'month' => $month->translatedFormat('M Y'),
+                        'positive' => $positive,
+                        'neutral' => $neutral,
+                        'negative' => $negative,
+                    ];
+                }
+                return $trends;
+            });
+
+            $destinationsList = MongoDestination::orderBy('name', 'asc')->get(['_id', 'name']);
 
             return view('admin.reviews.index', [
                 'reviews' => $reviews,
@@ -124,6 +184,8 @@ class ReviewController extends BaseAdminController
                 'keywordSummary' => $keywordSummary,
                 'predictionSummary' => $predictionSummary,
                 'keywordModelVersion' => $keywordModelVersion,
+                'sentimentTrends' => $sentimentTrends,
+                'destinationsList' => $destinationsList,
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading reviews from Mongo: ' . $e->getMessage());
@@ -131,15 +193,168 @@ class ReviewController extends BaseAdminController
         }
     }
 
+    /**
+     * Return filtered summary stats for the analytics tab (AJAX).
+     * Supports: destination_id, date_from, date_to, rating, sentiment
+     */
+    public function summaryStats(Request $request): JsonResponse
+    {
+        try {
+            $destId   = $request->input('destination_id');
+            $dateFrom = $request->input('date_from');
+            $dateTo   = $request->input('date_to');
+            $rating   = $request->input('rating');
+            $sentiment = $request->input('sentiment');
+
+            // Base query builder with filters applied
+            $base = function () use ($destId, $dateFrom, $dateTo, $rating, $sentiment) {
+                $q = MongoReview::query();
+
+                if ($destId) {
+                    $isObjectId = is_scalar($destId) && preg_match('/^[a-f\d]{24}$/i', (string)$destId);
+                    $q->where(function ($sub) use ($destId, $isObjectId) {
+                        $sub->where('destination_id', $destId);
+                        if ($isObjectId) {
+                            $sub->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                        }
+                    });
+                }
+
+                if ($dateFrom) {
+                    $q->where('created_at', '>=', \Carbon\Carbon::parse($dateFrom)->startOfDay());
+                }
+                if ($dateTo) {
+                    $q->where('created_at', '<=', \Carbon\Carbon::parse($dateTo)->endOfDay());
+                }
+
+                if ($rating) {
+                    $q->where('rating', (int) $rating);
+                }
+
+                if ($sentiment) {
+                    if ($sentiment === 'pending') {
+                        $q->whereNull('sentiment_label');
+                    } else {
+                        $q->where('sentiment_label', $sentiment);
+                    }
+                }
+
+                return $q;
+            };
+
+            // --- Sentiment summary card counts ---
+            $total    = (clone $base())->count();
+            $positive = (clone $base())->where('sentiment_label', 'positive')->count();
+            $neutral  = (clone $base())->where('sentiment_label', 'neutral')->count();
+            $negative = (clone $base())->where('sentiment_label', 'negative')->count();
+            $pending  = (clone $base())->whereNull('sentiment_label')->count();
+
+            // --- Rating distribution ---
+            $ratingDist = [];
+            foreach ([5, 4, 3, 2, 1] as $r) {
+                $count = (clone $base())->where('rating', $r)->count();
+                $ratingDist[$r] = [
+                    'count'      => $count,
+                    'percentage' => $total > 0 ? round(($count / $total) * 100) : 0,
+                ];
+            }
+
+            // --- Average rating ---
+            $allRatings   = (clone $base())->pluck('rating')->toArray();
+            $validRatings = array_filter($allRatings, fn ($v) => is_numeric($v) && $v > 0);
+            $avgRating    = count($validRatings) > 0
+                ? round(array_sum($validRatings) / count($validRatings), 1)
+                : 0;
+
+            // --- Sentiment trends (monthly, last 6 months) ---
+            $trends = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month     = now()->subMonths($i);
+                $startDate = $month->copy()->startOfMonth();
+                $endDate   = $month->copy()->endOfMonth();
+
+                $trends[] = [
+                    'month'    => $month->translatedFormat('M Y'),
+                    'positive' => (clone $base())->whereBetween('created_at', [$startDate, $endDate])->where('sentiment_label', 'positive')->count(),
+                    'neutral'  => (clone $base())->whereBetween('created_at', [$startDate, $endDate])->where('sentiment_label', 'neutral')->count(),
+                    'negative' => (clone $base())->whereBetween('created_at', [$startDate, $endDate])->where('sentiment_label', 'negative')->count(),
+                ];
+            }
+
+            // --- Top destinations by review count (max 8) with sentiment breakdown ---
+            $destReviews = (clone $base())
+                ->whereNotNull('destination_id')
+                ->get(['destination_id', 'sentiment_label', 'rating']);
+
+            $destMap = [];
+            foreach ($destReviews as $rv) {
+                $id = (string) $rv->destination_id;
+                if (!isset($destMap[$id])) {
+                    $destMap[$id] = ['positive' => 0, 'neutral' => 0, 'negative' => 0, 'total' => 0, 'rating_sum' => 0];
+                }
+                $label = $rv->sentiment_label ?? 'neutral';
+                if (isset($destMap[$id][$label])) {
+                    $destMap[$id][$label]++;
+                }
+                $destMap[$id]['total']++;
+                if (is_numeric($rv->rating)) {
+                    $destMap[$id]['rating_sum'] += (int) $rv->rating;
+                }
+            }
+
+            arsort($destMap);
+            $topDestIds = array_slice(array_keys($destMap), 0, 8);
+
+            $destNames = [];
+            if (!empty($topDestIds)) {
+                MongoDestination::whereIn('_id', $topDestIds)
+                    ->get(['_id', 'name'])
+                    ->each(function ($d) use (&$destNames) {
+                        $destNames[(string)$d->_id] = $d->name;
+                    });
+            }
+
+            $destinationStats = array_map(function ($id) use ($destMap, $destNames) {
+                $d = $destMap[$id];
+                return [
+                    'destination_id'   => $id,
+                    'destination_name' => $destNames[$id] ?? 'Destinasi',
+                    'sentiment_counts' => [
+                        'positive' => $d['positive'],
+                        'neutral'  => $d['neutral'],
+                        'negative' => $d['negative'],
+                    ],
+                    'total'      => $d['total'],
+                    'avg_rating' => $d['total'] > 0 ? round($d['rating_sum'] / $d['total'], 1) : 0,
+                ];
+            }, $topDestIds);
+
+            return response()->json([
+                'success'          => true,
+                'total'            => $total,
+                'avg_rating'       => $avgRating,
+                'sentiment'        => compact('total', 'positive', 'neutral', 'negative', 'pending'),
+                'rating_dist'      => $ratingDist,
+                'sentiment_trends' => $trends,
+                'destinations'     => array_values($destinationStats),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Review summaryStats error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     public function show(string $id, Request $request)
     {
         try {
             // Load review with relationship
-            $review = MongoReview::with('destination')->findOrFail($id);
+            $review = MongoReview::with(['destination', 'user'])->findOrFail($id);
 
             // Handle AJAX/JSON requests
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json($review);
+                $reviewData = $review->toArray();
+                $reviewData['user_is_registered'] = $review->user && !empty($review->user->password) && (!empty($review->user->email) || !empty($review->user->name));
+                return response()->json($reviewData);
             }
 
             // Handle regular requests
@@ -205,6 +420,8 @@ class ReviewController extends BaseAdminController
                 'sentiment_model_version' => $normalized['model_version'],
                 'sentiment_analyzed_at' => now(),
             ]);
+
+            $this->clearReviewCaches();
 
             $this->logActivity('analyze_review_sentiment', 'review', $id, null, [
                 'sentiment_label' => $result['label'] ?? 'neutral',
@@ -312,6 +529,10 @@ class ReviewController extends BaseAdminController
                 }
             }
 
+            if ($analyzed > 0) {
+                $this->clearReviewCaches();
+            }
+
             $this->logActivity('batch_analyze_review_sentiment', 'review', null, null, [
                 'requested_limit' => $limit,
                 'analyzed' => $analyzed,
@@ -341,20 +562,114 @@ class ReviewController extends BaseAdminController
     /**
      * Delete review from MongoDB
      */
-    public function destroy(string $id)
+    public function destroy(string $id, Request $request)
     {
         try {
             $review = MongoReview::findOrFail($id);
-            $review->delete();
+            
+            // Prevent deletion of approved reviews - they are locked
+            if ($review->status === 'approved') {
+                $errorMsg = 'Ulasan yang sudah di-approve tidak dapat dihapus langsung. '
+                    . 'Status ulasan yang sudah disetujui terkunci untuk menjaga integritas data destinasi dan audit trail. '
+                    . 'Hubungi super admin jika perlu penghapusan paksa.';
+                
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->with('error', $errorMsg);
+            }
 
-            $this->logActivity('delete_review_mongo', 'review', $id);
+            // Soft delete: mark as deleted instead of hard delete
+            $oldData = [
+                'status' => $review->status,
+                'rating' => $review->rating,
+                'review' => $review->review,
+                'sentiment_label' => $review->sentiment_label,
+            ];
+
+            $review->is_deleted = true;
+            $review->deleted_by = (string)$this->admin->id;
+            $review->deleted_at = now();
+            $review->deletion_reason = $request->input('deletion_reason', 'Admin-initiated deletion');
+            $review->save();
+
+            // Clear all affected caches
+            $this->clearAllAffectedCaches($review);
+
+            // Log deletion with complete context
+            $this->logActivity(
+                'soft_delete_review_mongo',
+                'review',
+                $id,
+                $oldData,
+                [
+                    'is_deleted' => true,
+                    'deleted_by' => (string)$this->admin->id,
+                    'deletion_reason' => $review->deletion_reason,
+                ]
+            );
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Ulasan berhasil dihapus (soft delete). Data disimpan untuk audit trail.'
+                ]);
+            }
 
             return redirect()
                 ->route('admin.reviews.index')
-                ->with('success', 'Review deleted from MongoDB successfully');
+                ->with('success', 'Ulasan berhasil dihapus. Data disimpan dalam log untuk audit trail.');
         } catch (\Exception $e) {
             Log::error('Error deleting review from Mongo: ' . $e->getMessage());
-            return back()->with('error', 'Error deleting review');
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal menghapus ulasan.'], 500);
+            }
+            return back()->with('error', 'Gagal menghapus ulasan.');
+        }
+    }
+
+    /**
+     * Approve a pending review
+     */
+    public function approve(string $id, Request $request)
+    {
+        try {
+            $review = MongoReview::findOrFail($id);
+            $review->update([
+                'status' => 'approved',
+                'approved_by' => auth('admin')->id()
+            ]);
+            
+            $this->clearReviewCaches();
+            $this->logActivity('approve_review', 'review', $id);
+
+            return back()->with('success', 'Ulasan berhasil disetujui.');
+        } catch (\Exception $e) {
+            Log::error('Error approving review: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menyetujui ulasan.');
+        }
+    }
+
+    /**
+     * Reject a pending review
+     */
+    public function reject(string $id, Request $request)
+    {
+        try {
+            $review = MongoReview::findOrFail($id);
+            $review->update([
+                'status' => 'rejected',
+                'reason' => $request->input('reason')
+            ]);
+
+            $this->clearReviewCaches();
+            $this->logActivity('reject_review', 'review', $id);
+
+            return back()->with('success', 'Ulasan berhasil ditolak.');
+        } catch (\Exception $e) {
+            Log::error('Error rejecting review: ' . $e->getMessage());
+            return back()->with('error', 'Gagal menolak ulasan.');
         }
     }
 
@@ -364,7 +679,7 @@ class ReviewController extends BaseAdminController
     public function export(Request $request)
     {
         try {
-            $query = MongoReview::with('destination');
+            $query = MongoReview::with(['destination', 'user']);
 
             if ($request->filled('rating')) {
                 $query->where('rating', (int)$request->rating);
@@ -372,13 +687,26 @@ class ReviewController extends BaseAdminController
 
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('review', 'like', "%{$search}%")
-                      ->orWhere('user_id', 'like', "%{$search}%")
-                      ->orWhereHas('destination', function ($destQuery) use ($search) {
-                          $destQuery->where('name', 'like', "%{$search}%");
-                      });
+                $query->where('review', 'like', "%{$search}%");
+            }
+
+            if ($request->filled('destination_id')) {
+                $destId = $request->destination_id;
+                $isDestObjectId = is_scalar($destId) && preg_match('/^[a-f\d]{24}$/i', (string)$destId);
+                $query->where(function($q) use ($destId, $isDestObjectId) {
+                    $q->where('destination_id', $destId);
+                    if ($isDestObjectId) {
+                        $q->orWhere('destination_id', new \MongoDB\BSON\ObjectId($destId));
+                    }
                 });
+            }
+
+            if ($request->filled('sentiment')) {
+                if ($request->sentiment === 'pending') {
+                    $query->whereNull('sentiment_label');
+                } else {
+                    $query->where('sentiment_label', $request->sentiment);
+                }
             }
 
             $reviews = $query->orderBy('created_at', 'desc')->get();
@@ -393,12 +721,15 @@ class ReviewController extends BaseAdminController
             $callback = function() use ($reviews) {
                 $file = fopen('php://output', 'w');
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
-                fputcsv($file, ['ID', 'User', 'Destinasi', 'Rating', 'Ulasan', 'Sentimen', 'Confidence', 'Tanggal'], ';');
+                fputcsv($file, ['ID', 'User', 'Tipe User', 'Destinasi', 'Rating', 'Ulasan', 'Sentimen', 'Confidence', 'Tanggal'], ';');
 
                 foreach ($reviews as $review) {
+                    $isRegistered = $review->user && !empty($review->user->password) && (!empty($review->user->email) || !empty($review->user->name));
+                    $userType = $isRegistered ? 'User' : 'Guest';
                     fputcsv($file, [
                         $review->_id,
-                        $review->user_id ?? 'Anonim',
+                        $review->reviewer_name,
+                        $userType,
                         $review->destination?->name ?? 'Umum',
                         $review->rating ?? 0,
                         $review->review ?? '-',
@@ -416,6 +747,107 @@ class ReviewController extends BaseAdminController
         } catch (\Exception $e) {
             Log::error('Review export error: ' . $e->getMessage());
             return redirect()->route('admin.reviews.index')->with('error', 'Gagal mengekspor data ulasan.');
+        }
+    }
+
+    /**
+     * Print reviews analytics to PDF view
+     */
+    public function printAnalytics(Request $request)
+    {
+        try {
+            $totalReviews = MongoReview::count();
+            $ratingDistribution = [];
+
+            foreach ([5, 4, 3, 2, 1] as $rating) {
+                $count = MongoReview::where('rating', $rating)->count();
+                $ratingDistribution[$rating] = [
+                    'count' => $count,
+                    'percentage' => $totalReviews > 0 ? round(($count / $totalReviews) * 100) : 0,
+                ];
+            }
+
+            $sentimentSummary = [
+                'total' => $totalReviews,
+                'positive' => MongoReview::where('sentiment_label', 'positive')->count(),
+                'neutral' => MongoReview::where('sentiment_label', 'neutral')->count(),
+                'negative' => MongoReview::where('sentiment_label', 'negative')->count(),
+                'pending' => MongoReview::whereNull('sentiment_label')->count(),
+            ];
+
+            $keywordSummary = [
+                'overall' => [
+                    'review_count' => 0,
+                    'sentiment_counts' => ['negative' => 0, 'neutral' => 0, 'positive' => 0],
+                    'top_keywords' => [],
+                    'top_keywords_by_sentiment' => ['negative' => [], 'neutral' => [], 'positive' => []],
+                ],
+            ];
+
+            $cacheKey = 'review_keyword_summary_' . date('Y-m-d_H'); // Cache per jam
+            $cachedSummary = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(2), function () {
+                $reviewsForKeywords = MongoReview::whereNotNull('sentiment_label')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(500)
+                    ->get(['_id', 'destination_id', 'review']);
+
+                if ($reviewsForKeywords->isNotEmpty()) {
+                    $summaryPayload = $reviewsForKeywords->map(fn ($review) => [
+                        'id' => (string) $review->_id,
+                        'text' => (string) ($review->review ?? ''),
+                        'destination_id' => $review->destination_id ? (string) $review->destination_id : null,
+                    ])->values()->all();
+
+                    return $this->sentimentService->summaryKeywords($summaryPayload, 50);
+                }
+                return null;
+            });
+
+            if ($cachedSummary && ($cachedSummary['success'] ?? false)) {
+                $summaryData = $cachedSummary['data'] ?? [];
+                $keywordSummary = $this->enrichKeywordSummaryWithDestinationNames($summaryData['keyword_summary'] ?? $keywordSummary);
+            }
+
+            $instansi = $request->input('instansi', 'PEMERINTAH KABUPATEN TOBA/DINAS KEBUDAYAAN DAN PARIWISATA');
+            $alamat = $request->input('alamat', 'Jl. Bukit Pagar Batu No. 1, Balige, Kabupaten Toba, Sumatera Utara');
+            $email = $request->input('email', 'disbudpar@tobakab.go.id');
+            $telp = $request->input('telp', '(0632) 123456');
+            $website = $request->input('website', 'https://disbudpar.tobakab.go.id');
+            $nomorSurat = $request->input('nomor_surat', '050/322/Disbudpar/' . date('Y'));
+            $hal = $request->input('hal', 'Laporan Analitik Ulasan Pengguna');
+            $namaPenandatangan = $request->input('nama_penandatangan', 'Sandro M. S. Simanjuntak, S.T., M.Si.');
+            $nipPenandatangan = $request->input('nip_penandatangan', '19780512 200501 1 003');
+            $jabatan = $request->input('jabatan', 'Kepala Dinas Kebudayaan dan Pariwisata');
+            
+            $logoUrl = null;
+            if ($request->hasFile('custom_logo')) {
+                $file = $request->file('custom_logo');
+                $extension = $file->getClientOriginalExtension();
+                $logoUrl = 'data:image/' . ($extension == 'svg' ? 'svg+xml' : $extension) . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            } else {
+                $logoPath = \App\Models\AppSetting::get('logo');
+                $logoUrl = $logoPath ? (str_starts_with($logoPath, 'http') ? $logoPath : \Illuminate\Support\Facades\Storage::url($logoPath)) : null;
+            }
+
+            return view('admin.reviews.print_analytics', compact(
+                'ratingDistribution',
+                'sentimentSummary',
+                'keywordSummary',
+                'instansi',
+                'alamat',
+                'email',
+                'telp',
+                'website',
+                'nomorSurat',
+                'hal',
+                'namaPenandatangan',
+                'nipPenandatangan',
+                'jabatan',
+                'logoUrl'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error generating print analytics: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memuat data analitik ulasan untuk dicetak.');
         }
     }
 
@@ -464,5 +896,85 @@ class ReviewController extends BaseAdminController
 
         $labelScore = (float) $scores[$label];
         return abs($confidence - $labelScore) <= 0.0001;
+    }
+
+    /**
+     * Enrich keyword summary with destination names from MongoDB
+     */
+    private function enrichKeywordSummaryWithDestinationNames(array $keywordSummary): array
+    {
+        if (!empty($keywordSummary['destinations']) && is_array($keywordSummary['destinations'])) {
+            $destIds = array_filter(array_map(fn($d) => $d['destination_id'] ?? null, $keywordSummary['destinations']));
+            if (!empty($destIds)) {
+                try {
+                    $destNames = \App\Models\MongoDB\MongoDestination::whereIn('_id', $destIds)
+                        ->get(['_id', 'name'])
+                        ->pluck('name', '_id')
+                        ->toArray();
+
+                    foreach ($keywordSummary['destinations'] as $key => $dest) {
+                        $id = $dest['destination_id'] ?? '';
+                        $name = $destNames[$id] ?? 'Destinasi Tidak Dikenal';
+                        $keywordSummary['destinations'][$key]['destination_name'] = $name;
+                        $keywordSummary['destinations'][$key]['name'] = $name;
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error enriching keyword summary destinations: ' . $e->getMessage());
+                }
+            }
+        }
+        return $keywordSummary;
+    }
+
+    /**
+     * Clear review statistics and keyword summary caches
+     */
+    private function clearReviewCaches(): void
+    {
+        try {
+            \Illuminate\Support\Facades\Cache::forget('review_stats_summary');
+            \Illuminate\Support\Facades\Cache::forget('review_trends_6_months');
+            \Illuminate\Support\Facades\Cache::forget('review_keyword_summary_' . date('Y-m-d_H'));
+            \Illuminate\Support\Facades\Cache::forget('review_keyword_summary_' . date('Y-m-d_H', strtotime('-1 hour')));
+        } catch (\Exception $e) {
+            Log::error('Failed to clear review caches: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Clear all affected caches when review is modified or deleted
+     * This includes review stats, destination stats, trending data, and user stats
+     */
+    private function clearAllAffectedCaches(MongoReview $review): void
+    {
+        try {
+            // Clear review-specific caches
+            $this->clearReviewCaches();
+            
+            // Clear destination stats cache if destination_id exists
+            if ($review->destination_id) {
+                \Illuminate\Support\Facades\Cache::forget("destination_stats_{$review->destination_id}");
+                \Illuminate\Support\Facades\Cache::forget("destination_reviews_{$review->destination_id}");
+            }
+            
+            // Clear user stats cache if user_id exists
+            if ($review->user_id) {
+                \Illuminate\Support\Facades\Cache::forget("user_activity_{$review->user_id}");
+            }
+            
+            // Clear trending destinations cache (since stats changed)
+            \Illuminate\Support\Facades\Cache::forget('trending_destinations');
+            \Illuminate\Support\Facades\Cache::forget('trending_destinations_auto');
+            
+            // Clear dashboard stats cache
+            \Illuminate\Support\Facades\Cache::forget('admin.dashboard.stats');
+            
+            // Clear admin users stats cache
+            \Illuminate\Support\Facades\Cache::forget('admin.users.stats');
+            
+            Log::info("All affected caches cleared for review deletion: {$review->_id}");
+        } catch (\Exception $e) {
+            Log::error('Failed to clear all affected caches: ' . $e->getMessage());
+        }
     }
 }

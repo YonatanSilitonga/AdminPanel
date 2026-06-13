@@ -12,14 +12,14 @@
     $menuItems = [
         [
             'type' => 'link',
-            'label' => 'Dashboard',
+            'label' => 'Beranda',
             'route' => route('admin.dashboard'),
             'active' => request()->routeIs('admin.dashboard'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>'
         ],
         [
             'type' => 'section',
-            'label' => 'Content Management'
+            'label' => 'Konten',
         ],
         [
             'type' => 'link',
@@ -30,14 +30,14 @@
         ],
         [
             'type' => 'link',
-            'label' => 'Kelola Event',
+            'label' => 'Acara',
             'route' => route('admin.events.index'),
             'active' => request()->routeIs('admin.events.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>'
         ],
         [
             'type' => 'link',
-            'label' => 'Carousel dan Banner',
+            'label' => 'Carousel & Banner',
             'route' => route('admin.carousel_banners.index'),
             'active' => request()->routeIs('admin.carousel_banners.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>'
@@ -51,36 +51,36 @@
         ],
         [
             'type' => 'link',
-            'label' => 'Berita & Promosi',
+            'label' => 'Berita & Promo',
             'route' => route('admin.berita_promosi.index'),
             'active' => request()->routeIs('admin.berita_promosi.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a2 2 0 002 2h4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h3m-3 4h5m-5 4h5"></path>'
         ],
         [
             'type' => 'link',
-            'label' => 'Budaya dan Warisan',
+            'label' => 'Budaya & Warisan',
             'route' => route('admin.budaya.index'),
             'active' => request()->routeIs('admin.budaya.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>'
         ],
         [
             'type' => 'section',
-            'label' => 'Administration'
+            'label' => 'Administrasi',
         ],
         [
             'type' => 'link',
-            'label' => 'Manajemen Pengguna',
+            'label' => 'Pengguna',
             'route' => route('admin.users.index'),
             'active' => request()->routeIs('admin.users.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>'
         ],
         [
             'type' => 'section',
-            'label' => 'Monitoring'
+            'label' => 'Monitoring',
         ],
         [
             'type' => 'dropdown',
-            'label' => 'Fitur AI dan Cerdas',
+            'label' => 'Log Pengguna',
             'openKey' => 'smartFeatures',
             'active' => request()->routeIs('admin.chatbot-logs.*') || request()->routeIs('admin.recommendations.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>',
@@ -96,13 +96,13 @@
             'active' => request()->routeIs('admin.reviews.*') || request()->routeIs('admin.reports.*'),
             'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>',
             'subItems' => [
-                ['label' => 'Ringkasan Ulasan', 'route' => route('admin.reviews.index'), 'active' => request()->routeIs('admin.reviews.index')],
-                ['label' => 'Laporan Masuk', 'route' => route('admin.reports.index'), 'active' => request()->routeIs('admin.reports.index')]
+                ['label' => 'Ulasan Pengguna', 'route' => route('admin.reviews.index'), 'active' => request()->routeIs('admin.reviews.index')],
+                ['label' => 'Menangani Laporan dan Isu', 'route' => route('admin.reports.index'), 'active' => request()->routeIs('admin.reports.index')]
             ]
         ],
         [
             'type' => 'section',
-            'label' => 'Settings'
+            'label' => 'Pengaturan'
         ],
         [
             'type' => 'link',
@@ -122,29 +122,21 @@
             ulasan: {{ request()->routeIs('admin.reviews.*') || request()->routeIs('admin.reports.*') ? 'true' : 'false' }}
         } 
     }" 
-    class="fixed inset-y-0 left-0 lg:relative text-white h-screen flex flex-col shadow-2xl lg:shadow-xl overflow-hidden flex-shrink-0 z-50 transition-all duration-300 ease-in-out group/sidebar"
+    class="fixed inset-y-0 left-0 lg:relative text-white h-screen flex flex-col shadow-2xl lg:shadow-xl overflow-hidden flex-shrink-0 z-50 transition-all duration-300 ease-in-out group/sidebar {{ $isSidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-16 sidebar-collapsed' }}"
     style="background: linear-gradient(135deg, #065f46, #047857, #059669);"
-    :class="{
-        'w-72 translate-x-0': sidebarOpen,
-        '-translate-x-full lg:translate-x-0 lg:w-16 sidebar-collapsed': !sidebarOpen
-    }"
+    :class="sidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-16 sidebar-collapsed'"
 >
     <!-- Logo Section -->
-    <div class="sidebar-header py-5 px-5 flex items-center justify-between border-b border-white/10 transition-all duration-300">
-        <div class="flex items-center">
-            <img src="{{ asset('images/logo.jpeg') }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20" width="40" height="40" style="width: 40px; height: 40px;">
-            <div class="sidebar-text ml-3 overflow-hidden whitespace-nowrap transition-all duration-300">
-                <h2 class="text-lg font-bold tracking-wider leading-tight">TOBA TOURISM</h2>
-                <p class="text-xs text-gray-300 opacity-80">Kawasan Danau Toba</p>
-            </div>
+    <div class="sidebar-header py-5 px-5 flex items-center border-b border-white/10 transition-all duration-300">
+        @if(app_setting('logo'))
+            <img src="{{ image_url(app_setting('logo')) }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20">
+        @else
+            <img src="{{ asset('images/logo.jpeg') }}" alt="Toba Tourism Logo" class="w-10 h-10 rounded-full object-cover shadow-lg flex-shrink-0 transition-transform duration-200 hover:scale-110 border border-white/20">
+        @endif
+        <div class="sidebar-text ml-3 overflow-hidden whitespace-nowrap transition-all duration-300">
+            <h2 class="text-lg font-bold tracking-wider leading-tight">WISATA TOBA</h2>
+            <p class="text-xs text-gray-300 opacity-80">Kawasan Danau Toba</p>
         </div>
-        
-        <!-- Mobile Close Button -->
-        <button @click="sidebarOpen = false" class="lg:hidden text-white hover:text-toba-gold transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </button>
     </div>
 
     {{-- <!-- User Profile Section -->
@@ -180,8 +172,8 @@
             @elseif($item['type'] === 'link')
                 <!-- Normal Link -->
                 <div class="relative group/item">
-                    <a href="{{ $item['route'] }}" class="sidebar-link px-4 py-2 flex items-center justify-start text-left rounded-xl transition-all duration-300 {{ $item['active'] ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
-                        <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="width: 20px; height: 20px;">
+                    <a href="{{ $item['route'] }}" class="sidebar-link px-4 py-2 flex items-center rounded-xl transition-all duration-300 {{ $item['active'] ? 'bg-sidebar-active text-white shadow-md' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
+                        <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {!! $item['icon'] !!}
                         </svg>
                         <span class="sidebar-text ml-3 font-medium whitespace-nowrap overflow-hidden transition-all duration-300">{{ $item['label'] }}</span>
@@ -194,13 +186,13 @@
                 <div x-data="{ open: openMenus.{{ $item['openKey'] }} }" class="relative group/item">
                     <!-- Collapsed Icon Only Link -->
                     <a href="{{ $item['subItems'][0]['route'] ?? '#' }}" class="sidebar-collapsed-only flex justify-center items-center py-2 rounded-xl transition-all duration-200 {{ $item['active'] ? 'bg-sidebar-active text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
-                        <svg class="sidebar-icon w-5 h-5 transition-transform duration-200 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="width: 20px; height: 20px;">
+                        <svg class="sidebar-icon w-5 h-5 transition-transform duration-200 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {!! $item['icon'] !!}
                         </svg>
                     </a>
                     <!-- Expanded Button -->
                     <button @click="open = !open" class="sidebar-expanded-only w-full flex items-center px-4 py-2 rounded-xl transition-all duration-200 {{ $item['active'] ? 'text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
-                        <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="width: 20px; height: 20px;">
+                        <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {!! $item['icon'] !!}
                         </svg>
                         <span class="sidebar-text ml-3 font-medium flex-1 text-left whitespace-nowrap overflow-hidden transition-all duration-300">{{ $item['label'] }}</span>
@@ -227,8 +219,8 @@
     <div class="sidebar-header mt-auto py-6 px-5 border-t border-white/10 transition-all duration-300">
         <div class="relative group/item">
             <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-logout-modal'))"
-                    class="sidebar-link w-full px-4 py-2 flex items-center justify-start text-right rounded-xl transition-all duration-300 text-gray-300 hover:bg-red-500/10 hover:text-red-400 group">
-                <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover:-translate-x-0.5 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" style="width: 20px; height: 20px;">
+                    class="sidebar-link w-full px-4 py-2 flex items-center rounded-xl transition-all duration-300 text-gray-300 hover:bg-red-500/10 hover:text-red-400 group">
+                <svg class="sidebar-icon w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover:-translate-x-0.5 group-hover/item:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                 </svg>
                 <span class="sidebar-text ml-3 font-medium whitespace-nowrap overflow-hidden transition-all duration-300">Logout</span>

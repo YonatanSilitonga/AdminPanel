@@ -27,6 +27,11 @@ class MongoBudaya extends Model
         'longitude',
         'description',
         'image_url',
+        'images',
+        'video_duration',
+        'video_autoplay',
+        'video_loop',
+        'video_wait_until_ready',
         'is_active',
         'admin_id',
     ];
@@ -45,6 +50,10 @@ class MongoBudaya extends Model
         'is_active' => 'boolean',
         'latitude' => 'float',
         'longitude' => 'float',
+        'video_duration' => 'integer',
+        'video_autoplay' => 'boolean',
+        'video_loop' => 'boolean',
+        'video_wait_until_ready' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

@@ -1,0 +1,211 @@
+@startuml Sitemap - Monitoring & Settings Modules
+
+' ============================================
+' STYLING
+' ============================================
+skinparam backgroundColor #FEFEFE
+skinparam rectangle {
+    BackgroundColor<<main>> #2563EB
+    BackgroundColor<<monitoring>> #10B981
+    BackgroundColor<<settings>> #F59E0B
+    BackgroundColor<<analytics>> #8B5CF6
+    BackgroundColor<<logs>> #06B6D4
+    BackgroundColor<<reports>> #EF4444
+    BackgroundColor<<action>> #F3F4F6
+    BorderColor #1F2937
+    FontColor<<main>> #FFFFFF
+    FontColor<<monitoring>> #FFFFFF
+    FontColor<<settings>> #FFFFFF
+    FontColor<<analytics>> #FFFFFF
+    FontColor<<logs>> #FFFFFF
+    FontColor<<reports>> #FFFFFF
+    FontColor<<action>> #374151
+    RoundCorner 10
+    Shadowing true
+}
+
+' ============================================
+' MAIN ADMIN PANEL
+' ============================================
+rectangle "**Admin Panel Dashboard**\n/admin/dashboard" <<main>> as dashboard
+
+' ============================================
+' MONITORING MODULE
+' ============================================
+rectangle "**MONITORING MODULE**" <<monitoring>> as monitoring_main {
+    
+    ' Analytics Section
+    rectangle "**Analytics Dashboard**\n/admin/analytics" <<analytics>> as analytics_dash
+    rectangle "Analytics - Destinasi\n/admin/analytics/destinations" <<action>> as analytics_dest
+    rectangle "Analytics - Event\n/admin/analytics/events" <<action>> as analytics_events
+    rectangle "Analytics - Reports\n/admin/analytics/reports" <<action>> as analytics_reports
+    
+    ' Chatbot Logs Section
+    rectangle "**Chatbot Logs**\n/admin/chatbot-logs" <<logs>> as chatbot_logs
+    rectangle "Detail Sesi Chatbot\n/admin/chatbot-logs/{id}" <<action>> as chatbot_detail
+    rectangle "Export Chatbot CSV\n/admin/chatbot-logs/export" <<action>> as chatbot_export
+    rectangle "Flag Session\n/admin/chatbot-logs/{id}/flag" <<action>> as chatbot_flag
+    
+    ' Recommendation Logs Section
+    rectangle "**Recommendation Logs**\n/admin/recommendations" <<logs>> as rec_logs
+    rectangle "Detail Rekomendasi\n/admin/recommendations/{id}" <<action>> as rec_detail
+    rectangle "Export Rekomendasi CSV\n/admin/recommendations/export" <<action>> as rec_export
+    
+    ' Reports/Laporan Section
+    rectangle "**Laporan Pengaduan**\n/admin/reports" <<reports>> as reports_index
+    rectangle "Detail Laporan\n/admin/reports/{id}" <<action>> as report_detail
+    rectangle "Assign Report\n/admin/reports/{id}/assign" <<action>> as report_assign
+    rectangle "Update Status\n/admin/reports/{id}/status" <<action>> as report_status
+    rectangle "Take Action\n/admin/reports/{id}/action" <<action>> as report_action
+    rectangle "Delete Report\n/admin/reports/{id}/delete" <<action>> as report_delete
+    rectangle "Export Laporan\n/admin/reports/export" <<action>> as report_export
+    rectangle "Print Laporan Resmi\n/admin/reports/print" <<action>> as report_print
+}
+
+' ============================================
+' SETTINGS MODULE
+' ============================================
+rectangle "**SETTINGS MODULE**\n(Super Admin Only)" <<settings>> as settings_main {
+    
+    ' General Settings
+    rectangle "**General Settings**\n/admin/settings/general" <<action>> as settings_general
+    rectangle "Update General Settings\nPUT /admin/settings/general" <<action>> as settings_general_update
+    
+    ' API Keys Settings
+    rectangle "**API Keys**\n/admin/settings/api-keys" <<action>> as settings_api
+    rectangle "Update API Keys\nPUT /admin/settings/api-keys" <<action>> as settings_api_update
+    
+    ' AI Configuration
+    rectangle "**AI Configuration**\n/admin/settings/ai-config" <<action>> as settings_ai
+    rectangle "Update AI Config\nPUT /admin/settings/ai-config" <<action>> as settings_ai_update
+    
+    ' Audit Logs
+    rectangle "**Audit Logs**\n/admin/settings/audit-logs" <<logs>> as audit_logs
+    rectangle "Detail Audit Log\n/admin/settings/audit-logs/{id}" <<action>> as audit_detail
+}
+
+' ============================================
+' RELATIONSHIPS - MAIN DASHBOARD
+' ============================================
+dashboard --> monitoring_main : "Monitoring Menu"
+dashboard --> settings_main : "Settings Menu\n(Super Admin)"
+
+' ============================================
+' MONITORING MODULE RELATIONSHIPS
+' ============================================
+
+' Analytics Flow
+monitoring_main --> analytics_dash
+analytics_dash --> analytics_dest : "View Destination Analytics"
+analytics_dash --> analytics_events : "View Event Analytics"
+analytics_dash --> analytics_reports : "View Report Analytics"
+
+' Chatbot Logs Flow
+monitoring_main --> chatbot_logs
+chatbot_logs --> chatbot_detail : "View Session Detail"
+chatbot_logs --> chatbot_export : "Export to CSV"
+chatbot_logs --> chatbot_flag : "Flag Session"
+
+' Recommendation Logs Flow
+monitoring_main --> rec_logs
+rec_logs --> rec_detail : "View Detail"
+rec_logs --> rec_export : "Export to CSV"
+
+' Reports Flow
+monitoring_main --> reports_index
+reports_index --> report_detail : "View Detail"
+reports_index --> report_assign : "Assign to Admin"
+reports_index --> report_status : "Update Status"
+reports_index --> report_action : "Take Action"
+reports_index --> report_delete : "Delete Report"
+reports_index --> report_export : "Export CSV/Excel"
+reports_index --> report_print : "Print Official Report"
+
+' ============================================
+' SETTINGS MODULE RELATIONSHIPS
+' ============================================
+
+' General Settings Flow
+settings_main --> settings_general
+settings_general --> settings_general_update : "Save Changes"
+
+' API Keys Flow
+settings_main --> settings_api
+settings_api --> settings_api_update : "Save API Keys"
+
+' AI Configuration Flow
+settings_main --> settings_ai
+settings_ai --> settings_ai_update : "Save AI Config"
+
+' Audit Logs Flow
+settings_main --> audit_logs
+audit_logs --> audit_detail : "View Log Detail"
+
+' ============================================
+' NOTES
+' ============================================
+note right of monitoring_main
+  **MONITORING MODULE**
+  • Accessible by: Admin, Super Admin
+  • Purpose: Monitor system activities,
+    user interactions, and reports
+  • Features:
+    - Real-time analytics
+    - Chatbot conversation logs
+    - AI recommendation tracking
+    - User report management
+end note
+
+note right of settings_main
+  **SETTINGS MODULE**
+  • Accessible by: Super Admin Only
+  • Purpose: Configure system settings
+    and review admin activities
+  • Features:
+    - General app settings
+    - Logo & favicon upload
+    - API key management
+    - AI configuration
+    - Audit log tracking
+end note
+
+note bottom of reports_index
+  **Report Actions:**
+  • delete_content
+  • warn_user
+  • ignore
+  
+  **Report Status:**
+  • pending
+  • reviewed
+  • resolved (locked)
+end note
+
+note bottom of audit_logs
+  **Audit Log Features:**
+  • Filter by action
+  • Filter by module
+  • Search by IP/Entity
+  • Date range filter
+  • Export capability
+end note
+
+note bottom of chatbot_logs
+  **Chatbot Log Data:**
+  • User vs Guest sessions
+  • Message history
+  • User identification
+  • Session timestamps
+  • MongoDB storage
+end note
+
+note bottom of rec_logs
+  **Recommendation Metrics:**
+  • Today/Week/Month stats
+  • Average duration
+  • Click rate tracking
+  • Popular destinations
+  • User preferences
+end note
+
+@enduml

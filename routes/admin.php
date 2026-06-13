@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
-use App\Http\Controllers\Admin\DestinationGalleryController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\ReportController;
@@ -31,7 +30,7 @@ Route::prefix('admin')->group(function () {
 });
 
 // PROTECTED ROUTES (Require auth:admin)
-Route::middleware('auth:admin')->prefix('admin')->group(function () {
+Route::middleware(['auth:admin', 'admin.error-handler'])->prefix('admin')->group(function () {
 
     // ============ DASHBOARD ============
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
@@ -58,13 +57,6 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::delete('destinations/{destination}/force-delete', [DestinationController::class, 'forceDestroy'])
             ->name('admin.destinations.force-destroy');
 
-        // Gallery management
-        Route::post('destinations/{destination}/gallery', [DestinationGalleryController::class, 'store'])
-            ->name('admin.gallery.store');
-        Route::delete('destinations/{destination}/gallery/{gallery}', [DestinationGalleryController::class, 'destroy'])
-            ->name('admin.gallery.destroy');
-        Route::patch('destinations/{destination}/gallery/order', [DestinationGalleryController::class, 'updateOrder'])
-            ->name('admin.gallery.order');
 
         // Facility management
         Route::post('destinations/{destination}/facilities', [FacilityController::class, 'store'])
@@ -138,6 +130,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // ============ REVIEWS (Admin + Moderator) ============
     Route::middleware('admin.role:admin,moderator,super_admin')->group(function () {
         Route::get('reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::get('reviews/summary/stats', [ReviewController::class, 'summaryStats'])->name('admin.reviews.summary-stats');
+        Route::match(['get', 'post'], 'reviews/analytics/print', [ReviewController::class, 'printAnalytics'])->name('admin.reviews.print-analytics');
         Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('admin.reviews.show');
         Route::post('reviews/{review}/analyze', [ReviewController::class, 'analyze'])->name('admin.reviews.analyze');
         Route::post('reviews/analyze-batch', [ReviewController::class, 'analyzeBatch'])->name('admin.reviews.analyze-batch');

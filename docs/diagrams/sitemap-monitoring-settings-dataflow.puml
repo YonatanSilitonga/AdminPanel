@@ -1,0 +1,318 @@
+@startuml Data Flow - Monitoring & Settings Modules
+
+!define RECTANGLE class
+
+' ============================================
+' STYLING
+' ============================================
+skinparam backgroundcolor #FAFAFA
+skinparam shadowing true
+
+skinparam package {
+    BackgroundColor #FFFFFF
+    BorderColor #6B7280
+    FontStyle bold
+    FontSize 13
+}
+
+skinparam class {
+    BackgroundColor<<ui>> #EFF6FF
+    BackgroundColor<<controller>> #DBEAFE
+    BackgroundColor<<model>> #FEF3C7
+    BackgroundColor<<storage>> #D1FAE5
+    BackgroundColor<<external>> #FEE2E2
+    BorderColor #374151
+    FontSize 11
+}
+
+skinparam arrow {
+    Color #4B5563
+    FontSize 10
+}
+
+' ============================================
+' PRESENTATION LAYER
+' ============================================
+package "**PRESENTATION LAYER**\n(Blade Views)" as presentation {
+    RECTANGLE "📊 Analytics Views\n• analytics/dashboard\n• analytics/destinations\n• analytics/events\n• analytics/reports" <<ui>> as ui_analytics
+    
+    RECTANGLE "💬 Chatbot Views\n• chatbot-logs/index\n• chatbot-logs/show" <<ui>> as ui_chatbot
+    
+    RECTANGLE "🎯 Recommendation Views\n• recommendations/index\n• recommendations/show" <<ui>> as ui_recommendations
+    
+    RECTANGLE "🚨 Report Views\n• reports/index\n• reports/show\n• reports/print" <<ui>> as ui_reports
+    
+    RECTANGLE "⚙️ Settings Views\n• settings/general\n• settings/audit-logs/index\n• settings/audit-logs/show" <<ui>> as ui_settings
+}
+
+' ============================================
+' APPLICATION LAYER
+' ============================================
+package "**APPLICATION LAYER**\n(Controllers)" as application {
+    RECTANGLE "AnalyticsController\n\n📊 Methods:\n• dashboard()\n• destinations()\n• events()\n• reports()\n\n🔐 Role: admin, super_admin" <<controller>> as ctrl_analytics
+    
+    RECTANGLE "ChatbotLogController\n\n💬 Methods:\n• index() - list sessions\n• show() - session detail\n• flag() - mark session\n• export() - CSV export\n\n🔓 Role: all admins" <<controller>> as ctrl_chatbot
+    
+    RECTANGLE "RecommendationLogController\n\n🎯 Methods:\n• index() - dashboard stats\n• show() - detail view\n• export() - CSV export\n\n🔓 Role: all admins\n⚡ Cache: 10 min TTL" <<controller>> as ctrl_recommendations
+    
+    RECTANGLE "ReportController\n\n🚨 Methods:\n• index() - list reports\n• show() - detail view\n• assign() - assign to admin\n• updateStatus() - change status\n• takeAction() - resolve report\n• destroy() - delete report\n• export() - CSV/Excel\n• printReport() - official format\n\n🔓 Role: all admins" <<controller>> as ctrl_reports
+    
+    RECTANGLE "SettingsController\n\n⚙️ Methods:\n• editGeneral()\n• updateGeneral()\n• editApiKeys()\n• updateApiKeys()\n• editAiConfig()\n• updateAiConfig()\n\n🛡️ Role: super_admin only\n📝 Logs all changes" <<controller>> as ctrl_settings
+    
+    RECTANGLE "AuditLogController\n\n📋 Methods:\n• index() - list logs\n• show() - log detail\n\n🛡️ Role: super_admin only\n🔍 Advanced filtering" <<controller>> as ctrl_audit
+    
+    RECTANGLE "BaseAdminController\n\n🔧 Shared Methods:\n• uploadFile()\n• deleteFile()\n• logActivity()\n• getAdmin()\n\n📝 Activity Logging:\nAll CRUD operations tracked" <<controller>> as ctrl_base
+}
+
+' ============================================
+' DOMAIN/MODEL LAYER
+' ============================================
+package "**DOMAIN LAYER**\n(Models & Business Logic)" as domain {
+    
+    package "MongoDB Models" as mongo_models {
+        RECTANGLE "ChatSession\n\n📦 Collection: chat_sessions\n\n🔗 Relations:\n• user() - BelongsTo\n\n📊 Fields:\n• _id (ObjectId)\n• user_id\n• messages (array)\n• created_at\n• updated_at" <<model>> as model_chat
+        
+        RECTANGLE "MongoRecommendation\n\n📦 Collection: recommendations\n\n🔗 Relations:\n• destination() - BelongsTo\n• user() - BelongsTo\n\n📊 Fields:\n• _id (ObjectId)\n• user_id\n• destination_id\n• recommendation_score\n• is_clicked (boolean)\n• behavior_data (json)\n• created_at" <<model>> as model_recommendation
+        
+        RECTANGLE "MongoReport\n\n📦 Collection: reports\n\n🔗 Relations:\n• destination() - BelongsTo\n• user() - BelongsTo\n\n📊 Fields:\n• _id (ObjectId)\n• user_id\n• destination_id\n• reporter_name\n• reason (enum)\n• description\n• status (enum)\n• action_taken\n• assigned_to\n• created_at" <<model>> as model_report
+        
+        RECTANGLE "MongoDestination\n\n📦 Collection: destinations\n\n📊 Fields:\n• _id (ObjectId)\n• name\n• location\n• category\n• rating" <<model>> as model_destination
+    }
+    
+    package "MySQL Models" as mysql_models {
+        RECTANGLE "AdminActivityLog\n\n📦 Table: admin_activity_logs\n\n🔗 Relations:\n• admin() - BelongsTo\n\n📊 Fields:\n• _id (ObjectId)\n• admin_id\n• action (string)\n• entity_type (string)\n• entity_id (string)\n• old_values (json)\n• new_values (json)\n• ip_address\n• user_agent\n• created_at" <<model>> as model_audit
+        
+        RECTANGLE "Admin\n\n📦 Table: admins\n\n📊 Fields:\n• _id (ObjectId)\n• name\n• email\n• password\n• role (enum)\n• status\n• created_at" <<model>> as model_admin
+        
+        RECTANGLE "User\n\n📦 Table: users\n\n📊 Fields:\n• _id (ObjectId)\n• name\n• email\n• password\n• created_at" <<model>> as model_user
+        
+        RECTANGLE "AppSetting\n\n📦 Table: app_settings\n\n📊 Fields:\n• key (string)\n• value (json)\n• type (string)\n\n🔧 Static Methods:\n• get(key)\n• set(key, value)\n• getAllSettings()" <<model>> as model_settings
+    }
+}
+
+' ============================================
+' DATA LAYER
+' ============================================
+package "**DATA LAYER**\n(Storage)" as storage {
+    RECTANGLE "MongoDB\n\n📊 Collections:\n• chat_sessions\n• recommendations\n• reports\n• destinations\n• users (partial)\n\n🔧 Features:\n• Document storage\n• Flexible schema\n• Array operations\n• Aggregation pipeline\n• ObjectId references" <<storage>> as db_mongo
+    
+    RECTANGLE "MySQL\n\n📊 Tables:\n• admin_activity_logs\n• admins\n• users (main)\n• app_settings\n\n🔧 Features:\n• Relational integrity\n• Transactions\n• JSON columns\n• Full-text search" <<storage>> as db_mysql
+    
+    RECTANGLE "File Storage\n\n📁 Paths:\n• public/storage/settings/\n  - logo files\n  - favicon files\n\n🔧 Laravel Storage:\n• Symlink to storage/app/public\n• URL generation\n• File deletion" <<storage>> as storage_files
+    
+    RECTANGLE "Cache (Redis/File)\n\n⚡ Cached Data:\n• Recommendation stats\n  (TTL: 10 minutes)\n• App settings\n• User sessions\n\n🔧 Cache Keys:\n• admin.recommendations.stats_summary" <<storage>> as cache
+}
+
+' ============================================
+' EXTERNAL LAYER
+' ============================================
+package "**EXTERNAL SERVICES**" as external {
+    RECTANGLE "Export Services\n\n📤 CSV Export:\n• UTF-8 BOM header\n• Semicolon delimiter\n• Streaming response\n\n📤 Excel Export:\n• XLS format\n• MIME type headers" <<external>> as export_service
+    
+    RECTANGLE "File Upload Service\n\n📤 Validation:\n• MIME type checking\n• File size limits\n• Extension validation\n\n💾 Storage:\n• Unique naming\n• Path organization" <<external>> as upload_service
+    
+    RECTANGLE "Logging Service\n\n📝 Laravel Log:\n• Error logging\n• Debug information\n• Stack traces\n\n📊 Channels:\n• daily\n• single\n• stack" <<external>> as log_service
+}
+
+' ============================================
+' MIDDLEWARE LAYER
+' ============================================
+package "**MIDDLEWARE**" as middleware {
+    RECTANGLE "AdminMiddleware\n✅ Verify admin auth" as mw_admin
+    RECTANGLE "AdminRoleMiddleware\n✅ Check role permission" as mw_role
+    RECTANGLE "AdminActivityLogMiddleware\n📝 Auto-log activities" as mw_activity
+    RECTANGLE "AdminErrorHandler\n⚠️ Handle exceptions" as mw_error
+}
+
+' ============================================
+' RELATIONSHIPS - UI TO CONTROLLER
+' ============================================
+ui_analytics --> ctrl_analytics : "HTTP Request"
+ui_chatbot --> ctrl_chatbot : "HTTP Request"
+ui_recommendations --> ctrl_recommendations : "HTTP Request"
+ui_reports --> ctrl_reports : "HTTP Request"
+ui_settings --> ctrl_settings : "HTTP Request"
+ui_settings --> ctrl_audit : "HTTP Request"
+
+' ============================================
+' RELATIONSHIPS - CONTROLLER INHERITANCE
+' ============================================
+ctrl_analytics -up-|> ctrl_base : "extends"
+ctrl_chatbot -up-|> ctrl_base : "extends"
+ctrl_recommendations -up-|> ctrl_base : "extends"
+ctrl_reports -up-|> ctrl_base : "extends"
+ctrl_settings -up-|> ctrl_base : "extends"
+ctrl_audit -up-|> ctrl_base : "extends"
+
+' ============================================
+' RELATIONSHIPS - CONTROLLER TO MODEL
+' ============================================
+ctrl_analytics ..> model_destination : "queries"
+ctrl_analytics ..> model_report : "queries"
+
+ctrl_chatbot ..> model_chat : "CRUD"
+ctrl_chatbot ..> model_user : "relations"
+
+ctrl_recommendations ..> model_recommendation : "CRUD"
+ctrl_recommendations ..> model_destination : "relations"
+ctrl_recommendations ..> model_user : "relations"
+
+ctrl_reports ..> model_report : "CRUD"
+ctrl_reports ..> model_destination : "relations"
+ctrl_reports ..> model_user : "relations"
+
+ctrl_settings ..> model_settings : "get/set"
+ctrl_settings ..> storage_files : "upload/delete"
+
+ctrl_audit ..> model_audit : "read"
+ctrl_audit ..> model_admin : "relations"
+
+ctrl_base ..> model_audit : "create logs"
+ctrl_base ..> storage_files : "file operations"
+
+' ============================================
+' RELATIONSHIPS - MODEL TO DATABASE
+' ============================================
+model_chat --> db_mongo : "store/retrieve"
+model_recommendation --> db_mongo : "store/retrieve"
+model_report --> db_mongo : "store/retrieve"
+model_destination --> db_mongo : "store/retrieve"
+
+model_audit --> db_mysql : "store/retrieve"
+model_admin --> db_mysql : "store/retrieve"
+model_user --> db_mysql : "store/retrieve"
+model_settings --> db_mysql : "store/retrieve"
+
+' ============================================
+' RELATIONSHIPS - CACHE
+' ============================================
+ctrl_recommendations ..> cache : "remember()"
+model_settings ..> cache : "cache settings"
+
+' ============================================
+' RELATIONSHIPS - EXTERNAL SERVICES
+' ============================================
+ctrl_chatbot ..> export_service : "export()"
+ctrl_recommendations ..> export_service : "export()"
+ctrl_reports ..> export_service : "export()"
+
+ctrl_settings ..> upload_service : "upload files"
+ctrl_base ..> upload_service : "uploadFile()"
+
+ctrl_analytics ..> log_service : "Log errors"
+ctrl_chatbot ..> log_service : "Log errors"
+ctrl_recommendations ..> log_service : "Log errors"
+ctrl_reports ..> log_service : "Log errors"
+ctrl_settings ..> log_service : "Log errors"
+
+' ============================================
+' MIDDLEWARE FLOW
+' ============================================
+presentation -down-> mw_admin : "All requests"
+mw_admin -down-> mw_role : "Role check"
+mw_role -down-> mw_activity : "Log activity"
+mw_activity -down-> mw_error : "Error handling"
+mw_error -down-> application : "Execute"
+
+' ============================================
+' NOTES
+' ============================================
+note right of mongo_models
+  **MongoDB Usage**
+  
+  Driver: mongodb/laravel-mongodb
+  
+  Features Used:
+  • Eloquent ORM compatibility
+  • Relationship loading (with, load)
+  • Query builder (where, orderBy)
+  • Raw queries for aggregation
+  • ObjectId handling
+  • Array operations
+  
+  Performance:
+  • Indexed fields (_id, user_id)
+  • Eager loading relationships
+  • Pagination support
+end note
+
+note right of mysql_models
+  **MySQL Usage**
+  
+  Driver: Laravel default
+  
+  Admin Activity Log:
+  • Tracks ALL admin actions
+  • Stores old/new values
+  • IP & user agent tracking
+  • Searchable & filterable
+  
+  App Settings:
+  • Key-value store
+  • Type casting
+  • Cached for performance
+end note
+
+note bottom of storage
+  **Hybrid Storage Strategy**
+  
+  MongoDB for:
+  • High-volume logs
+  • Flexible schemas
+  • Nested data structures
+  • User-generated content
+  
+  MySQL for:
+  • Admin management
+  • Settings & config
+  • Audit trails
+  • Structured data
+  
+  Files for:
+  • Logo & branding
+  • Uploaded images
+  • Export files (temp)
+  
+  Cache for:
+  • Expensive queries
+  • Settings lookup
+  • Session data
+end note
+
+note bottom of middleware
+  **Middleware Stack**
+  
+  Order matters:
+  1. AdminMiddleware
+     → Verify authenticated admin
+  
+  2. AdminRoleMiddleware
+     → Check role permissions
+     → admin, super_admin, etc.
+  
+  3. AdminActivityLogMiddleware
+     → Auto-log all activities
+     → IP, user agent tracking
+  
+  4. AdminErrorHandler
+     → Catch & log exceptions
+     → User-friendly errors
+end note
+
+note top of export_service
+  **Export Features**
+  
+  CSV Export:
+  • UTF-8 BOM for Excel compatibility
+  • Semicolon delimiter (Indonesia)
+  • Streaming for large datasets
+  • No memory issues
+  
+  Print Format:
+  • Government letterhead
+  • Customizable headers
+  • Logo embedding
+  • Official signatures
+end note
+
+@enduml

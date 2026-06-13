@@ -96,64 +96,141 @@ class BaseAdminController extends Controller
             \Illuminate\Support\Facades\Log::warning('Invalid file upload attempt', [
                 'has_file' => (bool)$file,
                 'is_valid' => $file ? $file->isValid() : false,
-                'error' => $file ? $file->getError() : 'no file',
+                'error'    => $file ? $file->getError() : 'no file',
             ]);
-            return null;
+            throw new \Exception('File upload tidak valid atau gagal diterima oleh server.');
         }
 
         // Validate size
         $maxSize = $options['max_size'] ?? 10; // MB
         if ($file->getSize() > $maxSize * 1024 * 1024) {
-            throw new \Exception("File size exceeds {$maxSize}MB limit");
+            throw new \Exception("Ukuran file melebihi batas {$maxSize}MB");
         }
 
         // Validate mime
-        $allowedMimes = $options['mimes'] ?? ['image/jpeg', 'image/png', 'image/webp'];
+        $resourceType = $options['resource_type'] ?? 'image';
+        
+        if (!isset($options['mimes'])) {
+            // Auto-detect allowed mimes based on resource_type
+            if ($resourceType === 'video') {
+                $options['mimes'] = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg'];
+            } else {
+                $options['mimes'] = ['image/jpeg', 'image/png', 'image/webp'];
+            }
+        }
+        
+        $allowedMimes = $options['mimes'];
         if (!in_array($file->getMimeType(), $allowedMimes)) {
-            throw new \Exception('File type not allowed: ' . $file->getMimeType());
+            throw new \Exception('Tipe file tidak diizinkan: ' . $file->getMimeType());
         }
 
         // ── Cloudinary ──────────────────────────────────────────────────────
         // Use config() instead of env() for reliability
         $cloudName = config('cloudinary.cloud_url') ?: env('CLOUDINARY_CLOUD_NAME');
-        
+
         if ($cloudName) {
+            // Cloudinary is configured — MUST use Cloudinary, no local fallback.
+            // This ensures URLs are always publicly accessible from any device.
+            $uploadParams = [
+                'folder'        => 'smarttourism/' . trim($path, '/'),
+                'resource_type' => $resourceType,
+            ];
+
+            if ($resourceType === 'image') {
+                $uploadParams['transformation'] = [
+                    'quality'      => 'auto',
+                    'fetch_format' => 'auto',
+                ];
+            }
+
             try {
-                // Use the uploadApi() method for the modern Cloudinary SDK
-                $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), [
+                $defaultOptions = [
                     'folder'        => 'smarttourism/' . trim($path, '/'),
-                    'resource_type' => 'image',
-                    'transformation' => [
+                    'resource_type' => 'auto',
+                ];
+
+                if ($resourceType === 'image') {
+                    $defaultOptions['transformation'] = [
                         'quality' => 'auto',
                         'fetch_format' => 'auto',
-                    ],
-                ]);
+                    ];
+                }
+
+                $uploadOptions = array_merge($defaultOptions, $options);
+                
+                if ($resourceType === 'video' || $file->getSize() > 10 * 1024 * 1024) {
+                    $result = \cloudinary()->uploadApi()->uploadLarge($file->getRealPath(), $uploadOptions);
+                } else {
+                    $result = \cloudinary()->uploadApi()->upload($file->getRealPath(), $uploadOptions);
+                }
 
                 return $result['secure_url'];
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Cloudinary upload failed: ' . $e->getMessage(), [
                     'file' => $file->getClientOriginalName(),
-                    'path' => $path
+                    'path' => $path,
                 ]);
-                // Fall back to local if Cloudinary fails
+                // Re-throw so controller catches it and returns error to the user.
+                // DO NOT fall back to local storage — local paths are NOT publicly accessible.
+                throw new \Exception('Gagal mengunggah file ke Cloudinary: ' . $e->getMessage());
             }
         }
 
-        // ── Local fallback ───────────────────────────────────────────────────
+        // ── Local fallback (only when Cloudinary is NOT configured) ──────────
         try {
-            $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
+            $filename   = Str::random(20) . '.' . $file->getClientOriginalExtension();
             $storedPath = $file->storeAs($path, $filename, 'public');
-            
+
             if (!$storedPath) {
-                 \Illuminate\Support\Facades\Log::error('Local storage failed for file', ['path' => $path]);
-                 return null;
+                \Illuminate\Support\Facades\Log::error('Local storage failed for file', ['path' => $path]);
+                throw new \Exception('Penyimpanan file lokal gagal.');
             }
-            
+
             return $storedPath;
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Local storage exception: ' . $e->getMessage());
-            return null;
+            throw $e;
         }
+    }
+
+    /**
+     * Normalize file path or URL to compare or delete locally.
+     */
+    protected function normalizeFilePath($path): string
+    {
+        if (!$path) {
+            return '';
+        }
+
+        $normalized = $path;
+
+        // If it's a full HTTP URL but not Cloudinary, extract the path segment
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            if (!str_starts_with($path, 'https://res.cloudinary.com/')) {
+                $parsed = parse_url($path, PHP_URL_PATH);
+                $normalized = $parsed ?: $path;
+            }
+        }
+
+        // Remove leading /storage/ or storage/ prefix if present
+        $normalized = preg_replace('/^\/?storage\//i', '', $normalized);
+
+        // Normalize slashes
+        $normalized = str_replace('\\', '/', $normalized);
+
+        // Trim leading and trailing slashes
+        return trim($normalized, '/');
+    }
+
+    /**
+     * Compare two file paths or URLs robustly.
+     */
+    protected function pathsMatch($path1, $path2): bool
+    {
+        if (str_starts_with($path1, 'https://res.cloudinary.com/') || str_starts_with($path2, 'https://res.cloudinary.com/')) {
+            return $path1 === $path2;
+        }
+        return $this->normalizeFilePath($path1) === $this->normalizeFilePath($path2);
     }
 
     /**
@@ -172,8 +249,9 @@ class BaseAdminController extends Controller
         if (str_starts_with($filePath, 'https://res.cloudinary.com/')) {
             try {
                 // Extract public_id from URL
-                // URL pattern: https://res.cloudinary.com/{cloud}/image/upload/{version}/{public_id}.{ext}
+                // URL pattern: https://res.cloudinary.com/{cloud}/{resource_type}/upload/{version}/{public_id}.{ext}
                 $parsed   = parse_url($filePath, PHP_URL_PATH);
+                $resourceType = str_contains($parsed, '/video/upload/') ? 'video' : 'image';
                 $segments = explode('/upload/', $parsed);
                 if (isset($segments[1])) {
                     $withVersion = $segments[1];
@@ -181,7 +259,9 @@ class BaseAdminController extends Controller
                     $publicIdWithExt = preg_replace('/^v\d+\//', '', $withVersion);
                     // Remove extension
                     $publicId = preg_replace('/\.[^.]+$/', '', $publicIdWithExt);
-                    \cloudinary()->uploadApi()->destroy($publicId);
+                    \cloudinary()->uploadApi()->destroy($publicId, [
+                        'resource_type' => $resourceType,
+                    ]);
                 }
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::warning('Cloudinary delete failed: ' . $e->getMessage());
@@ -190,8 +270,9 @@ class BaseAdminController extends Controller
         }
 
         // ── Local fallback ───────────────────────────────────────────────────
-        if (Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
+        $normalizedPath = $this->normalizeFilePath($filePath);
+        if (Storage::disk('public')->exists($normalizedPath)) {
+            Storage::disk('public')->delete($normalizedPath);
         }
     }
 
@@ -201,8 +282,18 @@ class BaseAdminController extends Controller
             return null;
         }
 
+        $mime = $file->getMimeType() ?: '';
+        $isVideo = str_starts_with($mime, 'video/');
+
         // Delegate to uploadFile() so Cloudinary is used when configured
-        return $this->uploadFile($file, $path);
+        // and keep image/video handling aligned with the uploaded file type.
+        return $this->uploadFile($file, $path, [
+            'mimes' => $isVideo
+                ? ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/ogg']
+                : ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'],
+            'resource_type' => $isVideo ? 'video' : 'image',
+            'max_size' => $isVideo ? 50 : 10,
+        ]);
     }
 
     /**
@@ -236,7 +327,7 @@ class BaseAdminController extends Controller
     {
         $cacheKey = 'admin.dashboard.stats_summary';
         
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(10), function () {
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addMinutes(2), function () {
             try {
                 return [
                     'total_destinations' => \App\Models\MongoDB\MongoDestination::count(),
@@ -246,6 +337,8 @@ class BaseAdminController extends Controller
                     'pending_reports'    => \App\Models\MongoDB\MongoReport::where('status', 'pending')->count(),
                     'total_reviews'      => \App\Models\MongoDB\MongoReview::count(),
                     'total_facilities'   => \App\Models\MongoDB\MongoFasilitasUmum::count(),
+                    'total_budaya'       => \App\Models\MongoDB\MongoBudaya::count(),
+                    'total_berita'       => \App\Models\MongoDB\MongoBeritaPromosi::count(),
                 ];
             } catch (\Exception $e) {
                 return [
@@ -256,9 +349,23 @@ class BaseAdminController extends Controller
                     'pending_reports'    => 0,
                     'total_reviews'      => 0,
                     'total_facilities'   => 0,
+                    'total_budaya'       => 0,
+                    'total_berita'       => 0,
                 ];
             }
         });
+    }
+
+    /**
+     * Clear dashboard statistics cache.
+     * Call this after any store/update/destroy operation so the dashboard
+     * immediately reflects the latest data.
+     */
+    protected function clearDashboardCache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('admin.dashboard.stats_summary');
+        \Illuminate\Support\Facades\Cache::forget('admin.dashboard.monthly_chart');
+        \Illuminate\Support\Facades\Cache::forget('admin.destinations.trending_stats');
     }
 
     /**

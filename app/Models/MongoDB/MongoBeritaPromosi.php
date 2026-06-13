@@ -10,11 +10,15 @@ class MongoBeritaPromosi extends Model
     use SoftDeletes;
     protected $connection = 'mongodb';
     protected $table = 'berita_promosi';
+    protected $collection = 'berita_promosi';
+    protected $primaryKey = '_id';
 
     protected $fillable = [
         'judul',
         'tipe',
         'thumbnail',
+        'images',
+        'videos',
         'konten',
         'tanggal_tayang',
         'tampilkan_di_carousel',

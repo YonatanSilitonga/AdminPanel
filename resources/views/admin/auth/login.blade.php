@@ -464,6 +464,20 @@
                             @enderror
                         </div>
 
+                        <!-- Remember Me -->
+                        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 16px;">
+                            <input
+                                type="checkbox"
+                                id="remember"
+                                name="remember"
+                                value="1"
+                                style="width: 16px; height: 16px; cursor: pointer; accent-color: #059669;"
+                            >
+                            <label for="remember" style="cursor: pointer; font-size: 0.82rem; color: rgba(255, 255, 255, 0.7); margin: 0;">
+                                Ingat saya (berlaku 7 hari)
+                            </label>
+                        </div>
+
                         <!-- Submit -->
                         <button type="submit" class="btn-submit">Masuk</button>
                     </form>
@@ -486,7 +500,7 @@
         </div>
 
         <div class="page-footer">
-            &copy; 2026 Toba Tourism. All rights reserved.
+            &copy; {{ date('Y') }} Aplikasi Wisata Toba. Hak Cipta Dilindungi.
         </div>
     </div>
 
