@@ -13,10 +13,7 @@
         <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
     @endif
 
-    <!-- Tailwind CSS (Local via Vite) -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <!-- Tailwind Play CDN (Fail-safe Fallback) -->
+    <!-- Tailwind Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
