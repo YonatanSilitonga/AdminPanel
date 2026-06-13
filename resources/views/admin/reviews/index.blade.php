@@ -1,4 +1,4 @@
-﻿@extends('admin.layouts.app')
+@extends('admin.layouts.app')
 
 @section('title', 'Ulasan Pengguna')
 @section('navbar_title', 'Ulasan')
@@ -164,7 +164,7 @@
     },
 
     stars(n) {
-        return 'â˜…'.repeat(n) + 'â˜†'.repeat(5 - n);
+        return '\u2605'.repeat(n) + '\u2606'.repeat(5 - n);
     }
 }">
     @php
@@ -1096,9 +1096,15 @@
                                             @endphp
                                             <div class="flex items-center gap-1.5 mt-0.5">
                                                 @if($isRegistered)
-                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">ðŸ‘¤ User</span>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">
+                                                        <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path></svg>
+                                                        User
+                                                    </span>
                                                 @else
-                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">ðŸ‘¥ Guest</span>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">
+                                                        <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a7 7 0 00-7 7v1h12v-1a7 7 0 00-7-7z"></path></svg>
+                                                        Guest
+                                                    </span>
                                                 @endif
                                                 <span class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">ID: {{ substr((string)$review->user_id, -6) }}</span>
                                             </div>
@@ -1240,11 +1246,17 @@
                             <div class="flex items-center gap-2">
                                 <p class="font-bold text-gray-800 text-sm" x-text="viewingReview?.reviewer_name || 'Anonim'"></p>
                                 <template x-if="viewingReview?.user_is_registered">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">ðŸ‘¤ User</span>
-                                </template>
-                                <template x-if="!viewingReview?.user_is_registered">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">ðŸ‘¥ Guest</span>
-                                </template>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">
+                                                        <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path></svg>
+                                                        User
+                                                    </span>
+                                                </template>
+                                                <template x-if="!viewingReview?.user_is_registered">
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">
+                                                        <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a7 7 0 00-7 7v1h12v-1a7 7 0 00-7-7z"></path></svg>
+                                                        Guest
+                                                    </span>
+                                                </template>
                             </div>
                             <p class="text-xs text-gray-400 mt-0.5" x-text="viewingReview?.created_at ? new Date(viewingReview.created_at).toLocaleDateString('id-ID', {year:'numeric', month:'long', day:'numeric'}) : ''"></p>
                         </div>
@@ -1502,7 +1514,7 @@
             ratingChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['5 â˜…', '4 â˜…', '3 â˜…', '2 â˜…', '1 â˜…'],
+                    labels: ['5 \u2605', '4 \u2605', '3 \u2605', '2 \u2605', '1 \u2605'],
                     datasets: [{
                         data: [
                             {{ $ratingDistribution[5]['count'] ?? 0 }},
@@ -1697,11 +1709,11 @@
                     display = sel?.options[sel.selectedIndex]?.text || val;
                 }
                 if (key === 'sentiment') display = sentimentLabels[val] || val;
-                if (key === 'rating') display = `${val} â˜…`;
+                if (key === 'rating') display = `${val} \u2605`;
                 const badge = document.createElement('span');
                 badge.className = 'inline-flex items-center gap-1 px-3 py-1 bg-sidebar/10 text-sidebar text-xs font-bold rounded-full';
                 badge.innerHTML = `${labels[key]}: ${display}
-                    <button onclick="this.parentElement.remove(); document.getElementById('sf_${key}').value=''; applyFilters();" class="ml-1 hover:text-red-500 transition-colors">âœ•</button>`;
+                    <button onclick="this.parentElement.remove(); document.getElementById('sf_${key}').value=''; applyFilters();" class="ml-1 hover:text-red-500 transition-colors">&times;</button>`;
                 wrap.appendChild(badge);
             });
             wrap.classList.toggle('hidden', !hasAny);

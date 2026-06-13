@@ -1432,10 +1432,9 @@ function facilityManager() {
                 const formData = new FormData(form);
                 
                 if (signData.success && signData.mode === 'cloudinary') {
-                    this.showUploadProgress = true;
-                    
                     // Upload thumbnail/cover
                     if (thumbnailInput && thumbnailInput.files.length > 0) {
+                        this.showUploadProgress = true;
                         this.uploadProgressPercent = 0;
                         this.uploadProgressText = 'Menghubungkan ke Cloudinary untuk mengunggah cover...';
                         this.uploadSpeedText = '';
@@ -1445,6 +1444,7 @@ function facilityManager() {
                     
                     // Upload additional images
                     if (imagesInput && imagesInput.files.length > 0) {
+                        this.showUploadProgress = true;
                         formData.delete('images[]');
                         for (let i = 0; i < imagesInput.files.length; i++) {
                             const file = imagesInput.files[i];
@@ -1456,10 +1456,12 @@ function facilityManager() {
                         }
                     }
                     
-                    this.uploadProgressPercent = 100;
-                    this.uploadProgressText = 'Unggah media berhasil! Menyimpan data ke server...';
-                    await new Promise(r => setTimeout(r, 500));
-                    this.showUploadProgress = false;
+                    if (this.showUploadProgress) {
+                        this.uploadProgressPercent = 100;
+                        this.uploadProgressText = 'Unggah media berhasil! Menyimpan data ke server...';
+                        await new Promise(r => setTimeout(r, 500));
+                        this.showUploadProgress = false;
+                    }
                     
                     const response = await fetch('{{ route('admin.fasilitas_umum.store') }}', {
                         method: 'POST',
@@ -1549,10 +1551,9 @@ function facilityManager() {
                 formData.append('is_active', this.editingFacility.is_active ? '1' : '0');
                 
                 if (signData.success && signData.mode === 'cloudinary') {
-                    this.showUploadProgress = true;
-                    
                     // Upload cover
                     if (thumbnailInput && thumbnailInput.files.length > 0) {
+                        this.showUploadProgress = true;
                         this.uploadProgressPercent = 0;
                         this.uploadProgressText = 'Menghubungkan ke Cloudinary untuk mengunggah cover...';
                         this.uploadSpeedText = '';
@@ -1562,6 +1563,7 @@ function facilityManager() {
                     
                     // Upload additional images
                     if (imagesInput && imagesInput.files.length > 0) {
+                        this.showUploadProgress = true;
                         formData.delete('images[]');
                         for (let i = 0; i < imagesInput.files.length; i++) {
                             const file = imagesInput.files[i];
@@ -1573,10 +1575,12 @@ function facilityManager() {
                         }
                     }
                     
-                    this.uploadProgressPercent = 100;
-                    this.uploadProgressText = 'Unggah media berhasil! Menyimpan data ke server...';
-                    await new Promise(r => setTimeout(r, 500));
-                    this.showUploadProgress = false;
+                    if (this.showUploadProgress) {
+                        this.uploadProgressPercent = 100;
+                        this.uploadProgressText = 'Unggah media berhasil! Menyimpan data ke server...';
+                        await new Promise(r => setTimeout(r, 500));
+                        this.showUploadProgress = false;
+                    }
                     
                     const response = await fetch(`/admin/fasilitas-umum/${facilityId}`, {
                         method: 'POST',

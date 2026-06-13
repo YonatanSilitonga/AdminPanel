@@ -1204,10 +1204,14 @@
                            </div>
                           
                           <div class="col-span-2 mt-2">
-                              <label class="flex items-center gap-3 cursor-pointer">
-                                  <input type="checkbox" name="is_active" value="1" checked class="w-5 h-5 rounded-md border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                  <span class="text-sm font-semibold text-gray-700">Tampilkan ke Publik (Aktif)</span>
-                              </label>
+                              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                  <span class="text-sm font-medium text-gray-700">Status Aktif <span class="text-xs text-gray-500 font-normal ml-1">(Draft jika nonaktif)</span></span>
+                                  <label class="relative inline-flex items-center cursor-pointer">
+                                      <input type="hidden" name="is_active" value="0">
+                                      <input type="checkbox" name="is_active" value="1" checked class="sr-only peer">
+                                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
+                                  </label>
+                              </div>
                           </div>
                       </div>
 
@@ -1496,10 +1500,14 @@
                                 </div>
                             </div>
                             <div class="col-span-2 mt-2">
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" name="is_active" value="1" x-model="editingBudaya.is_active" class="w-5 h-5 rounded-md border-gray-300 text-sidebar focus:ring-sidebar/30">
-                                    <span class="text-sm font-semibold text-gray-700">Tampilkan ke Publik (Aktif)</span>
-                                </label>
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                    <span class="text-sm font-medium text-gray-700">Status Aktif <span class="text-xs text-gray-500 font-normal ml-1">(Draft jika nonaktif)</span></span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="is_active" value="0">
+                                        <input type="checkbox" name="is_active" value="1" x-model="editingBudaya.is_active" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-gray-100 mt-6">
@@ -1523,11 +1531,13 @@
                                     </span>
                                 </template>
                             </div>
-                            <button type="button" @click="showEditModal = false" class="px-8 py-3.5 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl bg-gray-50 hover:text-gray-600 transition-colors">Batal</button>
-                            <button type="submit" :disabled="loading" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-                                <svg x-show="loading" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                                <span x-text="loading ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
-                            </button>
+                            <div class="flex items-center justify-end gap-3">
+                                <button type="button" @click="showEditModal = false" class="px-8 py-3.5 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl bg-gray-50 hover:text-gray-600 transition-colors">Batal</button>
+                                <button type="submit" :disabled="loading" class="px-10 py-3.5 text-sm font-bold text-white bg-sidebar rounded-xl shadow-lg shadow-sidebar/20 hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                                    <svg x-show="loading" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    <span x-text="loading ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>

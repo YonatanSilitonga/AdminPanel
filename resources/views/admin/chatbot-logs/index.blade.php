@@ -206,8 +206,8 @@
                 <select name="type" onchange="this.form.submit()" 
                     class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-[#066466] transition-all cursor-pointer">
                     <option value="">Semua Tipe</option>
-                    <option value="user" @selected(request('type') === 'user')>👤 User</option>
-                    <option value="guest" @selected(request('type') === 'guest')>👥 Tamu</option>
+                    <option value="user" @selected(request('type') === 'user')>User</option>
+                    <option value="guest" @selected(request('type') === 'guest')>Tamu</option>
                 </select>
             </div>
 
@@ -328,7 +328,10 @@
                                     <span class="text-xs text-gray-400 mt-0.5">{{ $session->user->email ?? 'ID: ' . substr($userId, -8) }}</span>
                                 </div>
                             @else
-                                <span class="px-4 py-1.5 bg-gray-50 text-gray-500 text-[11px] font-bold rounded-xl uppercase tracking-wider">👥 Tamu</span>
+                                <span class="inline-flex items-center px-4 py-1.5 bg-gray-50 text-gray-500 text-[11px] font-bold rounded-xl uppercase tracking-wider">
+                                    <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a7 7 0 00-7 7v1h12v-1a7 7 0 00-7-7z"></path></svg>
+                                    Tamu
+                                </span>
                             @endif
                         </td>
                         <td class="px-10 py-6">

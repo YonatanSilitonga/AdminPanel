@@ -481,6 +481,7 @@
                 }
                 
                 const response = await fetch(`/admin/berita-promosi/${itemId}`, {
+
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',

@@ -18,57 +18,74 @@ class RecommendationLogController extends BaseAdminController
     public function index(Request $request)
     {
         try {
-            // Hapus cache lama agar data selalu fresh saat development
-            // Cache::forget('admin.recommendations.stats_summary');
+            // 1. Counting stats — gunakan Carbon langsung (MongoDB Laravel driver
+            //    menangani konversi Carbon ke UTCDateTime secara otomatis sejak v4.x)
+            $today      = Carbon::now()->startOfDay();
+            $todayLogs  = MongoRecommendation::where('created_at', '>=', $today)->count();
 
-            $stats = Cache::remember('admin.recommendations.stats_summary', now()->addMinutes(10), function () {
-                // Helper: konversi Carbon ke UTCDateTime agar kompatibel dengan MongoDB driver
-                $toUtc = fn (Carbon $dt) => new \MongoDB\BSON\UTCDateTime($dt->getTimestampMs());
+            $weekStart  = Carbon::now()->startOfWeek();
+            $weekEnd    = Carbon::now()->endOfWeek();
+            $weekLogs   = MongoRecommendation::where('created_at', '>=', $weekStart)
+                ->where('created_at', '<=', $weekEnd)
+                ->count();
 
-                // Today's stats
-                $today    = Carbon::now()->startOfDay();
-                $todayLogs = MongoRecommendation::where('created_at', '>=', $toUtc($today))->count();
+            $monthStart = Carbon::now()->startOfMonth();
+            $monthEnd   = Carbon::now()->endOfMonth();
+            $monthLogs  = MongoRecommendation::where('created_at', '>=', $monthStart)
+                ->where('created_at', '<=', $monthEnd)
+                ->count();
 
-                // This week stats
-                $weekStart = Carbon::now()->startOfWeek();
-                $weekEnd   = Carbon::now()->endOfWeek();
-                $weekLogs  = MongoRecommendation::where('created_at', '>=', $toUtc($weekStart))
-                    ->where('created_at', '<=', $toUtc($weekEnd))
-                    ->count();
+            $totalCount  = MongoRecommendation::count();
+            $avgDuration = $totalCount > 0
+                ? round(MongoRecommendation::avg('recommendation_score'), 1)
+                : 0;
 
-                // This month stats
-                $monthStart = Carbon::now()->startOfMonth();
-                $monthEnd   = Carbon::now()->endOfMonth();
-                $monthLogs  = MongoRecommendation::where('created_at', '>=', $toUtc($monthStart))
-                    ->where('created_at', '<=', $toUtc($monthEnd))
-                    ->count();
+            $clickedCount = MongoRecommendation::where('is_clicked', true)->count();
+            $clickRate    = $totalCount > 0
+                ? round(($clickedCount / $totalCount) * 100, 1)
+                : 0;
 
-                // Average recommendation_score (interpreted as trip duration in days)
-                $totalCount  = MongoRecommendation::count();
-                $avgDuration = $totalCount > 0
-                    ? round(MongoRecommendation::avg('recommendation_score'), 1)
-                    : 0;
+            // 2. Fetch heavier metrics cached for 1 minute (for speed, but short enough for responsive testing)
+            $heavyStats = Cache::remember('admin.recommendations.heavy_stats', now()->addMinutes(1), function () {
+                // Popular destinations — MongoDB aggregation dari SELURUH data (bukan limit 500)
+                try {
+                    $pipeline = [
+                        ['$match' => ['destination_id' => ['$exists' => true, '$ne' => null, '$ne' => '']]],
+                        ['$group' => ['_id' => '$destination_id', 'count' => ['$sum' => 1]]],
+                        ['$sort'  => ['count' => -1]],
+                        ['$limit' => 5],
+                    ];
+                    $aggResult = MongoRecommendation::raw(fn ($col) => $col->aggregate($pipeline));
 
-                // Popular destinations — group by destination_id on last 500 logs
-                $popularDestinations = MongoRecommendation::with('destination')
-                    ->orderBy('created_at', 'desc')
-                    ->limit(500)
-                    ->get()
-                    ->groupBy('destination_id')
-                    ->map(fn ($group) => (object) [
-                        'destination_id' => $group->first()->destination_id,
-                        'count'          => $group->count(),
-                        'destination'    => $group->first()->destination,
-                    ])
-                    ->sortByDesc('count')
-                    ->take(5)
-                    ->values();
+                    $destIds = collect($aggResult)->pluck('_id')->filter()->map(fn ($id) => (string) $id)->toArray();
+                    $destinations = MongoDestination::whereIn('_id', $destIds)->get()->keyBy(fn ($d) => (string) $d->_id);
 
-                // Click rate
-                $clickedCount = MongoRecommendation::where('is_clicked', true)->count();
-                $clickRate    = $totalCount > 0
-                    ? round(($clickedCount / $totalCount) * 100, 1)
-                    : 0;
+                    $popularDestinations = collect($aggResult)->map(function ($row) use ($destinations) {
+                        $id   = (string) ($row['_id'] ?? '');
+                        $dest = $destinations->get($id);
+                        return (object) [
+                            'destination_id' => $id,
+                            'count'          => (int) ($row['count'] ?? 0),
+                            'destination'    => $dest,
+                        ];
+                    })->filter(fn ($r) => $r->destination !== null)->values();
+                } catch (\Exception $e) {
+                    Log::warning('Popular destinations aggregation failed, falling back: ' . $e->getMessage());
+                    // Fallback ke method lama jika aggregation tidak tersedia
+                    $popularDestinations = MongoRecommendation::with('destination')
+                        ->orderBy('created_at', 'desc')
+                        ->limit(1000)
+                        ->get()
+                        ->groupBy('destination_id')
+                        ->map(fn ($group) => (object) [
+                            'destination_id' => $group->first()->destination_id,
+                            'count'          => $group->count(),
+                            'destination'    => $group->first()->destination,
+                        ])
+                        ->sortByDesc('count')
+                        ->take(5)
+                        ->values();
+                }
 
                 // Distribution of trip duration (recommendation_score = duration in days)
                 $distributionData = [
@@ -77,8 +94,7 @@ class RecommendationLogController extends BaseAdminController
                     '8+ Hari'  => MongoRecommendation::where('recommendation_score', '>=', 8)->count(),
                 ];
 
-                // User preferences — computed from behavior_data.categories stored by the Go backend.
-                // We aggregate across all logs that have behavior_data with a categories field.
+                // User preferences
                 $categoryMap = [];
                 $categoryLabels = [
                     'wisata_alam'    => 'Wisata Alam',
@@ -144,18 +160,106 @@ class RecommendationLogController extends BaseAdminController
                     }
                 }
 
-                return compact(
-                    'todayLogs', 'weekLogs', 'monthLogs', 'avgDuration',
-                    'clickRate', 'popularDestinations', 'distributionData', 'userPreferences'
-                );
+                return compact('popularDestinations', 'distributionData', 'userPreferences');
             });
 
-            // Trip planner logs (paginated — not cached)
-            $logs = MongoRecommendation::with(['destination', 'user'])
-                ->orderBy('created_at', 'desc')
-                ->paginate(15);
+            // 3. Build query for history table with search & filters
+            $query = MongoRecommendation::with(['destination', 'user']);
 
-            return view('admin.recommendations.index', array_merge($stats, compact('logs')));
+            // Search Filter (Trip title, user name, destination name, or ID)
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                
+                // Find matching destinations in MongoDB
+                $destIds = MongoDestination::where('name', 'like', "%{$search}%")->pluck('_id')->toArray();
+                
+                // Find matching users in MySQL
+                $userIds = \App\Models\User::where('name', 'like', "%{$search}%")->pluck('id')->toArray();
+
+                $query->where(function ($q) use ($search, $destIds, $userIds) {
+                    $q->where('behavior_data.trip_title', 'like', "%{$search}%")
+                      ->orWhere('behavior_data.user_name', 'like', "%{$search}%");
+                    
+                    if (preg_match('/^[a-f\d]{24}$/i', $search)) {
+                        $q->orWhere('_id', $search);
+                    }
+                    
+                    if (!empty($destIds)) {
+                        foreach ($destIds as $id) {
+                            $q->orWhere('destination_id', (string)$id);
+                        }
+                    }
+                    
+                    if (!empty($userIds)) {
+                        $q->orWhereIn('user_id', $userIds);
+                    }
+                });
+            }
+
+            // Duration Filter
+            if ($request->filled('duration')) {
+                $dur = $request->input('duration');
+                if ($dur === '1-3') {
+                    $query->where('recommendation_score', '<=', 3);
+                } elseif ($dur === '4-7') {
+                    $query->whereBetween('recommendation_score', [4, 7]);
+                } elseif ($dur === '8+') {
+                    $query->where('recommendation_score', '>=', 8);
+                }
+            }
+
+            // Click Status Filter
+            if ($request->filled('status')) {
+                $status = $request->input('status');
+                if ($status === 'clicked') {
+                    $query->where('is_clicked', true);
+                } elseif ($status === 'ignored') {
+                    $query->where('is_clicked', false);
+                }
+            }
+
+            // User Type Filter
+            if ($request->filled('user_type')) {
+                $ut = $request->input('user_type');
+                if ($ut === 'registered') {
+                    $query->whereNotNull('user_id')->where('user_id', '!=', '');
+                } elseif ($ut === 'guest') {
+                    $query->where(function($q) {
+                        $q->whereNull('user_id')->orWhere('user_id', '');
+                    });
+                }
+            }
+
+            // Destination Filter
+            if ($request->filled('destination_id')) {
+                $query->where('destination_id', $request->input('destination_id'));
+            }
+
+            // Pagination
+            $perPage = (int) $request->input('per_page', 15);
+            $logs = $query->orderBy('created_at', 'desc')
+                ->paginate($perPage)
+                ->withQueryString();
+
+            // Ambil daftar destinasi yang pernah direkomendasikan untuk dropdown filter
+            // Gunakan data dari popularDestinations + query distinct untuk efisiensi
+            $filterDestinations = MongoDestination::whereIn(
+                '_id',
+                MongoRecommendation::distinct('destination_id')->get()->pluck('destination_id')
+                    ->filter()->map(fn ($id) => (string) $id)->toArray()
+            )->orderBy('name', 'asc')->get(['_id', 'name'])->map(fn ($d) => [
+                'id'   => (string) $d->_id,
+                'name' => $d->name,
+            ]);
+
+            // Merge stats cards, heavy cached stats, and logs for view
+            $dataForView = array_merge(
+                compact('todayLogs', 'weekLogs', 'monthLogs', 'avgDuration', 'clickRate'),
+                $heavyStats,
+                compact('logs', 'filterDestinations')
+            );
+
+            return view('admin.recommendations.index', $dataForView);
 
         } catch (\Exception $e) {
             Log::error('RecommendationLog index error: ' . $e->getMessage());
@@ -169,6 +273,7 @@ class RecommendationLogController extends BaseAdminController
                 'logs'               => collect(),
                 'distributionData'   => [],
                 'userPreferences'    => [],
+                'filterDestinations' => collect(),
                 'error'              => 'Gagal memuat data rekomendasi.',
             ]);
         }
@@ -229,14 +334,49 @@ class RecommendationLogController extends BaseAdminController
                 }
             }
 
-            // Trip itinerary from behavior_data or trip_plans collection
-            $itinerary    = $log->behavior_data['itinerary']    ?? [];
-            $tripDuration = $log->behavior_data['duration']     ?? round($log->recommendation_score);
-            $budget       = $log->behavior_data['budget']       ?? null;
-            $tripTitle    = $log->behavior_data['trip_title']   ?? null;
+            // Itinerary: ambil dari behavior_data dulu, fallback ke trip_plans
+            $itinerary    = $log->behavior_data['itinerary'] ?? [];
+            $tripDuration = $log->behavior_data['duration']  ?? round($log->recommendation_score);
+            $budget       = $log->behavior_data['budget']    ?? null;
+            $tripTitle    = $log->behavior_data['trip_title'] ?? null;
+
+            // Trip plans dari SmartTrip — ambil trip milik user ini (5 terbaru)
+            $tripPlans = collect();
+            if (!empty($log->user_id)) {
+                $tripPlans = \App\Models\MongoDB\MongoTripPlan::where('user_id', (string) $log->user_id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get();
+
+                // Jika itinerary kosong di behavior_data, coba ambil dari trip_plans terdekat
+                // Struktur SmartTrip: summary.days[] bukan itinerary[]
+                if (empty($itinerary) && $tripPlans->isNotEmpty()) {
+                    $closestPlan = $tripPlans->first();
+                    $summaryDays = $closestPlan->summary['days'] ?? [];
+                    if (!empty($summaryDays)) {
+                        // Normalisasi struktur summary.days ke format itinerary yang blade sudah handle
+                        $itinerary = array_map(function ($day) {
+                            return [
+                                'day'         => $day['day_number']  ?? 1,
+                                'title'       => $day['date_label']  ?? ('Hari Ke-' . ($day['day_number'] ?? 1)),
+                                'description' => ($day['start_from'] ? 'Mulai dari ' . $day['start_from'] : '') .
+                                                 ($day['smart_tip']  ? ' — ' . $day['smart_tip'] : ''),
+                                'activities'  => array_map(fn ($act) =>
+                                    ($act['time'] ? '[' . $act['time'] . '] ' : '') .
+                                    ($act['name'] ?? '') .
+                                    ($act['travel_mode'] ? ' (' . $act['travel_mode'] . ')' : ''),
+                                $day['activities'] ?? []),
+                            ];
+                        }, $summaryDays);
+                        $tripDuration = $closestPlan->summary['total_days'] ?? $tripDuration;
+                        $tripTitle    = $closestPlan->summary['title']      ?? $tripTitle;
+                    }
+                }
+            }
 
             return view('admin.recommendations.show', compact(
-                'log', 'destinationStats', 'preferences', 'itinerary', 'tripDuration', 'budget', 'tripTitle'
+                'log', 'destinationStats', 'preferences', 'itinerary',
+                'tripDuration', 'budget', 'tripTitle', 'tripPlans'
             ));
 
         } catch (\Exception $e) {

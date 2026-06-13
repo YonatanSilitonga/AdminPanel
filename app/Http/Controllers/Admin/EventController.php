@@ -206,6 +206,10 @@ class EventController extends BaseAdminController
                     ];
                 }, $event->images);
             }
+            // Tambah end_date_raw (ISO format) agar blade bisa cek apakah event sudah selesai
+            $event->end_date_raw = $event->end_date instanceof \DateTime
+                ? $event->end_date->format('c')
+                : (string) $event->end_date;
             return response()->json($event);
         }
 
@@ -277,6 +281,10 @@ class EventController extends BaseAdminController
             $event->latitude = isset($validated['latitude']) ? (float)$validated['latitude'] : $event->latitude;
             $event->longitude = isset($validated['longitude']) ? (float)$validated['longitude'] : $event->longitude;
             $event->is_active = $request->boolean('is_active');
+            // Event yang sudah selesai (end_date < now) tidak bisa diaktifkan
+            if ($event->end_date && $event->end_date < now()) {
+                $event->is_active = false;
+            }
 
             // Tags handling
             if ($request->has('tags')) {

@@ -283,6 +283,119 @@ class UserController extends BaseAdminController
                 ];
             }
 
+            // ── Build reviews_list ────────────────────────────────────────────
+            $reviewsAll = MongoReview::where(function($q) use ($id, $isObjectId) {
+                    $q->where('user_id', $id);
+                    if ($isObjectId) {
+                        $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                    }
+                })
+                ->with('destination')
+                ->latest()
+                ->take(20)
+                ->get();
+
+            $reviewsList = $reviewsAll->map(function($rev) {
+                return [
+                    'destination_name' => $rev->destination->name ?? 'Destinasi',
+                    'rating'           => (int)($rev->rating ?? 0),
+                    'review'           => $rev->review ?? '',
+                    'sentiment'        => $rev->sentiment_label ?? 'neutral',
+                    'time'             => $rev->created_at ? $rev->created_at->diffForHumans() : 'baru saja',
+                ];
+            })->values()->toArray();
+
+            // ── Build trips_list ──────────────────────────────────────────────
+            $tripsAll = \Illuminate\Support\Facades\DB::connection('mongodb')
+                ->table('trip_plans')
+                ->where(function($q) use ($id, $isObjectId) {
+                    $q->where('user_id', $id);
+                    if ($isObjectId) {
+                        $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                    }
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(20)
+                ->get();
+
+            $tripsList = $tripsAll->map(function($trip) {
+                $summary  = (array)($trip->summary ?? []);
+                $title    = $summary['title'] ?? ($trip->name ?? 'Trip Toba');
+                $duration = $summary['duration_days'] ?? ($trip->duration_days ?? 1);
+
+                $createdVal = $trip->created_at ?? null;
+                $createdAt  = null;
+                if ($createdVal) {
+                    if ($createdVal instanceof \MongoDB\BSON\UTCDateTime) {
+                        $createdAt = \Illuminate\Support\Carbon::createFromTimestampMs(
+                            $createdVal->toDateTime()->getTimestamp() * 1000
+                        );
+                    } elseif ($createdVal instanceof \Illuminate\Support\Carbon) {
+                        $createdAt = $createdVal;
+                    } else {
+                        $createdAt = \Illuminate\Support\Carbon::parse($createdVal);
+                    }
+                }
+
+                return [
+                    'title'    => $title,
+                    'duration' => (int)$duration,
+                    'time'     => $createdAt ? $createdAt->diffForHumans() : 'baru saja',
+                ];
+            })->values()->toArray();
+
+            // ── Build wishlist_list ───────────────────────────────────────────
+            $favoritesAll = \Illuminate\Support\Facades\DB::connection('mongodb')
+                ->table('favorites')
+                ->where(function($q) use ($id, $isObjectId) {
+                    $q->where('user_id', $id);
+                    if ($isObjectId) {
+                        $q->orWhere('user_id', new \MongoDB\BSON\ObjectId($id));
+                    }
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(20)
+                ->get();
+
+            $wishlistList = [];
+            if ($favoritesAll->isNotEmpty()) {
+                $allDestIds = $favoritesAll->pluck('destination_id')->map(fn($d) => (string)$d)->toArray();
+                $validIds   = array_filter($allDestIds, fn($d) => preg_match('/^[a-f\d]{24}$/i', (string)$d));
+                $objIds     = array_map(fn($d) => new \MongoDB\BSON\ObjectId($d), $validIds);
+
+                $destQ = \App\Models\MongoDB\MongoDestination::whereIn('_id', $allDestIds);
+                if (!empty($objIds)) {
+                    $destQ->orWhereIn('_id', $objIds);
+                }
+                $destMap = $destQ->get()->keyBy(fn($d) => (string)$d->_id);
+
+                foreach ($favoritesAll as $fav) {
+                    $dIdStr = (string)($fav->destination_id ?? '');
+                    $dest   = $destMap[$dIdStr] ?? null;
+
+                    $createdVal = $fav->created_at ?? null;
+                    $createdAt  = null;
+                    if ($createdVal) {
+                        if ($createdVal instanceof \MongoDB\BSON\UTCDateTime) {
+                            $createdAt = \Illuminate\Support\Carbon::createFromTimestampMs(
+                                $createdVal->toDateTime()->getTimestamp() * 1000
+                            );
+                        } elseif ($createdVal instanceof \Illuminate\Support\Carbon) {
+                            $createdAt = $createdVal;
+                        } else {
+                            $createdAt = \Illuminate\Support\Carbon::parse($createdVal);
+                        }
+                    }
+
+                    $wishlistList[] = [
+                        'name'     => $dest ? ($dest->name ?? 'Destinasi') : 'Destinasi',
+                        'location' => $dest ? ($dest->location ?? $dest->district ?? '') : '',
+                        'image'    => $dest ? ($dest->thumbnail ?? $dest->cover_image ?? null) : null,
+                        'time'     => $createdAt ? $createdAt->diffForHumans() : 'baru saja',
+                    ];
+                }
+            }
+
             return response()->json([
                 'user' => $user,
                 'initials' => collect(explode(' ', $user->name))->map(fn($n) => strtoupper(substr($n, 0, 1)))->take(2)->implode(''),
@@ -312,7 +425,10 @@ class UserController extends BaseAdminController
                         })
                         ->count(),
                 ],
-                'activities' => $activities
+                'activities' => $activities,
+                'reviews_list'  => $reviewsList,
+                'trips_list'    => $tripsList,
+                'wishlist_list' => $wishlistList,
             ]);
         }
 

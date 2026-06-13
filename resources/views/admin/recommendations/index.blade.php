@@ -218,6 +218,93 @@
     </div>
 </div>
 
+<!-- Filter Card -->
+<div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <form method="GET" action="{{ route('admin.recommendations.index') }}" class="flex-grow m-0">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
+                <!-- Pencarian -->
+                <div class="space-y-2 lg:col-span-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Cari Rekomendasi</label>
+                    <div class="relative">
+                        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Trip ID, user, destinasi..."
+                            class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-[14px] font-semibold text-gray-700 placeholder-gray-400 focus:bg-white focus:border-[#066466] hover:border-gray-200 transition-all shadow-sm">
+                    </div>
+                </div>
+
+                <!-- Filter Destinasi -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Destinasi</label>
+                    <select name="destination_id" onchange="this.form.submit()"
+                        class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                        <option value="">Semua Destinasi</option>
+                        @foreach($filterDestinations as $dest)
+                            <option value="{{ $dest['id'] }}" @selected(request('destination_id') === $dest['id'])>
+                                {{ $dest['name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Durasi -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Durasi Trip</label>
+                    <select name="duration" onchange="this.form.submit()"
+                        class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                        <option value="">Semua Durasi</option>
+                        <option value="1-3" @selected(request('duration') === '1-3')>1-3 Hari</option>
+                        <option value="4-7" @selected(request('duration') === '4-7')>4-7 Hari</option>
+                        <option value="8+" @selected(request('duration') === '8+')>8+ Hari</option>
+                    </select>
+                </div>
+
+                <!-- Status Klik -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Status Respon</label>
+                    <select name="status" onchange="this.form.submit()"
+                        class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                        <option value="">Semua Respon</option>
+                        <option value="clicked" @selected(request('status') === 'clicked')>Diklik</option>
+                        <option value="ignored" @selected(request('status') === 'ignored')>Diabaikan</option>
+                    </select>
+                </div>
+
+                <!-- Tipe Pengguna -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Tipe Pengguna</label>
+                    <select name="user_type" onchange="this.form.submit()"
+                        class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                        <option value="">Semua Tipe</option>
+                        <option value="registered" @selected(request('user_type') === 'registered')>User Terdaftar</option>
+                        <option value="guest" @selected(request('user_type') === 'guest')>Guest (Tamu)</option>
+                    </select>
+                </div>
+
+                <!-- Tampilkan -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Tampilkan</label>
+                    <select name="per_page" onchange="this.form.submit()"
+                        class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                        @foreach([10, 15, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected(request('per_page', 15) == $size)>{{ $size }} Baris</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        @if(request('search') || request('destination_id') || request('duration') || request('status') || request('user_type') || request('per_page') != 15)
+            <div class="flex-shrink-0 mt-4 lg:mt-[22px]">
+                <a href="{{ route('admin.recommendations.index') }}" class="px-5 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
+                    Reset
+                </a>
+            </div>
+        @endif
+    </div>
+</div>
+
 <!-- History Table -->
 <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden mb-8">
     <div class="overflow-x-auto">
@@ -281,9 +368,15 @@
                             <div class="flex flex-col gap-1">
                                 <span class="text-sm font-bold text-gray-800">{{ $userName }}</span>
                                 @if($isRegistered)
-                                    <span class="inline-flex items-center w-max px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">👤 User</span>
+                                    <span class="inline-flex items-center w-max px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E6F6F2] text-[#00A884] uppercase tracking-wide border border-[#00A884]/10">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                                        User
+                                    </span>
                                 @else
-                                    <span class="inline-flex items-center w-max px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">👥 Guest</span>
+                                    <span class="inline-flex items-center w-max px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-50 text-gray-500 uppercase tracking-wide border border-gray-100">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a7 7 0 00-7 7v1h12v-1a7 7 0 00-7-7z"></path></svg>
+                                        Guest
+                                    </span>
                                 @endif
                             </div>
                         </td>
