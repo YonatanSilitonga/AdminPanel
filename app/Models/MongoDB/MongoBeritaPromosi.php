@@ -39,4 +39,15 @@ class MongoBeritaPromosi extends Model
     {
         return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
     }
+
+    public function getImagesAttribute($value)
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            return json_decode($value, true) ?: [];
+        }
+        return [];
+    }
 }

@@ -417,6 +417,11 @@ class DestinationController extends BaseAdminController
             $destination->video_loop = $request->boolean('video_loop', $destination->video_loop ?? true);
             $destination->video_wait_until_ready = $request->boolean('video_wait_until_ready', $destination->video_wait_until_ready ?? true);
 
+            // Update status aktif/nonaktif
+            if ($request->has('is_active')) {
+                $destination->is_active = $request->boolean('is_active');
+            }
+
             $currentImages = $destination->images ?? [];
 
             $deleteImages = $request->input('delete_images', []);

@@ -719,6 +719,9 @@
             this.deletedImages.forEach(img => {
                 formData.append('delete_images[]', img);
             });
+            // Eksplisit set is_active dari Alpine state untuk menghindari ambiguitas checkbox
+            formData.delete('is_active');
+            formData.append('is_active', (this.editingDest.is_active) ? '1' : '0');
             
             if (signData.success && signData.mode === 'cloudinary') {
                 // Upload thumbnail baru ke Cloudinary
@@ -2002,6 +2005,14 @@
                                     </template>
                                 </div>
                             </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl mt-4">
+                            <span class="text-sm font-medium text-gray-700">Status Aktif <span class="text-xs text-gray-500 font-normal ml-1">(Nonaktif = disembunyikan)</span></span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="hidden" name="is_active" value="0">
+                                <input type="checkbox" name="is_active" value="1" x-model="editingDest.is_active" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
+                            </label>
                         </div>
                         <div class="flex items-center justify-end gap-3 pt-4">
                             <button type="button" @click="showEditModal = false; editingDest = null" class="px-8 py-3.5 text-sm font-bold text-gray-400 border border-gray-200 rounded-xl hover:text-gray-600 transition-colors">Batal</button>

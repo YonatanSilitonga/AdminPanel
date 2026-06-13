@@ -1161,10 +1161,24 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 pt-2">
-                            <input type="hidden" name="is_active" value="0">
-                            <input type="checkbox" name="is_active" value="1" x-model="edit_is_active" id="edit_is_active_check" class="w-4 h-4 text-sidebar border-gray-200 rounded-lg focus:ring-sidebar/20">
-                            <label for="edit_is_active_check" class="text-sm font-bold text-gray-600 cursor-pointer">Setel sebagai Aktif</label>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                            <template x-if="editingEvent && editingEvent.end_date_raw && new Date(editingEvent.end_date_raw) < new Date()">
+                                <div class="flex items-center gap-3 w-full">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span class="text-sm font-medium text-gray-500">Event ini telah selesai dan otomatis dinonaktifkan</span>
+                                    <input type="hidden" name="is_active" value="0">
+                                </div>
+                            </template>
+                            <template x-if="!(editingEvent && editingEvent.end_date_raw && new Date(editingEvent.end_date_raw) < new Date())">
+                                <div class="flex items-center justify-between w-full">
+                                    <span class="text-sm font-medium text-gray-700">Status Aktif <span class="text-xs text-gray-500 font-normal ml-1">(Nonaktif = disembunyikan)</span></span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="hidden" name="is_active" value="0">
+                                        <input type="checkbox" name="is_active" value="1" x-model="edit_is_active" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
+                                    </label>
+                                </div>
+                            </template>
                         </div>
 
                         <div class="flex items-center justify-end gap-3 pt-4">
@@ -1447,10 +1461,13 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2 pt-2">
-                                <input type="hidden" name="is_active" value="0">
-                                <input type="checkbox" name="is_active" value="1" x-model="is_active" id="is_active_check" class="w-4 h-4 text-sidebar border-gray-200 rounded-lg focus:ring-sidebar/20">
-                                <label for="is_active_check" class="text-sm font-bold text-gray-600 cursor-pointer">Setel sebagai Aktif</label>
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <span class="text-sm font-medium text-gray-700">Status Aktif <span class="text-xs text-gray-500 font-normal ml-1">(Nonaktif = disembunyikan)</span></span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="hidden" name="is_active" value="0">
+                                    <input type="checkbox" name="is_active" value="1" x-model="is_active" id="is_active_check" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sidebar"></div>
+                                </label>
                             </div>
 
                             <div class="flex items-center justify-end gap-3 pt-4">

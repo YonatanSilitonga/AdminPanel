@@ -61,6 +61,28 @@ class MongoDestination extends Model
         'video_wait_until_ready' => 'boolean',
     ];
 
+    public function getImagesAttribute($value)
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            return json_decode($value, true) ?: [];
+        }
+        return [];
+    }
+
+    public function getFacilitiesAttribute($value)
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            return json_decode($value, true) ?: [];
+        }
+        return [];
+    }
+
     /**
      * Get the reviews for this destination
      */

@@ -111,17 +111,17 @@
                     </div>
                     
                     <!-- Menu Items -->
-                    <div class="p-1.5">
+                    <div class="p-1.5 font-sans">
                         <a href="{{ route('admin.profile') }}" class="flex items-center space-x-3 px-3 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors">
-                            <span class="text-base">👤</span>
+                            <svg class="w-4 h-4 text-gray-400 group-hover:text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                             <span class="font-medium">Profil Saya</span>
                         </a>
                     </div>
                     
                     <!-- Logout -->
-                    <div class="p-1.5 border-t border-gray-100 bg-gray-50/50">
+                    <div class="p-1.5 border-t border-gray-100 bg-gray-50/50 font-sans">
                         <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-logout-modal'))" class="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors font-bold">
-                            <span class="text-base">🚪</span>
+                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                             <span>Logout</span>
                         </button>
                     </div>

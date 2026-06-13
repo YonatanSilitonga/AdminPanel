@@ -139,8 +139,6 @@ class CarouselBannerController extends BaseAdminController
 
             CarouselBanner::create($data);
 
-            session()->flash('success', 'Slide Carousel berhasil ditambahkan');
-
             return response()->json([
                 'success' => true,
                 'message' => 'Slide Carousel berhasil ditambahkan'
@@ -243,8 +241,6 @@ class CarouselBannerController extends BaseAdminController
 
             $banner->update($data);
 
-            session()->flash('success', 'Slide Carousel berhasil diperbarui');
-
             return response()->json([
                 'success' => true,
                 'message' => 'Slide Carousel berhasil diperbarui'
@@ -305,7 +301,6 @@ class CarouselBannerController extends BaseAdminController
                     }
                 }
             }
-            session()->flash('success', 'Urutan carousel berhasil disimpan');
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

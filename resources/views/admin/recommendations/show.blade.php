@@ -176,70 +176,165 @@
             </div>
         </div>
 
-        <!-- Itinerary / Trip Detail -->
+        {{-- Itinerary / Trip Plans — tampilkan satu card saja --}}
+        @php
+            $hasItinerary  = !empty($itinerary);
+            $hasTripPlans  = isset($tripPlans) && $tripPlans->isNotEmpty();
+        @endphp
+
+        @if($hasItinerary)
+        {{-- Ada itinerary di behavior_data --}}
         <div class="bg-white rounded-[20px] border border-gray-100 p-8 shadow-sm">
             <div class="flex items-center justify-between mb-2">
                 <h3 class="text-lg font-bold text-gray-900">Rencana Perjalanan Terperinci</h3>
                 <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-xl text-[11px] font-bold">{{ $duration }} Hari</span>
             </div>
             <p class="text-sm text-gray-400 mb-8">Detail itinerary harian dari sistem AI SmartTrip</p>
-
-            @if(!empty($itinerary))
-                <div class="space-y-10">
-                    @foreach($itinerary as $dayIdx => $day)
-                    @php
-                        $dayNum        = $day['day']        ?? ($dayIdx + 1);
-                        $dayTitle      = $day['title']       ?? "Hari Ke-{$dayNum}";
-                        $dayDesc       = $day['description'] ?? null;
-                        $dayActivities = $day['activities']  ?? [];
-                        $isLast        = $loop->last;
-                    @endphp
-                    <div class="flex gap-6 relative">
-                        @if(!$isLast)
-                            <div class="absolute left-6 top-14 bottom-[-40px] w-0.5 bg-emerald-50"></div>
+            <div class="space-y-10">
+                @foreach($itinerary as $dayIdx => $day)
+                @php
+                    $dayNum        = $day['day']        ?? ($dayIdx + 1);
+                    $dayTitle      = $day['title']       ?? "Hari Ke-{$dayNum}";
+                    $dayDesc       = $day['description'] ?? null;
+                    $dayActivities = $day['activities']  ?? [];
+                    $isLast        = $loop->last;
+                @endphp
+                <div class="flex gap-6 relative">
+                    @if(!$isLast)
+                        <div class="absolute left-6 top-14 bottom-[-40px] w-0.5 bg-emerald-50"></div>
+                    @endif
+                    <div class="relative z-10 w-12 h-12 bg-emerald-700 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg shadow-emerald-700/20 shrink-0">
+                        {{ $dayNum }}
+                    </div>
+                    <div class="flex-grow pt-1">
+                        <h4 class="text-lg font-bold text-gray-900 mb-2">{{ $dayTitle }}</h4>
+                        @if($dayDesc)
+                            <p class="text-gray-500 text-[14px] leading-relaxed mb-4">{{ $dayDesc }}</p>
                         @endif
-                        <div class="relative z-10 w-12 h-12 bg-emerald-700 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg shadow-emerald-700/20 shrink-0">
-                            {{ $dayNum }}
-                        </div>
-                        <div class="flex-grow pt-1">
-                            <h4 class="text-lg font-bold text-gray-900 mb-2">{{ $dayTitle }}</h4>
-                            @if($dayDesc)
-                                <p class="text-gray-500 text-[14px] leading-relaxed mb-4">{{ $dayDesc }}</p>
-                            @endif
-                            @if(!empty($dayActivities))
-                            <div class="grid grid-cols-1 gap-2">
-                                @foreach($dayActivities as $act)
-                                <div class="flex items-start gap-3 px-4 py-3 bg-gray-50 rounded-xl border border-gray-100/50">
-                                    <div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
-                                    <span class="text-[13px] text-gray-600 font-medium">
-                                        {{ is_array($act) ? ($act['name'] ?? $act['activity'] ?? json_encode($act)) : $act }}
-                                    </span>
-                                </div>
-                                @endforeach
+                        @if(!empty($dayActivities))
+                        <div class="grid grid-cols-1 gap-2">
+                            @foreach($dayActivities as $act)
+                            <div class="flex items-start gap-3 px-4 py-3 bg-gray-50 rounded-xl border border-gray-100/50">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+                                <span class="text-[13px] text-gray-600 font-medium">
+                                    {{ is_array($act) ? ($act['name'] ?? $act['activity'] ?? json_encode($act)) : $act }}
+                                </span>
                             </div>
+                            @endforeach
+                        </div>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        @elseif($hasTripPlans)
+        {{-- Tidak ada itinerary di behavior_data, tapi ada trip_plans dari SmartTrip --}}
+        <div class="bg-white rounded-[20px] border border-gray-100 p-8 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-lg font-bold text-gray-900">Trip Plans SmartTrip</h3>
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-xl text-[11px] font-bold uppercase tracking-wider">
+                    {{ $tripPlans->count() }} Plan
+                </span>
+            </div>
+            <p class="text-sm text-gray-400 mb-6">Rencana perjalanan yang dibuat pengguna ini di SmartTrip</p>
+
+            <div class="space-y-4">
+                @foreach($tripPlans as $plan)
+                @php
+                    $summary      = $plan->summary ?? [];
+                    $planTitle    = $summary['title']              ?? 'Trip Plan';
+                    $planDays     = (int) ($summary['total_days']  ?? 0);
+                    $planDests    = (int) ($summary['total_destinations'] ?? 0);
+                    $planStart    = $summary['start_location']     ?? null;
+                    $planTransport= $summary['transport']          ?? null;
+                    $summaryDays  = $summary['days']               ?? [];
+                @endphp
+                <div class="border border-gray-100 rounded-2xl overflow-hidden">
+                    {{-- Header --}}
+                    <div class="p-5 bg-gray-50/60">
+                        <p class="text-[14px] font-bold text-gray-800 mb-2">{{ $planTitle }}</p>
+                        <div class="flex flex-wrap items-center gap-2">
+                            @if($planDays)
+                                <span class="px-2.5 py-0.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg">{{ $planDays }} Hari</span>
                             @endif
+                            @if($planDests)
+                                <span class="px-2.5 py-0.5 bg-purple-50 text-purple-600 text-[11px] font-bold rounded-lg">{{ $planDests }} Destinasi</span>
+                            @endif
+                            @if($planStart)
+                                <span class="px-2.5 py-0.5 bg-gray-100 text-gray-500 text-[11px] font-bold rounded-lg">📍 {{ $planStart }}</span>
+                            @endif
+                            @if($planTransport)
+                                <span class="px-2.5 py-0.5 bg-amber-50 text-amber-600 text-[11px] font-bold rounded-lg">🚗 {{ $planTransport }}</span>
+                            @endif
+                            <span class="ml-auto text-[11px] text-gray-400">{{ $plan->created_at?->format('d M Y') ?? '-' }}</span>
                         </div>
                     </div>
-                    @endforeach
-                </div>
-            @else
-                {{-- Itinerary belum tersedia — data dari Go backend belum menyimpan field ini --}}
-                <div class="flex flex-col items-center justify-center py-14 text-center">
-                    <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 border border-gray-100">
-                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
+                    {{-- Days ringkas --}}
+                    @if(!empty($summaryDays))
+                    <div class="px-5 py-4 space-y-4">
+                        @foreach($summaryDays as $dayIndex => $day)
+                        @php
+                            $dNum        = $day['day_number']  ?? ($dayIndex + 1);
+                            $dLabel      = $day['date_label']  ?? "Hari Ke-{$dNum}";
+                            $dStart      = $day['start_from']  ?? null;
+                            $dSmartTip   = $day['smart_tip']   ?? null;
+                            $dActivities = $day['activities']  ?? [];
+                        @endphp
+                        <div class="flex items-start gap-3">
+                            <span class="w-7 h-7 bg-emerald-700 text-white text-[10px] font-bold rounded-xl flex items-center justify-center shrink-0 mt-0.5">{{ $dNum }}</span>
+                            <div class="flex-grow">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <p class="text-[13px] font-bold text-gray-700">{{ $dLabel }}</p>
+                                    @if($dStart)
+                                        <span class="text-[10px] text-gray-400">dari {{ $dStart }}</span>
+                                    @endif
+                                </div>
+                                {{-- Aktivitas --}}
+                                @if(!empty($dActivities))
+                                <div class="space-y-1.5">
+                                    @foreach($dActivities as $act)
+                                    @php
+                                        $actTime      = $act['time'] ?? null;
+                                        $actName      = $act['name'] ?? '-';
+                                        $actMode      = $act['travel_mode'] ?? null;
+                                        $actDuration  = $act['duration_hours'] ?? null;
+                                        $actMeta      = trim(($actMode ?? '') . ($actMode && $actDuration ? ' · ' : '') . ($actDuration ? $actDuration . ' jam' : ''));
+                                    @endphp
+                                    <div class="flex items-start gap-2 px-3 py-2 bg-gray-50 rounded-xl">
+                                        @if($actTime)
+                                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded shrink-0 mt-0.5">{{ $actTime }}</span>
+                                        @endif
+                                        <div class="min-w-0">
+                                            <p class="text-[12px] font-bold text-gray-700 truncate">{{ $actName }}</p>
+                                            @if($actMeta)
+                                                <p class="text-[10px] text-gray-400 mt-0.5">{{ $actMeta }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @endif
+                                {{-- Smart tip --}}
+                                @if($dSmartTip)
+                                <div class="mt-2 flex items-start gap-2 px-3 py-2 bg-amber-50 rounded-xl border border-amber-100">
+                                    <span class="text-amber-500 shrink-0 text-[12px]">💡</span>
+                                    <p class="text-[11px] text-amber-700 leading-relaxed">{{ $dSmartTip }}</p>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endforeach
                     </div>
-                    <p class="text-sm font-bold text-gray-500 mb-1">Detail itinerary tidak tersedia</p>
-                    <p class="text-xs text-gray-400 max-w-xs leading-relaxed">
-                        Log ini hanya mencatat rekomendasi destinasi selama
-                        <span class="font-bold text-gray-600">{{ $duration }} hari</span>.
-                        Detail rencana perjalanan per hari disimpan di koleksi
-                        <span class="font-mono text-emerald-600">trip_plans</span> oleh Go backend.
-                    </p>
+                    @endif
                 </div>
-            @endif
+                @endforeach
+            </div>
         </div>
+
+        @endif
+        {{-- Jika tidak ada itinerary DAN tidak ada trip_plans: tidak tampilkan card sama sekali --}}
     </div>
 
     <!-- Sidebar -->
@@ -253,9 +348,15 @@
                 <div>
                     <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Tipe Pengguna</p>
                     @if($isRegistered)
-                        <span class="inline-flex items-center px-3 py-1 bg-[#E6F6F2] text-[#00A884] text-[11px] font-bold rounded-lg uppercase tracking-wider border border-[#00A884]/10">👤 User Terdaftar</span>
+                        <span class="inline-flex items-center px-3 py-1 bg-[#E6F6F2] text-[#00A884] text-[11px] font-bold rounded-lg uppercase tracking-wider border border-[#00A884]/10">
+                            <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                            User Terdaftar
+                        </span>
                     @else
-                        <span class="inline-flex items-center px-3 py-1 bg-gray-50 text-gray-500 text-[11px] font-bold rounded-lg uppercase tracking-wider border border-gray-100">👥 Guest / Tamu</span>
+                        <span class="inline-flex items-center px-3 py-1 bg-gray-50 text-gray-500 text-[11px] font-bold rounded-lg uppercase tracking-wider border border-gray-100">
+                            <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a7 7 0 00-7 7v1h12v-1a7 7 0 00-7-7z"></path></svg>
+                            Guest / Tamu
+                        </span>
                     @endif
                 </div>
 
