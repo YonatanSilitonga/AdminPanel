@@ -23,6 +23,12 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
+# Exclude unnecessary files/folders for Hosting
+/admin_panel
+/Admin Panel
+/temp
+/scratch
+
 # Temporary files
 /temp
 *.tmp
