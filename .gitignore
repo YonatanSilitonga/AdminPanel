@@ -23,22 +23,40 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# Exclude unnecessary files/folders for Hosting
-/admin_panel
+# ============================================
+# HOSTING BRANCH - File tidak perlu di server
+# ============================================
+
+# Katalon Studio testing project
 /Admin Panel
+
+# Dokumentasi (tidak perlu di production)
+/docs
+README.md
+DOCS_HERE.md
+PROJECT_STRUCTURE.md
+
+# PHPUnit testing
+/tests
+phpunit.xml
+.phpunit.result.cache
+.phpunit.cache
+
+# Build tools (Vite - tidak dipakai, sudah CDN)
+/node_modules
+package.json
+package-lock.json
+vite.config.js
+
+# Dev scripts & temp files
+/scripts
 /temp
 /scratch
-
-# Temporary files
-/temp
-*.tmp
-*.bak
-
-# Debug files
-debug_*.php
-check_*.php
-profile_*.php
-*_dump.txt
+/admin_panel
+AdminPanel.zip
+fix_conflicts.py
+verify-middleware.bat
+verify-middleware.sh
 
 # Laravel Cache & Sessions
 /bootstrap/cache/*.php
@@ -46,3 +64,8 @@ profile_*.php
 /storage/framework/views/*.php
 /storage/framework/sessions/*
 /storage/framework/testing/*
+
+# Temporary files
+*.tmp
+*.bak
+*_dump.txt
