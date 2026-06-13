@@ -141,11 +141,8 @@ class DestinationController extends BaseAdminController
             $destination->latitude = (float) $validated['latitude'];
             $destination->longitude = (float) $validated['longitude'];
             
-            $facilities = [];
-            if (!empty($request->facilities)) {
-                $facilities = array_map('trim', explode(',', $request->facilities));
-            }
-            $destination->facilities = array_values(array_filter($facilities));
+            // Normalisasi facilities: handle input koma-separated dari form
+            $destination->facilities = $this->parseFacilitiesInput($request->facilities);
             
             $destination->opening_hours = $validated['opening_hours'] ?? '08:00 - 17:00';
             $destination->ticket_price = $validated['ticket_price'] ?? 'Gratis';
@@ -240,11 +237,7 @@ class DestinationController extends BaseAdminController
             $destination->longitude = (float) $validated['longitude'];
 
             if ($request->has('facilities')) {
-                $facilities = [];
-                if (!empty($request->facilities)) {
-                    $facilities = array_map('trim', explode(',', $request->facilities));
-                }
-                $destination->facilities = array_values(array_filter($facilities));
+                $destination->facilities = $this->parseFacilitiesInput($request->facilities);
             }
 
             $destination->opening_hours = $validated['opening_hours'] ?? $destination->opening_hours;
@@ -312,20 +305,14 @@ class DestinationController extends BaseAdminController
     }
 
     /**
-     * Delete destination from MongoDB
+     * Delete destination from MongoDB (soft delete)
      */
     public function destroy(string $id)
     {
         try {
             $destination = MongoDestination::findOrFail($id);
-            
-            // Delete files
-            if ($destination->images) {
-                foreach ($destination->images as $img) {
-                    $this->deleteFile($img);
-                }
-            }
-            
+
+            // Soft delete — hanya set deleted_at, file fisik tetap ada
             $destination->delete();
 
             // Log action
@@ -337,6 +324,35 @@ class DestinationController extends BaseAdminController
 
         } catch (\Exception $e) {
             return back()->with('error', 'Error deleting destination: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Permanently delete destination and its files from MongoDB
+     */
+    public function forceDestroy(string $id)
+    {
+        try {
+            $destination = MongoDestination::withTrashed()->findOrFail($id);
+
+            // Hapus file fisik hanya saat force delete
+            if ($destination->images) {
+                foreach ($destination->images as $img) {
+                    $this->deleteFile($img);
+                }
+            }
+
+            $destination->forceDelete();
+
+            $this->logActivity('force_delete_mongo', 'destination', $id);
+            $this->clearDashboardCache();
+
+            return redirect()
+                ->route('admin.destinations.index')
+                ->with('success', 'Destinasi berhasil dihapus permanen');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error force deleting destination: ' . $e->getMessage());
         }
     }
 
@@ -427,5 +443,41 @@ class DestinationController extends BaseAdminController
                 ];
             });
         return response()->json($destinations);
+    }
+
+    /**
+     * Normalisasi input facilities dari berbagai format menjadi array PHP bersih.
+     * Menangani:
+     *   - String koma-separated dari form: "Toilet, Parkir"
+     *   - JSON string dari data lama di DB: "[\"Toilet Umum\"]"
+     *   - Array PHP (jika sudah benar)
+     */
+    private function parseFacilitiesInput($input): array
+    {
+        if (empty($input)) {
+            return [];
+        }
+
+        // Jika sudah berupa array PHP
+        if (is_array($input)) {
+            return array_values(array_filter(array_map('trim', $input)));
+        }
+
+        if (!is_string($input)) {
+            return [];
+        }
+
+        $trimmed = trim($input);
+
+        // Coba decode sebagai JSON (format lama: "[\"Toilet Umum\"]")
+        if (str_starts_with($trimmed, '[')) {
+            $decoded = json_decode($trimmed, true);
+            if (is_array($decoded)) {
+                return array_values(array_filter(array_map('trim', $decoded)));
+            }
+        }
+
+        // Format normal dari form: koma-separated string
+        return array_values(array_filter(array_map('trim', explode(',', $trimmed))));
     }
 }

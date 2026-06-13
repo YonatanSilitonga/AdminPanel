@@ -84,7 +84,7 @@ class AdminAuthController extends Controller
 
         if (!$admin) {
             // Don't reveal if email exists (security)
-            return back()->with('status', 'If that email exists, a password reset link has been sent.');
+            return back()->with('status', 'Jika email tersebut terdaftar, link reset password telah dikirimkan.');
         }
 
         // Generate reset token
@@ -100,12 +100,36 @@ class AdminAuthController extends Controller
             ]
         );
 
-        // Send email
-        Mail::send('admin.auth.email.reset-password', ['token' => $token], function ($message) use ($request) {
-            $message->to($request->email)->subject('Reset Your Admin Password');
-        });
+        $isDevMode = config('mail.default') === 'log' || config('mail.mailers.'.config('mail.default').'.transport') === 'log';
+        $resetUrl  = url('/admin/reset-password/' . $token);
 
-        return back()->with('status', 'Password reset link sent to your email');
+        if ($isDevMode) {
+            // Development mode: email goes to log, surface reset URL in the UI
+            Log::info('Admin password reset link (dev mode)', [
+                'email'     => $request->email,
+                'reset_url' => $resetUrl,
+            ]);
+
+            return back()
+                ->with('status', 'Mode development: link reset ditampilkan di bawah karena MAIL_MAILER=log.')
+                ->with('dev_reset_url', $resetUrl);
+        }
+
+        // Production: actually send the email
+        try {
+            Mail::send('admin.auth.email.reset-password', ['token' => $token], function ($message) use ($request) {
+                $message->to($request->email)->subject('Reset Password Admin — Toba Tourism');
+            });
+
+            return back()->with('status', 'Link reset password telah dikirimkan ke email Anda. Cek inbox (dan folder spam).');
+        } catch (\Exception $e) {
+            Log::error('Failed to send password reset email', [
+                'email' => $request->email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors(['email' => 'Gagal mengirim email. Silakan coba lagi atau hubungi super admin.']);
+        }
     }
 
     /**
@@ -140,13 +164,14 @@ class AdminAuthController extends Controller
 
         // Token expires in 1 hour
         if (now()->diffInMinutes($reset->created_at) > 60) {
-            return back()->withErrors(['token' => 'Password reset link has expired']);
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            return back()->withErrors(['token' => 'Link reset password telah kedaluwarsa. Silakan minta link baru.']);
         }
 
         // Update admin password
         $admin = Admin::where('email', $request->email)->first();
         if (!$admin) {
-            return back()->withErrors(['email' => 'Admin not found']);
+            return back()->withErrors(['email' => 'Email admin tidak ditemukan.']);
         }
 
         $admin->update(['password' => Hash::make($request->password)]);
@@ -154,7 +179,13 @@ class AdminAuthController extends Controller
         // Delete token
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
-        return redirect()->route('admin.login')->with('success', 'Password reset successfully. Please login.');
+        Log::info('Admin password reset successfully', [
+            'admin_id' => $admin->id,
+            'email'    => $admin->email,
+            'ip'       => $request->ip(),
+        ]);
+
+        return redirect()->route('admin.login')->with('success', 'Password berhasil diubah. Silakan login dengan password baru Anda.');
     }
 
     /**

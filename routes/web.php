@@ -146,6 +146,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
                 'destroy' => 'admin.carousel_banners.destroy',
             ]
         ])->except(['show', 'create']);
+        Route::delete('carousel-banners/{id}/force-delete', [CarouselBannerController::class, 'forceDestroy'])
+            ->name('admin.carousel_banners.force-destroy');
     });
 
     // ============ FASILITAS UMUM ============

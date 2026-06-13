@@ -141,14 +141,25 @@ class CarouselBannerController extends BaseAdminController
     public function destroy(string $id)
     {
         $banner = CarouselBanner::findOrFail($id);
-        
+
+        // Soft delete — hanya set deleted_at, file fisik tetap ada
+        $banner->delete();
+
+        return redirect()->back()->with('success', 'Banner berhasil dihapus');
+    }
+
+    public function forceDestroy(string $id)
+    {
+        $banner = CarouselBanner::withTrashed()->findOrFail($id);
+
+        // Hapus file fisik hanya saat force delete
         if ($banner->image_url) {
             $this->deleteFile($banner->image_url);
         }
-        
-        $banner->delete();
-        
-        return redirect()->back()->with('success', 'Banner berhasil dihapus');
+
+        $banner->forceDelete();
+
+        return redirect()->back()->with('success', 'Banner berhasil dihapus permanen');
     }
 
     public function updateOrder(Request $request)
