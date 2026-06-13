@@ -18,23 +18,29 @@ class RecommendationLogController extends BaseAdminController
     public function index(Request $request)
     {
         try {
+            // Hapus cache lama agar data selalu fresh saat development
+            // Cache::forget('admin.recommendations.stats_summary');
+
             $stats = Cache::remember('admin.recommendations.stats_summary', now()->addMinutes(10), function () {
+                // Helper: konversi Carbon ke UTCDateTime agar kompatibel dengan MongoDB driver
+                $toUtc = fn (Carbon $dt) => new \MongoDB\BSON\UTCDateTime($dt->getTimestampMs());
+
                 // Today's stats
-                $today = Carbon::now()->startOfDay();
-                $todayLogs = MongoRecommendation::where('created_at', '>=', $today)->count();
+                $today    = Carbon::now()->startOfDay();
+                $todayLogs = MongoRecommendation::where('created_at', '>=', $toUtc($today))->count();
 
                 // This week stats
                 $weekStart = Carbon::now()->startOfWeek();
                 $weekEnd   = Carbon::now()->endOfWeek();
-                $weekLogs  = MongoRecommendation::where('created_at', '>=', $weekStart)
-                    ->where('created_at', '<=', $weekEnd)
+                $weekLogs  = MongoRecommendation::where('created_at', '>=', $toUtc($weekStart))
+                    ->where('created_at', '<=', $toUtc($weekEnd))
                     ->count();
 
                 // This month stats
                 $monthStart = Carbon::now()->startOfMonth();
                 $monthEnd   = Carbon::now()->endOfMonth();
-                $monthLogs  = MongoRecommendation::where('created_at', '>=', $monthStart)
-                    ->where('created_at', '<=', $monthEnd)
+                $monthLogs  = MongoRecommendation::where('created_at', '>=', $toUtc($monthStart))
+                    ->where('created_at', '<=', $toUtc($monthEnd))
                     ->count();
 
                 // Average recommendation_score (interpreted as trip duration in days)
@@ -282,7 +288,7 @@ class RecommendationLogController extends BaseAdminController
                     }
 
                     fputcsv($file, [
-                        '#TRP-' . date('Y') . '-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
+                        '#TRP-' . strtoupper(substr((string)$log->_id, -6)),
                         $userName,
                         $userType,
                         $log->destination?->name ?? 'N/A',

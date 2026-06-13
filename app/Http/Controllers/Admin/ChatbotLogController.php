@@ -23,6 +23,17 @@ class ChatbotLogController extends BaseAdminController
             }
         }
 
+        // Filter by flagged status
+        if ($request->filled('flagged')) {
+            if ($request->flagged === 'yes') {
+                $query->where('is_flagged', true);
+            } elseif ($request->flagged === 'no') {
+                $query->where(function($q) {
+                    $q->where('is_flagged', false)->orWhereNull('is_flagged');
+                });
+            }
+        }
+
         // Filter by user (Name/Email/ID)
         if ($request->filled('search')) {
             $search = $request->search;
@@ -74,15 +85,17 @@ class ChatbotLogController extends BaseAdminController
         $sessions = $query->with('user')->paginate($perPage)->withQueryString();
 
         // Stats
-        $totalSessions = ChatSession::count();
-        $userSessions  = ChatSession::whereNotNull('user_id')->where('user_id', '!=', '')->count();
-        $guestSessions = $totalSessions - $userSessions;
+        $totalSessions  = ChatSession::count();
+        $userSessions   = ChatSession::whereNotNull('user_id')->where('user_id', '!=', '')->count();
+        $guestSessions  = $totalSessions - $userSessions;
+        $flaggedSessions = ChatSession::where('is_flagged', true)->count();
 
         return view('admin.chatbot-logs.index', compact(
             'sessions',
             'totalSessions',
             'userSessions',
-            'guestSessions'
+            'guestSessions',
+            'flaggedSessions'
         ));
     }
 
@@ -96,13 +109,48 @@ class ChatbotLogController extends BaseAdminController
     }
 
     /**
-     * Flag action — placeholder (MongoDB sessions don't have a flag field from Go backend).
-     * Returns back with a notice.
+     * Toggle flag status on a chatbot session.
      */
-    public function flag(string $id)
+    public function flag(Request $request, string $id)
     {
-        return redirect()->route('admin.chatbot-logs.index')
-            ->with('info', 'Fitur flag belum tersedia untuk sesi MongoDB.');
+        try {
+            $session = ChatSession::where('_id', $id)->firstOrFail();
+
+            $isFlagging = !$session->isFlagged();
+
+            $session->is_flagged = $isFlagging;
+
+            if ($isFlagging) {
+                $session->flagged_at = now();
+                $session->flagged_by = auth('admin')->id();
+                $session->flag_reason = $request->input('flag_reason', null);
+            } else {
+                // Unflag — bersihkan metadata flag
+                $session->flagged_at  = null;
+                $session->flagged_by  = null;
+                $session->flag_reason = null;
+            }
+
+            $session->save();
+
+            $label = $isFlagging ? 'ditandai' : 'tandai dibatalkan';
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success'     => true,
+                    'is_flagged'  => $session->is_flagged,
+                    'message'     => "Sesi berhasil {$label}.",
+                ]);
+            }
+
+            return back()->with('success', "Sesi berhasil {$label}.");
+
+        } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Gagal mengubah status flag: ' . $e->getMessage());
+        }
     }
 
     /**

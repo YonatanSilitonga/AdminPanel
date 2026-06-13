@@ -13,6 +13,15 @@ Laporan lengkap semua test case
 - Manual testing results
 - Test coverage
 
+### API Testing
+
+#### [POSTMAN_API_TESTING_GUIDE.md](./POSTMAN_API_TESTING_GUIDE.md) ⭐
+Panduan lengkap pengujian API menggunakan Postman.
+- Pengaturan Session & Cookie
+- Penanganan token CSRF dinamis
+- Daftar lengkap endpoint dan payload
+- Template JSON Postman Collection v2.1
+
 ### Verification Checklists
 
 #### [VERIFICATION_CHECKLIST.md](./VERIFICATION_CHECKLIST.md)
@@ -26,6 +35,12 @@ Checklist verifikasi final sebelum deployment
 - Pre-deployment checks
 - Security verification
 - Performance checks
+
+#### [NON_FUNCTIONAL_PERFORMANCE_TEST_REPORT.md](./NON_FUNCTIONAL_PERFORMANCE_TEST_REPORT.md)
+Laporan testing non-fungsional aspek performance utama.
+
+#### [NON_FUNCTIONAL_PERFORMANCE_TEST_RUN_SUMMARY.md](./NON_FUNCTIONAL_PERFORMANCE_TEST_RUN_SUMMARY.md) ⭐
+Ringkasan eksekusi pengujian kinerja terupdate (read-only, tanpa buat data baru).
 
 #### [PRODUCTION_READINESS_CHECKLIST.md](./PRODUCTION_READINESS_CHECKLIST.md)
 Checklist kesiapan production
@@ -99,6 +114,9 @@ Checklist kesiapan production
 
 **Running tests?**
 → See test commands in [`../guides/QUICK_COMMANDS.md`](../guides/QUICK_COMMANDS.md)
+
+**Testing APIs with Postman?**
+→ See [`POSTMAN_API_TESTING_GUIDE.md`](./POSTMAN_API_TESTING_GUIDE.md)
 
 **Need test cases reference?**
 → [`Laporan_Test_Case_Lengkap.md`](./Laporan_Test_Case_Lengkap.md)

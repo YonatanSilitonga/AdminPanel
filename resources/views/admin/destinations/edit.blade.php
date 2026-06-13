@@ -77,7 +77,27 @@
 
     <div>
         <label class="block text-sm font-medium text-gray-700">Fasilitas (Pisahkan dengan koma)</label>
-        <input type="text" name="facilities" value="{{ old('facilities', isset($destination->facilities) ? implode(', ', $destination->facilities) : '') }}" class="mt-1 w-full border rounded-lg px-4 py-2" placeholder="contoh: Toko Suvenir, Toilet Umum">
+        @php
+            // Normalisasi facilities: bisa berupa array PHP, string JSON ["..."], atau string biasa
+            $rawFacilities = $destination->facilities ?? null;
+            $facilitiesForDisplay = '';
+            if (!empty($rawFacilities)) {
+                if (is_array($rawFacilities)) {
+                    // Sudah berupa array PHP → langsung implode
+                    $facilitiesForDisplay = implode(', ', $rawFacilities);
+                } elseif (is_string($rawFacilities)) {
+                    // Coba decode sebagai JSON (format: "[\"Toilet Umum\"]")
+                    $decoded = json_decode($rawFacilities, true);
+                    if (is_array($decoded)) {
+                        $facilitiesForDisplay = implode(', ', $decoded);
+                    } else {
+                        // Fallback: gunakan string apa adanya (strip brackets jika ada)
+                        $facilitiesForDisplay = trim($rawFacilities, '[]"\' ');
+                    }
+                }
+            }
+        @endphp
+        <input type="text" name="facilities" value="{{ old('facilities', $facilitiesForDisplay) }}" class="mt-1 w-full border rounded-lg px-4 py-2" placeholder="contoh: Toko Suvenir, Toilet Umum">
         @error('facilities')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 

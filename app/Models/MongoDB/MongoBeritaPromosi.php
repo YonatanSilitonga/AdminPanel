@@ -3,9 +3,11 @@
 namespace App\Models\MongoDB;
 
 use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MongoBeritaPromosi extends Model
 {
+    use SoftDeletes;
     protected $connection = 'mongodb';
     protected $table = 'berita_promosi';
     protected $collection = 'berita_promosi';
@@ -30,6 +32,7 @@ class MongoBeritaPromosi extends Model
         'is_active' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function admin()

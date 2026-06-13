@@ -431,19 +431,31 @@ class BeritaPromosiController extends BaseAdminController
     public function destroy(string $id)
     {
         $bp = MongoBeritaPromosi::findOrFail($id);
-        
-        // Delete media from array
+
+        // Soft delete — hanya set deleted_at, file fisik tetap ada
+        $this->logActivity('delete', 'berita_promosi', (string)$bp->_id, $bp->toArray());
+        $bp->delete();
+        $this->clearDashboardCache();
+
+        return redirect()->back()->with('success', 'Berhasil Dihapus');
+    }
+
+    public function forceDestroy(string $id)
+    {
+        $bp = MongoBeritaPromosi::withTrashed()->findOrFail($id);
+
+        // Hapus file fisik hanya saat force delete
         if ($bp->images) {
-            foreach($bp->images as $media) {
+            foreach ($bp->images as $media) {
                 $mediaUrl = is_array($media) ? ($media['url'] ?? $media) : $media;
                 $this->deleteFile($mediaUrl);
             }
         }
-        
-        $this->logActivity('delete', 'berita_promosi', (string)$bp->_id, $bp->toArray());
-        $bp->delete();
+
+        $this->logActivity('force_delete', 'berita_promosi', (string)$bp->_id, $bp->toArray());
+        $bp->forceDelete();
         $this->clearDashboardCache();
-        
-        return redirect()->back()->with('success', 'Berhasil Dihapus');
+
+        return redirect()->back()->with('success', 'Berhasil Dihapus Permanen');
     }
 }

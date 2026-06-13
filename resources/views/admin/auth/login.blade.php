@@ -399,7 +399,7 @@
             <div class="login-right">
                 <div class="form-card">
                     <h2 class="form-title">Masuk</h2>
-                    <p class="form-subtitle">Masuk ke dashboard admin Anda</p>
+                    <p class="form-subtitle">Masuk ke dashboard admin</p>
 
                     @if(session('success'))
                         <div class="alert alert-success">
@@ -483,7 +483,7 @@
                     </form>
 
                     <div class="form-footer">
-                        Lupa password? <a href="#">Hubungi Superadmin</a>
+                        Lupa password? <a href="{{ route('admin.forgot-password') }}">Reset Password</a>
                     </div>
                 </div>
             </div>

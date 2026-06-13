@@ -3,6 +3,7 @@
 namespace App\Models\MongoDB;
 
 use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Represents a tourist destination stored in MongoDB by the Go backend.
@@ -10,6 +11,7 @@ use MongoDB\Laravel\Eloquent\Model;
  */
 class MongoDestination extends Model
 {
+    use SoftDeletes;
     protected $connection = 'mongodb';
     protected $table = 'destinations';
     protected $collection = 'destinations';
@@ -49,6 +51,7 @@ class MongoDestination extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
         'latitude'   => 'float',
         'longitude'  => 'float',
         'is_active' => 'boolean',

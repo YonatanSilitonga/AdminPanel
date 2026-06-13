@@ -3,9 +3,11 @@
 namespace App\Models\MongoDB;
 
 use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CarouselBanner extends Model
 {
+    use SoftDeletes;
     protected $connection = 'mongodb';
     protected $table = 'carousel_banners';
 
@@ -66,6 +68,7 @@ class CarouselBanner extends Model
         'end_date' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
         'play_duration' => 'integer',
         'video_loop' => 'boolean',
         'video_muted' => 'boolean',

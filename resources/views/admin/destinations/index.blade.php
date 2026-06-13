@@ -1777,7 +1777,21 @@
                             </div>
                             <div class="col-span-2 space-y-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest">Fasilitas (Pisahkan dengan koma)</label>
-                                <input type="text" name="facilities" :value="editingDest.facilities ? editingDest.facilities.join(', ') : ''" class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
+                                <input type="text" name="facilities"
+                                    :value="(() => {
+                                        const f = editingDest.facilities;
+                                        if (!f) return '';
+                                        if (Array.isArray(f)) return f.join(', ');
+                                        if (typeof f === 'string') {
+                                            try {
+                                                const parsed = JSON.parse(f);
+                                                if (Array.isArray(parsed)) return parsed.join(', ');
+                                            } catch(e) {}
+                                            return f.replace(/^\[|\]$/g, '').replace(/\"/g, '');
+                                        }
+                                        return '';
+                                    })()"
+                                    class="w-full border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-sidebar/10 focus:border-sidebar outline-none text-sm font-medium text-gray-700">
                             </div>
                             {{-- Jam Operasional, Tiket, Best Time (Fixed layout) --}}
                             <div class="col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4" x-show="editingDest">
@@ -2108,6 +2122,49 @@
                                 <div>
                                     <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Lokasi / Alamat</h4>
                                     <p class="text-sm font-medium text-gray-600 leading-relaxed" x-text="viewingDest?.location || '-'"></p>
+                                </div>
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Fasilitas</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-if="(() => {
+                                            const f = viewingDest?.facilities;
+                                            if (!f) return false;
+                                            if (Array.isArray(f)) return f.length > 0;
+                                            if (typeof f === 'string') {
+                                                const cleaned = f.replace(/^\[|\]$/g, '').trim();
+                                                return cleaned.length > 0;
+                                            }
+                                            return false;
+                                        })()">
+                                            <template x-for="fac in (() => {
+                                                const f = viewingDest.facilities;
+                                                if (!f) return [];
+                                                if (Array.isArray(f)) return f;
+                                                if (typeof f === 'string') {
+                                                    try {
+                                                        const parsed = JSON.parse(f);
+                                                        if (Array.isArray(parsed)) return parsed;
+                                                    } catch(e) {}
+                                                    return f.replace(/^\[|\]$/g, '').split(',').map(s => s.replace(/\"/g, '').trim()).filter(s => s);
+                                                }
+                                                return [];
+                                            })()" :key="fac">
+                                                <span class="px-3 py-1.5 bg-sidebar-active/10 text-sidebar-active rounded-xl text-xs font-semibold" x-text="fac"></span>
+                                            </template>
+                                        </template>
+                                        <template x-if="(() => {
+                                            const f = viewingDest?.facilities;
+                                            if (!f) return true;
+                                            if (Array.isArray(f)) return f.length === 0;
+                                            if (typeof f === 'string') {
+                                                const cleaned = f.replace(/^\[|\]$/g, '').trim();
+                                                return cleaned.length === 0;
+                                            }
+                                            return true;
+                                        })()">
+                                            <span class="text-sm font-semibold text-gray-500">-</span>
+                                        </template>
+                                    </div>
                                 </div>
                                 <div class="flex items-center gap-8">
                                     <div>

@@ -117,25 +117,25 @@
             </div>
         </div>
         <div class="flex items-center gap-4 px-8 last:pr-0">
-            <div class="w-1 h-10 bg-blue-400 rounded-full"></div>
+            <div class="w-1 h-10 bg-red-400 rounded-full"></div>
             <div>
-                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">87%</p>
+                <p class="text-[28px] font-bold text-gray-900 leading-none mb-1">{{ number_format($flaggedSessions) }}</p>
                 <div class="flex items-center gap-1.5">
-                    <p class="text-[13px] font-bold text-gray-400">Rasio Respon</p>
+                    <p class="text-[13px] font-bold text-gray-400">Sesi Ditandai</p>
                     <div class="relative group cursor-pointer inline-flex items-center">
                         <svg class="w-3 h-3 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                        <div class="absolute bottom-full right-0 mb-2 w-72 p-4 bg-slate-900/95 backdrop-blur-sm text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-200 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
                             <div class="space-y-2">
                                 <div>
-                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
-                                    <p class="text-slate-200 font-normal">Menampilkan tingkat efektivitas AI dalam membalas pesan secara instan dan tepat.</p>
+                                    <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                    <p class="text-slate-200 font-normal">Menghitung sesi yang telah ditandai admin untuk tindak lanjut atau investigasi.</p>
                                 </div>
                                 <div class="pt-1.5 border-t border-slate-800">
-                                    <span class="block font-bold text-blue-400 uppercase tracking-wider text-[10px] mb-0.5">Ditampilkan Di</span>
-                                    <p class="text-slate-200 font-normal">Laporan performa asisten cerdas AI.</p>
+                                    <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Cara Menggunakan</span>
+                                    <p class="text-slate-200 font-normal">Klik ikon bendera pada baris sesi untuk menandai atau membatalkan tanda.</p>
                                 </div>
                             </div>
-                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                            <div class="absolute top-full right-2.5 border-[6px] border-transparent border-t-slate-900/95"></div>
                         </div>
                     </div>
                 </div>
@@ -151,7 +151,7 @@
         <input type="hidden" name="sort_by" value="{{ request('sort_by', 'updated_at') }}">
         <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <!-- Cari Pengguna -->
             <div class="space-y-2 sm:col-span-2">
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -211,6 +211,17 @@
                 </select>
             </div>
 
+            <!-- Status Tandai -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Status Tandai</label>
+                <select name="flagged" onchange="this.form.submit()"
+                    class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-sm shadow-sm text-gray-600 font-bold hover:border-[#066466] transition-all cursor-pointer">
+                    <option value="">Semua</option>
+                    <option value="yes" @selected(request('flagged') === 'yes')>🚩 Ditandai</option>
+                    <option value="no" @selected(request('flagged') === 'no')>✅ Normal</option>
+                </select>
+            </div>
+
             <!-- Tampilkan & Reset -->
             <div class="space-y-2">
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -240,7 +251,7 @@
                         <option value="50" @selected(request('per_page', 10) == 50)>50 Baris</option>
                         <option value="100" @selected(request('per_page', 10) == 100)>100 Baris</option>
                     </select>
-                    @if(request('search') || request('type') || request('per_page') != 10)
+                    @if(request('search') || request('type') || request('flagged') || request('per_page') != 10)
                         <a href="{{ route('admin.chatbot-logs.index') }}" class="px-4 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
                             Reset
@@ -281,6 +292,7 @@
                             </svg>
                         </a>
                     </th>
+                    <th class="px-10 py-6 text-center text-[13px] font-bold text-gray-500 uppercase tracking-wider">Tandai</th>
                     <th class="px-10 py-6 text-right text-[13px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
             </thead>
@@ -291,6 +303,7 @@
                         $userId    = $session->user_id ?? null;
                         $messages  = $session->messages ?? [];
                         $msgCount  = count($messages);
+                        $isFlagged = $session->is_flagged ?? false;
                         $preview   = '';
                         foreach ($messages as $m) {
                             if (($m['role'] ?? '') === 'user') {
@@ -299,9 +312,14 @@
                             }
                         }
                     @endphp
-                    <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
+                    <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0 {{ $isFlagged ? 'bg-red-50/30' : '' }}">
                         <td class="px-10 py-6">
-                            <span class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">#{{ substr($sessionId, -8) }}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">#{{ substr($sessionId, -8) }}</span>
+                                @if($isFlagged)
+                                    <span class="text-red-400" title="Sesi ini ditandai">🚩</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-10 py-6">
                             @if($userId)
@@ -326,6 +344,17 @@
                                 {{ $session->updated_at ? \Carbon\Carbon::parse($session->updated_at)->setTimezone('Asia/Jakarta')->format('d M Y, H:i') : '-' }}
                             </div>
                         </td>
+                        <td class="px-10 py-6 text-center">
+                            <button
+                                onclick="toggleFlag('{{ $sessionId }}', this)"
+                                data-flagged="{{ $isFlagged ? 'true' : 'false' }}"
+                                title="{{ $isFlagged ? 'Batalkan tanda' : 'Tandai sesi ini' }}"
+                                class="p-2 rounded-full transition-all {{ $isFlagged ? 'text-red-400 bg-red-50 hover:bg-red-100' : 'text-gray-300 hover:text-red-400 hover:bg-red-50' }}">
+                                <svg class="w-4 h-4" fill="{{ $isFlagged ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6H12.5l-1-2H5a2 2 0 00-2 2z"></path>
+                                </svg>
+                            </button>
+                        </td>
                         <td class="px-10 py-6 text-right">
                             <div class="flex items-center justify-end gap-3">
                                 <a href="{{ route('admin.chatbot-logs.show', $sessionId) }}"
@@ -337,7 +366,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-10 py-20 text-center text-gray-400">
+                        <td colspan="7" class="px-10 py-20 text-center text-gray-400">
                             <div class="flex flex-col items-center">
                                 <svg class="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
@@ -361,3 +390,81 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+function toggleFlag(sessionId, btn) {
+    const isFlagged = btn.dataset.flagged === 'true';
+    const icon = btn.querySelector('svg');
+
+    fetch(`/admin/chatbot-logs/${sessionId}/flag`, {
+        method: 'PATCH',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) throw new Error(data.message || 'Gagal');
+
+        const nowFlagged = data.is_flagged;
+        btn.dataset.flagged = nowFlagged ? 'true' : 'false';
+        btn.title = nowFlagged ? 'Batalkan tanda' : 'Tandai sesi ini';
+
+        // Update ikon fill
+        icon.setAttribute('fill', nowFlagged ? 'currentColor' : 'none');
+
+        // Update warna tombol
+        if (nowFlagged) {
+            btn.classList.remove('text-gray-300', 'hover:text-red-400', 'hover:bg-red-50');
+            btn.classList.add('text-red-400', 'bg-red-50', 'hover:bg-red-100');
+        } else {
+            btn.classList.remove('text-red-400', 'bg-red-50', 'hover:bg-red-100');
+            btn.classList.add('text-gray-300', 'hover:text-red-400', 'hover:bg-red-50');
+        }
+
+        // Update highlight baris
+        const row = btn.closest('tr');
+        if (nowFlagged) {
+            row.classList.add('bg-red-50/30');
+            const idCell = row.querySelector('td:first-child');
+            if (!idCell.querySelector('.flag-indicator')) {
+                const flagEl = document.createElement('span');
+                flagEl.className = 'text-red-400 flag-indicator';
+                flagEl.title = 'Sesi ini ditandai';
+                flagEl.textContent = '🚩';
+                idCell.querySelector('.flex').appendChild(flagEl);
+            }
+        } else {
+            row.classList.remove('bg-red-50/30');
+            const flagIndicator = row.querySelector('.flag-indicator');
+            if (flagIndicator) flagIndicator.remove();
+        }
+
+        showToast(nowFlagged ? '🚩 Sesi berhasil ditandai' : '✅ Tanda berhasil dibatalkan', nowFlagged ? 'red' : 'green');
+    })
+    .catch(err => {
+        showToast('Gagal mengubah status tanda: ' + err.message, 'red');
+    });
+}
+
+function showToast(message, color) {
+    const existing = document.getElementById('flag-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'flag-toast';
+    toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl text-white text-sm font-bold shadow-lg transition-all duration-300 ${color === 'red' ? 'bg-red-500' : 'bg-emerald-600'}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+</script>
+@endpush

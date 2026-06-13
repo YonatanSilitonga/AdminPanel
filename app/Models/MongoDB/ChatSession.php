@@ -22,8 +22,17 @@ class ChatSession extends Model
 
     public $timestamps = false; // Go backend manages timestamps
 
+    protected $fillable = [
+        'is_flagged',
+        'flag_reason',
+        'flagged_at',
+        'flagged_by',
+    ];
+
     protected $casts = [
         'updated_at' => 'datetime',
+        'is_flagged' => 'boolean',
+        'flagged_at' => 'datetime',
     ];
 
     /**
@@ -56,6 +65,22 @@ class ChatSession extends Model
     public function scopeGuests($query)
     {
         return $query->whereNull('user_id');
+    }
+
+    /**
+     * Scope to filter only flagged sessions.
+     */
+    public function scopeFlagged($query)
+    {
+        return $query->where('is_flagged', true);
+    }
+
+    /**
+     * Check if this session is flagged.
+     */
+    public function isFlagged(): bool
+    {
+        return $this->is_flagged === true;
     }
 
     /**

@@ -54,6 +54,8 @@ Route::middleware(['auth:admin', 'admin.error-handler'])->prefix('admin')->group
             ->name('admin.destinations.toggle-featured');
         Route::patch('destinations/{destination}/status', [DestinationController::class, 'toggleStatus'])
             ->name('admin.destinations.toggle-status');
+        Route::delete('destinations/{destination}/force-delete', [DestinationController::class, 'forceDestroy'])
+            ->name('admin.destinations.force-destroy');
 
 
         // Facility management
@@ -121,6 +123,8 @@ Route::middleware(['auth:admin', 'admin.error-handler'])->prefix('admin')->group
             ->name('admin.berita_promosi.update');
         Route::delete('berita_promosi/{id}', [BeritaPromosiController::class, 'destroy'])
             ->name('admin.berita_promosi.destroy');
+        Route::delete('berita_promosi/{id}/force-delete', [BeritaPromosiController::class, 'forceDestroy'])
+            ->name('admin.berita_promosi.force-destroy');
     });
 
     // ============ REVIEWS (Admin + Moderator) ============

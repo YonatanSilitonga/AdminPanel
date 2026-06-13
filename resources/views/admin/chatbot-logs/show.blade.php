@@ -62,6 +62,17 @@
             <a href="{{ route('admin.chatbot-logs.index') }}" class="px-6 py-3 bg-gray-50 text-gray-500 rounded-xl text-[14px] font-bold hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200">
                 Kembali
             </a>
+            <button
+                id="flag-btn"
+                onclick="toggleFlagShow('{{ $sessionId }}')"
+                data-flagged="{{ ($session->is_flagged ?? false) ? 'true' : 'false' }}"
+                title="{{ ($session->is_flagged ?? false) ? 'Batalkan tanda' : 'Tandai sesi ini' }}"
+                class="flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold transition-all border {{ ($session->is_flagged ?? false) ? 'bg-red-50 text-red-500 border-red-100 hover:bg-red-100' : 'bg-gray-50 text-gray-400 border-transparent hover:bg-red-50 hover:text-red-400' }}">
+                <svg class="w-4 h-4" fill="{{ ($session->is_flagged ?? false) ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6H12.5l-1-2H5a2 2 0 00-2 2z"></path>
+                </svg>
+                <span id="flag-label">{{ ($session->is_flagged ?? false) ? 'Batalkan Tanda' : 'Tandai Sesi' }}</span>
+            </button>
         </div>
     </div>
 </div>
@@ -139,6 +150,22 @@
                         {{ $userId ?: 'GUEST_MODE' }}
                     </p>
                 </div>
+
+                <div id="flag-status-card" class="p-5 rounded-2xl border {{ ($session->is_flagged ?? false) ? 'bg-red-50 border-red-100' : 'bg-gray-50/50 border-gray-50' }}">
+                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Status Tanda</p>
+                    @if($session->is_flagged ?? false)
+                        <p class="text-[13px] font-bold text-red-500 flex items-center gap-1.5">
+                            🚩 Ditandai
+                        </p>
+                        @if($session->flagged_at)
+                            <p class="text-[11px] text-gray-400 mt-1">
+                                {{ \Carbon\Carbon::parse($session->flagged_at)->setTimezone('Asia/Jakarta')->format('d M Y, H:i') }}
+                            </p>
+                        @endif
+                    @else
+                        <p class="text-[13px] text-gray-400 font-medium">Belum ditandai</p>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -151,3 +178,65 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+function toggleFlagShow(sessionId) {
+    const btn = document.getElementById('flag-btn');
+    const label = document.getElementById('flag-label');
+    const icon = btn.querySelector('svg');
+    const statusCard = document.getElementById('flag-status-card');
+
+    fetch(`/admin/chatbot-logs/${sessionId}/flag`, {
+        method: 'PATCH',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) throw new Error(data.message || 'Gagal');
+
+        const nowFlagged = data.is_flagged;
+        btn.dataset.flagged = nowFlagged ? 'true' : 'false';
+        btn.title = nowFlagged ? 'Batalkan tanda' : 'Tandai sesi ini';
+        label.textContent = nowFlagged ? 'Batalkan Tanda' : 'Tandai Sesi';
+        icon.setAttribute('fill', nowFlagged ? 'currentColor' : 'none');
+
+        if (nowFlagged) {
+            btn.className = 'flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold transition-all border bg-red-50 text-red-500 border-red-100 hover:bg-red-100';
+            statusCard.className = 'p-5 rounded-2xl border bg-red-50 border-red-100';
+            statusCard.querySelector('p:last-child').innerHTML = '🚩 <span class="text-[13px] font-bold text-red-500">Ditandai</span>';
+        } else {
+            btn.className = 'flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-bold transition-all border bg-gray-50 text-gray-400 border-transparent hover:bg-red-50 hover:text-red-400';
+            statusCard.className = 'p-5 rounded-2xl border bg-gray-50/50 border-gray-50';
+            statusCard.querySelector('p:last-child').innerHTML = '<span class="text-[13px] text-gray-400 font-medium">Belum ditandai</span>';
+        }
+
+        showToast(nowFlagged ? '🚩 Sesi berhasil ditandai' : '✅ Tanda berhasil dibatalkan', nowFlagged ? 'red' : 'green');
+    })
+    .catch(err => {
+        showToast('Gagal: ' + err.message, 'red');
+    });
+}
+
+function showToast(message, color) {
+    const existing = document.getElementById('flag-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'flag-toast';
+    toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl text-white text-sm font-bold shadow-lg transition-all duration-300 ${color === 'red' ? 'bg-red-500' : 'bg-emerald-600'}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+</script>
+@endpush
