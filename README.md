@@ -43,8 +43,7 @@ Berikut adalah fungsi dari folder-folder utama di dalam proyek Laravel Admin Pan
 Sebelum menjalankan aplikasi, pastikan komputer Anda telah terinstal:
 1.  **PHP** >= 8.2 (dilengkapi ekstensi `mongodb`)
 2.  **Composer** (Manajer paket PHP)
-3.  **Node.js** & **NPM** (untuk build compiler Tailwind/Alpine)
-4.  **MongoDB Server** (Lokal) atau akun **MongoDB Atlas** (Cloud)
+3.  **MongoDB Server** (Lokal) atau akun **MongoDB Atlas** (Cloud)
 
 ---
 
@@ -64,16 +63,14 @@ Unduh semua library PHP yang dibutuhkan proyek dengan Composer:
 composer install
 ```
 
-### Langkah 3: Install Dependensi Frontend
-Unduh library Javascript/CSS (seperti Tailwind CSS dan Alpine.js):
-```bash
-npm install
-```
-
-### Langkah 4: Setup Environment File (`.env`)
+### Langkah 3: Setup Environment File (`.env`)
 Salin file konfigurasi lingkungan dari template default:
 ```bash
+# Linux / macOS / PowerShell:
 cp .env.example .env
+
+# Windows CMD:
+copy .env.example .env
 ```
 Buka file `.env` yang baru disalin menggunakan text editor, kemudian sesuaikan parameter koneksi database Anda.
 
@@ -109,25 +106,21 @@ SENTIMENT_API_URL=http://127.0.0.1:5000
 SENTIMENT_API_TIMEOUT=30
 ```
 
-### Langkah 5: Generate Application Key
+### Langkah 4: Generate Application Key
 Jalankan perintah ini untuk membuat kunci enkripsi unik Laravel:
 ```bash
 php artisan key:generate
 ```
 
-### Langkah 6: Jalankan Migrasi Database
+### Langkah 5: Jalankan Migrasi Database
 Buat koleksi (tabel) dan indeks awal di MongoDB (Lokal / Atlas):
 ```bash
 php artisan migrate
 ```
 
-### Langkah 7: Compile Assets & Jalankan Server
-1.  Lakukan kompilasi aset frontend:
-    ```bash
-    npm run build
-    ```
-2.  Jalankan web server lokal Laravel:
-    ```bash
-    php artisan serve
-    ```
+### Langkah 6: Jalankan Server
+Jalankan web server lokal Laravel:
+```bash
+php artisan serve
+```
 Aplikasi Admin Panel Anda sekarang dapat diakses secara lokal di browser melalui alamat: **`http://127.0.0.1:8000`**
