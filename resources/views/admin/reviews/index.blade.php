@@ -64,7 +64,37 @@
 @endsection
 
 @section('content')
-<div x-on:open-export-modal.window="showExportModal = true" x-data="{
+
+@if (!app_setting('enable_reviews', true))
+    <div class="mb-6 p-4 bg-amber-50 border border-amber-200/40 rounded-2xl flex items-start gap-3">
+        <div class="flex-shrink-0 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-white mt-0.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        </div>
+        <div>
+            <p class="text-sm font-bold text-amber-800">Sistem Ulasan Dinonaktifkan</p>
+            <p class="text-xs text-amber-700 mt-1">Wisatawan tidak dapat memberikan ulasan atau rating bintang baru pada halaman detail destinasi di situs publik (frontend).</p>
+        </div>
+    </div>
+@elseif (app_setting('moderate_reviews', false))
+    <div class="mb-6 p-4 bg-blue-50 border border-blue-200/40 rounded-2xl flex items-start gap-3">
+        <div class="flex-shrink-0 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white mt-0.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </div>
+        <div>
+            <p class="text-sm font-bold text-blue-800">Moderasi Ulasan Aktif</p>
+            <p class="text-xs text-blue-700 mt-1">Setiap ulasan baru dari wisatawan disaring dan harus disetujui terlebih dahulu oleh admin/moderator sebelum dipublikasikan ke publik.</p>
+        </div>
+    </div>
+@endif
+
+<div id="reviews-page-root"
+     x-on:open-export-modal.window="showExportModal = true"
+     x-on:open-confirm-modal.window="openConfirmDialog($event.detail.message, $event.detail.action, $event.detail.cancel, $event.detail.type || 'info', $event.detail.title || 'Konfirmasi')"
+     x-data="{
     activeTab: (new URLSearchParams(window.location.search)).get('tab') || localStorage.getItem('active_review_tab') || 'summary',
     showViewModal: false,
     showExportModal: false,
@@ -78,6 +108,30 @@
     nama_penandatangan: 'Sandro M. S. Simanjuntak, S.T., M.Si.',
     nip_penandatangan: '19780512 200501 1 003',
     jabatan: 'Kepala Dinas Kebudayaan dan Pariwisata',
+
+    showConfirmModal: false,
+    confirmMessage: '',
+    confirmAction: null,
+    cancelAction: null,
+    confirmType: 'info',
+    confirmTitle: 'Konfirmasi',
+
+    openConfirmDialog(message, action, cancel, type = 'info', title = 'Konfirmasi') {
+        this.confirmMessage = message;
+        this.confirmAction = action;
+        this.cancelAction = cancel;
+        this.confirmType = type;
+        this.confirmTitle = title;
+        this.showConfirmModal = true;
+    },
+    executeConfirm() {
+        if (this.confirmAction) this.confirmAction();
+        this.showConfirmModal = false;
+    },
+    executeCancel() {
+        if (this.cancelAction) this.cancelAction();
+        this.showConfirmModal = false;
+    },
 
     init() {
         this.updateBreadcrumb(this.activeTab);
@@ -288,11 +342,11 @@
                     <select id="sf_rating"
                             class="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-gray-600 outline-none hover:border-sidebar transition-all cursor-pointer">
                         <option value="">Semua</option>
-                        <option value="5">â­â­â­â­â­ 5</option>
-                        <option value="4">â­â­â­â­ 4</option>
-                        <option value="3">â­â­â­ 3</option>
-                        <option value="2">â­â­ 2</option>
-                        <option value="1">â­ 1</option>
+                        <option value="5">&#9733;&#9733;&#9733;&#9733;&#9733; 5</option>
+                        <option value="4">&#9733;&#9733;&#9733;&#9733;&#9734; 4</option>
+                        <option value="3">&#9733;&#9733;&#9733;&#9734;&#9734; 3</option>
+                        <option value="2">&#9733;&#9733;&#9734;&#9734;&#9734; 2</option>
+                        <option value="1">&#9733;&#9734;&#9734;&#9734;&#9734; 1</option>
                     </select>
                 </div>
 
@@ -439,6 +493,118 @@
                 <p class="mt-3 text-3xl font-black text-red-700" id="sf_stat_negative">{{ number_format($sentimentSummary['negative']) }}</p>
             </div>
         </div>
+
+        {{-- ─── SENTIMEN WISATAWAN TERPOSITIF ────────────────────────────── --}}
+        @php
+            $topDests = $topDestinationsByRatingSentiment ?? [];
+        @endphp
+        @if(!empty($topDests))
+        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Sentimen Wisatawan Terpositif</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Destinasi dengan ulasan paling positif dari wisatawan berdasarkan analisis model ML</p>
+                </div>
+                <span class="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Berdasarkan Sentimen
+                </span>
+            </div>
+
+            <div class="space-y-3">
+                @foreach($topDests as $rank => $dest)
+                @php
+                    $score      = $dest['sentiment_score'];
+                    $scoreColor = $score >= 50 ? 'text-emerald-600 bg-emerald-50 border-emerald-100'
+                                : ($score >= 0  ? 'text-amber-600 bg-amber-50 border-amber-100'
+                                               : 'text-red-600 bg-red-50 border-red-100');
+                    $pctPos     = $dest['pct_positive'];
+                    $pctNeg     = $dest['total_analyzed'] > 0 ? round($dest['negative'] / $dest['total_analyzed'] * 100) : 0;
+                    $pctNeu     = max(0, 100 - $pctPos - $pctNeg);
+                    $rankColors = ['bg-amber-400 text-white', 'bg-gray-400 text-white', 'bg-orange-400 text-white',
+                                   'bg-sidebar/20 text-sidebar', 'bg-sidebar/10 text-sidebar'];
+                    $rankColor  = $rankColors[$rank] ?? 'bg-gray-100 text-gray-500';
+                @endphp
+                <div class="flex items-center gap-4 p-4 bg-gray-50/40 border border-gray-100 rounded-2xl hover:bg-gray-50 hover:shadow-sm transition-all">
+
+                    {{-- Rank Badge --}}
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full {{ $rankColor }} flex items-center justify-center text-xs font-black">
+                        {{ $rank + 1 }}
+                    </div>
+
+                    {{-- Thumbnail --}}
+                    @if($dest['thumbnail'])
+                        <img src="{{ image_url($dest['thumbnail']) }}" alt="{{ $dest['name'] }}"
+                             class="flex-shrink-0 w-12 h-12 rounded-xl object-cover border border-gray-100 shadow-sm"
+                             loading="lazy" onerror="this.style.display='none'">
+                    @else
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                        </div>
+                    @endif
+
+                    {{-- Info —  NO RATING DISPLAYED HERE --}}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-sm font-bold text-gray-900 truncate">{{ $dest['name'] }}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sidebar/10 text-sidebar">
+                                {{ ucfirst($dest['category']) }}
+                            </span>
+                        </div>
+
+                        @if($dest['total_analyzed'] > 0)
+                            {{-- Breakdown angka sentimen --}}
+                            <div class="flex items-center gap-3 mt-1.5 text-[10px] font-semibold text-gray-500">
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    {{ $dest['positive'] }} positif
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                    {{ $dest['neutral'] }} netral
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                    {{ $dest['negative'] }} negatif
+                                </span>
+                            </div>
+                            {{-- Progress bar sentimen --}}
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <div class="flex h-1.5 w-full max-w-[180px] bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-500 h-full" style="width:{{ $pctPos }}%"></div>
+                                    <div class="bg-amber-400 h-full" style="width:{{ $pctNeu }}%"></div>
+                                    <div class="bg-red-500 h-full"   style="width:{{ $pctNeg }}%"></div>
+                                </div>
+                                <span class="text-[10px] text-gray-400">{{ $dest['total_analyzed'] }} teranalisis</span>
+                            </div>
+                        @else
+                            <p class="text-[10px] text-gray-400 mt-1 italic">Belum ada sentimen teranalisis</p>
+                        @endif
+                    </div>
+
+                    {{-- Sentiment Score Badge --}}
+                    <div class="flex-shrink-0 text-right">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-sm font-black border {{ $scoreColor }}">
+                            @if($score >= 0)
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5H7z"/></svg>
+                            @else
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5H7z"/></svg>
+                            @endif
+                            {{ $score > 0 ? '+' : '' }}{{ $score }}
+                        </span>
+                        <p class="text-[9px] text-gray-400 mt-1 text-center font-medium">skor sentimen</p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
+            <p class="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                Skor sentimen = <strong>(ulasan positif − negatif) ÷ total teranalisis × 100</strong>.
+                Rentang: −100 (semua negatif) hingga +100 (semua positif). Rating ada di modul Destinasi.
+            </p>
+        </div>
+        @endif
+        {{-- ─── END SENTIMEN WISATAWAN TERPOSITIF ─────────────────────────── --}}
 
         <div class="grid gap-6 lg:grid-cols-2">
             <!-- Card 1: Tren Sentimen Ulasan (Line Chart) -->
@@ -832,7 +998,7 @@
                     <input type="hidden" name="sort_order" value="{{ request('sort_order', 'desc') }}">
                     <input type="hidden" name="tab" value="list">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                         <!-- Cari Ulasan -->
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -946,6 +1112,30 @@
                             </select>
                         </div>
 
+                        <!-- Kesesuaian (Mismatch) -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                                Kesesuaian
+                                <div class="relative group cursor-pointer inline-flex items-center">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 hover:text-[#066466] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 p-4 bg-slate-900 text-slate-300 text-xs rounded-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-50 text-left leading-relaxed shadow-xl border border-slate-700/50 normal-case font-normal font-sans">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <span class="block font-bold text-red-400 uppercase tracking-wider text-[10px] mb-0.5">Tujuan</span>
+                                                <p class="text-slate-200 font-sans">Menyaring ulasan yang memiliki ketidakcocokan antara rating bintang (tinggi/rendah) dan sentimen yang terdeteksi oleh model.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                    </div>
+                                </div>
+                            </label>
+                            <select name="mismatch" onchange="this.form.submit()"
+                                class="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none text-[14px] font-bold text-gray-700 shadow-sm hover:border-[#066466] transition-all cursor-pointer">
+                                <option value="">Semua Data</option>
+                                <option value="true" @selected(request('mismatch') === 'true' || request('mismatch') === '1')>Hanya Mismatch</option>
+                            </select>
+                        </div>
+
                         <!-- Tampilkan -->
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -963,7 +1153,7 @@
                                                 <p class="text-slate-200 font-sans">Pagination halaman tabel ulasan.</p>
                                             </div>
                                         </div>
-                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900/95"></div>
+                                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-b-slate-900/95"></div>
                                     </div>
                                 </div>
                             </label>
@@ -979,7 +1169,7 @@
 
                 <!-- Batch Analysis & Reset -->
                 <div class="flex items-center gap-3 lg:mb-[2px] mt-4 lg:mt-0 flex-shrink-0">
-                    @if(request('search') || request('rating') || request('destination_id') || request('sentiment') || request('per_page') != 15)
+                    @if(request('search') || request('rating') || request('destination_id') || request('sentiment') || request('mismatch') || request('per_page') != 15)
                         <a href="{{ route('admin.reviews.index', ['tab' => 'list']) }}" class="px-5 py-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all text-sm font-bold flex items-center justify-center gap-1.5" title="Reset Filter">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18v3z"></path></svg>
                             Reset
@@ -1140,23 +1330,50 @@
                                     <p class="text-sm text-gray-500 truncate">{{ $review->review ?? '-' }}</p>
                                 </td>
                                 <td class="px-10 py-6">
-                                    <span @class([
-                                        'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold',
-                                        'bg-emerald-50 text-emerald-600' => $review->sentiment_label === 'positive',
-                                        'bg-amber-50 text-amber-600' => $review->sentiment_label === 'neutral',
-                                        'bg-red-50 text-red-600' => $review->sentiment_label === 'negative',
-                                        'bg-gray-100 text-gray-500' => empty($review->sentiment_label),
-                                    ])>
-                                        {{ $review->sentiment_label ? ucfirst($review->sentiment_label) : 'Pending' }}
-                                    </span>
-                                    @if(!empty($review->sentiment_reason))
-                                        <p class="mt-2 text-[11px] text-gray-400 max-w-[150px] truncate" title="{{ $review->sentiment_reason }}">{{ $review->sentiment_reason }}</p>
-                                    @endif
+                                    <select onfocus="this.dataset.prev = this.value"
+                                        onchange="confirmSentimentChange('{{ $review->_id }}', this, {{ $review->rating ?? 0 }})"
+                                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-100/10 outline-none cursor-pointer transition-all shadow-sm focus:ring-2 focus:ring-sidebar/20
+                                            {{ $review->sentiment_label === 'positive' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100/50' : '' }}
+                                            {{ $review->sentiment_label === 'neutral' ? 'bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100/50' : '' }}
+                                            {{ $review->sentiment_label === 'negative' ? 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100/50' : '' }}
+                                            {{ empty($review->sentiment_label) ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : '' }}">
+                                        <option value="" disabled @selected(empty($review->sentiment_label))>Pending</option>
+                                        <option value="positive" @selected($review->sentiment_label === 'positive')>Positif</option>
+                                        <option value="neutral" @selected($review->sentiment_label === 'neutral')>Netral</option>
+                                        <option value="negative" @selected($review->sentiment_label === 'negative')>Negatif</option>
+                                    </select>
+                                    <div class="mt-1 flex flex-col gap-0.5" id="sentiment-reason-wrap-{{ $review->_id }}">
+                                        @if(!empty($review->sentiment_reason))
+                                            <span class="text-[10px] font-semibold text-gray-400" title="{{ $review->sentiment_reason }}">
+                                                {{ $review->sentiment_reason === 'manual_correction' ? '🔧 Dikoreksi Manual' : 'Model: ' . $review->sentiment_reason }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
-                                <td class="px-10 py-6">
-                                    <span class="text-sm font-semibold text-gray-600">
-                                        {{ isset($review->sentiment_confidence) ? number_format((float) $review->sentiment_confidence, 2) : '-' }}
-                                    </span>
+                                <td class="px-10 py-6" id="confidence-container-{{ $review->_id }}">
+                                    @if($review->sentiment_reason === 'manual_correction')
+                                        {{-- Koreksi manual: bukan hasil model, tampilkan badge khusus --}}
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-500 text-[11px] font-semibold">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            Dikoreksi Manual
+                                        </span>
+                                    @elseif(isset($review->sentiment_confidence))
+                                        @php
+                                            $conf = (float) $review->sentiment_confidence;
+                                            $barColor = $conf >= 0.75 ? 'bg-emerald-500' : ($conf >= 0.50 ? 'bg-amber-500' : 'bg-rose-500');
+                                            $textColor = $conf >= 0.75 ? 'text-emerald-700' : ($conf >= 0.50 ? 'text-amber-700' : 'text-rose-700');
+                                        @endphp
+                                        <div class="flex flex-col gap-1.5 w-20">
+                                            <span class="text-sm font-bold {{ $textColor }}" id="confidence-value-{{ $review->_id }}">
+                                                {{ number_format($conf, 2) }}
+                                            </span>
+                                            <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                                <div class="h-full {{ $barColor }} rounded-full" id="confidence-bar-{{ $review->_id }}" style="width: {{ $conf * 100 }}%"></div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-sm font-semibold text-gray-400">-</span>
+                                    @endif
                                 </td>
                                 <td class="px-10 py-6">
                                     <span class="text-xs text-gray-400 font-medium">{{ $review->created_at?->diffForHumans() ?? '-' }}</span>
@@ -1415,10 +1632,53 @@
                     </div>
                 </form>
             </div>
+    <!-- Custom Confirm Modal (Alpine-driven, inside Alpine scope) REMOVED -->
+</div>
+@endsection
+
+{{-- STANDALONE SENTIMENT CONFIRM MODAL: pure DOM, outside Alpine, always works --}}
+<div id="sentiment-confirm-overlay"
+     style="display:none"
+     class="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+     onclick="if(event.target===this){window._sentimentCancelFn&&window._sentimentCancelFn();this.style.display='none';}"
+>
+    <div id="sco-box" class="bg-white rounded-[2rem] max-w-sm w-full shadow-2xl text-center overflow-hidden">
+        <div class="px-8 pt-8 pb-4">
+            <div id="sco-icon-warning" style="display:none" class="w-[72px] h-[72px] bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <div id="sco-icon-info" style="display:none" class="w-[72px] h-[72px] bg-[#E6F6F2] rounded-full flex items-center justify-center mx-auto mb-5">
+                <svg class="w-8 h-8 text-[#066466]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </div>
+            <h3 id="sco-title" class="text-[20px] font-bold text-gray-900 mb-2">Konfirmasi</h3>
+            <p id="sco-message" class="text-[14px] text-gray-500 leading-relaxed px-2"></p>
+            <div id="sco-warning-note" style="display:none" class="mt-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-[12px] font-semibold text-amber-700 text-left flex items-start gap-2">
+                <svg class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Ketidaksesuaian antara rating dan sentimen dapat mempengaruhi akurasi analisis destinasi.</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 px-8 pb-8 pt-4">
+            <button type="button"
+                onclick="document.getElementById('sentiment-confirm-overlay').style.display='none'; window._sentimentCancelFn && window._sentimentCancelFn();"
+                class="flex-1 py-3 text-[14px] font-bold text-gray-700 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all">
+                Batal
+            </button>
+            <button type="button" id="sco-confirm-btn"
+                onclick="document.getElementById('sentiment-confirm-overlay').style.display='none'; window._sentimentConfirmFn && window._sentimentConfirmFn();"
+                class="flex-1 py-3 text-[14px] font-bold text-white rounded-2xl hover:opacity-90 transition-all">
+                Ya, Ubah
+            </button>
         </div>
     </div>
 </div>
-@endsection
 
 @push('charts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1819,7 +2079,147 @@
             });
         });
     })();
-    // â”€â”€â”€ END SUMMARY FILTER LOGIC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─── END SUMMARY FILTER LOGIC ─────────────────────────────────
+
+    // --- INLINE SENTIMENT UPDATE AJAX ---
+    window.updateSentimentInline = async function(reviewId, newSentiment, selectEl) {
+        selectEl = selectEl || (window.event ? window.event.target : null);
+        try {
+            if (selectEl) {
+                selectEl.style.opacity = '0.5';
+                selectEl.disabled = true;
+            }
+
+            const res = await fetch(`/admin/reviews/${reviewId}/update-sentiment`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ sentiment: newSentiment })
+            });
+
+            if (!res.ok) {
+                throw new Error('Gagal memperbarui sentimen.');
+            }
+
+            const resData = await res.json();
+            if (resData.success) {
+                if (selectEl) {
+                    selectEl.className = 'inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold border border-gray-100/10 outline-none cursor-pointer transition-all shadow-sm focus:ring-2 focus:ring-sidebar/20 ' +
+                        (newSentiment === 'positive' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100/50' : '') +
+                        (newSentiment === 'neutral' ? 'bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100/50' : '') +
+                        (newSentiment === 'negative' ? 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100/50' : '');
+                }
+
+                // Update reason text
+                const reasonWrap = document.getElementById(`sentiment-reason-wrap-${reviewId}`);
+                if (reasonWrap) {
+                    reasonWrap.innerHTML = '<span class="text-[10px] font-semibold text-gray-400">🔧 Dikoreksi Manual</span>';
+                }
+
+                // Ganti area confidence dengan badge "Manual" — bukan hasil model, jangan tampilkan angka
+                const confContainer = document.getElementById(`confidence-container-${reviewId}`);
+                if (confContainer) {
+                    confContainer.innerHTML =
+                        '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-500 text-[11px] font-semibold">' +
+                        '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>' +
+                        'Dikoreksi Manual' +
+                        '</span>';
+                }
+
+                window.showAlert('Sentimen berhasil diperbarui!', 'Sukses', 'success');
+            } else {
+                throw new Error(resData.message || 'Respons tidak valid.');
+            }
+        } catch(e) {
+            console.error('Error updating sentiment inline:', e);
+            window.showAlert('Gagal memperbarui sentimen: ' + e.message, 'Error', 'error');
+            setTimeout(() => { window.location.reload(); }, 1500);
+        } finally {
+            if (selectEl) {
+                selectEl.style.opacity = '1';
+                selectEl.disabled = false;
+            }
+        }
+    };
+
+    // --- STANDALONE CONFIRM MODAL HELPER (pure DOM, no Alpine dependency) ---
+    window._sentimentConfirmFn = null;
+    window._sentimentCancelFn  = null;
+
+    window.showSentimentConfirm = function(message, type, title, onConfirm, onCancel) {
+        var overlay = document.getElementById('sentiment-confirm-overlay');
+        if (!overlay) return;
+
+        // Set teks
+        document.getElementById('sco-message').textContent = message;
+        document.getElementById('sco-title').textContent   = title || 'Konfirmasi';
+
+        // Toggle ikon
+        var iconWarn = document.getElementById('sco-icon-warning');
+        var iconInfo = document.getElementById('sco-icon-info');
+        var warnNote = document.getElementById('sco-warning-note');
+        var confirmBtn = document.getElementById('sco-confirm-btn');
+
+        if (type === 'warning') {
+            iconWarn.style.display = 'flex';
+            iconInfo.style.display = 'none';
+            // Tampilkan catatan kuning mismatch
+            if (warnNote) warnNote.style.display = 'flex';
+            // Tombol konfirmasi warna oranye/amber untuk mismatch
+            if (confirmBtn) confirmBtn.style.cssText = 'background:#d97706; box-shadow: 0 4px 14px -4px rgba(217,119,6,0.5);';
+        } else {
+            iconWarn.style.display = 'none';
+            iconInfo.style.display = 'flex';
+            // Sembunyikan catatan mismatch
+            if (warnNote) warnNote.style.display = 'none';
+            // Tombol konfirmasi warna teal normal
+            if (confirmBtn) confirmBtn.style.cssText = 'background:#066466; box-shadow: 0 4px 14px -4px rgba(6,100,102,0.4);';
+        }
+
+        window._sentimentConfirmFn = onConfirm || null;
+        window._sentimentCancelFn  = onCancel  || null;
+        overlay.style.display = 'flex';
+    };
+
+    // --- CONFIRM SENTIMENT CHANGE WITH RATING MISMATCH WARNING ---
+    window.confirmSentimentChange = function(reviewId, selectEl, rating) {
+        var originalValue = selectEl.dataset.prev || selectEl.value;
+        var newValue      = selectEl.value;
+
+        if (originalValue === newValue) return;
+
+        var message = 'Apakah Anda yakin ingin mengubah sentimen ulasan ini?';
+        var type    = 'info';
+        var title   = 'Konfirmasi Perubahan';
+
+        if (newValue === 'positive' && parseInt(rating) <= 2) {
+            message = 'Ulasan ini memiliki rating rendah (' + rating + ' Bintang), tetapi Anda memilih sentimen Positif. Apakah Anda yakin ingin menyimpan perubahan ini?';
+            type    = 'warning';
+            title   = 'Peringatan: Mismatch';
+        } else if (newValue === 'negative' && parseInt(rating) >= 4) {
+            message = 'Ulasan ini memiliki rating tinggi (' + rating + ' Bintang), tetapi Anda memilih sentimen Negatif. Apakah Anda yakin ingin menyimpan perubahan ini?';
+            type    = 'warning';
+            title   = 'Peringatan: Mismatch';
+        }
+
+        window.showSentimentConfirm(
+            message,
+            type,
+            title,
+            function() {
+                // Konfirmasi: lakukan update
+                window.updateSentimentInline(reviewId, newValue, selectEl);
+                selectEl.dataset.prev = newValue;
+            },
+            function() {
+                // Batal: kembalikan nilai sebelumnya
+                selectEl.value = originalValue;
+            }
+        );
+    };
 </script>
 @endpush
 

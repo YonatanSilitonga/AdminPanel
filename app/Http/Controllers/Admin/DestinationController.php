@@ -50,65 +50,56 @@ class DestinationController extends BaseAdminController
 
         $perPage = $request->get('per_page', 10);
         $destinations = $query->paginate($perPage)->withQueryString();
-        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
+        $categories = ['Alam', 'Budaya & Sejarah', 'Alam dan Budaya', 'Religi', 'Alam dan Religi', 'Budaya'];
 
-        // --- Trending Logic (Only if tab is trending) ---
-        $trendingData = [
-            'mode' => null,
-            'trendingDestinations' => collect(),
-            'stats' => [
-                'total_destinations' => 0,
-                'total_wishlist' => 0,
-                'total_review' => 0,
-                'destinations_increase' => 0,
-                'wishlist_increase' => 0,
-                'review_increase' => 0,
-            ],
-            'trendChartData' => ['labels' => [], 'data' => []],
-        ];
+        // --- Trending Logic (Always loaded to align with AlpineJS SPA tab switcher) ---
+        $mode = \App\Models\AppSetting::get('trending_mode', 'manual');
+        $manualList = \App\Models\AppSetting::get('trending_list', []);
         
-        if ($activeTab === 'trending') {
-            $mode = \App\Models\AppSetting::get('trending_mode', 'manual');
-            $manualList = \App\Models\AppSetting::get('trending_list', []);
-            
-            $trendingDestinations = [];
-            if ($mode === 'manual' && !empty($manualList)) {
-                $ids = array_map('strval', $manualList);
-                $destinations = MongoDestination::whereIn('_id', $ids)->get()->keyBy(function($dest) {
-                    return (string)$dest->_id;
-                });
-                $trendingDestinations = collect($manualList)->map(function($id) use ($destinations) {
-                    $dest = $destinations->get((string)$id);
-                    if ($dest) $dest->id_str = (string)$dest->_id;
-                    return $dest;
-                })->filter()->values();
-            } else {
-                $trendingDestinations = MongoDestination::where('is_active', true)
-                    ->get()
-                    ->sortByDesc(function($dest) {
-                        return ($dest->total_reviews * 10) + $dest->average_rating;
-                    })
-                    ->take(10)
-                    ->map(function($dest) {
-                        $dest->id_str = (string)$dest->_id;
-                        return $dest;
-                    })->values();
-            }
-
-            $cachedStats = \Illuminate\Support\Facades\Cache::remember('admin.destinations.trending_stats', now()->addMinutes(15), function () {
-                return [
-                    'stats' => $this->buildTrendingStats(),
-                    'trendChartData' => $this->buildWeeklyReviewTrend(),
-                ];
+        $trendingDestinations = [];
+        if ($mode === 'manual' && !empty($manualList)) {
+            $ids = array_map('strval', $manualList);
+            $destinationsData = MongoDestination::whereIn('_id', $ids)->get()->keyBy(function($dest) {
+                return (string)$dest->_id;
             });
+            $trendingDestinations = collect($manualList)->map(function($id) use ($destinationsData) {
+                $dest = $destinationsData->get((string)$id);
+                if ($dest) $dest->id_str = (string)$dest->_id;
+                return $dest;
+            })->filter()->values();
+        } else {
+            $trendingDestinations = MongoDestination::where('is_active', true)
+                ->get()
+                ->sortByDesc(function($dest) {
+                    $reviewsCount    = $dest->total_reviews ?? 0;
+                    $avgRating       = $dest->average_rating ?? 0;
+                    // Sentiment bonus: range -100 sd +100
+                    // Bobot kecil (x0.5) agar tidak mendominasi volume ulasan
+                    $sentimentBonus  = ($dest->sentiment_score ?? 0) * 0.5;
 
-            $trendingData = [
-                'mode' => $mode,
-                'trendingDestinations' => $trendingDestinations,
-                'stats' => $cachedStats['stats'],
-                'trendChartData' => $cachedStats['trendChartData'],
-            ];
+                    // Formula: (Jumlah Ulasan x10) + (Rating x10) + Sentiment Bonus
+                    return ($reviewsCount * 10) + ($avgRating * 10) + $sentimentBonus;
+                })
+                ->take(10)
+                ->map(function($dest) {
+                    $dest->id_str = (string)$dest->_id;
+                    return $dest;
+                })->values();
         }
+
+        $cachedStats = \Illuminate\Support\Facades\Cache::remember('admin.destinations.trending_stats', now()->addMinutes(15), function () {
+            return [
+                'stats' => $this->buildTrendingStats(),
+                'trendChartData' => $this->buildWeeklyReviewTrend(),
+            ];
+        });
+
+        $trendingData = [
+            'mode' => $mode,
+            'trendingDestinations' => $trendingDestinations,
+            'stats' => $cachedStats['stats'],
+            'trendChartData' => $cachedStats['trendChartData'],
+        ];
 
         return view('admin.destinations.index', array_merge([
             'destinations' => $destinations,
@@ -202,7 +193,7 @@ class DestinationController extends BaseAdminController
      */
     public function create()
     {
-        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
+        $categories = ['Alam', 'Budaya & Sejarah', 'Alam dan Budaya', 'Religi', 'Alam dan Religi', 'Budaya'];
 
         return view('admin.destinations.create', [
             'categories' => $categories,
@@ -221,7 +212,7 @@ class DestinationController extends BaseAdminController
                 'name'          => 'required|string|min:3|max:200',
                 'description'   => 'required|string|min:10|max:5000',
                 'location'      => 'required|string|max:500',
-                'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
+                'category'      => 'required|in:Alam,Budaya & Sejarah,Alam dan Budaya,Religi,Alam dan Religi,Budaya',
                 'latitude'      => 'nullable|numeric|between:-90,90',
                 'longitude'     => 'nullable|numeric|between:-180,180',
                 'facilities'    => 'nullable|string',
@@ -338,7 +329,7 @@ class DestinationController extends BaseAdminController
     public function edit(string $id, Request $request)
     {
         $destination = MongoDestination::findOrFail($id);
-        $categories = ['park', 'beach', 'museum', 'historical', 'nature', 'cultural', 'religi'];
+        $categories = ['Alam', 'Budaya & Sejarah', 'Alam dan Budaya', 'Religi', 'Alam dan Religi', 'Budaya'];
 
         if ($request->ajax() || $request->wantsJson()) {
             if ($destination->images && is_array($destination->images)) {
@@ -376,7 +367,7 @@ class DestinationController extends BaseAdminController
                 'name'          => 'required|string|min:3|max:200',
                 'description'   => 'required|string|min:10|max:5000',
                 'location'      => 'required|string|max:500',
-                'category'      => 'required|in:park,beach,museum,historical,nature,cultural,religi',
+                'category'      => 'required|in:Alam,Budaya & Sejarah,Alam dan Budaya,Religi,Alam dan Religi,Budaya',
                 'latitude'      => 'nullable|numeric|between:-90,90',
                 'longitude'     => 'nullable|numeric|between:-180,180',
                 'facilities'    => 'nullable|string',

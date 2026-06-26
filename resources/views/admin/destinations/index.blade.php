@@ -1280,6 +1280,32 @@
             </div>
         </div>
 
+        <!-- Info Formula Trending Otomatis -->
+        <div class="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-150 mb-8 text-gray-650">
+            <h4 class="font-bold text-gray-800 text-sm mb-1">Algoritma Peringkat Trending Otomatis</h4>
+            <p class="text-xs text-gray-400 leading-relaxed mb-4">
+                Peringkat dihitung secara otomatis berdasarkan gabungan dari total ulasan, rating rata-rata, dan analisis sentimen wisatawan dengan formula berikut:
+            </p>
+            <div class="inline-block bg-white px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-mono font-bold text-gray-700 shadow-sm mb-4">
+                Skor = (Jumlah Ulasan &times; 10) + (Rating &times; 10) + (Skor Sentimen &times; 0.5)
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-[11px] leading-relaxed pt-4 border-t border-gray-100/80">
+                <div>
+                    <span class="font-bold text-gray-700 block mb-0.5">1. Popularitas (Ulasan)</span>
+                    <p class="text-gray-400">Dihitung dari total ulasan wisatawan untuk mengukur tingkat kunjungan destinasi.</p>
+                </div>
+                <div>
+                    <span class="font-bold text-gray-700 block mb-0.5">2. Kualitas (Rating)</span>
+                    <p class="text-gray-400">Rerata ulasan bintang (1-5). Kontribusi penambah skor maksimal adalah +50 poin.</p>
+                </div>
+                <div>
+                    <span class="font-bold text-gray-700 block mb-0.5">3. Sentimen (Model ML)</span>
+                    <p class="text-gray-400">Hasil ulasan positif/negatif (-100 s/d +100). Memberikan bonus hingga +50 poin atau denda hingga -50 poin.</p>
+                </div>
+            </div>
+        </div>
+
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <div class="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-6">
@@ -1327,7 +1353,46 @@
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-bold text-gray-800 text-sm" x-text="item.name"></h4>
-                                <p class="text-[10px] text-gray-400 capitalize" x-text="item.category"></p>
+                                <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                                    <p class="text-[10px] text-gray-400 capitalize" x-text="item.category"></p>
+                                    {{-- Sentiment score badge: tampil jika ada data sentimen --}}
+                                    <template x-if="item.sentiment_score !== undefined && item.sentiment_score !== null">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold border"
+                                              :class="item.sentiment_score >= 50 ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                    : item.sentiment_score >= 0   ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                                    : 'bg-red-50 text-red-700 border-red-100'">
+                                            <span class="w-1.5 h-1.5 rounded-full"
+                                                  :class="item.sentiment_score >= 50 ? 'bg-emerald-500'
+                                                        : item.sentiment_score >= 0   ? 'bg-amber-400'
+                                                        : 'bg-red-500'"></span>
+                                            Sentimen: <span x-text="(item.sentiment_score > 0 ? '+' : '') + item.sentiment_score"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- Detail Nilai & Skor Tren -->
+                            <div class="flex items-center gap-4 text-right flex-wrap md:flex-nowrap border-l border-gray-100 pl-4">
+                                <div class="flex flex-col gap-0.5 text-[10px] text-gray-400 font-semibold text-left">
+                                    <div>
+                                        <span class="text-gray-550" x-text="(item.total_reviews ?? 0) + ' Ulasan'"></span>
+                                        <span class="text-gray-300">(&times;10)</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-550" x-text="'Rating ' + Number(item.average_rating ?? 0).toFixed(1)"></span>
+                                        <span class="text-gray-300">(&times;10)</span>
+                                    </div>
+                                    <template x-if="item.sentiment_score !== undefined && item.sentiment_score !== null">
+                                        <div>
+                                            <span class="text-gray-550" x-text="'Sentimen ' + (item.sentiment_score > 0 ? '+' : '') + item.sentiment_score"></span>
+                                            <span class="text-gray-300">(&times;0.5)</span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="min-w-[75px] bg-gray-50 border border-gray-150 px-2.5 py-1.5 rounded-xl text-center">
+                                    <span class="block text-[8px] text-gray-400 font-black uppercase tracking-wider">Skor Tren</span>
+                                    <span class="text-xs font-black text-gray-700" 
+                                          x-text="Math.round(((item.total_reviews ?? 0) * 10) + ((item.average_rating ?? 0) * 10) + ((item.sentiment_score ?? 0) * 0.5))"></span>
+                                </div>
                             </div>
                             <button x-show="mode === 'manual'" 
                                     type="button" 

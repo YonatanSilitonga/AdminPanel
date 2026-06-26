@@ -197,6 +197,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
         Route::post('reviews/analyze-batch', [ReviewController::class, 'analyzeBatch'])->name('admin.reviews.analyze-batch');
         Route::patch('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('admin.reviews.approve');
         Route::patch('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('admin.reviews.reject');
+        Route::patch('reviews/{review}/update-sentiment', [ReviewController::class, 'updateSentimentInline'])->name('admin.reviews.update-sentiment');
         Route::delete('reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
     });
 

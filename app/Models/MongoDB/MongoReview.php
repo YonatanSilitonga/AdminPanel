@@ -25,9 +25,27 @@ class MongoReview extends Model
         'sentiment_reason',
         'sentiment_model_version',
         'sentiment_analyzed_at',
+        'sentiment_is_uncertain',
+        'sentiment_uncertainty_reasons',
     ];
 
     public $timestamps = true;
+
+    public static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($review) {
+            if (\App\Models\AppSetting::get('notify_new_review', false)) {
+                try {
+                    $adminEmail = config('mail.from.address', 'admin@toba.id');
+                    \Illuminate\Support\Facades\Mail::to($adminEmail)->send(new \App\Mail\NewReviewNotification($review));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to send new review email notification: ' . $e->getMessage());
+                }
+            }
+        });
+    }
 
     protected $casts = [
         'created_at' => 'datetime',
@@ -37,6 +55,8 @@ class MongoReview extends Model
         'user_id' => 'string',
         'sentiment_confidence' => 'float',
         'sentiment_analyzed_at' => 'datetime',
+        'sentiment_is_uncertain' => 'boolean',
+        'sentiment_uncertainty_reasons' => 'array',
     ];
 
     /**
@@ -66,10 +86,6 @@ class MongoReview extends Model
         $user = $this->user;
         return $user ? ($user->name ?? ($user->firstName ? $user->firstName . ' ' . $user->lastName : 'Anonim')) : ($this->user_id ?? 'Anonim');
     }
-
-    /**
-     * Override toArray to always include sentiment fields even if null
-     */
     public function toArray()
     {
         $array = parent::toArray();
@@ -81,6 +97,8 @@ class MongoReview extends Model
         $array['sentiment_scores'] = $this->sentiment_scores ?? null;
         $array['sentiment_analyzed_at'] = $this->sentiment_analyzed_at ?? null;
         $array['sentiment_model_version'] = $this->sentiment_model_version ?? null;
+        $array['sentiment_is_uncertain'] = $this->sentiment_is_uncertain ?? false;
+        $array['sentiment_uncertainty_reasons'] = $this->sentiment_uncertainty_reasons ?? [];
         $array['reviewer_name'] = $this->reviewer_name;
 
         // Include destination relationship

@@ -27,6 +27,14 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerViewComposers();
+
+        // Apply default language locale from settings
+        try {
+            $lang = \App\Models\AppSetting::get('default_language', 'id');
+            \Illuminate\Support\Facades\App::setLocale($lang);
+        } catch (\Exception $e) {
+            // Silence exceptions in case DB connection is not initialized during console/migration runs
+        }
     }
 
     /**

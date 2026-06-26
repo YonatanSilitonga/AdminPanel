@@ -15,6 +15,22 @@ class User extends Authenticatable
     protected $collection = 'users';
     protected $primaryKey = '_id';
 
+    public static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($user) {
+            if (\App\Models\AppSetting::get('notify_new_user', false)) {
+                try {
+                    $adminEmail = config('mail.from.address', 'admin@toba.id');
+                    \Illuminate\Support\Facades\Mail::to($adminEmail)->send(new \App\Mail\NewUserNotification($user));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to send new user email notification: ' . $e->getMessage());
+                }
+            }
+        });
+    }
+
     /**
      * Default attributes for the model.
      */

@@ -812,9 +812,9 @@
                         <th class="px-10 py-6 text-right">AKSI</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="bg-white divide-y divide-gray-50">
                     @forelse($beritaPromosi as $index => $item)
-                    <tr class="hover:bg-gray-50/50 transition-colors group">
+                    <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
                         <td class="px-8 py-5 text-sm text-gray-500 font-medium">
                             {{ ($beritaPromosi->currentPage() - 1) * $beritaPromosi->perPage() + $loop->iteration }}
                         </td>

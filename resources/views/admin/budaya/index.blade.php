@@ -790,9 +790,9 @@
                             <th class="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
+                    <tbody class="bg-white divide-y divide-gray-50">
                         @forelse($budayas as $index => $item)
-                            <tr class="hover:bg-gray-50/30 transition-colors group">
+                            <tr class="hover:bg-gray-50/20 transition-all border-b border-gray-50 last:border-0">
                                 <td class="px-8 py-5">
                                     <span class="text-sm font-semibold text-gray-400">{{ $index + 1 }}</span>
                                 </td>

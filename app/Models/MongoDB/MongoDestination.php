@@ -18,6 +18,11 @@ class MongoDestination extends Model
 
     protected $primaryKey = '_id';
 
+    protected $appends = [
+        'average_rating',
+        'total_reviews',
+    ];
+
     protected $fillable = [
         'name',
         'description',
@@ -36,6 +41,12 @@ class MongoDestination extends Model
         'video_loop',
         'video_wait_until_ready',
         'admin_id',
+        // Sentiment aggregation fields (populated by ReviewSentimentController)
+        'positive_sentiment_count',
+        'negative_sentiment_count',
+        'neutral_sentiment_count',
+        'sentiment_score',          // Net Positive Ratio: range -100 s/d +100
+        'sentiment_synced_at',      // Timestamp terakhir sinkronisasi sentimen
     ];
 
     /**
@@ -59,6 +70,12 @@ class MongoDestination extends Model
         'video_autoplay' => 'boolean',
         'video_loop' => 'boolean',
         'video_wait_until_ready' => 'boolean',
+        // Sentiment aggregation casts
+        'positive_sentiment_count' => 'integer',
+        'negative_sentiment_count' => 'integer',
+        'neutral_sentiment_count'  => 'integer',
+        'sentiment_score'          => 'float',
+        'sentiment_synced_at'      => 'datetime',
     ];
 
     public function getImagesAttribute($value)

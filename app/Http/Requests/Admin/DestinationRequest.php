@@ -39,7 +39,7 @@ class DestinationRequest extends FormRequest
             ],
             'description' => 'required|string|min:10|max:500',
             'long_description' => 'nullable|string|max:5000',
-            'category' => 'required|in:park,beach,museum,historical,nature,cultural,religi',
+            'category' => 'required|in:Alam,Budaya & Sejarah,Alam dan Budaya,Religi,Alam dan Religi,Budaya',
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',

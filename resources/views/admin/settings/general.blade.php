@@ -407,7 +407,7 @@
             </div>
             <div>
                 <h3 class="text-base font-bold text-gray-900">Preferensi Notifikasi</h3>
-                <p class="text-xs text-gray-400 font-medium mt-0.5">Pilih notifikasi email yang ingin dikirim ke admin</p>
+                <p class="text-xs text-gray-400 font-medium mt-0.5">Kontrol notifikasi email <span class="text-blue-500 font-bold">dan bell icon</span> untuk setiap jenis kejadian</p>
             </div>
         </div>
 
@@ -438,7 +438,7 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-400 font-medium">Notifikasi saat ada ulasan masuk</p>
+                        <p class="text-xs text-gray-400 font-medium">📧 Email + 🔔 Bell icon saat ada ulasan masuk</p>
                     </div>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
@@ -473,7 +473,7 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-400 font-medium">Notifikasi saat ada laporan masalah baru</p>
+                        <p class="text-xs text-gray-400 font-medium">📧 Email + 🔔 Bell icon saat ada laporan baru</p>
                     </div>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
@@ -508,7 +508,7 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-400 font-medium">Notifikasi saat pendaftaran akun baru</p>
+                        <p class="text-xs text-gray-400 font-medium">📧 Email saat ada pendaftaran akun baru</p>
                     </div>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
@@ -543,7 +543,7 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-400 font-medium">Notifikasi ketika terjadi kendala sistem</p>
+                        <p class="text-xs text-gray-400 font-medium">📧 Email saat terjadi error atau kendala sistem</p>
                     </div>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
@@ -567,3 +567,55 @@
 </form>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        /* ── Color Picker Two-Way Sync ─────────────────────────────────── */
+        const syncColorInput = (pickerName) => {
+            const picker = document.querySelector(`input[name="${pickerName}"]`);
+            if (!picker) return;
+            const textInput = picker.nextElementSibling;
+            if (!textInput) return;
+
+            // Remove readonly so the user can type/paste hex code
+            textInput.removeAttribute('readonly');
+
+            // Two-way sync: Color Picker -> Text Input
+            picker.addEventListener('input', (e) => {
+                textInput.value = e.target.value.toUpperCase();
+            });
+
+            // Two-way sync: Text Input -> Color Picker
+            textInput.addEventListener('input', (e) => {
+                let hexVal = e.target.value.trim();
+                if (hexVal && !hexVal.startsWith('#')) {
+                    hexVal = '#' + hexVal;
+                }
+                // Validate if it is a valid hex color format
+                if (/^#[0-9A-F]{6}$/i.test(hexVal)) {
+                    picker.value = hexVal;
+                }
+            });
+        };
+
+        syncColorInput('primary_color');
+        syncColorInput('secondary_color');
+
+        /* ── Live Dark Mode Toggle (Preview tanpa save form) ───────────── */
+        const darkModeCheckbox = document.querySelector('input[name="dark_mode"]');
+        if (darkModeCheckbox) {
+            // Apply immediately when clicked
+            darkModeCheckbox.addEventListener('change', function () {
+                if (this.checked) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            });
+        }
+    });
+</script>
+@endpush
+

@@ -137,9 +137,10 @@ class SentimentAnalysisService
                 'model_version' => $data['data']['model_version'] ?? ($data['data']['sentiment_model_version'] ?? null),
                 'sentiment_model_version' => $data['data']['sentiment_model_version'] ?? ($data['data']['model_version'] ?? null),
                 'sentence_predictions' => $data['data']['sentence_predictions'] ?? null,
+                'sentiment_is_uncertain' => $data['data']['sentiment_is_uncertain'] ?? false,
+                'sentiment_uncertainty_reasons' => $data['data']['sentiment_uncertainty_reasons'] ?? [],
                 'timestamp' => $data['data']['timestamp'] ?? now()->toIso8601String()
             ];
-        
         } catch (Exception $e) {
             Log::error(
                 'Sentiment prediction exception',

@@ -31,6 +31,30 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Report system exceptions by sending email if configured
+        $exceptions->report(function (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException || 
+                $e instanceof \Illuminate\Auth\AuthenticationException || 
+                $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+                return;
+            }
+
+            if (\App\Models\AppSetting::get('notify_system_error', false)) {
+                try {
+                    $adminEmail = config('mail.from.address', 'admin@toba.id');
+                    $errorMessage = $e->getMessage();
+                    $errorTrace = $e->getTraceAsString();
+                    $requestUrl = request()?->fullUrl() ?? 'Console/Queue';
+                    
+                    \Illuminate\Support\Facades\Mail::to($adminEmail)->send(
+                        new \App\Mail\SystemErrorNotification($errorMessage, $errorTrace, $requestUrl)
+                    );
+                } catch (\Exception $mailEx) {
+                    \Illuminate\Support\Facades\Log::error('Failed to send error notification email: ' . $mailEx->getMessage());
+                }
+            }
+        });
+
         // Handle 404 Not Found
         $exceptions->render(function (Illuminate\Http\Exceptions\HttpResponseException $e, Request $request) {
             if ($request->is('admin/*') && $e->getResponse()->status() === 404) {

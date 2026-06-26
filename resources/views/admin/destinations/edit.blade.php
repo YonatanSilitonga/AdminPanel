@@ -18,7 +18,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700">Category</label>
             <select name="category" class="mt-1 w-full border rounded-lg px-4 py-2">
-                @foreach(($categories ?? ['park','beach','museum','historical','nature','cultural','religi']) as $category)
+                @foreach(($categories ?? ['Alam', 'Budaya & Sejarah', 'Alam dan Budaya', 'Religi', 'Alam dan Religi', 'Budaya']) as $category)
                     <option value="{{ $category }}" @selected(old('category', $destination->category ?? '') === $category)>{{ ucfirst($category) }}</option>
                 @endforeach
             </select>

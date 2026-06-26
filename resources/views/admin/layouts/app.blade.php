@@ -1,6 +1,6 @@
 <!-- resources/views/admin/layouts/app.blade.php -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id" class="{{ app_setting('dark_mode') ? 'dark' : '' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,12 +17,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        sidebar: '#066466',
-                        'sidebar-hover': '#055456',
-                        'sidebar-active': '#197a7c',
+                        sidebar: 'var(--primary-color, #066466)',
+                        'sidebar-hover': 'var(--primary-color, #055456)',
+                        'sidebar-active': 'var(--secondary-color, #10B981)',
+                        primary: 'var(--primary-color, #066466)',
+                        secondary: 'var(--secondary-color, #10B981)',
                         'toba-gold': '#e5bc3d',
                         light: '#F9FAFB',
                     }
@@ -42,6 +45,10 @@
 
     @stack('styles')
     <style>
+        :root {
+            --primary-color: {{ app_setting('primary_color', '#066466') }};
+            --secondary-color: {{ app_setting('secondary_color', '#10B981') }};
+        }
         [x-cloak] {
             display: none !important;
         }
@@ -57,13 +64,14 @@
 
         /* Global Gradient for Buttons */
         button.bg-sidebar, a.bg-sidebar, button.bg-primary, a.bg-primary, button[type="submit"]:not(.bg-[#EF4444]):not(.bg-[#dc2626]) {
-            background: linear-gradient(135deg, #065f46, #047857, #059669) !important;
+            background: var(--primary-color, #066466) !important;
             border: none !important;
             transition: all 0.3s ease !important;
         }
         button.bg-sidebar:hover, a.bg-sidebar:hover, button.bg-primary:hover, a.bg-primary:hover, button[type="submit"]:not(.bg-[#EF4444]):not(.bg-[#dc2626]):hover {
-            background: linear-gradient(135deg, #047857, #059669, #065f46) !important;
-            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3) !important;
+            background: var(--primary-color, #066466) !important;
+            filter: brightness(90%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
             transform: translateY(-1px);
         }
         /* Page transition disabled to keep navigation fully static */
@@ -109,6 +117,120 @@
         /* Isolate table repaint dari halaman */
         .review-table-wrap {
             contain: layout;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           Dark Mode Global Overrides — aktif saat <html> memiliki .dark
+           ══════════════════════════════════════════════════════════════ */
+        html.dark { color-scheme: dark; }
+        html.dark body { background-color: #0f172a !important; color: #e2e8f0; }
+
+        /* ── Backgrounds ─────────────────────────────────────────────── */
+        html.dark .bg-white          { background-color: #1e293b !important; }
+        html.dark .bg-light          { background-color: #0f172a !important; }
+        html.dark .bg-gray-50        { background-color: #162032 !important; }
+        html.dark .bg-gray-100       { background-color: #1e293b !important; }
+        html.dark .bg-gray-200       { background-color: #293c52 !important; }
+        html.dark .bg-gray-50\/30    { background-color: rgba(22,32,50,.6) !important; }
+        html.dark .bg-gray-50\/50    { background-color: rgba(22,32,50,.5) !important; }
+        html.dark .hover\:bg-gray-50:hover  { background-color: #1e293b !important; }
+        html.dark .hover\:bg-gray-100:hover { background-color: #293c52 !important; }
+        html.dark .hover\:bg-gray-200:hover { background-color: #334155 !important; }
+        html.dark .focus\:bg-white:focus    { background-color: #1e293b !important; }
+
+        /* ── Text ────────────────────────────────────────────────────── */
+        html.dark .text-gray-900 { color: #f1f5f9 !important; }
+        html.dark .text-gray-800 { color: #e2e8f0 !important; }
+        html.dark .text-gray-700 { color: #cbd5e1 !important; }
+        html.dark .text-gray-600 { color: #94a3b8 !important; }
+        html.dark .text-gray-500 { color: #64748b !important; }
+        html.dark .text-gray-400 { color: #475569 !important; }
+        html.dark h1, html.dark h2, html.dark h3, html.dark h4 { color: #f1f5f9; }
+
+        /* ── Borders ─────────────────────────────────────────────────── */
+        html.dark .border-gray-100 { border-color: #1e3358 !important; }
+        html.dark .border-gray-200 { border-color: #334155 !important; }
+        html.dark .divide-gray-100 > * + * { border-color: #1e3358 !important; }
+        html.dark .divide-gray-200 > * + * { border-color: #334155 !important; }
+
+        /* ── Form Controls ───────────────────────────────────────────── */
+        html.dark input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),
+        html.dark select,
+        html.dark textarea {
+            background-color: #0f172a !important;
+            color: #e2e8f0 !important;
+            border-color: #334155 !important;
+        }
+        html.dark input::placeholder,
+        html.dark textarea::placeholder { color: #475569 !important; }
+        html.dark label.text-gray-700  { color: #cbd5e1 !important; }
+
+        /* ── Header / Navbar ─────────────────────────────────────────── */
+        html.dark header {
+            background-color: #1e293b !important;
+            border-color: #1e3358 !important;
+        }
+
+        /* ── Tables ──────────────────────────────────────────────────── */
+        html.dark thead tr  { background-color: #162032 !important; }
+        html.dark thead th  { color: #94a3b8 !important; border-color: #1e3358 !important; }
+        html.dark tbody tr  { border-color: #1e3358 !important; }
+        html.dark tbody tr:hover { background-color: #162032 !important; }
+        html.dark tbody td  { color: #cbd5e1 !important; border-color: #1e3358 !important; }
+
+        /* ── Dropdowns & Modals ──────────────────────────────────────── */
+        html.dark .shadow-xl  { box-shadow: 0 20px 40px -12px rgba(0,0,0,.7) !important; }
+        html.dark .shadow-2xl { box-shadow: 0 30px 60px -12px rgba(0,0,0,.7) !important; }
+
+        /* ── Colored Alerts — keep tinted but dimmed ─────────────────── */
+        html.dark .bg-red-50      { background-color: rgba(239,68,68,.12)   !important; }
+        html.dark .bg-blue-50     { background-color: rgba(59,130,246,.12)  !important; }
+        html.dark .bg-emerald-50  { background-color: rgba(16,185,129,.12)  !important; }
+        html.dark .bg-green-50    { background-color: rgba(16,185,129,.12)  !important; }
+        html.dark .bg-yellow-50   { background-color: rgba(234,179,8,.12)   !important; }
+        html.dark .bg-amber-50    { background-color: rgba(245,158,11,.12)  !important; }
+        html.dark .bg-purple-50   { background-color: rgba(168,85,247,.12)  !important; }
+        html.dark .bg-indigo-50   { background-color: rgba(99,102,241,.12)  !important; }
+        html.dark .bg-orange-50   { background-color: rgba(249,115,22,.12)  !important; }
+
+        /* ── Alert text colors — keep vivid ──────────────────────────── */
+        html.dark .text-red-800    { color: #fca5a5 !important; }
+        html.dark .text-blue-900   { color: #93c5fd !important; }
+        html.dark .text-blue-600   { color: #60a5fa !important; }
+        html.dark .text-red-900    { color: #fca5a5 !important; }
+        html.dark .text-red-600    { color: #f87171 !important; }
+
+        /* ── Borders on alert boxes ───────────────────────────────────── */
+        html.dark .border-red-200\/40  { border-color: rgba(248,113,113,.25)  !important; }
+        html.dark .border-blue-200     { border-color: rgba(147,197,253,.25)  !important; }
+        html.dark .border-red-200      { border-color: rgba(248,113,113,.25)  !important; }
+
+        /* ── Footer ──────────────────────────────────────────────────── */
+        html.dark footer { border-color: #1e3358 !important; }
+        html.dark footer p { color: #475569 !important; }
+
+        /* ── Sidebar active menu items ────────────────────────────────── */
+        html.dark .bg-white\/15 { background-color: rgba(255,255,255,.15) !important; }
+        html.dark .bg-white\/10 { background-color: rgba(255,255,255,.10) !important; }
+        html.dark .hover\:bg-white\/10:hover { background-color: rgba(255,255,255,.10) !important; }
+
+        /* ── Hover states used in navbar & menus ─────────────────────────── */
+        html.dark .hover\:bg-emerald-50:hover { background-color: rgba(16,185,129,.08) !important; }
+        html.dark .hover\:bg-emerald-100:hover { background-color: rgba(16,185,129,.15) !important; }
+        html.dark .hover\:text-emerald-600:hover { color: #34d399 !important; }
+        html.dark .hover\:text-emerald-700:hover { color: #34d399 !important; }
+        html.dark .focus\:ring-sidebar\/10 { --tw-ring-color: rgba(6,100,102,.2) !important; }
+
+        /* ── Success flash message bg ────────────────────────────────────── */
+        html.dark .bg-\[\#E6F6F2\] { background-color: rgba(0,168,132,.1) !important; }
+        html.dark .border-\[\#00A884\]\/20 { border-color: rgba(0,168,132,.2) !important; }
+
+        /* ── Dark mode smooth page-level transition only ─────────────────── */
+        /* Avoid html.dark * { transition } — too broad, causes lag on interactions */
+        html { transition: background-color 300ms ease; }
+        html.dark body, html.dark header, html.dark main, html.dark footer,
+        html.dark nav, html.dark aside {
+            transition: background-color 300ms ease, border-color 200ms ease;
         }
     </style>
 </head>

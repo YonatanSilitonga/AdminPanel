@@ -32,8 +32,33 @@ class DashboardController extends BaseAdminController
         $pendingReviews = $stats['pending_reviews'] ?? 0;
         $pendingReports = $stats['pending_reports'] ?? 0;
 
-        // Top 5 Destinasi (Real Data dari MongoDB)
-        $topDestinations = MongoDestination::orderBy('average_rating', 'desc')->limit(5)->get();
+        // Top 5 Destinasi (Real Data dari MongoDB, disinkronkan dengan modul destinasi trending)
+        $trendingMode = \App\Models\AppSetting::get('trending_mode', 'manual');
+        $manualList = \App\Models\AppSetting::get('trending_list', []);
+        
+        $topDestinations = collect();
+        if ($trendingMode === 'manual' && !empty($manualList)) {
+            $ids = array_map('strval', array_slice($manualList, 0, 5));
+            $destinations = MongoDestination::whereIn('_id', $ids)->get()->keyBy(function($dest) {
+                return (string)$dest->_id;
+            });
+            $topDestinations = collect($ids)->map(function($id) use ($destinations) {
+                return $destinations->get((string)$id);
+            })->filter()->values();
+        } else {
+            $topDestinations = MongoDestination::where('is_active', true)
+                ->get()
+                ->sortByDesc(function($dest) {
+                    $reviewsCount    = $dest->total_reviews ?? 0;
+                    $avgRating       = $dest->average_rating ?? 0;
+                    $sentimentBonus  = ($dest->sentiment_score ?? 0) * 0.5;
+
+                    // Formula: (Jumlah Ulasan x10) + (Rating x10) + Sentiment Bonus
+                    return ($reviewsCount * 10) + ($avgRating * 10) + $sentimentBonus;
+                })
+                ->take(5)
+                ->values();
+        }
 
         // Trip Statistics (Real Data dari RecommendationLog) - Cached for 10 minutes
         $tripStats = \Illuminate\Support\Facades\Cache::remember('admin.dashboard.trip_stats', now()->addMinutes(10), function() {

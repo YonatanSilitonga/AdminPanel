@@ -92,6 +92,12 @@ class SettingsController extends BaseAdminController
             AppSetting::set('notify_system_error', $request->has('notify_system_error'), 'boolean');
             AppSetting::set('dark_mode', $request->has('dark_mode'), 'boolean');
 
+            // ── Clear navbar counts cache so notification settings apply immediately ──
+            \Illuminate\Support\Facades\Cache::forget('admin.navbar.counts');
+
+            // ── Apply locale immediately for this request ──────────────────────────
+            \Illuminate\Support\Facades\App::setLocale($validated['default_language']);
+
             $newValues = AppSetting::getAllSettings();
             $this->logActivity('update_general_settings', 'settings', 'general', $oldValues, $newValues);
 
@@ -99,6 +105,76 @@ class SettingsController extends BaseAdminController
         } catch (\Exception $e) {
             Log::error('Error updating general settings: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal memperbarui pengaturan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show API keys settings page (Stub).
+     */
+    public function editApiKeys()
+    {
+        return redirect()->back()->with('info', 'Fitur Pengaturan API Keys akan segera hadir.');
+    }
+
+    /**
+     * Update API keys (Stub).
+     */
+    public function updateApiKeys(Request $request)
+    {
+        return redirect()->back()->with('info', 'Fitur Pengaturan API Keys akan segera hadir.');
+    }
+
+    /**
+     * Show AI configuration settings page (Stub).
+     */
+    public function editAiConfig()
+    {
+        return redirect()->back()->with('info', 'Fitur Konfigurasi AI akan segera hadir.');
+    }
+
+    /**
+     * Update AI configuration (Stub).
+     */
+    public function updateAiConfig(Request $request)
+    {
+        return redirect()->back()->with('info', 'Fitur Konfigurasi AI akan segera hadir.');
+    }
+
+    /**
+     * Toggle Maintenance mode.
+     */
+    public function toggleMaintenance(Request $request)
+    {
+        try {
+            $enabled = $request->has('enabled') || $request->input('enabled') === '1' || $request->input('enabled') === 'true';
+            
+            $oldValues = AppSetting::getAllSettings();
+            
+            // Toggle maintenance mode setting
+            AppSetting::set('maintenance_mode', $enabled, 'boolean');
+            
+            $message = $request->input('maintenance_message', 'Sistem sedang dalam pemeliharaan.');
+            AppSetting::set('maintenance_message', $message, 'string');
+            
+            $statusStr = $enabled ? 'aktif' : 'nonaktif';
+            
+            // Try sending email if notify setting is enabled
+            if (AppSetting::get('notify_system_error', false)) {
+                try {
+                    $adminEmail = config('mail.from.address', 'admin@toba.id');
+                    \Illuminate\Support\Facades\Mail::to($adminEmail)->send(new \App\Mail\MaintenanceMode($enabled, $message));
+                } catch (\Exception $mailEx) {
+                    Log::error('Failed to send Maintenance mode email: ' . $mailEx->getMessage());
+                }
+            }
+
+            $newValues = AppSetting::getAllSettings();
+            $this->logActivity('toggle_maintenance_mode', 'settings', 'maintenance', $oldValues, $newValues);
+
+            return redirect()->back()->with('success', "Mode Pemeliharaan berhasil diubah menjadi {$statusStr}.");
+        } catch (\Exception $e) {
+            Log::error('Error toggling maintenance mode: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengubah status mode pemeliharaan: ' . $e->getMessage());
         }
     }
 }

@@ -123,7 +123,7 @@
         } 
     }" 
     class="fixed inset-y-0 left-0 lg:relative text-white h-screen flex flex-col shadow-2xl lg:shadow-xl overflow-hidden flex-shrink-0 z-50 transition-all duration-300 ease-in-out group/sidebar {{ $isSidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-16 sidebar-collapsed' }}"
-    style="background: linear-gradient(135deg, #065f46, #047857, #059669);"
+    style="background: linear-gradient(135deg, var(--primary-color, #066466), var(--secondary-color, #10B981));"
     :class="sidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-16 sidebar-collapsed'"
 >
     <!-- Logo Section -->

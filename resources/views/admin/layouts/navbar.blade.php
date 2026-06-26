@@ -26,55 +26,84 @@
             </div>
 
             <!-- Notifications -->
+            @php
+                // Filter in-app notification counts based on admin notification settings
+                $notifyReview  = app_setting('notify_new_review', true);
+                $notifyReport  = app_setting('notify_new_report', true);
+                $bellReviews   = $notifyReview  ? (int)($pendingReviews  ?? 0) : 0;
+                $bellReports   = $notifyReport  ? (int)($pendingReports  ?? 0) : 0;
+                $bellTotal     = $bellReviews + $bellReports;
+            @endphp
             <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="text-gray-500 hover:text-emerald-600 relative p-2 hover:bg-emerald-50 rounded-lg transition-colors">
+                <button @click="open = !open" class="text-gray-500 hover:text-emerald-600 relative p-2 hover:bg-emerald-50 rounded-lg transition-colors" title="Notifikasi">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                     </svg>
-                    @if (($pendingNotificationsCount ?? 0) > 0)
-                        <span class="absolute top-1.5 right-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform bg-red-500 rounded-full animate-pulse">
-                            {{ $pendingNotificationsCount }}
+                    @if ($bellTotal > 0)
+                        <span class="absolute top-1.5 right-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full animate-pulse">
+                            {{ $bellTotal > 99 ? '99+' : $bellTotal }}
                         </span>
                     @endif
                 </button>
 
                 <!-- Dropdown -->
-                <div x-show="open" 
-                     x-transition 
+                <div x-show="open"
+                     x-transition
                      @click.outside="open = false"
                      x-cloak
                      class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl z-50 border border-gray-100 overflow-hidden">
-                    <div class="p-4 border-b border-gray-50">
-                        <h3 class="text-sm font-bold text-gray-800 mb-3">📢 Notifikasi</h3>
-                        
-                        @php
-                            $pendingReviewsCount = (int) ($pendingReviews ?? 0);
-                            $pendingReportsCount = (int) ($pendingReports ?? 0);
-                            $totalNotifications = $pendingReviewsCount + $pendingReportsCount;
-                        @endphp
 
-                        @if($totalNotifications > 0)
-                            @if($pendingReviewsCount > 0)
-                                <a href="{{ route('admin.reviews.index') }}" class="block mb-2 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
-                                    <p class="font-medium text-blue-900 text-sm">⭐ {{ $pendingReviewsCount }} Ulasan Pending</p>
-                                    <p class="text-blue-600 text-[11px] mt-1">Klik untuk review</p>
+                    <!-- Header -->
+                    <div class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-gray-800">📢 Notifikasi</h3>
+                        @if ($bellTotal > 0)
+                            <span class="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">{{ $bellTotal }} baru</span>
+                        @endif
+                    </div>
+
+                    <!-- Items -->
+                    <div class="p-3 space-y-2">
+                        @if($bellTotal > 0)
+                            @if($bellReviews > 0)
+                                <a href="{{ route('admin.reviews.index') }}" class="flex items-start gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-200/60 transition-colors group">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200 transition-colors">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-blue-900 text-sm">{{ $bellReviews }} Ulasan Menunggu</p>
+                                        <p class="text-blue-600 text-[11px] mt-0.5">Perlu ditinjau & disetujui</p>
+                                    </div>
                                 </a>
                             @endif
 
-                            @if($pendingReportsCount > 0)
-                                <a href="{{ route('admin.reports.index') }}" class="block p-3 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors">
-                                    <p class="font-medium text-red-900 text-sm">⚠️ {{ $pendingReportsCount }} Laporan Pending</p>
-                                    <p class="text-red-600 text-[11px] mt-1">Klik untuk proses</p>
+                            @if($bellReports > 0)
+                                <a href="{{ route('admin.reports.index') }}" class="flex items-start gap-3 p-3 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200/60 transition-colors group">
+                                    <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 transition-colors">
+                                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-red-900 text-sm">{{ $bellReports }} Laporan Masuk</p>
+                                        <p class="text-red-600 text-[11px] mt-0.5">Perlu diproses segera</p>
+                                    </div>
                                 </a>
                             @endif
                         @else
-                            <div class="py-6 text-center">
-                                <p class="text-gray-400 text-sm">✓ Tidak ada notifikasi baru</p>
+                            <div class="py-8 text-center">
+                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                </div>
+                                <p class="text-gray-500 text-sm font-medium">Semua beres!</p>
+                                <p class="text-gray-400 text-xs mt-1">Tidak ada notifikasi baru</p>
                             </div>
                         @endif
                     </div>
-                    <div class="p-3 bg-gray-50 text-center border-t border-gray-100">
-                        <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Terakhir diperbarui: {{ now()->format('H:i') }}</p>
+
+                    <!-- Footer -->
+                    <div class="px-4 py-2.5 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                        <p class="text-[10px] text-gray-400">Diperbarui: {{ now()->format('H:i') }}</p>
+                        @if(!$notifyReview || !$notifyReport)
+                            <a href="{{ route('admin.settings.general') }}" class="text-[10px] text-sidebar font-semibold hover:underline">Atur notifikasi →</a>
+                        @endif
                     </div>
                 </div>
             </div>

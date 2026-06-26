@@ -35,6 +35,22 @@ class MongoReport extends Model
 
     public $timestamps = false;  // Go backend manages timestamps — do NOT let Laravel overwrite them
 
+    public static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($report) {
+            if (\App\Models\AppSetting::get('notify_new_report', false)) {
+                try {
+                    $adminEmail = config('mail.from.address', 'admin@toba.id');
+                    \Illuminate\Support\Facades\Mail::to($adminEmail)->send(new \App\Mail\NewReportNotification($report));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to send new report email notification: ' . $e->getMessage());
+                }
+            }
+        });
+    }
+
     protected $casts = [
         'status'         => 'string',
         'destination_id' => 'string',

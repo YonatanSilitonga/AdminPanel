@@ -34,14 +34,18 @@ class TrendingDestinationController extends BaseAdminController
             })->filter()->values();
         } else {
             // Automatic mode: fetch active destinations, calculate trending score in-memory
-            // Score logic: heavily favor total_reviews (popularity) combined with rating
+            // Score logic: volume ulasan + kualitas rating + bonus sentimen
             $trendingDestinations = MongoDestination::where('is_active', true)
                 ->get()
                 ->sortByDesc(function($dest) {
-                    $reviewsCount = $dest->total_reviews;
-                    $avgRating = $dest->average_rating;
-                    // Formula: (Reviews * 10) + Rating
-                    return ($reviewsCount * 10) + $avgRating;
+                    $reviewsCount   = $dest->total_reviews ?? 0;
+                    $avgRating      = $dest->average_rating ?? 0;
+                    // Sentiment bonus: range -100 sd +100 (default 0 jika belum dianalisis)
+                    // Bobot x0.5 agar tidak mendominasi volume ulasan
+                    $sentimentBonus = ($dest->sentiment_score ?? 0) * 0.5;
+
+                    // Formula: (Jumlah Ulasan x10) + (Rating x10) + Sentiment Bonus
+                    return ($reviewsCount * 10) + ($avgRating * 10) + $sentimentBonus;
                 })
                 ->take(10)
                 ->map(function($dest) {

@@ -53,6 +53,22 @@ class ReviewController extends BaseAdminController
                 }
             }
 
+            // Filter by rating vs sentiment mismatch (only rating vs sentiment mismatch)
+            if ($request->filled('mismatch') && ($request->mismatch === '1' || $request->mismatch === 'true' || $request->mismatch === 'yes')) {
+                $query->where(function($q) {
+                    // Mismatch 1: Rating >= 4 (high) tapi sentimen negative
+                    $q->where(function($sub) {
+                        $sub->where('rating', '>=', 4)
+                            ->where('sentiment_label', 'negative');
+                    })
+                    // Mismatch 2: Rating <= 2 (low) tapi sentimen positive
+                    ->orWhere(function($sub) {
+                        $sub->where('rating', '<=', 2)
+                            ->where('sentiment_label', 'positive');
+                    });
+                });
+            }
+
             // Search in review text
             if ($request->filled('search')) {
                 $search = $request->search;
@@ -176,16 +192,62 @@ class ReviewController extends BaseAdminController
 
             $destinationsList = MongoDestination::orderBy('name', 'asc')->get(['_id', 'name']);
 
+            // --- Top Destinations by Sentiment Score (for analytics summary card) ---
+            // Murni berdasarkan skor sentimen — TIDAK menggunakan rating
+            // Rating ditampilkan di modul Destinasi (Trending Destinasi)
+            $topDestCacheKey = 'review_top_dest_sentiment_only';
+            $topDestinationsByRatingSentiment = \Illuminate\Support\Facades\Cache::remember(
+                $topDestCacheKey, now()->addMinutes(15), function () {
+                    $dests = MongoDestination::where('is_active', true)
+                        ->get([
+                            '_id', 'name', 'category', 'images',
+                            'total_reviews',
+                            'sentiment_score', 'positive_sentiment_count',
+                            'negative_sentiment_count', 'neutral_sentiment_count',
+                        ])
+                        // Hanya destinasi yang sudah pernah dianalisis sentimen
+                        ->filter(fn($d) => ($d->positive_sentiment_count ?? 0)
+                                         + ($d->negative_sentiment_count ?? 0)
+                                         + ($d->neutral_sentiment_count  ?? 0) > 0)
+                        // Urutkan murni berdasarkan skor sentimen (Net Positive Ratio)
+                        ->sortByDesc(fn($d) => (float) ($d->sentiment_score ?? -100))
+                        ->take(5)
+                        ->values()
+                        ->map(function ($d) {
+                            $pos   = (int) ($d->positive_sentiment_count ?? 0);
+                            $neg   = (int) ($d->negative_sentiment_count ?? 0);
+                            $neu   = (int) ($d->neutral_sentiment_count  ?? 0);
+                            $total = $pos + $neg + $neu;
+                            return [
+                                'id'             => (string) $d->_id,
+                                'name'           => $d->name,
+                                'category'       => $d->category,
+                                'thumbnail'      => $d->images[0] ?? null,
+                                'total_reviews'  => (int) ($d->total_reviews ?? 0),
+                                'sentiment_score'=> round((float) ($d->sentiment_score ?? 0), 1),
+                                'positive'       => $pos,
+                                'negative'       => $neg,
+                                'neutral'        => $neu,
+                                'total_analyzed' => $total,
+                                'pct_positive'   => $total > 0 ? round($pos / $total * 100) : 0,
+                            ];
+                        })
+                        ->all();
+                    return $dests;
+                }
+            );
+
             return view('admin.reviews.index', [
-                'reviews' => $reviews,
-                'ratings' => $ratings,
-                'sentimentSummary' => $sentimentSummary,
-                'ratingDistribution' => $ratingDistribution,
-                'keywordSummary' => $keywordSummary,
-                'predictionSummary' => $predictionSummary,
-                'keywordModelVersion' => $keywordModelVersion,
-                'sentimentTrends' => $sentimentTrends,
-                'destinationsList' => $destinationsList,
+                'reviews'                        => $reviews,
+                'ratings'                        => $ratings,
+                'sentimentSummary'               => $sentimentSummary,
+                'ratingDistribution'             => $ratingDistribution,
+                'keywordSummary'                 => $keywordSummary,
+                'predictionSummary'              => $predictionSummary,
+                'keywordModelVersion'            => $keywordModelVersion,
+                'sentimentTrends'                => $sentimentTrends,
+                'destinationsList'               => $destinationsList,
+                'topDestinationsByRatingSentiment'=> $topDestinationsByRatingSentiment,
             ]);
         } catch (\Exception $e) {
             Log::error('Error loading reviews from Mongo: ' . $e->getMessage());
@@ -418,8 +480,14 @@ class ReviewController extends BaseAdminController
                 'sentiment_scores' => $normalized['scores'],
                 'sentiment_reason' => $normalized['reason'],
                 'sentiment_model_version' => $normalized['model_version'],
+                'sentiment_is_uncertain' => false,
+                'sentiment_uncertainty_reasons' => [],
                 'sentiment_analyzed_at' => now(),
             ]);
+
+            if ($review->destination_id) {
+                $this->syncSentimentToDestination((string) $review->destination_id);
+            }
 
             $this->clearReviewCaches();
 
@@ -490,6 +558,7 @@ class ReviewController extends BaseAdminController
             }
 
             $analyzed = 0;
+            $destinationIdsToSync = [];
             foreach ($predictions as $prediction) {
                 if (!is_array($prediction)) {
                     continue;
@@ -515,22 +584,37 @@ class ReviewController extends BaseAdminController
                     continue;
                 }
 
+                $revObj = $reviews->firstWhere('_id', $reviewId);
+                if (!$revObj) {
+                    $revObj = MongoReview::find($reviewId);
+                }
+
                 $updated = MongoReview::where('_id', $reviewId)->update([
                     'sentiment_label' => $normalized['label'],
                     'sentiment_confidence' => $normalized['confidence'],
                     'sentiment_scores' => $normalized['scores'],
                     'sentiment_reason' => $normalized['reason'],
                     'sentiment_model_version' => $normalized['model_version'],
+                    'sentiment_is_uncertain' => false,
+                    'sentiment_uncertainty_reasons' => [],
                     'sentiment_analyzed_at' => now(),
                 ]);
 
                 if ($updated > 0) {
                     $analyzed++;
+                    if ($revObj && $revObj->destination_id) {
+                        $destinationIdsToSync[] = (string) $revObj->destination_id;
+                    }
                 }
             }
 
             if ($analyzed > 0) {
                 $this->clearReviewCaches();
+                if (!empty($destinationIdsToSync)) {
+                    foreach (array_unique($destinationIdsToSync) as $destId) {
+                        $this->syncSentimentToDestination($destId);
+                    }
+                }
             }
 
             $this->logActivity('batch_analyze_review_sentiment', 'review', null, null, [
@@ -593,6 +677,10 @@ class ReviewController extends BaseAdminController
             $review->deletion_reason = $request->input('deletion_reason', 'Admin-initiated deletion');
             $review->save();
 
+            if ($review->destination_id) {
+                $this->syncSentimentToDestination((string) $review->destination_id);
+            }
+
             // Clear all affected caches
             $this->clearAllAffectedCaches($review);
 
@@ -641,6 +729,10 @@ class ReviewController extends BaseAdminController
                 'approved_by' => auth('admin')->id()
             ]);
             
+            if ($review->destination_id) {
+                $this->syncSentimentToDestination((string) $review->destination_id);
+            }
+
             $this->clearReviewCaches();
             $this->logActivity('approve_review', 'review', $id);
 
@@ -662,6 +754,10 @@ class ReviewController extends BaseAdminController
                 'status' => 'rejected',
                 'reason' => $request->input('reason')
             ]);
+
+            if ($review->destination_id) {
+                $this->syncSentimentToDestination((string) $review->destination_id);
+            }
 
             $this->clearReviewCaches();
             $this->logActivity('reject_review', 'review', $id);
@@ -874,6 +970,8 @@ class ReviewController extends BaseAdminController
             'scores' => $scores,
             'reason' => (string) ($prediction['sentiment_reason'] ?? $prediction['reason'] ?? 'model_only'),
             'model_version' => $prediction['sentiment_model_version'] ?? $prediction['model_version'] ?? null,
+            'sentiment_is_uncertain' => (bool) ($prediction['sentiment_is_uncertain'] ?? false),
+            'sentiment_uncertainty_reasons' => $prediction['sentiment_uncertainty_reasons'] ?? [],
         ];
     }
 
@@ -975,6 +1073,114 @@ class ReviewController extends BaseAdminController
             Log::info("All affected caches cleared for review deletion: {$review->_id}");
         } catch (\Exception $e) {
             Log::error('Failed to clear all affected caches: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update sentiment label manually from inline dropdown (AJAX)
+     */
+    public function updateSentimentInline(Request $request, string $id): JsonResponse
+    {
+        try {
+            $request->validate([
+                'sentiment' => 'required|in:positive,neutral,negative',
+            ]);
+
+            $review = MongoReview::findOrFail($id);
+            $oldSentiment = $review->sentiment_label;
+            $newSentiment = $request->input('sentiment');
+
+            // Explicitly reset uncertain flag and reasons as well
+            $review->update([
+                'sentiment_label'               => $newSentiment,
+                // confidence TIDAK diubah — ini bukan hasil model, biarkan confidence model asli tersimpan
+                'sentiment_reason'              => 'manual_correction',
+                'sentiment_is_uncertain'        => false,
+                'sentiment_uncertainty_reasons' => [],
+                'sentiment_analyzed_at'         => now(),
+            ]);
+
+            // Sync destination sentiment stats if destination_id exists
+            if ($review->destination_id) {
+                $this->syncSentimentToDestination((string) $review->destination_id);
+            }
+
+            // Clear caches
+            $this->clearAllAffectedCaches($review);
+
+            $this->logActivity('manual_correct_sentiment', 'review', $id, null, [
+                'old_sentiment' => $oldSentiment,
+                'new_sentiment' => $newSentiment,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sentimen berhasil diperbarui secara manual.',
+                'data'    => [
+                    'sentiment_label'      => $newSentiment,
+                    'sentiment_reason'     => 'manual_correction',
+                    'sentiment_confidence' => $review->sentiment_confidence, // confidence asli
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating sentiment inline: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui sentimen ulasan: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Recalculate sentiment stats for a specific destination and save them.
+     */
+    private function syncSentimentToDestination(string $destinationId): void
+    {
+        try {
+            $destination = MongoDestination::find($destinationId);
+            if (!$destination) {
+                return;
+            }
+
+            // Count sentiments from approved reviews only
+            $positive = MongoReview::where('destination_id', $destinationId)
+                ->where('status', 'approved')
+                ->where('is_deleted', '!=', true)
+                ->where('sentiment_label', 'positive')
+                ->count();
+
+            $neutral = MongoReview::where('destination_id', $destinationId)
+                ->where('status', 'approved')
+                ->where('is_deleted', '!=', true)
+                ->where('sentiment_label', 'neutral')
+                ->count();
+
+            $negative = MongoReview::where('destination_id', $destinationId)
+                ->where('status', 'approved')
+                ->where('is_deleted', '!=', true)
+                ->where('sentiment_label', 'negative')
+                ->count();
+
+            $total = $positive + $neutral + $negative;
+
+            // Calculate sentiment_score (Net Positive Ratio): range -100 to +100
+            // Net Positive Ratio = (Positive - Negative) / Total * 100
+            $sentimentScore = 0.0;
+            if ($total > 0) {
+                $sentimentScore = (float) (($positive - $negative) / $total * 100);
+            }
+
+            $destination->update([
+                'positive_sentiment_count' => $positive,
+                'neutral_sentiment_count' => $neutral,
+                'negative_sentiment_count' => $negative,
+                'sentiment_score' => $sentimentScore,
+                'sentiment_synced_at' => now(),
+            ]);
+
+            Log::info("Synced sentiment for destination {$destinationId}: Pos={$positive}, Neu={$neutral}, Neg={$negative}, Score={$sentimentScore}");
+        } catch (\Exception $e) {
+            Log::error("Failed to sync sentiment for destination {$destinationId}: " . $e->getMessage());
         }
     }
 }
